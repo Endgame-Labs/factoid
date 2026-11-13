@@ -54,7 +54,14 @@ model, search returns results in their retrieval order. For the `choose` workloa
 TypeSafe. Jev is the best decision model and is cheap. Other decision models work too: OpenAI's decisions API,
 Fireworks' Rune, and Cloudflare's Clef.
 
-Run these commands to store keys and verify your setup:
+Guided setup is available as a terminal UI. The terminal UI adds providers, checks each key, and lets you pick a model
+for each workload from the providers you have:
+
+```sh
+factoid setup
+```
+
+To do the same steps by hand, store keys and verify your setup with these commands:
 
 ```sh
 factoid keys set fireworks    # one provider is enough to start
@@ -84,13 +91,6 @@ Every model name uses the `provider/model` format, so Factoid knows which provid
 missing key when that key is not set. Workload assignments live in the project's `settings.py` file. Edit `settings.py`
 to change a model. Because `settings.py` is Python, a project can compute its model assignments, for example to select
 different models in production.
-
-The same configuration steps are available as a terminal UI. The terminal UI adds providers, checks each key, and lets
-you pick a model for each workload from the providers you have:
-
-```sh
-factoid setup
-```
 
 ### Use
 
