@@ -2,13 +2,18 @@
 
 > **Status: Design draft.** Nothing is built yet. These docs settle the design before code is written.
 
-Factoid turns documents into `Facts`: short, self-contained sentences, each tied to an exact source quote, who said it,
+Factoid turns `Documents` into `Facts`: short, self-contained sentences, each tied to an exact source quote, who said it,
 and when. As new documents arrive, Factoid updates its set of facts. It retires outdated facts, merges duplicate
 facts, and flags facts that disagree.
 
 It also extracts `Entities` from these documents, and links the facts to the entities.
 
-People, agents, and data pipelines can access these facts through a CLI, an HTTP API, and over MCP.
+Factoid is designed as a development framework. This makes it fully configurable, meaning you can map it to any domain
+by extending the `Document`, `Fact`, and `Entity` base classes.
+
+People, agents, and data pipelines can access these facts through a CLI, an HTTP API, and over MCP. This includes semantic,
+bm25, and hybrid-reranked search.
+
 
 ## Quickstart
 
