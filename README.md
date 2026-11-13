@@ -1,4 +1,4 @@
-# Factoid 🧮
+# Factoid 📚
 
 > **Status: Design draft.** Nothing is built yet. These docs will settle the v1 design before we write code.
 
