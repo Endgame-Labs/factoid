@@ -59,7 +59,7 @@ The three base classes expose hooks for each stage of the pipeline:
 
 | Class | Hooks | Responsibility |
 | --- | --- | --- |
-| `BaseDocument` | `classify`, `segment`, `extract`, and `discover` | Match a document to this type, split it into passages, extract candidate facts, and propose entities. |
+| `BaseDocument` | `classify`, `segment`, `chunk`, `situate`, `extract`, and `discover` | Match a document to this type, split it into passages, group passages into chunks, describe each chunk, extract candidate facts, and propose entities. |
 | `BaseFact` | `judge`, `repair`, `label`, `link`, and `resolve` | Check quality, rewrite a near miss, apply labels, link to entities, and compare against stored facts. |
 | `BaseEntity` | `identify`, `claim`, and `merge` | Match a mention to an entity of this type, claim stored facts, and decide whether two entities are the same. |
 
@@ -82,6 +82,55 @@ class TenantEmail(BaseDocument):
         # Summarize the quoted thread first, then extract with that summary as context.
         thread = self.generate("thread_summary.md.j2", passages=passages)
         return super().extract(passages, thread=thread)
+```
+
+### Chunking
+
+A long document does not fit in one extraction call, so Factoid cuts the document into chunks. First, `segment` splits
+the document into passages, such as speaker turns, paragraphs, or rows. Next, `chunk` groups those passages into
+chunks. A chunk never splits a passage.
+
+Two settings on a document class control chunking:
+
+- `chunk_size`: the largest chunk, in characters.
+- `chunk_overlap`: how much of the previous chunk is repeated at the start of the next chunk. This setting takes a
+  number of characters (`400`) or a share of `chunk_size` as a string (`"15%"`). Because `chunk_overlap` is one setting
+  with two forms, the two forms can never disagree. Overlap is rounded to whole passages.
+
+Overlap text is context only. A fact can cite a passage only from the chunk that owns that passage, so a passage in the
+overlap does not yield the same fact twice.
+
+After a chunk is made, the `situate` hook writes a situation for that chunk: one or two sentences stating where the
+chunk sits in the whole document and what the chunk is about. The model that writes the situation sees the whole
+document and the chunk. Factoid stores the situation with the chunk and indexes the situation with the chunk's text for
+search. The extractor reads the situation before the chunk's passages. This context helps the extractor write
+self-contained facts, naming the people and things that the chunk only refers to.
+
+The `situate` step is a hook like any other: turn `situate` off with `situate = False`, change the prompt wording with
+`prompts/<class_name>/situate.md.j2`, or override the method. Running `situate` costs one generative call per chunk, so
+whether `situate` is on by default is an eval result.
+
+```python
+# documents.py
+class LeaseAgreement(BaseDocument):
+    """A signed lease for one unit."""
+    chunk_size = 4000        # characters
+    chunk_overlap = "15%"    # or a number of characters, such as 400
+    situate = True           # write a situation for each chunk
+```
+
+The built-in `situate` prompt passes the whole document and the chunk to the model:
+
+```jinja
+{# factoid/situate.md.j2, the built-in situate template #}
+<document>
+{{ document.text }}
+</document>
+<chunk>
+{{ chunk.text }}
+</chunk>
+In one or two sentences, say where this chunk sits in the document and what it is about.
+Name the people, organizations, and things it refers to. Answer with the situation only.
 ```
 
 ### Facts and labels
