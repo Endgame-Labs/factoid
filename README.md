@@ -39,22 +39,48 @@ without `uv run` or manual virtual environment activation.
 
 ### Setup
 
-Factoid calls three kinds of models, and each model needs an API key: a choice model (classifying, judging, and
-resolving), a generative model (extracting facts), and an embedding model (search). The commands below use the default
-providers. You can specify other providers in `settings.py`.
+Factoid uses models for three kinds of work:
+
+| Workload | Kind of model | Used for |
+| --- | --- | --- |
+| `choose` | Decision model | Classifying, judging, labeling, linking, and resolving |
+| `generate` | Generative model | Extracting facts and describing chunks |
+| `embed` | Embedding model | Search |
+
+API keys belong to providers, and one provider can serve several workloads. One provider key is enough to start when
+that provider offers all three kinds of model. Fireworks and OpenAI both offer all three. For the `choose` workload,
+Factoid recommends Jev from TypeSafe. Jev is the best decision model and is cheap. Other decision models work too:
+OpenAI's decisions API, Fireworks' Rune, and Cloudflare's Clef.
+
+Run these commands to store keys and verify your setup:
 
 ```sh
-factoid keys set typesafe     # choice model
-factoid keys set fireworks    # generative model
-factoid keys set openai       # embedding model
-factoid doctor                # makes one small call with each key and reports what works
+factoid keys set fireworks    # one provider is enough to start
+factoid keys set typesafe     # optional: Jev, the recommended decision model
+factoid models                # each workload, its model, and whether its key works
+factoid doctor                # makes one small call per workload and reports what works
 ```
 
-Each `keys set` command prompts for the API key and stores the key in your user config directory, outside any project.
-Standard environment variables (`TYPESAFE_API_KEY`, `FIREWORKS_API_KEY`, and `OPENAI_API_KEY`) take precedence when
-those variables are set.
+The `factoid keys set` command prompts for the key and stores that key in `~/.factoid/.env`. Pass `--project` to store
+the key for the current project only. An environment variable with the standard provider name, such as
+`FIREWORKS_API_KEY`, takes precedence when that variable is set.
 
-A terminal UI provides the same steps, walking through each key and running the checks:
+The `factoid models` command shows which model runs each workload. Example output, with both keys set:
+
+```text
+workload   model                              key
+choose     typesafe/jev-1.13.0                ok
+generate   fireworks/glm-5p3-flash            ok
+embed      fireworks/nomic-embed-text-v1.5    ok
+```
+
+Every model name uses the `provider/model` format, so Factoid knows which provider key a workload needs and names the
+missing key when that key is not set. Workload assignments live in the project's `settings.py` file. Edit `settings.py`
+to change a model. Because `settings.py` is Python, a project can compute its model assignments, for example to select
+different models in production.
+
+The same configuration steps are available as a terminal UI. The terminal UI adds providers, checks each key, and lets
+you pick a model for each workload from the providers you have:
 
 ```sh
 factoid setup
@@ -241,7 +267,7 @@ confidence score. Linking proceeds from sure to unsure and stops at the first st
 2. Match a strong identity, such as an email address, a phone number, or a domain.
 3. Match a name belonging to exactly one entity in the same document.
 4. Match a name belonging to exactly one entity in the whole store.
-5. Ask the choice model a yes-or-no question for what is left.
+5. Ask the decision model a yes-or-no question for what is left.
 
 A mention that matches nothing stays on the fact as an unlinked mention. The fact is kept in the store, and a mention
 inside a fact never creates an entity.
@@ -252,7 +278,7 @@ proposes candidate entities. Placeholder names such as "unknown" or "the tenant"
 entity only when that candidate has a strong identity or is named in two or more separate documents.
 
 When a new entity is stored, Factoid runs a claiming step across existing facts. Factoid searches the stored facts for
-the new entity's names and asks the choice model to confirm each hit. Facts that arrived before the entity existed get
+the new entity's names and asks the decision model to confirm each hit. Facts that arrived before the entity existed get
 linked during this claiming step.
 
 Stored entities can also merge as new evidence arrives. Two entities that share a strong identity merge by rule. Two
@@ -263,12 +289,12 @@ Merges and splits are recorded as events in the log, so either event can be undo
 
 Resolve works the same way for every new fact that enters the store. Factoid gathers the stored facts that share one or
 more linked entities with the new fact, and those entity links are what keep that comparison small. For each stored fact
-in that set, Factoid asks the choice model one question with four answers: duplicate, supersedes, contradicts, or
+in that set, Factoid asks the decision model one question with four answers: duplicate, supersedes, contradicts, or
 unrelated. This resolution step is what retires outdated facts, merges duplicates, and flags facts that disagree.
 
 ### Classification
 
-By default, `classify` uses a choice model. A choice model scores a fixed set of options in one pass and returns a
+By default, `classify` uses a decision model. A decision model scores a fixed set of options in one pass and returns a
 probability per option with no generated text. To classify a document, Factoid sends one request containing all
 document classes and their docstrings. Labeling and entity discovery use the same kind of model.
 
@@ -293,7 +319,7 @@ and rejects a candidate at the first failure, so the cheap judge goes first.
 | Judge | Responsibility |
 | --- | --- |
 | `nli` | Small entailment model. Checks that the cited passage entails the sentence. Cheap, so `nli` runs first. |
-| `jev_floors` | Six yes-or-no questions in one choice-model call. Each probability has a floor; all six must pass. |
+| `jev_floors` | Six yes-or-no questions in one decision-model call. Each probability has a floor; all six must pass. |
 
 Each `jev_floors` answer is a probability that must clear the floor for that question:
 
@@ -335,9 +361,9 @@ each prompt in the step's fingerprint.
 
 | Method | Returns | Model kind |
 | --- | --- | --- |
-| `self.choose(prompt, options)` | A probability for each option | Choice model |
-| `self.decide(prompt)` | A probability that the answer is yes | Choice model |
-| `self.score(prompt, rubric)` | A rubric level | Choice model |
+| `self.choose(prompt, options)` | A probability for each option | Decision model |
+| `self.decide(prompt)` | A probability that the answer is yes | Decision model |
+| `self.score(prompt, rubric)` | A rubric level | Decision model |
 | `self.generate(prompt)` | Text | Generative model |
 
 Define models once in `settings.py` with pinned versions. Read secrets from environment variables.
@@ -353,7 +379,7 @@ class Project(FactoidSettings):
     store = S3Store(bucket="acme-facts", key=os.environ["S3_KEY"])
     index = SqliteFts(path="./var/index.db")
     models = {
-        "choice": Model("typesafe/jev-1.13.0"),        # classify, judge, and resolve
+        "choose": Model("typesafe/jev-1.13.0"),        # classify, judge, and resolve
         "generate": Model("fireworks/glm-5p3-flash"),  # extract and repair
         "embed": Model("openai/text-embedding-3-small"),
     }
@@ -361,7 +387,7 @@ class Project(FactoidSettings):
 ```
 
 Eval runs can swap hook strategies from the CLI without modifying project files. `factoid eval --vary
-classify=choice,llm,rules` runs the same documents under each strategy and compares quality, cost, and latency.
+classify=decision,llm,rules` runs the same documents under each strategy and compares quality, cost, and latency.
 
 ## Prompts
 
@@ -429,7 +455,7 @@ class AccountNote(FactoidDocument):
     """A note an account manager wrote about a customer."""
 
 class ServiceSettings(FactoidSettings):
-    models = {"generate": Model("fireworks/glm-5p3-flash"), "choice": Model("typesafe/jev-1.13.0")}
+    models = {"generate": Model("fireworks/glm-5p3-flash"), "choose": Model("typesafe/jev-1.13.0")}
 
 facts = Factoid(settings=ServiceSettings, documents=[AccountNote], entities=[Account])
 facts.ingest_text("Globex upgraded to Enterprise.", document_type=AccountNote)
@@ -454,7 +480,7 @@ recent = globex.facts(since="30d")     # every recent fact linked to Globex
   `mcp`), models, and judges share small base classes that projects can subclass.
 - **Unlinked facts are kept.** A mention that matches no entity stays on the fact as an unlinked mention, and a
   mention in a fact never creates an entity. When a new entity is stored, Factoid searches stored facts for the
-  entity's names and asks the choice model to confirm each hit, linking facts that arrived before the entity existed.
+  entity's names and asks the decision model to confirm each hit, linking facts that arrived before the entity existed.
 - **Fingerprints.** Each fact records a fingerprint of the prompts, questions, floors, and settings that produced the
   fact. When any of those inputs change, facts from the old version are stale, and `factoid rebuild --estimate` prices
   re-deriving those facts. The model is omitted from the fingerprint, so switching models for price does not force a

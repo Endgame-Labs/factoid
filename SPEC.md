@@ -127,12 +127,12 @@ attribute such as `chunk_size = 4000` (tested on Pydantic 2.14), and plain attri
   2. A strong identity.
   3. A name that matches exactly one entity in the same document.
   4. A name that matches exactly one entity in the store.
-  5. A yes-or-no question to the choice model.
+  5. A yes-or-no question to the decision model.
 - A mention in a fact never creates an entity.
 - Entities come from sources that carry records with identifiers, or from a discovery step per document. A discovered
   entity is stored only when it has a strong identity or is named in two or more documents. Placeholder names are
   refused. (The bar of two documents is a guess that needs an eval.)
-- When an entity is stored, it claims stored facts: Factoid searches them for the entity's names, and the choice model
+- When an entity is stored, it claims stored facts: Factoid searches them for the entity's names, and the decision model
   confirms each hit.
 - Entities that share a strong identity merge by rule. Entities that share only a weak identity go to a question with a
   high floor. Merge and split are events, so each can be undone.
@@ -182,7 +182,7 @@ A setting can be a computed property.
 
 ### Classification
 
-**Decided.** Classifiers are fast choice models (Jev-like) by default: a typed question answered in one pass, with a
+**Decided.** Classifiers are fast decision models (Jev-like) by default: a typed question answered in one pass, with a
 probability per option and no generated text.
 
 **Proposed.** A document is typed with one request whose options are the document classes and their docstrings.
@@ -203,7 +203,7 @@ probability per option and no generated text.
 
 ### Resolving
 
-**Proposed.** For each new fact, Factoid gathers the stored facts that share its entities, and asks the choice model
+**Proposed.** For each new fact, Factoid gathers the stored facts that share its entities, and asks the decision model
 one question with four answers: duplicate, supersedes, contradicts, or unrelated.
 
 Neither cerebro nor OpenEndgame detects that a newer fact replaces or contradicts an older one, so this step is new
@@ -215,7 +215,7 @@ work and needs evals before any claim about its quality.
 
 **Proposed.**
 
-- Hooks call models through `choose`, `decide`, and `score` (choice model) and `generate` (generative model). Calls made
+- Hooks call models through `choose`, `decide`, and `score` (decision model) and `generate` (generative model). Calls made
   this way are logged, priced, budgeted, replayed, and fingerprinted.
 - Models are named once in settings and pinned to exact versions.
 - Prompts are Jinja templates. A file at `prompts/<class_name>/<hook>.md.j2` replaces a built-in prompt for one class,
@@ -324,8 +324,9 @@ work and needs evals before any claim about its quality.
   - The global command is a thin launcher. When a project pins its own version of Factoid, the project's version does
     the work.
   - Outside a project, `new`, `keys`, `setup`, and `doctor` work with the user's defaults.
-- Default providers: TypeSafe (Jev) for the choice model, Fireworks for the generative model, and OpenAI for
-  embeddings.
+- Terms: the README says "decision model" (not "choice model"), and the settings key for that workload is `choose`.
+- The README's Setup section follows the workloads and providers model in section 9: one provider key to start, Jev
+  recommended for `choose`, `factoid models` to review, and `factoid setup` as the terminal UI.
 - Commands in use across the docs: `new`, `ingest`, `search`, `read`, `eval`, `rebuild`, `stats`, `serve`, `mcp`,
   `keys`, `doctor`, and `setup`.
 
@@ -376,7 +377,7 @@ All dates are 2026-11-13 unless noted.
 6. Python chosen as the language to design against. Framework names stay out of the docs.
 7. No app layer.
 8. Prompts are Jinja templates.
-9. The framework is mainly for organizing AI code and prompts. Classifiers are Jev-like choice models by default.
+9. The framework is mainly for organizing AI code and prompts. Classifiers are Jev-like decision models by default.
 10. Carbon writes end-user copy.
 11. No slot. A fact links to one or more entities, and the sentence carries the meaning.
 12. Renamed to Factoid: project, repo, and checkout.
@@ -388,3 +389,5 @@ All dates are 2026-11-13 unless noted.
     that finds the project from the current directory. (Proposed, with Kyle's go-ahead to record it.)
 18. `choose` is done by a decision (System One) model. Jev is recommended, and OpenAI's decisions API, Fireworks' Rune,
     and Cloudflare's Clef are supported. Keys are per provider, not per kind of model.
+19. Model assignments live in `settings.py`, so they stay programmable. Only the project id is in `pyproject.toml`.
+    The README's Setup section was rewritten around provider keys and workloads.
