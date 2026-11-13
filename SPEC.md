@@ -254,7 +254,10 @@ work and needs evals before any claim about its quality.
 - Setup is two steps: add a provider key, then review the assignments. Commands: `factoid keys set <provider>`,
   `factoid models`, and `factoid models set <workload> <provider/model>`. `factoid setup` is the same as a terminal UI.
   `factoid doctor` checks assignments as well as keys.
-- Assignments live in the project's `settings.py`, committed, so a team extracts with the same models.
+- Assignments live in the project's `pyproject.toml`, under `[tool.factoid.models]`, next to the project id. The file
+  is committed, so a team extracts with the same models. It is data, so `factoid models set` can edit it without
+  touching code, and other tools can read it without importing the project. (Kyle asked why not the pyproject file.
+  The earlier idea was `settings.py`.)
 - A provider can be keyless: a local runtime, or a gateway that injects credentials.
 
 **Open.** Whether the four decision models share a request shape. Jev takes a JSON state plus named questions of type
