@@ -231,6 +231,35 @@ work and needs evals before any claim about its quality.
 - The pieces an author writes (definition, guidance, examples, and rubric) may live on the class, with a type that
   outgrows one file getting its own folder.
 
+### Workloads, providers, and keys
+
+**Decided.**
+
+- The `choose` workload (classifying, judging, labeling, linking, and resolving) is done by a decision model, also
+  called a System One model. A generative model does not stand in for it.
+- Jev (TypeSafe) is the recommended decision model: it is the best and it is cheap. Other providers have one too, and
+  Factoid supports them: OpenAI's decisions API, Fireworks' Rune, and Cloudflare's Clef.
+- Keys belong to providers, and a provider can serve several kinds of model. The README must not pair one key with one
+  kind of model.
+
+**Proposed.**
+
+- Workloads: `choose`, `generate`, `embed`, and `rerank`. A hook can pin its own model.
+- An assignment maps a workload to a model, written `provider/model`. The provider in the name says which key the
+  assignment needs, and a missing key is reported by name.
+- One provider key is enough to start when that provider has a decision model, a generative model, and an embedding
+  model. Adding TypeSafe moves `choose` to Jev.
+- Factoid ships a catalog: for each provider, the recommended model per workload, with quality, cost, and latency from
+  the shipped evals.
+- Setup is two steps: add a provider key, then review the assignments. Commands: `factoid keys set <provider>`,
+  `factoid models`, and `factoid models set <workload> <provider/model>`. `factoid setup` is the same as a terminal UI.
+  `factoid doctor` checks assignments as well as keys.
+- Assignments live in the project's `settings.py`, committed, so a team extracts with the same models.
+- A provider can be keyless: a local runtime, or a gateway that injects credentials.
+
+**Open.** Whether the four decision models share a request shape. Jev takes a JSON state plus named questions of type
+`noul`, `choice`, or `score`, each with instructions and criteria. The other three have not been checked.
+
 ## 10. History and fingerprints
 
 **Proposed** (Kyle has seen the trade-offs and has not confirmed).
@@ -351,3 +380,5 @@ All dates are 2026-11-13 unless noted.
 16. `AGENTS.md` added, with per-developer preferences in a git-ignored `AGENTS.md.local`.
 17. Keys and config: user keys in `~/.factoid/.env`, per-project keys by project id, and the `factoid` launcher
     that finds the project from the current directory. (Proposed, with Kyle's go-ahead to record it.)
+18. `choose` is done by a decision (System One) model. Jev is recommended, and OpenAI's decisions API, Fireworks' Rune,
+    and Cloudflare's Clef are supported. Keys are per provider, not per kind of model.
