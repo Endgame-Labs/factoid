@@ -17,21 +17,61 @@ bm25, and hybrid-reranked search.
 
 ## Quickstart
 
-Install Factoid with `uv` on Python 3.13+. `factoid new` scaffolds `acme` with sample classes and evals.
+### Install
+
+Factoid requires Python 3.13 or newer. You can install the `factoid` CLI in two ways.
+
+Install with `uv`:
 
 ```sh
 uv tool install factoid
-factoid new acme
-cd acme
-factoid ingest ./sample_docs
-factoid search "Unit 4B heater"
-factoid read fact_01j9x8k2m
-factoid eval
-factoid eval --vary judge=none,nli,jev_floors
 ```
 
-`uv tool install` puts `factoid` on your `PATH`. Inside a project directory, `factoid` runs in that project's
-environment without `uv run` or manual activation.
+Or run the install script, which installs `uv` if `uv` is missing and then installs Factoid:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Endgame-Labs/factoid/main/install.sh | bash
+```
+
+Both methods put `factoid` on your `PATH`. Inside a project directory, `factoid` runs in that project's environment
+without `uv run` or manual virtual environment activation.
+
+### Setup
+
+Factoid calls three kinds of models, and each model needs an API key: a choice model (classifying, judging, and
+resolving), a generative model (extracting facts), and an embedding model (search). The commands below use the default
+providers. You can specify other providers in `settings.py`.
+
+```sh
+factoid keys set typesafe     # choice model
+factoid keys set fireworks    # generative model
+factoid keys set openai       # embedding model
+factoid doctor                # makes one small call with each key and reports what works
+```
+
+Each `keys set` command prompts for the API key and stores the key in your user config directory, outside any project.
+Standard environment variables (`TYPESAFE_API_KEY`, `FIREWORKS_API_KEY`, and `OPENAI_API_KEY`) take precedence when
+those variables are set.
+
+A terminal UI provides the same steps, walking through each key and running the checks:
+
+```sh
+factoid setup
+```
+
+### Use
+
+`factoid new` creates a project directory named `acme` with sample classes, sample documents, and an eval.
+
+```sh
+factoid new acme
+cd acme
+factoid ingest ./sample_docs                     # documents in, facts and entities out
+factoid search "Unit 4B heater"
+factoid read fact_01j9x8k2m                      # one fact, its quotes, its entities, and its history
+factoid eval                                     # score the run against labeled data
+factoid eval --vary judge=none,nli,jev_floors    # compare judge chains on the same documents
+```
 
 ## Documents, facts, and entities
 
