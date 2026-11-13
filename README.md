@@ -59,9 +59,9 @@ The three base classes expose hooks for each stage of the pipeline:
 
 | Class | Hooks | Responsibility |
 | --- | --- | --- |
-| `BaseDocument` | `classify`, `segment`, `chunk`, `situate`, `extract`, and `discover` | Match a document to this type, split it into passages, group passages into chunks, describe each chunk, extract candidate facts, and propose entities. |
-| `BaseFact` | `judge`, `repair`, `label`, `link`, and `resolve` | Check quality, rewrite a near miss, apply labels, link to entities, and compare against stored facts. |
-| `BaseEntity` | `identify`, `claim`, and `merge` | Match a mention to an entity of this type, claim stored facts, and decide whether two entities are the same. |
+| `FactoidDocument` | `classify`, `segment`, `chunk`, `situate`, `extract`, and `discover` | Match a document to this type, split it into passages, group passages into chunks, describe each chunk, extract candidate facts, and propose entities. |
+| `FactoidFact` | `judge`, `repair`, `label`, `link`, and `resolve` | Check quality, rewrite a near miss, apply labels, link to entities, and compare against stored facts. |
+| `FactoidEntity` | `identify`, `claim`, and `merge` | Match a mention to an entity of this type, claim stored facts, and decide whether two entities are the same. |
 
 Every class supports three levels of customization:
 
@@ -73,9 +73,9 @@ Here `TenantEmail` summarizes a quoted email thread first, then passes that summ
 
 ```python
 # documents.py
-from factoid import BaseDocument
+from factoid import FactoidDocument
 
-class TenantEmail(BaseDocument):
+class TenantEmail(FactoidDocument):
     """An email from a tenant to the leasing office."""
 
     def extract(self, passages):
@@ -113,7 +113,7 @@ whether `situate` is on by default is an eval result.
 
 ```python
 # documents.py
-class LeaseAgreement(BaseDocument):
+class LeaseAgreement(FactoidDocument):
     """A signed lease for one unit."""
     chunk_size = 4000        # characters
     chunk_overlap = "15%"    # or a number of characters, such as 400
@@ -139,33 +139,33 @@ Name the people, organizations, and things it refers to. Answer with the situati
 A fact is one self-contained sentence, exact source quotes (with who said each quote and when), links to one or more
 entities, and zero or more labels. The sentence carries the meaning.
 
-A label is a small `BaseLabel` subclass with a docstring. The docstring is the definition the model reads. The tagger
+A label is a small `FactoidLabel` subclass with a docstring. The docstring is the definition the model reads. The tagger
 asks one yes-or-no question per label. A fact can carry several labels, and a fact that matches no label is kept.
 
-A `BaseFact` subclass is optional, and many projects need none. A `BaseFact` subclass exists for behavior only: a custom
+A `FactoidFact` subclass is optional, and many projects need none. A `FactoidFact` subclass exists for behavior only: a custom
 definition, extraction guidance, shared labels, or custom judges.
 
 ```python
 # facts.py
-from factoid import BaseFact, BaseLabel
+from factoid import FactoidFact, FactoidLabel
 
-class RepairIssue(BaseLabel):
+class RepairIssue(FactoidLabel):
     """A problem with a unit or its equipment that someone reported."""
 
-class Commitment(BaseLabel):
+class Commitment(FactoidLabel):
     """Something a person agreed to do, with or without a date."""
 
-class Cost(BaseLabel):
+class Cost(FactoidLabel):
     """An amount of money that someone quoted, charged, or paid."""
 
-class AcmeBaseFact(BaseFact):
+class AcmeBaseFact(FactoidFact):
     """Shared defaults for this project's facts."""
     labels = [RepairIssue, Commitment, Cost]
 ```
 
 ### Entities
 
-`BaseEntity` is a first-class base class in a Factoid project. Each `BaseEntity` subclass declares one kind of thing
+`FactoidEntity` is a first-class base class in a Factoid project. Each `FactoidEntity` subclass declares one kind of thing
 that facts are about and defines how an entity of that kind is identified. The class docstring describes that kind in
 plain language, and `identities` maps each identifier key to `"strong"` or `"weak"`. A subclass can also define a
 `normalize` method so variant mentions reduce to one canonical string before matching.
@@ -173,9 +173,9 @@ plain language, and `identities` maps each identifier key to `"strong"` or `"wea
 ```python
 # entities.py
 import re
-from factoid import BaseEntity
+from factoid import FactoidEntity
 
-class Unit(BaseEntity):
+class Unit(FactoidEntity):
     """One rentable apartment in a building."""
     identities = {"unit_number": "strong"}
 
@@ -184,11 +184,11 @@ class Unit(BaseEntity):
         # "Apt 4B", "#4b", and "unit 4-B" name the same unit.
         return re.sub(r"(apt|unit|[^0-9a-z])", "", mention.lower())
 
-class Person(BaseEntity):
+class Person(FactoidEntity):
     """A tenant, a staff member, or a contractor."""
     identities = {"email": "strong", "phone": "strong", "name": "weak"}
 
-class Vendor(BaseEntity):
+class Vendor(FactoidEntity):
     """A company that does work on the property."""
     identities = {"domain": "strong", "name": "weak"}
 ```
@@ -232,7 +232,7 @@ probability per option with no generated text. To classify a document, Factoid s
 document classes and their docstrings. Labeling and entity discovery use the same kind of model.
 
 ```python
-class PlumberInvoice(BaseDocument):
+class PlumberInvoice(FactoidDocument):
     """An invoice from a plumber for work done on a unit."""
     classify_threshold = 0.8          # default threshold comes from calibration
 
@@ -269,11 +269,11 @@ custom judge without replacing the default chain:
 
 ```python
 # facts.py
-from factoid import BaseFact
+from factoid import FactoidFact
 from factoid.judges import JevFloors, Nli
 from acme.judges import FirstHandJudge
 
-class AcmeBaseFact(BaseFact):
+class AcmeBaseFact(FactoidFact):
     """Shared defaults for this project's facts."""
     labels = [RepairIssue, Commitment, Cost]
     judges = [Nli, JevFloors(useful=0.8)]             # the default chain, with one floor raised
@@ -283,7 +283,7 @@ class RepairReport(AcmeBaseFact):
     judges = [*AcmeBaseFact.judges, FirstHandJudge]  # the chain, then a judge of our own
 ```
 
-`RepairReport` is a `BaseFact` subclass that exists only to carry an extra judge.
+`RepairReport` is a `FactoidFact` subclass that exists only to carry an extra judge.
 
 `factoid eval --vary judge=none,nli,jev_floors` compares chains on the same documents.
 
@@ -304,11 +304,11 @@ Define models once in `settings.py` with pinned versions. Read secrets from envi
 ```python
 # settings.py
 import os
-from factoid import BaseSettings, Model, Search
+from factoid import FactoidSettings, Model, Search
 from factoid.indexes import SqliteFts
 from factoid.stores import S3Store
 
-class Project(BaseSettings):
+class Project(FactoidSettings):
     store = S3Store(bucket="acme-facts", key=os.environ["S3_KEY"])
     index = SqliteFts(path="./var/index.db")
     models = {
@@ -378,16 +378,16 @@ of each.
   application and pass classes to `Factoid(...)`:
 
 ```python
-from factoid import BaseDocument, BaseEntity, BaseSettings, Factoid, Model
+from factoid import Factoid, FactoidDocument, FactoidEntity, FactoidSettings, Model
 
-class Account(BaseEntity):
+class Account(FactoidEntity):
     """A customer company."""
     identities = {"domain": "strong", "name": "weak"}
 
-class AccountNote(BaseDocument):
+class AccountNote(FactoidDocument):
     """A note an account manager wrote about a customer."""
 
-class ServiceSettings(BaseSettings):
+class ServiceSettings(FactoidSettings):
     models = {"generate": Model("fireworks/glm-5p3-flash"), "choice": Model("typesafe/jev-1.13.0")}
 
 facts = Factoid(settings=ServiceSettings, documents=[AccountNote], entities=[Account])

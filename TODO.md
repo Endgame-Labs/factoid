@@ -16,3 +16,6 @@ Questions to settle:
 - If the store is files, how do secondary lookups work, such as getting all facts for a given entity?
 - Which embedding model runs locally, and which runs in production?
 - What does a new user have to install before `factoid ingest` works?
+- Pydantic as a dependency: use it underneath (model output, stored records, and validating class settings at
+  import), and keep the classes users write as plain classes. Tested against Pydantic 2.14: a `BaseModel` subclass
+  rejects plain attributes such as `chunk_size = 4000`.
