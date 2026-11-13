@@ -71,7 +71,7 @@ The `factoid models` command shows which model runs each workload. Example outpu
 workload   model                              key
 choose     typesafe/jev-1.13.0                ok
 generate   fireworks/glm-5p3-flash            ok
-embed      fireworks/nomic-embed-text-v1.5    ok
+embed      fireworks/qwen3-embedding-8b       ok
 ```
 
 Every model name uses the `provider/model` format, so Factoid knows which provider key a workload needs and names the
