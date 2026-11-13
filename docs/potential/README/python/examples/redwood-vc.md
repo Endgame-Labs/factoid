@@ -1,211 +1,192 @@
-# Factorial 🧮
+# Example: redwood_vc
 
-> **Status: Design draft.** Nothing is built yet. We update the docs first to settle the design before writing code.
-
-Factorial turns documents into facts: short, self-contained sentences, each tied to an exact source quote, who said it,
-and when. As new documents arrive, Factorial updates its set of facts. It retires outdated facts, merges duplicate
-facts, and flags facts that disagree. People and agents can access these facts through a CLI, an HTTP API, and MCP.
+`redwood_vc` extracts financial metrics and corporate governance facts from deal data rooms during startup diligence.
 
 ## Fifteen minutes
 
-Install Factorial with `uv` on Python 3.13+. Below, we create `redwood_vc`, a startup diligence project covering
-financial reports and legal records for companies such as Orbital Inc.
+Install Factorial with `uv` on Python 3.13+. Inside the project directory, `factorial` uses the project environment.
 
-```bash
+```sh
 uv tool install factorial
-factorial new redwood_vc && cd redwood_vc
-factorial generate document PitchDeck AuditedStatement BoardMinutes
-factorial generate fact AnnualRevenue CashRunway IncorporationState
-factorial ingest ./dataroom
-factorial search "Orbital revenue and runway"
-factorial read fact_01j8x9q2
+factorial new redwood_vc
+cd redwood_vc
+factorial ingest ./data_room
+factorial search "Orbital revenue"
+factorial read fact_01j9z4m8p
 factorial eval
-factorial eval --vary judge=none,nli,jev_floors
+factorial eval --vary judge=none,nli,policy_judge
 ```
 
-`uv tool install` puts one `factorial` command on your path. Inside a project, that command finds the project's own
-environment and runs there, so you never type `uv run` or activate anything.
-
-## Project layout
-
-A project is one flat Python package with five conventional modules and an `evals/` folder. Subclassing a Factorial base
-class declares a component with no registration step and no app list. Names like `redwood_vc`, `PitchDeck`,
-`AnnualRevenue`, and `PolicyJudge` are your own classes.
+## Layout
 
 ```text
 redwood_vc/
 ├── pyproject.toml
 ├── redwood_vc/
-│   ├── __init__.py
-│   ├── settings.py    # Pinned models, storage, index, search, and judge chain
-│   ├── sources.py     # Input connectors (folder, jsonl, imap, and mcp)
-│   ├── documents.py   # Document types, segmentation, and extraction
-│   ├── facts.py       # Fact types, typed slots, and supersede rules
-│   └── judges.py      # Custom verification judges
+│   ├── settings.py    # storage, indexes, pinned models, and search
+│   ├── sources.py     # deal data room folder source
+│   ├── documents.py   # PitchDeck, AuditedStatement, and BoardMinutes
+│   ├── facts.py       # AnnualRevenue, CashRunway, and IncorporationState
+│   └── judges.py      # PolicyJudge for diligence rules
 ├── prompts/
-│   └── pitch_deck/
-│       └── extract.md.j2
-└── evals/
-    └── diligence.jsonl
+│   ├── pitch_deck/
+│   │   ├── extract.md.j2         # deck extraction rules
+│   │   └── slide_context.md.j2   # slide units and footnote summary
+│   └── policy_judge/
+│       └── judge.md.j2           # diligence evidence check
+└── evals/orbital_diligence.jsonl
 ```
 
-## Defining a project
+## Documents
 
-Every source, document type, fact type, judge, and setting is a Python class. Base classes provide eval-tested defaults,
-class attributes set options, and real imports connect classes. Any constant attribute can become a `@property` or an
-overridden method when behavior depends on runtime data.
+Each document class defines its type in the docstring, lists its fact classes, and overrides hooks when needed.
 
-**`redwood_vc/sources.py`**
 ```python
-from factorial import Classifier, FolderSource
-
-class DataRoom(FolderSource):
-    path = "./dataroom"
-    classifier = Classifier.llm  # Built-ins: declared, rules, systemone, and llm
-```
-
-**`redwood_vc/documents.py`**
-```python
-from factorial import Document, Extractor, Segmenter
-
-class AuditedStatement(Document):
-    segmenter = Segmenter.rows        # Built-ins: auto, turns, email, paragraphs, and rows
-    extractor = Extractor.staged      # Built-ins: passages and staged
-
-class BoardMinutes(Document):
-    segmenter = Segmenter.turns
+# documents.py
+from factorial import Document
+from redwood_vc.facts import AnnualRevenue, CashRunway, IncorporationState
 
 class PitchDeck(Document):
-    segmenter = Segmenter.paragraphs
+    """A founder presentation covering product, traction, financials, and fundraising terms."""
+    facts = [AnnualRevenue, CashRunway, IncorporationState]
 
-    @property
-    def extractor(self) -> Extractor:
-        return Extractor.staged if len(self.text) > 20_000 else Extractor.passages
+    def extract(self, passages):
+        # Summarize chart units and slide footnotes before extracting candidate facts.
+        slide_context = self.generate("slide_context.md.j2", passages=passages)
+        return super().extract(passages, slide_context=slide_context)
+
+class AuditedStatement(Document):
+    """An independent auditor's report and financial statements for a completed fiscal period."""
+    facts = [AnnualRevenue, CashRunway]
+    classify_threshold = 0.85
+
+    def classify_view(self) -> str:
+        # Read the cover page, auditor opinion, and signature block.
+        return self.head(500) + self.tail(300)
+
+class BoardMinutes(Document):
+    """Approved minutes from a meeting of a company's board of directors."""
+    facts = [AnnualRevenue, CashRunway, IncorporationState]
 ```
 
-**`redwood_vc/facts.py`**
+## Facts
 
-A `Fact` pairs a sentence with an optional typed slot `(entity, field, value)`. On write at ingest, Factorial
-deduplicates matching facts, supersedes older slot values for the same entity and field, and flags conflicting claims.
+Each fact class defines one claim type and its typed slot. `AnnualRevenue` rejects negative amounts in Python code.
+
 ```python
-from typing import Self
-from factorial import Fact
-from redwood_vc.documents import AuditedStatement, PitchDeck
+# facts.py
+from factorial import Entity, Fact
 
 class AnnualRevenue(Fact):
-    arr_usd: int  # Slot example: ("Orbital Inc.", "arr_usd", 3900000)
+    """Recognized annual recurring revenue in US dollars for a completed reporting period."""
+    company: Entity
+    arr_usd: int
 
-    def supersedes(self, prior: Self) -> bool:
-        if isinstance(prior.document, AuditedStatement) and isinstance(self.document, PitchDeck):
-            return False
-        return super().supersedes(prior)
+    def validate(self) -> bool:
+        return self.arr_usd >= 0
 
 class CashRunway(Fact):
-    runway_months: int  # Slot example: ("Orbital Inc.", "runway_months", 14)
+    """Months of operating cash remaining at the company's current burn rate."""
+    company: Entity
+    runway_months: int
 
 class IncorporationState(Fact):
-    incorporation_state: str  # Slot example: ("Orbital Inc.", "incorporation_state", "Delaware")
+    """The US state or jurisdiction where the company is legally incorporated."""
+    company: Entity
+    incorporation_state: str
 ```
 
-**`redwood_vc/judges.py` and `redwood_vc/settings.py`**
+## Sources and judges
 
-A judge chain runs in order and rejects at the first failure, so cheap checks run first. Models are named once with
-pinned snapshots, and secrets come from environment variables.
-```python
-from factorial import LLMJudge
-
-class PolicyJudge(LLMJudge):
-    template = "judges/policy.md.j2"   # prompts/judges/policy.md.j2
-```
+`DataRoom` watches exported files, and `PolicyJudge` calls the choice model to reject unbacked or speculative claims.
 
 ```python
-import os
-from factorial import JevFloorsJudge, Model, NLIJudge, Retriever, S3Store, Settings, SQLiteFTS
-from redwood_vc.judges import PolicyJudge
+# sources.py
+from factorial.sources import FolderSource
 
-class DiligenceSettings(Settings):
-    extract_model = Model("claude-3-5-haiku-20241022", api_key=os.environ["ANTHROPIC_API_KEY"])
-    judge_model = Model("claude-3-7-sonnet-20250219", api_key=os.environ["ANTHROPIC_API_KEY"])
-    store = S3Store(bucket="redwood-vc-facts")
-    index = SQLiteFTS(path="./var/facts.db")  # Built-ins: sqlite-fts, pgvectorscale, and turbopuffer
-    judges = [NLIJudge, JevFloorsJudge, PolicyJudge]
-    retrieve = Retriever.hybrid_rrf           # Built-ins: bm25, vector, and hybrid-rrf
-    rerank = True
-    budget_tokens = 4_000
+class DataRoom(FolderSource):
+    """PDFs, decks, and board packets exported from the deal data room."""
+    path = "./data_room"
 ```
 
-## Core ideas
+```python
+# judges.py
+from factorial import Judge
 
-- **Facts are what a reader reads.** On dialogue benchmarks, returning self-contained facts beat chunk retrieval at
-  about one-seventh of the read tokens (see [docs/prior-art.md](../../../../prior-art.md)).
-- **Models never write evidence.** The extractor cites numbered passages, and Factorial's code attaches the exact quote,
-  speaker, and timestamp.
-- **History is the truth.** Ingest writes to an append-only event log (`added`, `superseded`, `contradicted`,
-  `retracted`, and `restored`). Current state and search indexes are views rebuilt from that log.
-- **Algorithm choices are made by evals.** Every pipeline stage (`classify`, `segment`, `extract`, `judge`, `repair`,
-  `resolve`, and `tag`) is scored by `factorial eval` against labeled data with cost and latency numbers. Built-in
-  defaults are eval results.
+class PolicyJudge(Judge):
+    """Reject unquoted numbers and speculative promises."""
 
-## Pluggable seams and eval overrides
-
-Storage (local folder or S3-compatible bucket), sources (`folder`, `jsonl`, `imap`, and `mcp`), models, and judges
-(`nli`, `jev-floors`, and `llm`) are base classes with small method contracts. Subclass those base classes in your
-project or distribute extensions as standard Python packages.
-
-When you run `factorial eval --vary judge=none,nli,jev_floors` (or `--vary resolve=hash,slot,vector-judge`), the eval
-runner constructs an in-memory subclass of your settings or document classes for each trial and overrides the target
-attribute on that subclass. Your source files on disk never change.
+    def judge(self, fact) -> bool:
+        return self.decide("judge.md.j2", fact=fact) >= 0.85
+```
 
 ## Prompts
 
-Prompts are Jinja templates. Every step that calls a model has a built-in template, and Factorial fills it with the
-document, its numbered passages, and the fact types that the document class lists:
+Templates in `prompts/` back custom model calls or extend Factorial's built-in hook prompts for a specific class.
 
 ```jinja
-{# factorial/extract.md.j2, the built-in extract template #}
-Extract facts from this {{ document.type }}, dated {{ document.at }}.
-
-{% block guidance %}{% endblock %}
-
-Fact types:
-{% for fact_type in fact_types %}
-- {{ fact_type.name }}: {{ fact_type.description }}
-{% endfor %}
-
-Passages:
+{# prompts/pitch_deck/slide_context.md.j2 #}
+List currency units, reporting periods, and footnote qualifiers across these slides:
 {% for passage in passages %}
-[{{ passage.n }}] {{ passage.speaker }}: {{ passage.text }}
+[{{ passage.n }}] {{ passage.text }}
 {% endfor %}
-
-Cite passages by number. Do not copy quote text.
 ```
-
-A file in your project's `prompts/` folder takes the place of a built-in template. `prompts/extract.md.j2` applies to
-every document type, and `prompts/pitch_deck/extract.md.j2` applies to `PitchDeck` only. A project template can extend
-the built-in template and change one block, the same way a class overrides one method:
 
 ```jinja
 {# prompts/pitch_deck/extract.md.j2 #}
 {% extends "factorial/extract.md.j2" %}
-
 {% block guidance %}
-Extract only figures stated as actuals. Skip projections.
+Slide units and footnotes: {{ slide_context }}
+Expand unit shorthand such as "$3.9M" when the slide states the unit. Skip pipeline targets and multi-year forecasts.
 {% endblock %}
 ```
 
-A class can add template variables by overriding `prompt_context()`. `factorial prompts copy extract` writes the
-built-in template into `prompts/` as a starting point. A template's text is part of its step's fingerprint, so changing
-a prompt marks the facts it produced as stale.
+```jinja
+{# prompts/policy_judge/judge.md.j2 #}
+Candidate fact: {{ fact }}
+Answer yes only when every number appears in the cited passage and describes a completed period, with no forecast
+verbs, pipeline targets, or speculative promises.
+```
 
-## Why this approach
+## Settings
 
-Plain Python classes give projects IDE autocomplete, static type checking, real imports, and standard debugging without
-a custom configuration language. Common declarations stay one-line class attributes, while custom domain rules live on
-the same class as a `@property` or method override. The cost is that loading a project executes Python code, so external
-tools cannot inspect or edit declarations as static data. Every person who edits project rules also has to read and
-write Python.
+Storage, search indexes, and pinned model versions live in `settings.py`.
 
-## Further reading
+```python
+# settings.py
+import os
+from factorial import Model, Search, Settings
+from factorial.indexes import SqliteFts
+from factorial.stores import S3Store
 
-Start with [docs/mental-model.md](../../../../mental-model.md), and then read [docs/README.md](../../../../README.md). Note that
-[docs/config.md](../../../../config.md) and [docs/plugins.md](../../../../plugins.md) still describe the older single-YAML design.
+class Project(Settings):
+    store = S3Store(bucket="redwood-diligence", key=os.environ["S3_KEY"])
+    index = SqliteFts(path="./var/index.db")
+    models = {
+        "choice": Model("typesafe/jev-1.13.0"),
+        "generate": Model("fireworks/glm-5p3-flash"),
+        "embed": Model("openai/text-embedding-3-small"),
+    }
+    search = Search(retrieve="hybrid-rrf", budget_tokens=1500)
+```
+
+## What happens as documents arrive
+
+Three files for Orbital Inc. arrive in `./data_room` in order:
+
+1. **Q3 board minutes (`2026-10-15`, `BoardMinutes`).** The minutes state that Orbital Inc. is incorporated in
+   Delaware, closed Q3 at $3,100,000 in ARR, and holds 18 months of runway. Factorial logs `added` events for
+   `("Orbital Inc.", "incorporation_state", "Delaware")`, `("Orbital Inc.", "arr_usd", 3100000)`, and
+   `("Orbital Inc.", "runway_months", 18)`.
+2. **Series A pitch deck (`2027-01-12`, `PitchDeck`).** Slides report Delaware incorporation, Q4 ARR of $3,900,000, 14
+   months of runway, and a projected $9,000,000 ARR next year. `PolicyJudge` drops the $9,000,000 projection.
+   `IncorporationState` matches the stored `"Delaware"` fact and merges as a duplicate with a second quote. The Q4
+   facts `("Orbital Inc.", "arr_usd", 3900000)` and `("Orbital Inc.", "runway_months", 14)` supersede the Q3 figures.
+3. **FY2026 audit (`2027-02-08`, `AuditedStatement`).** The auditor reports 14 months of runway and $3,450,000 in Q4
+   ARR. The 14-month `CashRunway` merges as a duplicate. `("Orbital Inc.", "arr_usd", 3450000)` disagrees with the
+   deck's $3,900,000 Q4 figure, so `resolve` flags both Q4 revenue facts as `contradicted`.
+
+After ingestion, `CashRunway.current(company="Orbital Inc.").runway_months` returns `14`, and
+`factorial search "Orbital revenue"` returns both Q4 revenue sentences, their quotes, and the contradiction flag.
+
+The design is described in [the Python README](../README.md).

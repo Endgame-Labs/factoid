@@ -1,206 +1,197 @@
-# Factorial 🧮
+# Example: beacon_auto
 
-> **Status: Design draft.** Nothing is built yet. These documents are updated before any code is written.
-
-Factorial turns documents into short, self-contained sentences called facts. Every fact carries an exact source quote,
-who said it, and when.
-
-As new documents arrive, Factorial updates its set of facts. It retires outdated facts, merges duplicate facts, and
-flags facts that disagree. People and agents can access these facts through a CLI, an HTTP API, and MCP.
-
-## Core ideas
-
-- **Facts are what a reader reads.** Queries return atomic sentences with provenance. On dialogue benchmarks, reading
-  facts beat chunk retrieval at about a seventh of the read tokens (see [docs/prior-art.md](../../../../prior-art.md)).
-- **Models never write evidence.** The extractor cites numbered source passages, and deterministic code attaches the
-  exact quote, speaker, and timestamp.
-- **History is the truth.** Deduplication, superseding, and contradiction run at ingest and append to an event log
-  (`added`, `superseded`, `contradicted`, `retracted`, and `restored`). Current state and search indexes are views
-  rebuilt from that log.
-- **Algorithm choices are made by evals.** `factorial eval` scores a setup against labeled data and reports accuracy,
-  cost, and latency. Built-in defaults are recorded eval winners.
+`beacon_auto` turns auto insurance incident files and policy records into cited facts for adjusters and backend code.
 
 ## Fifteen minutes
 
-Factorial requires Python 3.13+ and `uv`. Below is an auto insurance project named `beacon_auto` with user-defined
-classes for incident files and policy documents:
+Install Factorial with `uv` on Python 3.13+, create `beacon_auto`, and ingest a folder of sample incident files.
 
-```bash
+```sh
 uv tool install factorial
-factorial new beacon_auto && cd beacon_auto
-factorial generate document DriverStatement PoliceReport ShopEstimate
-factorial generate fact TrafficLightColor RepairEstimate CollisionDeductible
-
-factorial ingest ./sample_files
-factorial search "case 8841 northbound light"
-factorial read fact_01j9x2k
+factorial new beacon_auto
+cd beacon_auto
+factorial ingest ./sample_docs
+factorial search "case_8841 northbound light"
+factorial read fact_01j9z4m8q
 factorial eval
-factorial eval --vary judge=none,nli,jev_floors
+factorial eval --vary judge=none,nli,firsthand
 ```
 
-`uv tool install` puts one `factorial` command on your path. Inside a project, that command finds the project's own
-environment and runs there, so you never type `uv run` or activate anything.
+## Layout
 
-## Project layout
-
-A project is one flat Python package. Factorial imports these modules by convention, and subclassing a base class
-registers your definition:
+Incident files and policy exports share one flat package of sources, documents, facts, and judges.
 
 ```text
 beacon_auto/
-  pyproject.toml
-  beacon_auto/
-    settings.py     # storage, indexes, search,judge chain, and pinned models
-    sources.py      # where documents come from (folder, jsonl, imap, mcp)
-    documents.py    # document classes: segmentation and extraction
-    facts.py        # fact classes: typed slots and resolution rules
-    judges.py       # custom verification passes
-  prompts/
-    driver_statement/
-      extract.md.j2   # Jinja template for DriverStatement extraction
-  evals/
-    incidents.jsonl # labeled documents and expected facts
+├── pyproject.toml
+├── beacon_auto/
+│   ├── settings.py    # storage, index, pinned models, and search budget
+│   ├── sources.py     # adjuster mail inbox and policy export folder
+│   ├── documents.py   # DriverStatement, PoliceReport, and ShopEstimate
+│   ├── facts.py       # TrafficLightColor, RepairEstimate, and CollisionDeductible
+│   └── judges.py      # Firsthand judge for witness and inspection facts
+├── prompts/
+│   ├── police_report/
+│   │   └── vehicles.md.j2         # maps report unit numbers to travel directions
+│   ├── shop_estimate/
+│   │   ├── stage.md.j2            # picks initial quote or teardown supplement
+│   │   └── extract.md.j2          # pulls net repair totals and deductibles
+│   ├── repair_estimate/
+│   │   └── resolve.md.j2          # compares early quotes with supplements
+│   └── firsthand/
+│       └── judge.md.j2            # rejects hearsay and uninspected guesses
+└── evals/incidents_and_policies.jsonl
 ```
 
-## Defining a project
+## Documents
 
-Classes inherit sensible defaults from Factorial base classes, configure options with plain attributes, and reference
-each other with standard Python imports. Any attribute can be replaced by a `@property` or an overridden method.
-
-```python
-# beacon_auto/facts.py
-from typing import Literal
-from factorial import Fact
-
-
-class TrafficLightColor(Fact):
-    """Example slot: ("case_8841", "northbound_light", "red")"""
-    case_id: str
-    direction: str
-    color: Literal["red", "yellow", "green"]
-
-
-class CollisionDeductible(Fact):
-    """Example slot: ("policy_992", "deductible_usd", 500)"""
-    policy_id: str
-    field: Literal["deductible_usd"] = "deductible_usd"
-    amount_usd: int
-
-
-class RepairEstimate(Fact):
-    """Example slot: ("case_8841", "repair_cost_usd", 4100)"""
-    case_id: str
-    field: Literal["repair_cost_usd"] = "repair_cost_usd"
-    amount_usd: int
-
-    def supersedes(self, prior: "RepairEstimate") -> bool:
-        if self.document.is_teardown and not prior.document.is_teardown:
-            return True
-        return super().supersedes(prior)
-```
+Each document class holds its docstring definition, the fact types that document yields, and any custom hook code.
 
 ```python
-# beacon_auto/documents.py
-from factorial import Document, extract, segment
+# documents.py
+from factorial import Document
 from beacon_auto.facts import CollisionDeductible, RepairEstimate, TrafficLightColor
 
-
 class DriverStatement(Document):
-    segmenter = segment.Turns()
-    fact_types = [TrafficLightColor]
-
-    @property
-    def extractor(self) -> extract.Extractor:
-        if self.token_count > 6_000:
-            return extract.Staged()
-        return extract.Passages()
-
+    """A signed or emailed statement from a driver involved in a collision."""
+    facts = [TrafficLightColor, CollisionDeductible]
 
 class PoliceReport(Document):
-    segmenter = segment.Paragraphs()
-    fact_types = [TrafficLightColor]
+    """An investigating officer's collision report with narrative, diagram notes, and citations."""
+    facts = [TrafficLightColor]
 
+    def extract(self, passages):
+        vehicles = self.generate("vehicles.md.j2", passages=passages)
+        return super().extract(passages, vehicles=vehicles)
 
 class ShopEstimate(Document):
-    is_teardown: bool = False
-    fact_types = [RepairEstimate, CollisionDeductible]
+    """A repair estimate or tear-down supplement from an auto body shop."""
+    facts = [RepairEstimate, CollisionDeductible]
+    classify_threshold = 0.85
+
+    def classify_view(self) -> str:
+        return self.head(500) + self.tail(500)
+
+    def extract(self, passages):
+        probs = self.choose("stage.md.j2", options=["initial", "teardown"], passages=passages)
+        return super().extract(passages, stage=max(probs, key=probs.get))
+```
+
+## Facts
+
+Typed attributes define each fact's slot. `CollisionDeductible` uses `validate` to reject invalid deductible amounts.
+
+```python
+# facts.py
+from typing import Literal
+from factorial import Entity, Fact
+
+class TrafficLightColor(Fact):
+    """The color shown by a specific traffic light when vehicles entered the intersection."""
+    case: Entity
+    light: Literal["northbound_light", "southbound_light", "eastbound_light", "westbound_light"]
+    color: Literal["green", "yellow", "red"]
+
+class RepairEstimate(Fact):
+    """The total estimated cost in US dollars to repair vehicle damage on a case."""
+    case: Entity
+    repair_cost_usd: int
+
+class CollisionDeductible(Fact):
+    """The collision deductible in US dollars set on an auto insurance policy."""
+    policy: Entity
+    deductible_usd: int
+
+    def validate(self) -> bool:
+        return self.deductible_usd in {250, 500, 1000, 2000}
+```
+
+## Sources and judges
+
+`sources.py` reads adjuster mail and policy exports. `judges.py` checks whether a speaker had direct knowledge.
+
+```python
+# sources.py
+import os
+from factorial.sources import FolderSource, ImapSource
+
+class IncidentInbox(ImapSource):
+    """Adjuster mailbox receiving driver statements, police reports, and shop estimates."""
+    host = "imap.beaconauto.example"
+    password = os.environ["IMAP_PASSWORD"]
+
+class PolicyExports(FolderSource):
+    """Nightly folder export of policy declarations and endorsements from underwriting."""
+    path = "./var/policy_exports"
 ```
 
 ```python
-# beacon_auto/settings.py
-import os
-from factorial import Settings, index, judge, model, search, store
+# judges.py
+from factorial import Judge
 
+class Firsthand(Judge):
+    """Accepts facts backed by direct sight, camera video, policy text, or physical shop inspection."""
 
-class ProjectSettings(Settings):
-    storage = store.S3Bucket(bucket="beacon-facts", key=os.environ["S3_KEY"])
-    search_index = index.SQLiteFTS(path="./var/index.db")
-    retrieval = search.HybridRRF(budget_tokens=1_500)
-
-    extractor_model = model.Pinned("gemini-2.5-flash-2026-02-01")
-    judges = [judge.NLI(), judge.JevFloors()]  # runs in order; stops on first rejection
+    def judge(self, fact) -> bool:
+        return self.decide("judge.md.j2", fact=fact) >= 0.7
 ```
-
-When you run `factorial eval --vary judge=none,nli,jev_floors`, the runner clones `ProjectSettings` in memory for each
-trial, binds `ProjectSettings.judges` to the listed built-in or local `Judge` subclass, and scores every variant against
-`evals/`.
-
-## Pluggable seams
-
-Storage (`local`, `s3`), sources (`folder`, `jsonl`, `imap`, `mcp`), pinned models, indexes (`sqlite-fts`,
-`pgvectorscale`, `turbopuffer`), and judges (`nli`, `jev-floors`, `llm`) are base classes with standard methods. You
-extend any seam by subclassing its base class in your project files.
 
 ## Prompts
 
-Prompts are Jinja templates. Every step that calls a model has a built-in template, and Factorial fills it with the
-document, its numbered passages, and the fact types that the document class lists:
+Templates in `prompts/` replace or extend Factorial's built-in Jinja prompts for a specific class and hook.
 
 ```jinja
-{# factorial/extract.md.j2, the built-in extract template #}
-Extract facts from this {{ document.type }}, dated {{ document.at }}.
-
-{% block guidance %}{% endblock %}
-
-Fact types:
-{% for fact_type in fact_types %}
-- {{ fact_type.name }}: {{ fact_type.description }}
-{% endfor %}
-
-Passages:
-{% for passage in passages %}
-[{{ passage.n }}] {{ passage.speaker }}: {{ passage.text }}
-{% endfor %}
-
-Cite passages by number. Do not copy quote text.
-```
-
-A file in your project's `prompts/` folder takes the place of a built-in template. `prompts/extract.md.j2` applies to
-every document type, and `prompts/driver_statement/extract.md.j2` applies to `DriverStatement` only. A project template
-can extend the built-in template and change one block, the same way a class overrides one method:
-
-```jinja
-{# prompts/driver_statement/extract.md.j2 #}
+{# prompts/shop_estimate/extract.md.j2 #}
 {% extends "factorial/extract.md.j2" %}
-
 {% block guidance %}
-Extract what the driver says they saw. Skip what the driver assumes.
+Stage: {{ stage }}. Skip part numbers, labor tables, and tax subtotals.
+Extract RepairEstimate from the grand total and CollisionDeductible from the policy header.
 {% endblock %}
 ```
 
-A class can add template variables by overriding `prompt_context()`. `factorial prompts copy extract` writes the
-built-in template into `prompts/` as a starting point. A template's text is part of its step's fingerprint, so changing
-a prompt marks the facts it produced as stale.
+```jinja
+{# prompts/repair_estimate/resolve.md.j2 #}
+{% extends "factorial/resolve.md.j2" %}
+{% block guidance %}
+On the same case, a teardown supplement supersedes an earlier visual quote; competing initial quotes disagree.
+{% endblock %}
+```
 
-## Why this approach
+## Settings
 
-- **What it is good at:** Every link between documents, facts, and settings is a real Python import, so type checkers,
-  autocomplete, and jump-to-definition work everywhere. Custom logic such as dynamic extractors or domain supersede
-  rules sits directly on the class it governs with a `@property` or method override.
-- **What it costs:** Configuration requires importing and executing user Python code, so non-engineers cannot edit
-  settings safely in a static form, and external tools cannot inspect a project without running a Python interpreter.
+```python
+# settings.py
+import os
+from factorial import Model, Search, Settings
+from factorial.indexes import SqliteFts
+from factorial.stores import S3Store
 
-## Next steps
+class Project(Settings):
+    store = S3Store(bucket="beacon-auto-facts", key=os.environ["S3_KEY"])
+    index = SqliteFts(path="./var/index.db")
+    models = {
+        "choice": Model("typesafe/jev-1.13.0"),
+        "generate": Model("fireworks/glm-5p3-flash"),
+        "embed": Model("openai/text-embedding-3-small"),
+    }
+    search = Search(retrieve="hybrid-rrf", budget_tokens=1500)
+```
 
-Start with [docs/mental-model.md](../../../../mental-model.md), and then read [docs/README.md](../../../../README.md). Note that
-[docs/config.md](../../../../config.md) and [docs/plugins.md](../../../../plugins.md) still describe the older single-YAML design.
+## What happens as documents arrive
+
+Four files arrive in order for `case_8841` and `policy_992`:
+
+1. **`driver_maya_lin.txt` (`DriverStatement`, March 14).** Maya Lin writes that she entered on a green northbound
+   light and carries a `$500` deductible on `policy_992`. `validate` accepts `500`, logging two `added` facts:
+   `TrafficLightColor("case_8841", "northbound_light", "green")` and `CollisionDeductible("policy_992", 500)`.
+2. **`apd_report_8841.pdf` (`PoliceReport`, March 15).** `PoliceReport.extract` maps vehicle numbers to directions
+   and pulls Officer Ortiz's camera finding: `TrafficLightColor("case_8841", "northbound_light", "red")`. `resolve`
+   compares that fact against Maya Lin's `"green"` fact; both stay active with their quotes, marked `contradicted`.
+3. **`harbor_body_initial.pdf` (`ShopEstimate`, March 16).** Harbor Body Shop quotes `$1,950` for bumper repairs on
+   `case_8841` and lists `policy_992`'s `$500` deductible. `resolve` merges `CollisionDeductible("policy_992", 500)`
+   as a duplicate, adding the shop quote to the stored fact, and logs `RepairEstimate("case_8841", 1950)` as `added`.
+4. **`harbor_body_supplement.pdf` (`ShopEstimate`, March 19).** After bumper removal, the shop sends a tear-down
+   supplement at `$4,100`. `ShopEstimate.extract` sets `stage="teardown"`, `resolve` marks the `$1,950` visual quote
+   `superseded`, and `RepairEstimate.current(case="case_8841").repair_cost_usd` returns `4100`.
+
+The design is described in [the Python README](../README.md).

@@ -1,225 +1,196 @@
-# Factorial 🧮
+# Example: harbor_realty
 
-> **Status: Design draft.** Nothing is built yet. We update the documentation to settle the design before writing code.
-
-Factorial turns documents into facts: short, self-contained sentences, each tied to an exact source quote, who said it,
-and when. As new documents arrive, Factorial updates its set of facts. It retires outdated facts, merges duplicate
-facts, and flags facts that disagree. People and agents can access these facts through a CLI, an HTTP API, and MCP.
+`harbor_realty` tracks apartment lease terms and repair reports from signed leases, tenant emails, and invoices.
 
 ## Fifteen minutes
 
-Install Factorial with `uv` on Python 3.13+, scaffold an example property management project named `harbor_realty`,
-ingest sample leases and repair emails, and run an evaluation.
+Install Factorial with `uv` on Python 3.13+, ingest the sample files, search stored facts, and run the evals.
 
 ```sh
 uv tool install factorial
-factorial new harbor_realty
 cd harbor_realty
-
-factorial generate document LeaseAgreement TenantEmail PlumberInvoice
-factorial generate fact MonthlyRent PetPolicy HeaterStatus
-
 factorial ingest ./sample_docs
 factorial search "Unit 4B heater"
 factorial read fact_01j9x8k2m
 factorial eval
-factorial eval --vary judge=none,nli,jev_floors
+factorial eval --vary judge=none,nli,direct_inspection
 ```
 
-`uv tool install` puts one `factorial` command on your path. Inside a project, that command finds the project's own
-environment and runs there, so you never type `uv run` or activate anything.
-
-## Project layout
-
-`factorial new` creates one flat Python package with conventional module names. Factorial imports these modules at
-startup, and subclassing a base class registers your definition. Your domain classes (`LeaseAgreement`, `MonthlyRent`,
-`HeaterStatus`, and the rest) live directly in these files with no app folders or registration lists.
+## Layout
 
 ```text
 harbor_realty/
 ├── pyproject.toml
 ├── harbor_realty/
-│   ├── __init__.py
-│   ├── settings.py    # storage, indexes, pinned models, judge chain, search
-│   ├── sources.py     # folders, IMAP mailboxes, JSONL streams, MCP sources
-│   ├── documents.py   # LeaseAgreement, TenantEmail, PlumberInvoice
-│   ├── facts.py       # MonthlyRent, PetPolicy, HeaterStatus
-│   └── judges.py      # custom judges alongside built-in judges
+│   ├── settings.py    # storage, index, pinned models, and search
+│   ├── sources.py     # lease folder and office inbox
+│   ├── documents.py   # LeaseAgreement, TenantEmail, and PlumberInvoice
+│   ├── facts.py       # MonthlyRent, PetPolicy, and HeaterStatus
+│   └── judges.py      # DirectInspection judge
 ├── prompts/
-│   └── tenant_email/
-│       └── extract.md.j2
-└── evals/
-    └── leases_and_repairs.jsonl
+│   ├── tenant_email/extract.md.j2
+│   ├── tenant_email/thread_summary.md.j2
+│   ├── heater_status/resolve.md.j2
+│   └── direct_inspection/judge.md.j2
+└── evals/leases_and_repairs.jsonl
 ```
 
-### Facts and typed slots (`facts.py`)
+## Documents
 
-A fact type is a subclass of `Fact` with an optional typed slot (`entity`, field name, and typed value). Deduplication,
-supersede checks, and contradiction checks run on write during ingest. Built-in slot resolution supersedes older values
-for the same entity and field, and you can override methods when domain rules need custom logic.
-
-```python
-from typing import Self
-from factorial import Fact
-
-
-class MonthlyRent(Fact):
-    """Example slot: ("Unit 4B", "monthly_rent_usd", 1950)"""
-    monthly_rent_usd: int
-
-    def supersedes(self, prior: Self) -> bool:
-        return self.entity == prior.entity and self.stated_at > prior.stated_at
-
-
-class PetPolicy(Fact):
-    """Example slot: ("Unit 4B", "pets_allowed", False)"""
-    pets_allowed: bool
-
-
-class HeaterStatus(Fact):
-    """Example slot: ("Unit 4B", "heater_status", "leaking")"""
-    heater_status: str
-```
-
-### Documents and computed settings (`documents.py`)
-
-Document types inherit defaults from `Document`, reference fact classes through standard Python imports, and can replace
-any static attribute with a `@property` or method.
+Each document class puts its classifier definition in its docstring and lists the fact types it yields. `TenantEmail`
+summarizes quoted messages before extracting, and `PlumberInvoice` sends its header and totals to the classifier.
 
 ```python
-from factorial import Document, Extractor
-from factorial.extractors import Passages, Staged
-from factorial.segmenters import Auto, Email, Paragraphs
+# documents.py
+from factorial import Document
 from harbor_realty.facts import HeaterStatus, MonthlyRent, PetPolicy
 
-
 class LeaseAgreement(Document):
-    segmenter = Paragraphs
+    """A signed residential lease or renewal agreement for an apartment unit."""
     facts = [MonthlyRent, PetPolicy]
 
-    @property
-    def extractor(self) -> type[Extractor]:
-        return Staged if len(self.text) > 15_000 else Passages
-
-
 class TenantEmail(Document):
-    segmenter = Email
+    """An email from a tenant to the leasing office about lease rules or unit repairs."""
     facts = [HeaterStatus, PetPolicy]
 
+    def extract(self, passages):
+        thread = self.generate("thread_summary.md.j2", passages=passages)
+        return super().extract(passages, thread=thread)
 
 class PlumberInvoice(Document):
-    segmenter = Auto
+    """An invoice from a plumbing contractor for repair work on an apartment unit."""
     facts = [HeaterStatus]
+    classify_threshold = 0.8
+
+    def classify_view(self) -> str:
+        return self.head(400) + self.tail(400)
 ```
 
-### Sources, judges, and settings (`sources.py`, `judges.py`, `settings.py`)
+## Facts
 
-Sources and custom judges follow the same subclass pattern. In `settings.py`, models are named once and pinned to exact
-versions, secrets come from environment variables, and the judge chain runs cheap checks first, rejecting a candidate
-fact at the first failure.
+Typed attributes define the slot; code reads active values with `PetPolicy.current(unit="Unit 4B").pets_allowed`.
+
+```python
+# facts.py
+from typing import Literal
+from factorial import Entity, Fact
+
+class MonthlyRent(Fact):
+    """The monthly rent in US dollars for an apartment unit under a signed lease."""
+    unit: Entity
+    monthly_rent_usd: int
+
+    def validate(self) -> bool:
+        return 500 <= self.monthly_rent_usd <= 25_000
+
+class PetPolicy(Fact):
+    """Whether tenants in an apartment unit are permitted to keep pets."""
+    unit: Entity
+    pets_allowed: bool
+
+class HeaterStatus(Fact):
+    """Whether a unit's heater is working, leaking, or broken according to someone who checked it."""
+    unit: Entity
+    heater_status: Literal["working", "leaking", "broken"]
+```
+
+## Sources and judges
+
+Leases arrive in a local folder, and mail arrives over IMAP. `DirectInspection` checks for firsthand observation.
+
+```python
+# sources.py
+import os
+from factorial.sources import FolderSource, ImapSource
+
+class LeaseFolder(FolderSource):
+    """Directory where staff drop signed lease PDFs."""
+    path = "./inbox/leases"
+
+class OfficeInbox(ImapSource):
+    """Mailbox receiving tenant emails and contractor invoices."""
+    host = "imap.harborrealty.com"
+    user = os.environ["IMAP_USER"]
+    password = os.environ["IMAP_PASSWORD"]
+```
 
 ```python
 # judges.py
-from factorial import CandidateFact, Judge
+from factorial import Judge
 
+class DirectInspection(Judge):
+    """Accepts facts stated in a signed lease or reported by someone who inspected the unit."""
 
-class SignedInvoiceJudge(Judge):
-    def check(self, candidate: CandidateFact) -> bool:
-        return "Authorized signature" in candidate.passage.text
+    def judge(self, fact) -> float:
+        return self.decide("judge.md.j2", fact=fact)
 ```
+
+## Prompts
+
+Hook templates extend built-in templates and override named blocks. Helper templates called by custom code stand alone.
+
+```jinja
+{# prompts/tenant_email/thread_summary.md.j2 #}
+Summarize earlier messages in two sentences, noting the unit and any open repair:
+{% for p in passages %}[{{ p.n }}] {{ p.speaker }}: {{ p.text }}
+{% endfor %}
+```
+
+```jinja
+{# prompts/tenant_email/extract.md.j2 #}
+{% extends "factorial/extract.md.j2" %}
+{% block guidance %}
+Earlier thread: {{ thread }}. Extract from the newest message only; skip greetings, signatures, and quoted replies.
+{% endblock %}
+```
+
+```jinja
+{# prompts/heater_status/resolve.md.j2 #}
+{% extends "factorial/resolve.md.j2" %}
+{% block guidance %}
+Repair invoices dated after a leak report supersede that report. Opposing claims on one visit are contradicted.
+{% endblock %}
+```
+
+```jinja
+{# prompts/direct_inspection/judge.md.j2 #}
+Does the quote show firsthand inspection of the unit or text from a signed lease for "{{ fact.text }}"?
+Quote: "{{ fact.quote }}"
+```
+
+## Settings
 
 ```python
 # settings.py
 import os
 from factorial import Model, Search, Settings
 from factorial.indexes import SqliteFts
-from factorial.judges import JevFloors, Nli
-from factorial.retrievers import HybridRrf
 from factorial.stores import S3Store
-from harbor_realty.judges import SignedInvoiceJudge
-
 
 class Project(Settings):
-    store = S3Store(bucket="harbor-facts", key=os.environ["S3_KEY"])
+    store = S3Store(bucket="harbor-realty-facts", key=os.environ["S3_KEY"])
     index = SqliteFts(path="./var/index.db")
     models = {
-        "extract": Model("claude-3-5-haiku-20241022"),
-        "judge": Model("gpt-4o-mini-2024-07-18"),
+        "choice": Model("typesafe/jev-1.13.0"),
+        "generate": Model("fireworks/glm-5p3-flash"),
+        "embed": Model("openai/text-embedding-3-small"),
     }
-    judges = [Nli, JevFloors, SignedInvoiceJudge]
-    search = Search(retriever=HybridRrf, rerank=True, budget_tokens=1500)
+    search = Search(retrieve="hybrid-rrf", budget_tokens=1500)
 ```
 
-When you run `factorial eval --vary judge=none,nli,jev_floors`, the CLI runner clones `Project` in memory for each trial
-and binds the varied attribute or property for that run, leaving your Python files untouched.
+## What happens as documents arrive
 
-## Core ideas
+1. **`2025-09-01` (`lease_4b_2025.pdf`, `LeaseAgreement`).** Sets Unit 4B rent at $1,950 and forbids pets. `validate`
+   passes, adding `("Unit 4B", "monthly_rent_usd", 1950)` and `("Unit 4B", "pets_allowed", False)`.
+2. **`2026-09-01` (`lease_4b_2026.pdf`, `LeaseAgreement`).** Raises rent to $2,050 and repeats the no-pets clause.
+   `resolve` marks the $1,950 `MonthlyRent` **superseded**, adds `("Unit 4B", "monthly_rent_usd", 2050)`, and merges
+   `("Unit 4B", "pets_allowed", False)` as a **duplicate** backed by quotes from both leases.
+3. **`2026-11-10` (`inv_8841.pdf`, `PlumberInvoice`).** Bay Plumbing bills for replacing a Unit 4B radiator valve and
+   notes the heater was left working. `classify_view` sends the header and totals to the classifier, `DirectInspection`
+   approves the quote, and Factorial adds `("Unit 4B", "heater_status", "working")`.
+4. **`2026-11-10` (`email_412.eml`, `TenantEmail`).** That evening the tenant emails that water is pooling under the
+   Unit 4B heater after the plumber left. `extract` summarizes the thread and pulls
+   `("Unit 4B", "heater_status", "leaking")`. Per `heater_status/resolve.md.j2`, `resolve` flags both `HeaterStatus`
+   facts as **contradicted**.
 
-- **Facts are what a reader reads.** Readers and agents receive short, self-contained sentences within a token budget.
-  On dialogue benchmarks, fact retrieval beat chunk retrieval at about a seventh of the read tokens (see
-  [docs/prior-art.md](../../../../prior-art.md)).
-- **Models never write evidence.** During extraction, the model cites numbered passages from the segmented document, and
-  Factorial's own code attaches the exact quote, speaker, and timestamp.
-- **History is the truth.** Every write appends to an immutable event log (`added`, `superseded`, `contradicted`,
-  `retracted`, and `restored`). Current fact state and search indexes (`sqlite-fts`, `pgvectorscale`, and `turbopuffer`)
-  are views rebuilt from that log.
-- **Algorithm choices are made by evals.** Pipeline stages (`classify`, `segment`, `extract`, `judge`, `repair`,
-  `resolve`, and `tag`) have built-in strategies whose defaults come from benchmark runs. `factorial eval` scores your
-  classes against labeled data and reports accuracy, cost, and latency.
-- **Pluggable seams.** Storage (local folders and S3-compatible buckets), sources (`folder`, `jsonl`, `imap`, and
-  `mcp`), pinned models, and judges all share small base classes that you can subclass in your project.
-
-## Prompts
-
-Prompts are Jinja templates. Every step that calls a model has a built-in template, and Factorial fills it with the
-document, its numbered passages, and the fact types that the document class lists:
-
-```jinja
-{# factorial/extract.md.j2, the built-in extract template #}
-Extract facts from this {{ document.type }}, dated {{ document.at }}.
-
-{% block guidance %}{% endblock %}
-
-Fact types:
-{% for fact_type in fact_types %}
-- {{ fact_type.name }}: {{ fact_type.description }}
-{% endfor %}
-
-Passages:
-{% for passage in passages %}
-[{{ passage.n }}] {{ passage.speaker }}: {{ passage.text }}
-{% endfor %}
-
-Cite passages by number. Do not copy quote text.
-```
-
-A file in your project's `prompts/` folder takes the place of a built-in template. `prompts/extract.md.j2` applies to
-every document type, and `prompts/tenant_email/extract.md.j2` applies to `TenantEmail` only. A project template can
-extend the built-in template and change one block, the same way a class overrides one method:
-
-```jinja
-{# prompts/tenant_email/extract.md.j2 #}
-{% extends "factorial/extract.md.j2" %}
-
-{% block guidance %}
-Skip greetings, signatures, and quoted replies.
-{% endblock %}
-```
-
-A class can add template variables by overriding `prompt_context()`. `factorial prompts copy extract` writes the
-built-in template into `prompts/` as a starting point. A template's text is part of its step's fingerprint, so changing
-a prompt marks the facts it produced as stale.
-
-## Why this approach
-
-Plain Python classes give users autocomplete, type checking, real imports, debugger breakpoints, and custom logic
-through standard inheritance, `@property` descriptors, and method overrides. Keeping five conventional files in one flat
-package avoids boilerplate registration and nested directories. The cost is that configuration is executable code:
-external tools cannot parse project declarations as static data without importing the package, and authors must avoid
-slow work at import time.
-
-## Further reading
-
-Start with [docs/mental-model.md](../../../../mental-model.md), and then read [docs/README.md](../../../../README.md). Note that
-[docs/config.md](../../../../config.md) and [docs/plugins.md](../../../../plugins.md) still describe the older single-YAML design and
-will be updated next.
+The design is described in [the Python README](../README.md).
