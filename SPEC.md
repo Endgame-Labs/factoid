@@ -244,7 +244,11 @@ work and needs evals before any claim about its quality.
 
 **Proposed.**
 
-- Workloads: `choose`, `generate`, `embed`, and `rerank`. A hook can pin its own model.
+- Workloads: `choose`, `generate`, and `embed` are required. `rerank` is a model workload too, and it is optional
+  (Kyle). Without a `rerank` model, search returns results in retrieval order. A hook can pin its own model.
+- Real Fireworks ids, checked against the provider's model list on 2026-11-13: `rune` (decision model, Rune 26B-A4B,
+  through the System One decisions API), `glm-5p3-flash`, `qwen3-embedding-8b`, and `qwen3-reranker-8b`. Do not put a
+  model id in the docs without checking it exists.
 - An assignment maps a workload to a model, written `provider/model`. The provider in the name says which key the
   assignment needs, and a missing key is reported by name.
 - One provider key is enough to start when that provider has a decision model, a generative model, and an embedding
@@ -391,3 +395,5 @@ All dates are 2026-11-13 unless noted.
     and Cloudflare's Clef are supported. Keys are per provider, not per kind of model.
 19. Model assignments live in `settings.py`, so they stay programmable. Only the project id is in `pyproject.toml`.
     The README's Setup section was rewritten around provider keys and workloads.
+20. `rerank` is an optional model workload. The README's Setup example shows the one-key Fireworks case, with Rune
+    doing `choose`.

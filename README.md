@@ -39,18 +39,20 @@ without `uv run` or manual virtual environment activation.
 
 ### Setup
 
-Factoid uses models for three kinds of work:
+Factoid uses models for four kinds of work, and the fourth is optional:
 
 | Workload | Kind of model | Used for |
 | --- | --- | --- |
 | `choose` | Decision model | Classifying, judging, labeling, linking, and resolving |
 | `generate` | Generative model | Extracting facts and describing chunks |
 | `embed` | Embedding model | Search |
+| `rerank` | Reranking model (optional) | Reordering search results |
 
 API keys belong to providers, and one provider can serve several workloads. One provider key is enough to start when
-that provider offers all three kinds of model. Fireworks and OpenAI both offer all three. For the `choose` workload,
-Factoid recommends Jev from TypeSafe. Jev is the best decision model and is cheap. Other decision models work too:
-OpenAI's decisions API, Fireworks' Rune, and Cloudflare's Clef.
+that provider offers all three required kinds of model. Fireworks and OpenAI both offer all three. Without a `rerank`
+model, search returns results in their retrieval order. For the `choose` workload, Factoid recommends Jev from
+TypeSafe. Jev is the best decision model and is cheap. Other decision models work too: OpenAI's decisions API,
+Fireworks' Rune, and Cloudflare's Clef.
 
 Run these commands to store keys and verify your setup:
 
@@ -65,14 +67,18 @@ The `factoid keys set` command prompts for the key and stores that key in `~/.fa
 the key for the current project only. An environment variable with the standard provider name, such as
 `FIREWORKS_API_KEY`, takes precedence when that variable is set.
 
-The `factoid models` command shows which model runs each workload. Example output, with both keys set:
+The `factoid models` command shows which model runs each workload. Here is the output with only a Fireworks key set.
+`fireworks/rune` is Fireworks' decision model:
 
 ```text
-workload   model                              key
-choose     typesafe/jev-1.13.0                ok
-generate   fireworks/glm-5p3-flash            ok
-embed      fireworks/qwen3-embedding-8b       ok
+workload   model                         key
+choose     fireworks/rune                ok
+generate   fireworks/glm-5p3-flash       ok
+embed      fireworks/qwen3-embedding-8b  ok
+rerank     fireworks/qwen3-reranker-8b   ok
 ```
+
+Running `factoid keys set typesafe` moves `choose` to `typesafe/jev-1.13.0`, and the other workloads stay on Fireworks.
 
 Every model name uses the `provider/model` format, so Factoid knows which provider key a workload needs and names the
 missing key when that key is not set. Workload assignments live in the project's `settings.py` file. Edit `settings.py`
@@ -382,6 +388,7 @@ class Project(FactoidSettings):
         "choose": Model("typesafe/jev-1.13.0"),        # classify, judge, and resolve
         "generate": Model("fireworks/glm-5p3-flash"),  # extract and repair
         "embed": Model("openai/text-embedding-3-small"),
+        "rerank": Model("fireworks/qwen3-reranker-8b"),    # optional
     }
     search = Search(retrieve="hybrid-rrf", budget_tokens=1500)
 ```
