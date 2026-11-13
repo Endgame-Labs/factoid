@@ -101,9 +101,10 @@ Overlap text is context only. A fact can cite a passage only from the chunk that
 overlap does not yield the same fact twice.
 
 After a chunk is made, the `situate` hook writes a situation for that chunk: one or two sentences stating where the
-chunk sits in the whole document and what the chunk is about. The model that writes the situation sees the whole
-document and the chunk. Factoid stores the situation with the chunk and indexes the situation with the chunk's text for
-search. The extractor reads the situation before the chunk's passages. This context helps the extractor write
+chunk sits in the whole document and what the chunk is about. This follows Anthropic's [contextual
+retrieval](https://www.anthropic.com/research/contextual-retrieval) technique. The model that writes the situation sees
+the whole document and the chunk. Factoid stores the situation with the chunk and indexes the situation with the chunk's
+text for search. The extractor reads the situation before the chunk's passages. This context helps the extractor write
 self-contained facts, naming the people and things that the chunk only refers to.
 
 The `situate` step is a hook like any other: turn `situate` off with `situate = False`, change the prompt wording with
