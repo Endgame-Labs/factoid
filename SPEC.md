@@ -334,6 +334,34 @@ work and needs evals before any claim about its quality.
 - Commands in use across the docs: `new`, `ingest`, `search`, `read`, `eval`, `rebuild`, `stats`, `serve`, `mcp`,
   `keys`, `doctor`, and `setup`.
 
+### The setup wizard
+
+**Decided** (Kyle).
+
+- `factoid setup` should be super smooth, useful inside the team, and even charming. It is colorful.
+- Navigation works two ways: arrow keys and Enter, or WASD and the space bar.
+- It shows clickable URLs that open the right section of each provider's dashboard, such as the page where a key is
+  created.
+- Flavor text, here and everywhere else in the app, lives in markdown files, so it can be changed without touching
+  code.
+
+**Proposed.**
+
+- Flavor text is any user-facing copy that is not data: greetings, step titles, hints, tips, empty states, success
+  and error messages, and the wording around prompts. It lives in `factoid/text/` as markdown files, one per screen or
+  command, such as `text/setup/welcome.md` and `text/setup/keys.md`.
+- Each file holds named sections, and the code looks text up by file and section. Text can use simple placeholders for
+  live values, such as `{provider}` and `{model}`.
+- Dashboard links live in the same files, next to the text that uses them, so a moved provider page is a text change.
+  Each link points at a specific section, not a home page.
+- Clickable links use the terminal's hyperlink support (OSC 8), with the full URL printed as a fallback in terminals
+  that do not support it.
+- Color follows the terminal's theme, and the wizard honors `NO_COLOR`. It stays usable with color off.
+- Copy in these files follows the same rules as the docs: Carbon writes it, in a plain and pragmatic voice, with room
+  for charm in the wizard.
+
+**Open.** The TUI library. Textual is the obvious candidate in Python.
+
 ## 13. Out of scope
 
 **Proposed.** Factoid stops at facts and entities. Deciding which entities a workspace should cover, writing articles
@@ -397,3 +425,5 @@ All dates are 2026-11-13 unless noted.
     The README's Setup section was rewritten around provider keys and workloads.
 20. `rerank` is an optional model workload. The README's Setup example shows the one-key Fireworks case, with Rune
     doing `choose`.
+21. `factoid setup` is smooth, charming, and colorful, with arrow keys and Enter or WASD and space, and clickable
+    dashboard links. All flavor text lives in markdown files.
