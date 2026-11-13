@@ -142,8 +142,8 @@ entities, and zero or more labels. The sentence carries the meaning.
 A label is a small `FactoidLabel` subclass with a docstring. The docstring is the definition the model reads. The tagger
 asks one yes-or-no question per label. A fact can carry several labels, and a fact that matches no label is kept.
 
-A `FactoidFact` subclass is optional, and many projects need none. A `FactoidFact` subclass exists for behavior only: a custom
-definition, extraction guidance, shared labels, or custom judges.
+A `FactoidFact` subclass is optional, and many projects need none. A `FactoidFact` subclass exists for behavior only: a
+custom definition, extraction guidance, shared labels, or custom judges.
 
 ```python
 # facts.py
@@ -165,9 +165,9 @@ class AcmeBaseFact(FactoidFact):
 
 ### Entities
 
-`FactoidEntity` is a first-class base class in a Factoid project. Each `FactoidEntity` subclass declares one kind of thing
-that facts are about and defines how an entity of that kind is identified. The class docstring describes that kind in
-plain language, and `identities` maps each identifier key to `"strong"` or `"weak"`. A subclass can also define a
+`FactoidEntity` is a first-class base class in a Factoid project. Each `FactoidEntity` subclass declares one kind of
+thing that facts are about and defines how an entity of that kind is identified. The class docstring describes that kind
+in plain language, and `identities` maps each identifier key to `"strong"` or `"weak"`. A subclass can also define a
 `normalize` method so variant mentions reduce to one canonical string before matching.
 
 ```python
