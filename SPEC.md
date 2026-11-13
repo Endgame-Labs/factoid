@@ -251,13 +251,16 @@ work and needs evals before any claim about its quality.
   model. Adding TypeSafe moves `choose` to Jev.
 - Factoid ships a catalog: for each provider, the recommended model per workload, with quality, cost, and latency from
   the shipped evals.
-- Setup is two steps: add a provider key, then review the assignments. Commands: `factoid keys set <provider>`,
-  `factoid models`, and `factoid models set <workload> <provider/model>`. `factoid setup` is the same as a terminal UI.
+- Setup is two steps: add a provider key, then review the assignments. Commands: `factoid keys set <provider>` and
+  `factoid models`. `factoid setup` is the same as a terminal UI.
   `factoid doctor` checks assignments as well as keys.
-- Assignments live in the project's `pyproject.toml`, under `[tool.factoid.models]`, next to the project id. The file
-  is committed, so a team extracts with the same models. It is data, so `factoid models set` can edit it without
-  touching code, and other tools can read it without importing the project. (Kyle asked why not the pyproject file.
-  The earlier idea was `settings.py`.)
+- Assignments live in the project's `settings.py`, committed, so a team extracts with the same models. Kyle prefers
+  this to `pyproject.toml` because settings stay dynamic and programmable: a property can pick a model from the
+  environment, the document, or anything else. Only the project id lives in `pyproject.toml`, since the launcher has to
+  find the project before it can import any code.
+- Because settings are code, the CLI does not edit them. `factoid models` shows the assignments that `settings.py`
+  resolves to, and whether each has a working key. `factoid new` and `factoid setup` write `settings.py` once, when the
+  project is created. After that, a person changes a model by editing the file.
 - A provider can be keyless: a local runtime, or a gateway that injects credentials.
 
 **Open.** Whether the four decision models share a request shape. Jev takes a JSON state plus named questions of type
