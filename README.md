@@ -1,14 +1,16 @@
 # Factorial 🧮
 
-> **Status: design draft.** Nothing here is built yet. These docs are the spec we build against, so change them first.
+> **Status: design draft.** Nothing here is built yet. These docs are the spec we build against, so update the docs before
+> writing code.
 
-Factorial turns documents into **facts you can trust**: short, self-contained sentences, each tied to the exact words it
-came from, who said them, and when. As documents arrive, it supersedes facts that newer ones replace, merges repeats,
-and marks facts that disagree. It serves them to people and agents through a CLI, an HTTP API, and MCP.
+Factorial turns documents into **facts you can trust**: short, self-contained sentences, each tied to an exact source
+quote, who said it, and when. As new documents arrive, Factorial updates its set of facts. It retires outdated facts,
+merges duplicate facts, and flags facts that disagree. People and agents can access these facts through a CLI, an HTTP
+API, and MCP.
 
-It is also a **workbench for deciding how to do all that**. Every step (how documents are typed, how facts are extracted,
-judged, deduplicated, and searched) is a strategy you choose in one config file, and `factorial eval` measures any choice
-against labeled data, with the cost and the latency of each.
+It is also a **workbench for choosing how each step in that pipeline works**. In one config file, you pick a strategy
+for every step: classifying documents, extracting facts, judging facts, deduplicating them, and searching. Running
+`factorial eval` scores your configuration against labeled data and reports its cost and latency.
 
 ## Fifteen minutes
 
