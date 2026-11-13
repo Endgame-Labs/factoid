@@ -3,13 +3,12 @@
 > **Status: design draft.** Nothing here is built yet. These docs are the spec we build against, so change them first.
 
 Factorial turns documents into **facts you can trust**: short, self-contained sentences, each tied to the exact words it
-came from, who said them, and when. It keeps them current as new documents arrive. When a later email updates a price,
-the old fact is superseded rather than duplicated, and when two calls disagree, the disagreement is recorded rather than
-hidden. Then it serves them to people and agents through a CLI, an HTTP API, and MCP.
+came from, who said them, and when. As documents arrive, it supersedes facts that newer ones replace, merges repeats,
+and marks facts that disagree. It serves them to people and agents through a CLI, an HTTP API, and MCP.
 
 It is also a **workbench for deciding how to do all that**. Every step (how documents are typed, how facts are extracted,
 judged, deduplicated, and searched) is a strategy you choose in one config file, and `factorial eval` measures any choice
-against labeled data, with the cost and the latency of each. Algorithms are picked by evidence, not taste.
+against labeled data, with the cost and the latency of each.
 
 ## Fifteen minutes
 

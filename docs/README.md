@@ -1,7 +1,7 @@
 # Factorial docs
 
 These docs are the spec. They describe what Factorial does from the outside: its inputs, its outputs, its config, and
-how it is measured. They say nothing about the implementation language, on purpose.
+how it is measured. They do not depend on the implementation language.
 
 | Doc | What it covers |
 | --- | --- |

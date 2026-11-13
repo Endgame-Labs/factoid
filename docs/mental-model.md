@@ -56,7 +56,7 @@ Facts are never edited in place. Everything is an event appended to the log:
 ```
 
 From the log, Factorial keeps **views**: the current state of every fact, and each search index. Views can be dropped
-and rebuilt at any time. That gives three things for free:
+and rebuilt at any time, which gives us:
 
 1. **Undo.** Every automatic change has an actor and a reason, and reversing it is another event.
 2. **Time travel.** "What did we believe on October 1?" is the log replayed to October 1.

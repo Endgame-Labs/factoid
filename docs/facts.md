@@ -89,5 +89,5 @@ The log is the record of truth. Each line is an event:
 `actor.kind` is one of `code`, `rule`, `model`, `judge`, or `person`. Every automatic event can be reversed by a
 `fact.restored`, so nothing the machine does is final.
 
-Rejected candidates are logged on purpose: they are what you label to calibrate a judge, and what a new judge is replayed
+Rejected candidates are logged because they are what you label to calibrate a judge, and what a new judge is replayed
 against.
