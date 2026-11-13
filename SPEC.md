@@ -260,6 +260,17 @@ work and needs evals before any claim about its quality.
 - `factoid keys set <provider>` stores a key in the user's config directory, outside any project. An environment
   variable of the usual name takes precedence. `factoid doctor` checks each key with one small call. `factoid setup`
   is a terminal UI over the same steps.
+- Where keys and config live (modeled on Hermes Agent, which keeps `config.yaml`, a plain-text `.env` for secrets, and
+  `auth.json` under `~/.hermes/`, with `HERMES_HOME` behind its profiles):
+  - User level, `~/.factoid/` (relocated by `FACTOID_HOME`): `.env` holds API keys, written by `factoid keys set` with
+    owner-only permissions. No keychain.
+  - Project level, in the repo: `settings.py` holds every non-secret setting and is committed. `.env.local` holds keys
+    or overrides for this one project, and is ignored by git through the `*.local` rule. Data (the store and indexes)
+    goes in a git-ignored directory in the project unless `settings.py` points elsewhere.
+  - Precedence, highest first: a real environment variable, the project's `.env.local`, `~/.factoid/.env`, and then
+    the defaults in `settings.py`.
+  - A provider can set a base URL and run with no key, for gateways that inject credentials (such as exe.dev
+    integrations).
 - Default providers: TypeSafe (Jev) for the choice model, Fireworks for the generative model, and OpenAI for
   embeddings.
 - Commands in use across the docs: `new`, `ingest`, `search`, `read`, `eval`, `rebuild`, `stats`, `serve`, `mcp`,
