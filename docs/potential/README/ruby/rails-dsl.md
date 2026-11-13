@@ -104,8 +104,8 @@ end
 ```
 
 A class's `definition` is prompt text. It is what a model reads when it classifies into that type, so the description
-lives on the thing it describes. The `slot` lines are the fact's typed slot. A setting such as `resolve_neighbors` can be
-a constant (`resolve_neighbors 20`) or a method that computes it.
+lives on the thing it describes. The `slot` lines are the fact's typed slot. A setting such as `resolve_neighbors` can
+be a constant (`resolve_neighbors 20`) or a method that computes it.
 
 Shared defaults go in the base classes, and every type inherits them:
 
