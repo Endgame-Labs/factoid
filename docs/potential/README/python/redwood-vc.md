@@ -16,12 +16,15 @@ uv tool install factorial
 factorial new redwood_vc && cd redwood_vc
 factorial generate document PitchDeck AuditedStatement BoardMinutes
 factorial generate fact AnnualRevenue CashRunway IncorporationState
-uv run factorial ingest ./dataroom
-uv run factorial search "Orbital revenue and runway"
-uv run factorial read fact_01j8x9q2
-uv run factorial eval
-uv run factorial eval --vary judge=none,nli,jev_floors
+factorial ingest ./dataroom
+factorial search "Orbital revenue and runway"
+factorial read fact_01j8x9q2
+factorial eval
+factorial eval --vary judge=none,nli,jev_floors
 ```
+
+`uv tool install` puts one `factorial` command on your path. Inside a project, that command finds the project's own
+environment and runs there, so you never type `uv run` or activate anything.
 
 ## Project layout
 

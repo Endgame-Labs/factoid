@@ -16,15 +16,18 @@ uv tool install factorial
 factorial new harbor_realty
 cd harbor_realty
 
-uv run factorial generate document LeaseAgreement TenantEmail PlumberInvoice
-uv run factorial generate fact MonthlyRent PetPolicy HeaterStatus
+factorial generate document LeaseAgreement TenantEmail PlumberInvoice
+factorial generate fact MonthlyRent PetPolicy HeaterStatus
 
-uv run factorial ingest ./sample_docs
-uv run factorial search "Unit 4B heater"
-uv run factorial read fact_01j9x8k2m
-uv run factorial eval
-uv run factorial eval --vary judge=none,nli,jev_floors
+factorial ingest ./sample_docs
+factorial search "Unit 4B heater"
+factorial read fact_01j9x8k2m
+factorial eval
+factorial eval --vary judge=none,nli,jev_floors
 ```
+
+`uv tool install` puts one `factorial` command on your path. Inside a project, that command finds the project's own
+environment and runs there, so you never type `uv run` or activate anything.
 
 ## Project layout
 

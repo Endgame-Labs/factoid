@@ -39,6 +39,9 @@ factorial eval
 factorial eval --vary judge=none,nli,jev_floors
 ```
 
+`uv tool install` puts one `factorial` command on your path. Inside a project, that command finds the project's own
+environment and runs there, so you never type `uv run` or activate anything.
+
 ## Project layout
 
 A project is one flat Python package with conventional module names. Factorial imports these files automatically, and

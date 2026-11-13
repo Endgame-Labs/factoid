@@ -31,12 +31,15 @@ factorial new beacon_auto && cd beacon_auto
 factorial generate document DriverStatement PoliceReport ShopEstimate
 factorial generate fact TrafficLightColor RepairEstimate CollisionDeductible
 
-uv run factorial ingest ./sample_files
-uv run factorial search "case 8841 northbound light"
-uv run factorial read fact_01j9x2k
-uv run factorial eval
-uv run factorial eval --vary judge=none,nli,jev_floors
+factorial ingest ./sample_files
+factorial search "case 8841 northbound light"
+factorial read fact_01j9x2k
+factorial eval
+factorial eval --vary judge=none,nli,jev_floors
 ```
+
+`uv tool install` puts one `factorial` command on your path. Inside a project, that command finds the project's own
+environment and runs there, so you never type `uv run` or activate anything.
 
 ## Project layout
 

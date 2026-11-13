@@ -34,12 +34,15 @@ factorial generate fact MedicationDose BloodType SmokingStatus
 Drop sample intake forms, visit notes, and lab exports into `./inbox`, then ingest, query, and evaluate:
 
 ```sh
-uv run factorial ingest
-uv run factorial search "patient_402 blood pressure medication"
-uv run factorial read fact_01j9z8k2
-uv run factorial eval
-uv run factorial eval --vary judge=none,nli,jev_floors
+factorial ingest
+factorial search "patient_402 blood pressure medication"
+factorial read fact_01j9z8k2
+factorial eval
+factorial eval --vary judge=none,nli,jev_floors
 ```
+
+`uv tool install` puts one `factorial` command on your path. Inside a project, that command finds the project's own
+environment and runs there, so you never type `uv run` or activate anything.
 
 ## Project layout
 
