@@ -276,6 +276,19 @@ work and needs evals before any claim about its quality.
     defaults in `settings.py`.
   - A provider can set a base URL and run with no key, for gateways that inject credentials (such as exe.dev
     integrations).
+- The `factoid` command:
+  - It is a real executable on the user's `PATH`, installed once per user. `uv tool install` builds a private
+    environment under `~/.local/share/uv/tools/factoid/` and puts a launcher in `~/.local/bin/`. It is not a shell
+    alias, and it needs no root.
+  - On each run it walks up from the current directory to find the project marker, the way `git` finds `.git`.
+  - The marker is a `[tool.factoid]` table in the project's `pyproject.toml`, which holds the project id.
+    `factoid new` writes it. The id is the project's name plus a short random suffix, such as `acme-7k2m`, and it is
+    committed, so every checkout and every teammate shares it.
+  - With a project found, the command loads that project's keys, then re-runs itself inside the project's own
+    environment, so it can import the project's classes and their dependencies.
+  - The global command is a thin launcher. When a project pins its own version of Factoid, the project's version does
+    the work.
+  - Outside a project, `new`, `keys`, `setup`, and `doctor` work with the user's defaults.
 - Default providers: TypeSafe (Jev) for the choice model, Fireworks for the generative model, and OpenAI for
   embeddings.
 - Commands in use across the docs: `new`, `ingest`, `search`, `read`, `eval`, `rebuild`, `stats`, `serve`, `mcp`,
@@ -336,3 +349,5 @@ All dates are 2026-11-13 unless noted.
 14. Chunking: `chunk_size`, `chunk_overlap` in characters or percent, and a configurable situation per chunk.
 15. Quickstart is Install, Setup, and Use. `SPEC.md` exists and is kept current.
 16. `AGENTS.md` added, with per-developer preferences in a git-ignored `AGENTS.md.local`.
+17. Keys and config: user keys in `~/.factoid/.env`, per-project keys by project id, and the `factoid` launcher
+    that finds the project from the current directory. (Proposed, with Kyle's go-ahead to record it.)
