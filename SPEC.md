@@ -288,6 +288,8 @@ share of facts with no label, and the share of mentions with no entity.
   tone is matter-of-fact and pragmatic, with plain label headings.
 - This file is maintained by the session's agent, without Carbon. Update it whenever a decision is made or changed.
 - Always use the Oxford comma. Avoid slogans, "X rather than Y" contrasts, and invented anecdotes.
+- `AGENTS.md` holds the shared rules for coding agents. Each developer's own preferences live in `AGENTS.md.local`,
+  which agents read and keep current. Every file ending in `.local` is ignored by git.
 
 ## 16. Docs that lag the design
 
@@ -317,3 +319,4 @@ All dates are 2026-11-13 unless noted.
 13. Example company is Acme. Base classes are `FactoidFact`, `FactoidDocument`, and `FactoidEntity`.
 14. Chunking: `chunk_size`, `chunk_overlap` in characters or percent, and a configurable situation per chunk.
 15. Quickstart is Install, Setup, and Use. `SPEC.md` exists and is kept current.
+16. `AGENTS.md` added, with per-developer preferences in a git-ignored `AGENTS.md.local`.
