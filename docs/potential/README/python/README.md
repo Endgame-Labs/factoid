@@ -114,6 +114,46 @@ class PlumberInvoice(Document):
 
 Override `classify` to replace the model call with Python logic, such as a header check.
 
+### Default judges
+
+Every candidate fact passes a default chain of judges before being stored. A project gets this chain without writing
+any code, and custom judges run on top of the default chain while keeping the built-in checks. The chain runs in order
+and rejects a candidate at the first failure, so the cheap judge goes first.
+
+| Judge | Responsibility |
+| --- | --- |
+| `nli` | Small entailment model. Checks that the cited passage entails the sentence. Cheap, so `nli` runs first. |
+| `jev_floors` | Six yes-or-no questions in one choice-model call. Each probability has a floor; all six must pass. |
+
+Each `jev_floors` answer is a probability that must clear the floor for that question:
+
+- `grounded`: The cited passages support the sentence.
+- `attribution`: Who said the sentence, and whether the sentence was certain or negated, match the source.
+- `self_contained`: The sentence names its subject, with no unresolved pronouns.
+- `atomic`: The sentence states one claim.
+- `useful`: The fact is worth keeping.
+- `distinct`: No stored fact already states the same claim.
+
+Factorial calibrates these floors on labeled data; no floor uses a fixed `0.5`. A candidate that narrowly fails gets
+one repair (a rewording), and Factorial judges the repaired candidate again. A project can change one floor or add a
+custom judge without replacing the default chain:
+
+```python
+# facts.py
+from factorial import Fact
+from factorial.judges import JevFloors, Nli
+from harbor_realty.judges import FirstHandJudge
+
+class HarborFact(Fact):
+    """Shared defaults for this project's fact types."""
+    judges = [Nli, JevFloors(useful=0.8)]          # the default chain, with one floor raised
+
+class HeaterStatus(HarborFact):
+    judges = [*HarborFact.judges, FirstHandJudge]  # the chain, then a judge of our own
+```
+
+`factorial eval --vary judge=none,nli,jev_floors` compares chains on the same documents.
+
 ### Model calls
 
 Hooks call models through four methods on `self`. Factorial logs, prices, budgets, and replays these calls, and includes

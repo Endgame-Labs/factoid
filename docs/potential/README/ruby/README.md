@@ -135,6 +135,46 @@ end
 
 Override `classify` to replace the model call with Ruby code, such as a header rule.
 
+### Default judges
+
+Every candidate fact passes a default chain of judges before being stored. A project gets this chain without
+writing any code, and a custom judge appends to the chain without replacing the defaults. The chain runs in
+order and rejects the candidate at the first failure, so the cheap judge runs first.
+
+| Judge | Check |
+| --- | --- |
+| `nli` | A small, cheap entailment model. Runs first and checks that the cited passage entails the sentence. |
+| `jev_floors` | Six yes-or-no questions in one choice-model call; all six probabilities must pass their floors. |
+
+Each `jev_floors` answer is a probability, each question has its own floor, and all six questions must pass:
+
+- `grounded`: The cited passages support the sentence.
+- `attribution`: Who stated the claim, and whether the claim was certain or negated, match the source.
+- `self_contained`: The sentence names its subject, with no unresolved pronouns.
+- `atomic`: The sentence states one claim.
+- `useful`: The fact is worth keeping.
+- `distinct`: No stored fact already states the claim.
+
+Floors come from calibration on labeled data; Factorial does not use a fixed 0.5 cutoff. A candidate that
+narrowly fails gets one repair (a rewording) and is judged again.
+
+A project can change one floor or add a judge without replacing the default chain:
+
+```ruby
+# app/facts/application_fact.rb
+class ApplicationFact < Factorial::Fact
+  judges :nli, :jev_floors      # the default chain, written out
+  floor :useful, 0.8            # one floor raised
+end
+
+# app/facts/heater_status.rb
+class HeaterStatus < ApplicationFact
+  judges FirstHandJudge         # runs after the inherited chain
+end
+```
+
+`factorial eval --vary judge=none,nli,jev_floors` compares judge chains on the same documents.
+
 ### Model calls
 
 Hooks call models through four methods. Factorial logs, prices, budgets, and replays these calls, and includes each
