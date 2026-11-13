@@ -1,0 +1,2 @@
+# Per-developer files: local notes, logs, and overrides. Never commit these.
+*.local
