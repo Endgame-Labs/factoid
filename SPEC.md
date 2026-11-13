@@ -264,11 +264,16 @@ work and needs evals before any claim about its quality.
   `auth.json` under `~/.hermes/`, with `HERMES_HOME` behind its profiles):
   - User level, `~/.factoid/` (relocated by `FACTOID_HOME`): `.env` holds API keys, written by `factoid keys set` with
     owner-only permissions. No keychain.
-  - Project level, in the repo: `settings.py` holds every non-secret setting and is committed. `.env.local` holds keys
-    or overrides for this one project, and is ignored by git through the `*.local` rule. Data (the store and indexes)
-    goes in a git-ignored directory in the project unless `settings.py` points elsewhere.
-  - Precedence, highest first: a real environment variable, the project's `.env.local`, `~/.factoid/.env`, and then
-    the defaults in `settings.py`.
+  - Project level, in the repo: `settings.py` holds every non-secret setting and is committed. Data (the store and
+    indexes) goes in a git-ignored directory in the project unless `settings.py` points elsewhere.
+  - Per-project keys: different projects may need different keys (Kyle). Store them in the user's home, keyed by a
+    stable project id, at `~/.factoid/projects/<id>/.env`. `factoid new` writes the id into the project, and
+    `factoid keys set <provider> --project` writes there. Do not key by absolute path: a moved or renamed checkout
+    would lose its keys, and two checkouts of one project would each need setup. Keeping keys in the home directory
+    also keeps secrets out of the working tree, where coding agents and build tools read files. (A git-ignored
+    `.env.local` in the project is the alternative, and is simpler but puts the secret in the tree.)
+  - Precedence, highest first: a real environment variable, the project's keys, `~/.factoid/.env`, and then the
+    defaults in `settings.py`.
   - A provider can set a base URL and run with no key, for gateways that inject credentials (such as exe.dev
     integrations).
 - Default providers: TypeSafe (Jev) for the choice model, Fireworks for the generative model, and OpenAI for
