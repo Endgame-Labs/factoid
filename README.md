@@ -40,8 +40,8 @@ harbor_realty/
 ```
 
 A `Fact` subclass adds an optional typed slot (`entity`, field, and value). Dedup, supersede, and contradiction run on
-write at ingest. By default, a newer value supersedes an older one for the same entity and field. Override a method to change
-that rule.
+write at ingest. By default, a newer value supersedes an older one for the same entity and field. Override a method
+to change that rule.
 
 ```python
 # facts.py
