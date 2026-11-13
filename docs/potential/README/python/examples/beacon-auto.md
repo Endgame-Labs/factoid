@@ -11,7 +11,7 @@ flags facts that disagree. People and agents can access these facts through a CL
 ## Core ideas
 
 - **Facts are what a reader reads.** Queries return atomic sentences with provenance. On dialogue benchmarks, reading
-  facts beat chunk retrieval at about a seventh of the read tokens (see [docs/prior-art.md](docs/prior-art.md)).
+  facts beat chunk retrieval at about a seventh of the read tokens (see [docs/prior-art.md](../../../../prior-art.md)).
 - **Models never write evidence.** The extractor cites numbered source passages, and deterministic code attaches the
   exact quote, speaker, and timestamp.
 - **History is the truth.** Deduplication, superseding, and contradiction run at ingest and append to an event log
@@ -202,5 +202,5 @@ a prompt marks the facts it produced as stale.
 
 ## Next steps
 
-Start with [docs/mental-model.md](docs/mental-model.md), and then read [docs/README.md](docs/README.md). Note that
-[docs/config.md](docs/config.md) and [docs/plugins.md](docs/plugins.md) still describe the older single-YAML design.
+Start with [docs/mental-model.md](../../../../mental-model.md), and then read [docs/README.md](../../../../README.md). Note that
+[docs/config.md](../../../../config.md) and [docs/plugins.md](../../../../plugins.md) still describe the older single-YAML design.

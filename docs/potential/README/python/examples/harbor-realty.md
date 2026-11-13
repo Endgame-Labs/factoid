@@ -157,7 +157,7 @@ and binds the varied attribute or property for that run, leaving your Python fil
 
 - **Facts are what a reader reads.** Readers and agents receive short, self-contained sentences within a token budget.
   On dialogue benchmarks, fact retrieval beat chunk retrieval at about a seventh of the read tokens (see
-  [docs/prior-art.md](docs/prior-art.md)).
+  [docs/prior-art.md](../../../../prior-art.md)).
 - **Models never write evidence.** During extraction, the model cites numbered passages from the segmented document, and
   Factorial's own code attaches the exact quote, speaker, and timestamp.
 - **History is the truth.** Every write appends to an immutable event log (`added`, `superseded`, `contradicted`,
@@ -220,6 +220,6 @@ slow work at import time.
 
 ## Further reading
 
-Start with [docs/mental-model.md](docs/mental-model.md), and then read [docs/README.md](docs/README.md). Note that
-[docs/config.md](docs/config.md) and [docs/plugins.md](docs/plugins.md) still describe the older single-YAML design and
+Start with [docs/mental-model.md](../../../../mental-model.md), and then read [docs/README.md](../../../../README.md). Note that
+[docs/config.md](../../../../config.md) and [docs/plugins.md](../../../../plugins.md) still describe the older single-YAML design and
 will be updated next.

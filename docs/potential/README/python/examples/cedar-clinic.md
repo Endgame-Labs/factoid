@@ -10,7 +10,7 @@ MCP.
 ## Core ideas
 
 - **Facts are what a reader reads.** Queries return compact sentences with provenance. On dialogue benchmarks, fact
-  retrieval beat chunk retrieval at about a seventh of the read tokens (see [docs/prior-art.md](docs/prior-art.md)).
+  retrieval beat chunk retrieval at about a seventh of the read tokens (see [docs/prior-art.md](../../../../prior-art.md)).
 - **Models never write evidence.** An extractor cites numbered passages from the segmented document, and deterministic
   code attaches the exact quote, speaker, and timestamp.
 - **History is the truth.** Ingest writes to an append-only event log (`added`, `superseded`, `contradicted`,
@@ -224,6 +224,6 @@ teams must keep heavy business logic out of class definitions.
 
 ## Further reading
 
-Start with [docs/mental-model.md](docs/mental-model.md), then read [docs/README.md](docs/README.md). Note that
-[docs/config.md](docs/config.md) and [docs/plugins.md](docs/plugins.md) still describe the older single-YAML design and
+Start with [docs/mental-model.md](../../../../mental-model.md), then read [docs/README.md](../../../../README.md). Note that
+[docs/config.md](../../../../config.md) and [docs/plugins.md](../../../../plugins.md) still describe the older single-YAML design and
 have not been updated yet.
