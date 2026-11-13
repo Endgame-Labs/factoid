@@ -2,7 +2,8 @@
 
 > **Status: Design draft.** Nothing is built yet. These docs will settle the v1 design before we write code.
 
-Factoid turns `Documents` into `Facts`.  A fact is a short, self-contained sentence. Each fact is tied to an exact location in the source document.
+Factoid turns `Documents` into `Facts`.  A fact is a short, self-contained sentence, devoid of filler and explicit in its language (no pronouns, etc).
+Each fact is tied to an exact location in the source document.
 As new documents arrive, Factoid updates its set of facts. It retires outdated facts, merges duplicate
 facts, and flags facts that disagree.
 
