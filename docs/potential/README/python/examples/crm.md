@@ -5,20 +5,20 @@ about accounts, people, and deals. It is modeled on `endgame-wiki`'s default rev
 
 ## Fifteen minutes
 
-Install Factorial with `uv` on Python 3.13+, enter the example directory, ingest the sample fixture set, and run a
+Install Factoid with `uv` on Python 3.13+, enter the example directory, ingest the sample fixture set, and run a
 query and an eval.
 
 ```sh
-uv tool install factorial
+uv tool install factoid
 cd examples/revenue_desk
-factorial ingest ./sample_docs
-factorial search "Acme security review"
-factorial read fact_01j9z4m8p
-factorial eval
-factorial eval --vary tag=choice,llm
+factoid ingest ./sample_docs
+factoid search "Acme security review"
+factoid read fact_01j9z4m8p
+factoid eval
+factoid eval --vary tag=choice,llm
 ```
 
-`factorial` finds `revenue_desk`'s project environment automatically and runs inside it.
+`factoid` finds `revenue_desk`'s project environment automatically and runs inside it.
 
 ## Layout
 
@@ -51,7 +51,7 @@ Accounts, people, and deals arrive from four sources under different internal ID
 
 ```python
 # entities.py
-from factorial import Entity
+from factoid import Entity
 
 class Account(Entity):
     """A customer or prospect company."""
@@ -89,7 +89,7 @@ typed facts in plain code with no model call, and `Note` relies on all base defa
 ```python
 # documents.py
 from datetime import date
-from factorial import Document, FieldCitation
+from factoid import Document, FieldCitation
 from revenue_desk.entities import Opportunity
 from revenue_desk.facts import CloseDate, DealAmount, DealStage, NextStep, RevenueFact
 
@@ -147,7 +147,7 @@ score every label in one choice-model call and keep every label at or above `0.5
 # facts.py
 from datetime import date
 from typing import Literal
-from factorial import Fact
+from factoid import Fact
 from revenue_desk.entities import Account, Opportunity
 from revenue_desk.judges import AgreedJudge
 from revenue_desk.queues import review_queue
@@ -201,7 +201,7 @@ so an unaccepted pitch on a call does not become a `NextStep`.
 ```python
 # sources.py
 import os
-from factorial.sources import FolderSource, ImapSource, JsonlSource
+from factoid.sources import FolderSource, ImapSource, JsonlSource
 from revenue_desk.documents import Call, CrmOpportunity, Email, Note
 
 crm = JsonlSource(path="./var/salesforce_opps.jsonl", document_type=CrmOpportunity)
@@ -212,7 +212,7 @@ notes = FolderSource(path="./notes", glob="**/*.md", document_type=Note)
 
 ```python
 # judges.py
-from factorial import Judge
+from factoid import Judge
 
 class AgreedJudge(Judge):
     """Accepts a NextStep only when the other party agreed to it."""
@@ -229,7 +229,7 @@ whether each speaker is on `"ours"`, `"theirs"`, or `"unknown"` side.
 
 ```jinja
 {# prompts/call/extract.md.j2 #}
-{% extends "factorial/extract.md.j2" %}
+{% extends "factoid/extract.md.j2" %}
 {% block guidance %}
 Participants: {{ speaker_brief }}
 Record what their side stated, asked for, committed to, or pushed back on.
@@ -244,7 +244,7 @@ Statements from our side pitching features or suggesting ideas are not account f
 
 ```jinja
 {# prompts/email/extract.md.j2 #}
-{% extends "factorial/extract.md.j2" %}
+{% extends "factoid/extract.md.j2" %}
 {% block guidance %}
 Skip greetings, legal footers, signatures, and quoted replies from earlier messages.
 {% endblock %}
@@ -261,15 +261,15 @@ Did both sides agree to take this step, as opposed to one speaker floating a pro
 
 ## Settings
 
-`our_domains` tells Factorial which email domains belong to Harbor so every passage speaker gets a `side` attribute
+`our_domains` tells Factoid which email domains belong to Harbor so every passage speaker gets a `side` attribute
 before hooks, prompts, and judges run.
 
 ```python
 # settings.py
 import os
-from factorial import Model, Search, Settings
-from factorial.indexes import SqliteFts
-from factorial.stores import S3Store
+from factoid import Model, Search, Settings
+from factoid.indexes import SqliteFts
+from factoid.stores import S3Store
 
 class Project(Settings):
     our_domains = ["harbor.example"]
@@ -314,7 +314,7 @@ Harbor (`harbor.example`) is working `"Acme Corp Renewal 2027"` with Priya Natar
    `Negotiation`. `CrmOpportunity.extract` runs in Python and writes `DealAmount`, `CloseDate`, and `DealStage`.
 2. **Gong call, October 8.** Priya (`theirs`) says, "we have to get through security before the board meets in
    November." A Harbor rep (`ours`) proposes a pricing workshop that nobody accepts, and Tom (`theirs`) mentions that
-   the renewal is "a hundred thousand." Factorial stores the security review fact on `acme.example` with tags
+   the renewal is "a hundred thousand." Factoid stores the security review fact on `acme.example` with tags
    `timeline` (`0.91`) and `decision_commitment` (`0.74`), rejects the workshop in `AgreedJudge`, and merges Tom's
    quote into the existing `100000` `DealAmount` fact as a second citation.
 3. **Email, October 20.** Priya writes that the board meeting moved to December 12 and Acme cannot sign before it. The

@@ -1,6 +1,6 @@
 # The mental model
 
-Factorial has three parts: a **pipeline** that turns documents into facts, a **log** that remembers everything that
+Factoid has three parts: a **pipeline** that turns documents into facts, a **log** that remembers everything that
 happened to them, and an **eval loop** that measures the pipeline. Keep these three in mind and the rest follows.
 
 ## The nouns
@@ -38,7 +38,7 @@ happened to them, and an **eval loop** that measures the pipeline. Keep these th
 | `resolve` | How does it relate to facts we already have? | `hash`, `slot` (same entity and field, newer wins), `vector-judge` |
 | `index` | Where can it be found? Not a stage of truth, a view. | `sqlite-fts`, `pgvectorscale`, `turbopuffer` |
 
-`resolve` is where Factorial does what none of its predecessors did at ingest. For each new fact it asks: have we seen
+`resolve` is where Factoid does what none of its predecessors did at ingest. For each new fact it asks: have we seen
 this (**duplicate**: keep one, link the other as corroboration), does it replace something (**supersede**), or does it
 disagree with something (**contradict**: keep both, mark both disputed). Slot facts resolve by rule: the same entity and
 field, stated later, supersede. Sentence facts resolve by retrieving their nearest neighbors and asking a judge.
@@ -55,7 +55,7 @@ Facts are never edited in place. Everything is an event appended to the log:
 {"seq":205, "type":"fact.restored",    "id":"f_a1", "actor":{"kind":"rule", "name":"resurrect"}}
 ```
 
-From the log, Factorial keeps **views**: the current state of every fact, and each search index. Views can be dropped
+From the log, Factoid keeps **views**: the current state of every fact, and each search index. Views can be dropped
 and rebuilt at any time, which gives us:
 
 1. **Undo.** Every automatic change has an actor and a reason, and reversing it is another event.
@@ -80,7 +80,7 @@ that changes only the judge replays the extraction instead of paying for it agai
 ## Staying current
 
 Every stage's settings and prompts hash into its **fingerprint**, and each fact records the fingerprints that made it.
-Change a prompt and the facts it produced become stale; `factorial rebuild --estimate` says what re-deriving them would
+Change a prompt and the facts it produced become stale; `factoid rebuild --estimate` says what re-deriving them would
 cost, and the daemon re-derives them at a pace you set. Changing *only the model* of a stage does not make facts stale
 (models are recorded on each fact, not fingerprinted), so switching to a cheaper model never forces a corpus rebuild
 by accident. A rebuild for a model change is an explicit choice.

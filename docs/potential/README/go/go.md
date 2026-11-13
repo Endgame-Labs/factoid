@@ -1,9 +1,9 @@
-# Factorial 🧮
+# Factoid 🧮
 
 > **Status: Design draft.** Nothing is built yet. We update the documentation to settle the design before writing code.
 
-Factorial turns documents into facts: short, self-contained sentences, each tied to an exact source quote, who said it,
-and when. As new documents arrive, Factorial updates its set of facts. It retires outdated facts, merges duplicate
+Factoid turns documents into facts: short, self-contained sentences, each tied to an exact source quote, who said it,
+and when. As new documents arrive, Factoid updates its set of facts. It retires outdated facts, merges duplicate
 facts, and flags facts that disagree. People and agents can access these facts through a CLI, an HTTP API, and MCP.
 
 ## Fifteen minutes
@@ -11,24 +11,24 @@ facts, and flags facts that disagree. People and agents can access these facts t
 Scaffold a Go module, generate your first types, ingest sample documents, query the index, and run an evaluation:
 
 ```sh
-factorial new acme-kb && cd acme-kb
-factorial generate source inbox --kind=imap
-factorial generate fact account_owner --slot
-factorial ingest ./testdata/threads
-factorial search "who owns the Globex renewal?"
-factorial read fact_01j9z8k2
-factorial eval
-factorial eval --vary judge=none,nli,jev-floors
+factoid new acme-kb && cd acme-kb
+factoid generate source inbox --kind=imap
+factoid generate fact account_owner --slot
+factoid ingest ./testdata/threads
+factoid search "who owns the Globex renewal?"
+factoid read fact_01j9z8k2
+factoid eval
+factoid eval --vary judge=none,nli,jev-floors
 ```
 
 ## A project is a Go module
 
-`factorial new` creates a small Go 1.25+ module with conventional packages:
+`factoid new` creates a small Go 1.25+ module with conventional packages:
 
 ```text
 acme-kb/
   go.mod
-  main.go                 # calls factorial.Main(&App{})
+  main.go                 # calls factoid.Main(&App{})
   app.go                  # models, store, index, search, judge chain
   documents/
     support_thread.go     # classify, segment, and extract rules
@@ -39,65 +39,65 @@ acme-kb/
   sources/
     inbox.go              # folder, jsonl, imap, or mcp inputs
   evals/
-    renewal.jsonl         # labeled facts for factorial eval
+    renewal.jsonl         # labeled facts for factoid eval
 ```
 
-The `factorial` CLI compiles your module into `.factorial/bin/app` whenever `.go` files change and forwards commands to
+The `factoid` CLI compiles your module into `.factoid/bin/app` whenever `.go` files change and forwards commands to
 that binary. Running `go build` produces the same standalone binary for production. Every built-in and custom component
-has a registry name, so `factorial eval --vary judge=none,nli,jev-floors` swaps the active step on `App` for each trial
+has a registry name, so `factoid eval --vary judge=none,nli,jev-floors` swaps the active step on `App` for each trial
 without editing source files.
 
 ### Shared settings (`app.go`)
 
-Embed `factorial.BaseApp` to inherit defaults, and override methods for project-wide choices. Models are named once and
+Embed `factoid.BaseApp` to inherit defaults, and override methods for project-wide choices. Models are named once and
 pinned to exact versions, and secrets come from environment variables.
 
 ```go
 package main
 
-import "github.com/factorial-hq/factorial"
+import "github.com/factoid-hq/factoid"
 
-type App struct{ factorial.BaseApp }
+type App struct{ factoid.BaseApp }
 
-func (App) Models() factorial.Models {
-	return factorial.Models{
+func (App) Models() factoid.Models {
+	return factoid.Models{
 		"fast":  "gemini-2.5-flash-2026-01",
 		"smart": "claude-sonnet-4-20250514",
 	}
 }
 
-func (App) Store() factorial.Store { return factorial.S3Store(factorial.Env("FACTORIAL_BUCKET")) }
-func (App) Index() factorial.Index { return factorial.SQLiteFTS(".factorial/index.db") }
+func (App) Store() factoid.Store { return factoid.S3Store(factoid.Env("FACTOID_BUCKET")) }
+func (App) Index() factoid.Index { return factoid.SQLiteFTS(".factoid/index.db") }
 
-func (App) Judges() []factorial.Judge {
-	return []factorial.Judge{factorial.NLI(), factorial.JEVFloors(), QuoteWindow{}}
+func (App) Judges() []factoid.Judge {
+	return []factoid.Judge{factoid.NLI(), factoid.JEVFloors(), QuoteWindow{}}
 }
 
-func (App) Search() factorial.Search {
-	return factorial.Search{Retrieve: factorial.HybridRRF, Rerank: true, BudgetTokens: 1200}
+func (App) Search() factoid.Search {
+	return factoid.Search{Retrieve: factoid.HybridRRF, Rerank: true, BudgetTokens: 1200}
 }
 ```
 
 ### Document types (`documents/support_thread.go`)
 
 Pipeline stages run in order: `classify`, `segment`, `extract`, `judge`, `repair`, `resolve`, and `tag`. Embed
-`factorial.BaseDocument` and define methods only where a document type differs from the defaults.
+`factoid.BaseDocument` and define methods only where a document type differs from the defaults.
 
 ```go
 package documents
 
-import "github.com/factorial-hq/factorial"
+import "github.com/factoid-hq/factoid"
 
-type SupportThread struct{ factorial.BaseDocument }
+type SupportThread struct{ factoid.BaseDocument }
 
-func (SupportThread) Classify() factorial.Classifier { return factorial.Rules("subject:Case #") }
-func (SupportThread) Segment() factorial.Segmenter   { return factorial.Turns() }
+func (SupportThread) Classify() factoid.Classifier { return factoid.Rules("subject:Case #") }
+func (SupportThread) Segment() factoid.Segmenter   { return factoid.Turns() }
 
-func (SupportThread) Extract(doc factorial.Doc) factorial.Extractor {
+func (SupportThread) Extract(doc factoid.Doc) factoid.Extractor {
 	if doc.TokenCount() > 8000 {
-		return factorial.Staged("smart")
+		return factoid.Staged("smart")
 	}
-	return factorial.Passages("fast")
+	return factoid.Passages("fast")
 }
 ```
 
@@ -110,10 +110,10 @@ and generics type the `Supersedes` method. Dedup, supersede, and contradiction r
 ```go
 package facts
 
-import "github.com/factorial-hq/factorial"
+import "github.com/factoid-hq/factoid"
 
 type AccountOwner struct {
-	factorial.SlotFact[AccountOwner]
+	factoid.SlotFact[AccountOwner]
 	Account string `slot:"entity"`
 	Owner   string `slot:"value" field:"account_owner"`
 }
@@ -131,14 +131,14 @@ judges.
 ```go
 package judges
 
-import "github.com/factorial-hq/factorial"
+import "github.com/factoid-hq/factoid"
 
-type QuoteWindow struct{ factorial.BaseJudge }
+type QuoteWindow struct{ factoid.BaseJudge }
 
 func (QuoteWindow) Name() string { return "quote-window" }
-func (QuoteWindow) Check(c factorial.Candidate) error {
+func (QuoteWindow) Check(c factoid.Candidate) error {
 	if len(c.Quote) > 400 {
-		return factorial.Reject("quote exceeds 400 chars")
+		return factoid.Reject("quote exceeds 400 chars")
 	}
 	return nil
 }
@@ -153,7 +153,7 @@ func (QuoteWindow) Check(c factorial.Candidate) error {
   attaches the exact quote, speaker, and timestamp.
 - **History is the truth.** Writes go to an append-only event log (`added`, `superseded`, `contradicted`, `retracted`,
   and `restored`). Current fact state and search indexes are views rebuilt from that log.
-- **Algorithm choices are made by evals.** `factorial eval` scores your pipeline against labeled JSONL sets and reports
+- **Algorithm choices are made by evals.** `factoid eval` scores your pipeline against labeled JSONL sets and reports
   quality, cost, and latency. Built-in defaults come from eval results.
 
 ## Pluggable seams
@@ -167,7 +167,7 @@ few lines of Go.
 Defining a project in Go gives you compile-time checks on slot types, autocomplete across pipeline options, and a single
 self-contained binary for local work and production deploys. Dynamic settings are ordinary Go methods that inspect the
 document or environment at runtime. Go struct embedding lacks true class inheritance, so embedded base methods cannot
-dispatch back into overridden methods on your outer struct; Factorial dispatches through interfaces at the pipeline
+dispatch back into overridden methods on your outer struct; Factoid dispatches through interfaces at the pipeline
 boundary instead, and Go adds explicit type boilerplate compared to Ruby or Python.
 
 ## Documentation

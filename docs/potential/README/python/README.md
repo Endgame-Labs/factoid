@@ -1,27 +1,27 @@
-# Factorial 🧮
+# Factoid 🧮
 
 > **Status: Design draft.** Nothing is built yet. These docs settle the design before code is written.
 
-Factorial turns documents into facts: short, self-contained sentences, each tied to an exact source quote, who said it,
-and when. As new documents arrive, Factorial updates its set of facts. It retires outdated facts, merges duplicate
+Factoid turns documents into facts: short, self-contained sentences, each tied to an exact source quote, who said it,
+and when. As new documents arrive, Factoid updates its set of facts. It retires outdated facts, merges duplicate
 facts, and flags facts that disagree. People and agents can access these facts through a CLI, an HTTP API, and MCP.
 
 ## Quickstart
 
-Install Factorial with `uv` on Python 3.13+. `factorial new` scaffolds `harbor_realty` with sample classes and evals.
+Install Factoid with `uv` on Python 3.13+. `factoid new` scaffolds `harbor_realty` with sample classes and evals.
 
 ```sh
-uv tool install factorial
-factorial new harbor_realty
+uv tool install factoid
+factoid new harbor_realty
 cd harbor_realty
-factorial ingest ./sample_docs
-factorial search "Unit 4B heater"
-factorial read fact_01j9x8k2m
-factorial eval
-factorial eval --vary judge=none,nli,jev_floors
+factoid ingest ./sample_docs
+factoid search "Unit 4B heater"
+factoid read fact_01j9x8k2m
+factoid eval
+factoid eval --vary judge=none,nli,jev_floors
 ```
 
-`uv tool install` puts `factorial` on your `PATH`. Inside a project directory, `factorial` runs in that project's
+`uv tool install` puts `factoid` on your `PATH`. Inside a project directory, `factoid` runs in that project's
 environment without `uv run` or manual activation.
 
 ## Document and fact types
@@ -62,7 +62,7 @@ Hooks support three levels of customization:
 
 ```python
 # documents.py
-from factorial import Document
+from factoid import Document
 from harbor_realty.facts import HeaterStatus, PetPolicy
 
 class TenantEmail(Document):
@@ -78,7 +78,7 @@ class TenantEmail(Document):
 ```python
 # facts.py
 from typing import Literal
-from factorial import Entity, Fact
+from factoid import Entity, Fact
 
 class HeaterStatus(Fact):
     """Whether a unit's heater works, as reported by someone who checked it."""
@@ -97,8 +97,8 @@ define its structured fields.
 ### Classification
 
 By default, `classify` uses a choice model. A choice model scores a fixed set of options in one pass and returns a
-probability per option with no generated text. To classify a document, Factorial sends one request containing all
-document classes and their docstrings. To classify a candidate fact, Factorial sends one request containing the fact
+probability per option with no generated text. To classify a document, Factoid sends one request containing all
+document classes and their docstrings. To classify a candidate fact, Factoid sends one request containing the fact
 classes listed on that document.
 
 ```python
@@ -134,14 +134,14 @@ Each `jev_floors` answer is a probability that must clear the floor for that que
 - `useful`: The fact is worth keeping.
 - `distinct`: No stored fact already states the same claim.
 
-Factorial calibrates these floors on labeled data; no floor uses a fixed `0.5`. A candidate that narrowly fails gets
-one repair (a rewording), and Factorial judges the repaired candidate again. A project can change one floor or add a
+Factoid calibrates these floors on labeled data; no floor uses a fixed `0.5`. A candidate that narrowly fails gets
+one repair (a rewording), and Factoid judges the repaired candidate again. A project can change one floor or add a
 custom judge without replacing the default chain:
 
 ```python
 # facts.py
-from factorial import Fact
-from factorial.judges import JevFloors, Nli
+from factoid import Fact
+from factoid.judges import JevFloors, Nli
 from harbor_realty.judges import FirstHandJudge
 
 class HarborFact(Fact):
@@ -152,11 +152,11 @@ class HeaterStatus(HarborFact):
     judges = [*HarborFact.judges, FirstHandJudge]  # the chain, then a judge of our own
 ```
 
-`factorial eval --vary judge=none,nli,jev_floors` compares chains on the same documents.
+`factoid eval --vary judge=none,nli,jev_floors` compares chains on the same documents.
 
 ### Model calls
 
-Hooks call models through four methods on `self`. Factorial logs, prices, budgets, and replays these calls, and includes
+Hooks call models through four methods on `self`. Factoid logs, prices, budgets, and replays these calls, and includes
 each prompt in the step's fingerprint.
 
 | Method | Returns | Model kind |
@@ -171,9 +171,9 @@ Define models once in `settings.py` with pinned versions. Read secrets from envi
 ```python
 # settings.py
 import os
-from factorial import Model, Search, Settings
-from factorial.indexes import SqliteFts
-from factorial.stores import S3Store
+from factoid import Model, Search, Settings
+from factoid.indexes import SqliteFts
+from factoid.stores import S3Store
 
 class Project(Settings):
     store = S3Store(bucket="harbor-facts", key=os.environ["S3_KEY"])
@@ -186,7 +186,7 @@ class Project(Settings):
     search = Search(retrieve="hybrid-rrf", budget_tokens=1500)
 ```
 
-Eval runs can swap hook strategies from the CLI without modifying project files. `factorial eval --vary
+Eval runs can swap hook strategies from the CLI without modifying project files. `factoid eval --vary
 classify=choice,llm,rules` runs the same documents under each strategy and compares quality, cost, and latency.
 
 ## Prompts
@@ -196,7 +196,7 @@ Prompts are Jinja templates. Every model-backed hook has a built-in template tha
 `TenantEmail`. Project templates can also extend a built-in template and override individual blocks.
 
 ```jinja
-{# factorial/extract.md.j2, the built-in extract template #}
+{# factoid/extract.md.j2, the built-in extract template #}
 Extract facts from this {{ document.type }}, dated {{ document.at }}.
 {% block guidance %}{% endblock %}
 {% for fact_type in fact_types %}
@@ -210,7 +210,7 @@ Cite passages by number. Do not copy quote text.
 
 ```jinja
 {# prompts/tenant_email/extract.md.j2 #}
-{% extends "factorial/extract.md.j2" %}
+{% extends "factoid/extract.md.j2" %}
 {% block guidance %}
 Earlier messages in this thread: {{ thread }}
 Skip greetings, signatures, and quoted replies.
@@ -227,14 +227,14 @@ Fact classes also support Python hooks that need no model. Override `validate` t
 ## Usage
 
 - **Standalone CLI project.** Manage a RAG corpus in its own directory, tune retrieval units, and evaluate prompt,
-  extractor, and judge choices with `factorial ingest`, `factorial search`, and `factorial eval`.
+  extractor, and judge choices with `factoid ingest`, `factoid search`, and `factoid eval`.
 - **Agent memory over MCP.** Connect `imap`, `folder`, `jsonl`, and `mcp` sources for mail, calls, notes, and chats,
-  then expose fact search and writes to an agent through `factorial mcp` or the CLI.
-- **Python library or HTTP service.** Run `factorial serve` as an HTTP sidecar, or `import factorial` inside an
-  application and pass classes to `Factorial(...)`:
+  then expose fact search and writes to an agent through `factoid mcp` or the CLI.
+- **Python library or HTTP service.** Run `factoid serve` as an HTTP sidecar, or `import factoid` inside an
+  application and pass classes to `Factoid(...)`:
 
 ```python
-from factorial import Document, Fact, Factorial, Model, Settings
+from factoid import Document, Fact, Factoid, Model, Settings
 
 class PlanTier(Fact):
     """The plan an account is on."""
@@ -247,7 +247,7 @@ class AccountNote(Document):
 class ServiceSettings(Settings):
     models = {"generate": Model("fireworks/glm-5p3-flash"), "choice": Model("typesafe/jev-1.13.0")}
 
-facts = Factorial(settings=ServiceSettings, documents=[AccountNote])
+facts = Factoid(settings=ServiceSettings, documents=[AccountNote])
 facts.ingest_text("Acme Corp upgraded to Enterprise.", document_type=AccountNote)
 hits = facts.search("Acme Corp plan")               # fact sentences with source quotes
 tier = PlanTier.current(entity="Acme Corp").tier   # typed attribute value
@@ -258,13 +258,13 @@ tier = PlanTier.current(entity="Acme Corp").tier   # typed attribute value
 - **Fact-level retrieval.** Search returns short, self-contained sentences within a token budget. On dialogue, fact
   retrieval outperformed chunk retrieval while using about one-seventh of the read tokens
   ([docs/prior-art.md](../../../prior-art.md)).
-- **Deterministic provenance.** The extractor cites numbered passages, and Factorial's code attaches the exact quote,
+- **Deterministic provenance.** The extractor cites numbered passages, and Factoid's code attaches the exact quote,
   speaker, and timestamp.
 - **Append-only event log.** Writes append `added`, `superseded`, `contradicted`, `retracted`, and `restored` events to
   a log. Current state and search indexes (`sqlite-fts`, `pgvectorscale`, and `turbopuffer`) are views rebuilt from that
   log.
 - **Eval-selected defaults.** Default strategies across `classify`, `segment`, `extract`, `judge`, `repair`, `resolve`,
-  and `tag` come from eval results. `factorial eval` measures accuracy, cost, and latency on labeled data.
+  and `tag` come from eval results. `factoid eval` measures accuracy, cost, and latency on labeled data.
 - **Pluggable backends.** Storage (local folders and S3-compatible buckets), sources (`folder`, `jsonl`, `imap`, and
   `mcp`), models, and judges share small base classes that projects can subclass.
 

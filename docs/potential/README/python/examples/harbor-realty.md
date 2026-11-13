@@ -4,16 +4,16 @@
 
 ## Fifteen minutes
 
-Install Factorial with `uv` on Python 3.13+, ingest the sample files, search stored facts, and run the evals.
+Install Factoid with `uv` on Python 3.13+, ingest the sample files, search stored facts, and run the evals.
 
 ```sh
-uv tool install factorial
+uv tool install factoid
 cd harbor_realty
-factorial ingest ./sample_docs
-factorial search "Unit 4B heater"
-factorial read fact_01j9x8k2m
-factorial eval
-factorial eval --vary judge=none,nli,direct_inspection
+factoid ingest ./sample_docs
+factoid search "Unit 4B heater"
+factoid read fact_01j9x8k2m
+factoid eval
+factoid eval --vary judge=none,nli,direct_inspection
 ```
 
 ## Layout
@@ -42,7 +42,7 @@ summarizes quoted messages before extracting, and `PlumberInvoice` sends its hea
 
 ```python
 # documents.py
-from factorial import Document
+from factoid import Document
 from harbor_realty.facts import HeaterStatus, MonthlyRent, PetPolicy
 
 class LeaseAgreement(Document):
@@ -73,7 +73,7 @@ Typed attributes define the slot; code reads active values with `PetPolicy.curre
 ```python
 # facts.py
 from typing import Literal
-from factorial import Entity, Fact
+from factoid import Entity, Fact
 
 class MonthlyRent(Fact):
     """The monthly rent in US dollars for an apartment unit under a signed lease."""
@@ -101,7 +101,7 @@ Leases arrive in a local folder, and mail arrives over IMAP. `DirectInspection` 
 ```python
 # sources.py
 import os
-from factorial.sources import FolderSource, ImapSource
+from factoid.sources import FolderSource, ImapSource
 
 class LeaseFolder(FolderSource):
     """Directory where staff drop signed lease PDFs."""
@@ -116,7 +116,7 @@ class OfficeInbox(ImapSource):
 
 ```python
 # judges.py
-from factorial import Judge
+from factoid import Judge
 
 class DirectInspection(Judge):
     """Accepts facts stated in a signed lease or reported by someone who inspected the unit."""
@@ -138,7 +138,7 @@ Summarize earlier messages in two sentences, noting the unit and any open repair
 
 ```jinja
 {# prompts/tenant_email/extract.md.j2 #}
-{% extends "factorial/extract.md.j2" %}
+{% extends "factoid/extract.md.j2" %}
 {% block guidance %}
 Earlier thread: {{ thread }}. Extract from the newest message only; skip greetings, signatures, and quoted replies.
 {% endblock %}
@@ -146,7 +146,7 @@ Earlier thread: {{ thread }}. Extract from the newest message only; skip greetin
 
 ```jinja
 {# prompts/heater_status/resolve.md.j2 #}
-{% extends "factorial/resolve.md.j2" %}
+{% extends "factoid/resolve.md.j2" %}
 {% block guidance %}
 Repair invoices dated after a leak report supersede that report. Opposing claims on one visit are contradicted.
 {% endblock %}
@@ -163,9 +163,9 @@ Quote: "{{ fact.quote }}"
 ```python
 # settings.py
 import os
-from factorial import Model, Search, Settings
-from factorial.indexes import SqliteFts
-from factorial.stores import S3Store
+from factoid import Model, Search, Settings
+from factoid.indexes import SqliteFts
+from factoid.stores import S3Store
 
 class Project(Settings):
     store = S3Store(bucket="harbor-realty-facts", key=os.environ["S3_KEY"])
@@ -187,7 +187,7 @@ class Project(Settings):
    `("Unit 4B", "pets_allowed", False)` as a **duplicate** backed by quotes from both leases.
 3. **`2026-11-10` (`inv_8841.pdf`, `PlumberInvoice`).** Bay Plumbing bills for replacing a Unit 4B radiator valve and
    notes the heater was left working. `classify_view` sends the header and totals to the classifier, `DirectInspection`
-   approves the quote, and Factorial adds `("Unit 4B", "heater_status", "working")`.
+   approves the quote, and Factoid adds `("Unit 4B", "heater_status", "working")`.
 4. **`2026-11-10` (`email_412.eml`, `TenantEmail`).** That evening the tenant emails that water is pooling under the
    Unit 4B heater after the plumber left. `extract` summarizes the thread and pulls
    `("Unit 4B", "heater_status", "leaking")`. Per `heater_status/resolve.md.j2`, `resolve` flags both `HeaterStatus`

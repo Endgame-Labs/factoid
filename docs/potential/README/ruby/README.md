@@ -1,27 +1,27 @@
-# Factorial 🧮
+# Factoid 🧮
 
 > **Status: Design draft.** Nothing is built yet. These docs are updated to settle the design before code is written.
 
-Factorial turns documents into facts: short, self-contained sentences, each tied to an exact source quote, who said it,
-and when. As new documents arrive, Factorial updates its set of facts. It retires outdated facts, merges duplicate
+Factoid turns documents into facts: short, self-contained sentences, each tied to an exact source quote, who said it,
+and when. As new documents arrive, Factoid updates its set of facts. It retires outdated facts, merges duplicate
 facts, and flags facts that disagree. People and agents can access these facts through a CLI, an HTTP API, and MCP.
 
 ## Getting started
 
-Install the gem on Ruby 3.4+. `factorial new` creates `harbor_realty` with sample classes and evals.
+Install the gem on Ruby 3.4+. `factoid new` creates `harbor_realty` with sample classes and evals.
 
 ```sh
-gem install factorial
-factorial new harbor_realty
+gem install factoid
+factoid new harbor_realty
 cd harbor_realty
-factorial ingest ./sample_docs
-factorial search "Unit 4B heater"
-factorial read fact_01j9x8k2m
-factorial eval
-factorial eval --vary judge=none,nli,jev_floors
+factoid ingest ./sample_docs
+factoid search "Unit 4B heater"
+factoid read fact_01j9x8k2m
+factoid eval
+factoid eval --vary judge=none,nli,jev_floors
 ```
 
-`gem install` adds the `factorial` executable to your path. Inside a project directory, `factorial` loads that
+`gem install` adds the `factoid` executable to your path. Inside a project directory, `factoid` loads that
 project's bundle without `bundle exec`.
 
 ## Document and fact types
@@ -59,7 +59,7 @@ harbor_realty/
 └── evals/leases_and_repairs.jsonl
 ```
 
-Each class lives in a file matching its name. Factorial loads classes by name without `require` statements.
+Each class lives in a file matching its name. Factoid loads classes by name without `require` statements.
 
 Each pipeline step is a hook on `Document` or `Fact`:
 
@@ -108,7 +108,7 @@ Base classes hold shared defaults that subclasses inherit:
 
 ```ruby
 # app/facts/application_fact.rb
-class ApplicationFact < Factorial::Fact
+class ApplicationFact < Factoid::Fact
   judges :nli, :jev_floors
   resolve :hash, :slot, :vector_judge
 end
@@ -117,8 +117,8 @@ end
 ### Classification
 
 By default, `classify` uses a fast choice model that returns a probability for each option in one pass without
-generating text. To classify a document, Factorial sends one request whose options are the project's document classes
-and their definitions. To classify a candidate fact, Factorial sends one request with the fact classes that the
+generating text. To classify a document, Factoid sends one request whose options are the project's document classes
+and their definitions. To classify a candidate fact, Factoid sends one request with the fact classes that the
 document extracts. Adding classes adds options to that request without adding model calls.
 
 ```ruby
@@ -155,14 +155,14 @@ Each `jev_floors` answer is a probability, each question has its own floor, and 
 - `useful`: The fact is worth keeping.
 - `distinct`: No stored fact already states the claim.
 
-Floors come from calibration on labeled data; Factorial does not use a fixed 0.5 cutoff. A candidate that
+Floors come from calibration on labeled data; Factoid does not use a fixed 0.5 cutoff. A candidate that
 narrowly fails gets one repair (a rewording) and is judged again.
 
 A project can change one floor or add a judge without replacing the default chain:
 
 ```ruby
 # app/facts/application_fact.rb
-class ApplicationFact < Factorial::Fact
+class ApplicationFact < Factoid::Fact
   judges :nli, :jev_floors      # the default chain, written out
   floor :useful, 0.8            # one floor raised
 end
@@ -173,11 +173,11 @@ class HeaterStatus < ApplicationFact
 end
 ```
 
-`factorial eval --vary judge=none,nli,jev_floors` compares judge chains on the same documents.
+`factoid eval --vary judge=none,nli,jev_floors` compares judge chains on the same documents.
 
 ### Model calls
 
-Hooks call models through four methods. Factorial logs, prices, budgets, and replays these calls, and includes each
+Hooks call models through four methods. Factoid logs, prices, budgets, and replays these calls, and includes each
 prompt in the step's fingerprint.
 
 | Method | Returns | Model kind |
@@ -191,7 +191,7 @@ Models are configured in `config/application.rb` and pinned to exact versions. S
 
 ```ruby
 # config/application.rb
-class HarborRealty < Factorial::Application
+class HarborRealty < Factoid::Application
   store :s3, bucket: "harbor-facts", key: ENV.fetch("S3_KEY")
   index :sqlite_fts, path: "./var/index.db"
 
@@ -210,7 +210,7 @@ HarborRealty.configure do
 end
 ```
 
-Eval runs can swap a hook's strategy without editing project files. `factorial eval --vary classify=choice,llm,rules`
+Eval runs can swap a hook's strategy without editing project files. `factoid eval --vary classify=choice,llm,rules`
 runs the documents once per setting and compares quality, cost, and latency.
 
 ## Sources and judges
@@ -220,7 +220,7 @@ accept or reject a candidate fact.
 
 ```ruby
 # app/sources/repair_inbox.rb
-class RepairInbox < Factorial::Source
+class RepairInbox < Factoid::Source
   adapter :imap, host: "imap.harbor.example", password: ENV.fetch("IMAP_PASSWORD")
   yields TenantEmail
 end
@@ -228,7 +228,7 @@ end
 
 ```ruby
 # app/judges/first_hand_judge.rb
-class FirstHandJudge < Factorial::Judge
+class FirstHandJudge < Factoid::Judge
   # Accept a heater report only when the speaker checked the heater themselves.
   def judge(candidate)
     decide("first_hand", candidate:) > 0.7 ? accept : reject("the speaker did not check the heater")
@@ -246,7 +246,7 @@ Prompts are ERB templates composed of named parts. Every model-backed hook has a
 every document type, and `app/prompts/tenant_email/_guidance.md.erb` replaces the `guidance` part for `TenantEmail`.
 
 ```erb
-<%# factorial/extract.md.erb, the built-in extract template %>
+<%# factoid/extract.md.erb, the built-in extract template %>
 Extract facts from this <%= document.type %>, dated <%= document.at %>.
 <%= render "guidance" %>
 <% fact_types.each do |fact_type| %>
@@ -294,27 +294,27 @@ return structured values: `HeaterStatus.current(unit: "Unit 4B").status` returns
 ## Usage
 
 - **CLI project.** Manage a RAG corpus in a project directory, tune retrieval units, and evaluate prompt, extractor,
-  and judge choices with `factorial ingest`, `factorial search`, and `factorial eval`.
+  and judge choices with `factoid ingest`, `factoid search`, and `factoid eval`.
 - **Agent memory over MCP.** Connect `imap`, `folder`, `jsonl`, and `mcp` sources for mail, calls, notes, and chats,
-  then expose fact search and writes to an agent over `factorial mcp` or the CLI.
-- **Library or HTTP service.** Run `factorial serve` as an HTTP sidecar, or `require "factorial"` inside an existing
-  service and pass classes directly to `Factorial.new`:
+  then expose fact search and writes to an agent over `factoid mcp` or the CLI.
+- **Library or HTTP service.** Run `factoid serve` as an HTTP sidecar, or `require "factoid"` inside an existing
+  service and pass classes directly to `Factoid.new`:
 
 ```ruby
-require "factorial"
+require "factoid"
 
-class PlanTier < Factorial::Fact
+class PlanTier < Factoid::Fact
   definition "The plan an account is on."
   slot :account, Entity
   slot :tier, String
 end
 
-class AccountNote < Factorial::Document
+class AccountNote < Factoid::Document
   definition "A note an account manager wrote about a customer."
   extracts PlanTier
 end
 
-facts = Factorial.new(
+facts = Factoid.new(
   documents: [AccountNote],
   models: { generate: "fireworks/glm-5p3-flash", choice: "typesafe/jev-1.13.0" }
 )
@@ -327,12 +327,12 @@ tier = PlanTier.current(account: "Acme Corp").tier  # a typed value
 
 - **Fact retrieval.** Search returns short, self-contained sentences within a token budget. On dialogue, fact retrieval
   beat chunk retrieval at about one-seventh of the read tokens ([docs/prior-art.md](../../../prior-art.md)).
-- **Passage citations.** The extractor cites numbered passages, and Factorial attaches the exact quote, speaker, and
+- **Passage citations.** The extractor cites numbered passages, and Factoid attaches the exact quote, speaker, and
   timestamp in code.
 - **Event log.** Writes append events (`added`, `superseded`, `contradicted`, `retracted`, and `restored`) to a log.
   Current state and search indexes (`sqlite_fts`, `pgvectorscale`, and `turbopuffer`) are views rebuilt from that log.
 - **Evaluations.** Defaults across `classify`, `segment`, `extract`, `judge`, `repair`, `resolve`, and `tag` come from
-  eval results. `factorial eval` scores quality, cost, and latency on labeled data.
+  eval results. `factoid eval` scores quality, cost, and latency on labeled data.
 - **Extension points.** Storage (local folders and S3-compatible buckets), sources (`folder`, `jsonl`, `imap`, and
   `mcp`), models, and judges share small base classes that projects subclass.
 
@@ -342,8 +342,8 @@ Class macros (`definition`, `slot`, `extracts`, and `judges`) keep type declarat
 `ApplicationFact` put project defaults in one place. Callbacks, blocks, and `super` let classes wrap default steps with
 custom code. Loading classes by file name removes `require` statements.
 
-Costs of this design: Factorial requires a Ruby runtime, so Python NLP and model libraries cannot run in process. Ruby
-lacks docstrings and typed attributes, so Factorial provides `definition` and `slot` macros. ERB lacks template
+Costs of this design: Factoid requires a Ruby runtime, so Python NLP and model libraries cannot run in process. Ruby
+lacks docstrings and typed attributes, so Factoid provides `definition` and `slot` macros. ERB lacks template
 inheritance, so prompt overrides target named parts. Configuration is Ruby code evaluated at load time, so external
 tools must load the project to read its settings.
 

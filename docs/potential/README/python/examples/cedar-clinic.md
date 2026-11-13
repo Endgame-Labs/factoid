@@ -1,19 +1,19 @@
 # Example: cedar_clinic
 
-`cedar_clinic` is a Factorial project for a primary care clinic that tracks patient facts across visits and labs.
+`cedar_clinic` is a Factoid project for a primary care clinic that tracks patient facts across visits and labs.
 
 ## Fifteen minutes
 
-Install Factorial with `uv` on Python 3.13+, open the project, ingest sample charts, search facts, and run evals.
+Install Factoid with `uv` on Python 3.13+, open the project, ingest sample charts, search facts, and run evals.
 
 ```sh
-uv tool install factorial
+uv tool install factoid
 cd cedar_clinic
-factorial ingest ./sample_docs
-factorial search "patient_402 lisinopril"
-factorial read fact_01j9z4m8p
-factorial eval
-factorial eval --vary judge=none,nli,clinical_floors
+factoid ingest ./sample_docs
+factoid search "patient_402 lisinopril"
+factoid read fact_01j9z4m8p
+factoid eval
+factoid eval --vary judge=none,nli,clinical_floors
 ```
 
 ## Layout
@@ -43,7 +43,7 @@ cedar_clinic/
 
 ```python
 # documents.py
-from factorial import Document
+from factoid import Document
 from cedar_clinic.facts import BloodType, MedicationDose, SmokingStatus
 
 class IntakeForm(Document):
@@ -75,7 +75,7 @@ milligram doses, and `SmokingStatus.supersedes` prevents a `"never"` claim from 
 ```python
 # facts.py
 from typing import Literal
-from factorial import Entity, Fact
+from factoid import Entity, Fact
 
 class MedicationDose(Fact):
     """A patient's prescribed daily dose of a medication, measured in milligrams."""
@@ -109,7 +109,7 @@ whether each candidate fact is backed by a direct order, lab result, or patient 
 
 ```python
 # sources.py
-from factorial.sources import FolderSource, JsonlSource
+from factoid.sources import FolderSource, JsonlSource
 
 class VisitCharts(FolderSource):
     """Scanned intake questionnaires and signed clinician notes from office visits."""
@@ -122,7 +122,7 @@ class LabFeed(JsonlSource):
 
 ```python
 # judges.py
-from factorial import Judge
+from factoid import Judge
 
 class ClinicalFloors(Judge):
     """Filters out clinical claims that come from family history, questions, or rule-out notes."""
@@ -147,7 +147,7 @@ Ignore family history and declined treatments.
 
 ```jinja
 {# prompts/doctor_note/extract.md.j2 #}
-{% extends "factorial/extract.md.j2" %}
+{% extends "factoid/extract.md.j2" %}
 {% block guidance %}
 Medication summary for this visit: {{ med_summary }}
 Record active daily doses in milligrams. Skip discontinued drugs and as-needed doses.
@@ -168,9 +168,9 @@ Return "documented" for a direct order, lab result, or patient report, "hedged" 
 ```python
 # settings.py
 import os
-from factorial import Model, Search, Settings
-from factorial.indexes import SqliteFts
-from factorial.stores import S3Store
+from factoid import Model, Search, Settings
+from factoid.indexes import SqliteFts
+from factoid.stores import S3Store
 
 class ClinicSettings(Settings):
     store = S3Store(bucket="cedar-clinic-facts", key=os.environ["S3_KEY"])
@@ -188,11 +188,11 @@ class ClinicSettings(Settings):
 Four records for `patient_402` arrive over three months:
 
 1. **2026-01-12, `LabReport` (`speaker="metro_lab"`):** Reports `"ABO/Rh: O negative."` `LabReport.classify_view`
-   sends the header and result lines to the choice model, which scores above `0.85`. Factorial logs `added` for
+   sends the header and result lines to the choice model, which scores above `0.85`. Factoid logs `added` for
    `BloodType(patient="patient_402", blood_type="O-")`.
 2. **2026-01-15, `DoctorNote` (`speaker="dr_patel"`):** Notes `"Start lisinopril 10 mg daily. Former smoker, quit in
    2018."` `DoctorNote.extract` summarizes the new order, `MedicationDose.validate` accepts `10`, and `ClinicalFloors`
-   marks both `"documented"`. Factorial logs `added` for `MedicationDose("patient_402", "lisinopril", 10)` and
+   marks both `"documented"`. Factoid logs `added` for `MedicationDose("patient_402", "lisinopril", 10)` and
    `SmokingStatus("patient_402", "former")`.
 3. **2026-04-09, `IntakeForm` (`speaker="patient_402"`):** On check-in, the patient writes blood type `"O-"` and
    checks `"Never smoked."` `resolve` merges the `"O-"` `BloodType` as a duplicate, attaching the patient's quote,

@@ -1,12 +1,12 @@
-# Config: `factorial.yml`
+# Config: `factoid.yml`
 
 ## The project layout
 
-`factorial new acme-facts` makes this, and every command assumes it:
+`factoid new acme-facts` makes this, and every command assumes it:
 
 ```
 acme-facts/
-  factorial.yml      # the one config file
+  factoid.yml      # the one config file
   corpus/            # sample documents (delete when you have real ones)
   prompts/           # empty until you copy a default prompt out to change it
   plugins/           # your own strategies, sources, stores, or indexes
@@ -62,7 +62,7 @@ budget:
   judges first.
 - **Models are named once** under `models:` and referred to by name, so swapping a model is a one-line change.
 - **`$NAME` reads an environment variable.** Secrets never go in the file.
-- **Prompts:** every model-calling strategy has a default prompt. `factorial prompts copy extract` puts it in `prompts/`,
+- **Prompts:** every model-calling strategy has a default prompt. `factoid prompts copy extract` puts it in `prompts/`,
   and from then on the copy is used and fingerprinted.
 - **Fingerprints:** a stage's fingerprint covers its strategy, settings, and prompt, but not its model.
   See [the mental model](mental-model.md#staying-current).
@@ -70,5 +70,5 @@ budget:
 ## Defaults are eval results
 
 A default is a claim: "on the shipped suites, this was the best trade-off of quality and cost." Each default in the
-built-in config cites the run that chose it (`factorial defaults --why`). When a new strategy wins, the default changes,
+built-in config cites the run that chose it (`factoid defaults --why`). When a new strategy wins, the default changes,
 and the run that showed it is checked in.

@@ -1,20 +1,20 @@
 # Example: revenue_desk
 
-`revenue_desk` is a Factorial project for B2B sales and account teams that turns CRM records, call transcripts, emails,
+`revenue_desk` is a Factoid project for B2B sales and account teams that turns CRM records, call transcripts, emails,
 and notes into typed, cited facts. It is modeled on the default revenue starter workspace in `endgame-wiki`.
 
 ## Fifteen minutes
 
-Enter the project on Ruby 3.4+ with the `factorial` gem installed, ingest the sample Harbor and Acme Corp files, and
+Enter the project on Ruby 3.4+ with the `factoid` gem installed, ingest the sample Harbor and Acme Corp files, and
 inspect the extracted facts.
 
 ```sh
 cd revenue_desk
-factorial ingest ./sample_docs
-factorial search "Acme Corp security review"
-factorial read fact_01ja9m4k8
-factorial eval
-factorial eval --vary judge=nli,jev_floors
+factoid ingest ./sample_docs
+factoid search "Acme Corp security review"
+factoid read fact_01ja9m4k8
+factoid eval
+factoid eval --vary judge=nli,jev_floors
 ```
 
 ## Layout
@@ -65,7 +65,7 @@ records with the same domain, email address, or CRM identifier resolve to one en
 
 ```ruby
 # app/entities/account.rb
-class Account < Factorial::Entity
+class Account < Factoid::Entity
   definition "A customer or prospect company."
   key :domain
 end
@@ -73,7 +73,7 @@ end
 
 ```ruby
 # app/entities/person.rb
-class Person < Factorial::Entity
+class Person < Factoid::Entity
   definition "A person at a customer or on our own team."
   key :email
 end
@@ -81,7 +81,7 @@ end
 
 ```ruby
 # app/entities/opportunity.rb
-class Opportunity < Factorial::Entity
+class Opportunity < Factoid::Entity
   definition "A commercial deal tracked in the CRM."
   key :crm_id
   slot :account, Account
@@ -96,7 +96,7 @@ targets, while `CrmOpportunity` overrides `extract` in plain Ruby.
 
 ```ruby
 # app/documents/application_document.rb
-class ApplicationDocument < Factorial::Document
+class ApplicationDocument < Factoid::Document
   extracts ApplicationFact, CloseDate, DealAmount, NextStep
 end
 ```
@@ -153,7 +153,7 @@ step, one choice-model call scores every label and keeps each label at or above 
 
 ```ruby
 # app/facts/application_fact.rb
-class ApplicationFact < Factorial::Fact
+class ApplicationFact < Factoid::Fact
   definition "A standalone statement about an account, person, or opportunity."
   slot :account, Account
 
@@ -221,13 +221,13 @@ that declare them.
 
 ```ruby
 # app/sources/gong_calls.rb
-class GongCalls < Factorial::Source
+class GongCalls < Factoid::Source
   adapter :gong, api_key: ENV.fetch("GONG_API_KEY")
   yields Call
 end
 
 # app/sources/salesforce_crm.rb
-class SalesforceCrm < Factorial::Source
+class SalesforceCrm < Factoid::Source
   adapter :salesforce, token: ENV.fetch("SFDC_TOKEN")
   yields CrmOpportunity
 end
@@ -235,7 +235,7 @@ end
 
 ```ruby
 # app/judges/agreed_judge.rb
-class AgreedJudge < Factorial::Judge
+class AgreedJudge < Factoid::Judge
   def judge(candidate)
     decide("agreed_step", candidate:) > 0.6 ? accept : reject("step was proposed without agreement")
   end
@@ -267,12 +267,12 @@ Did the other side accept or confirm this action in the surrounding exchange?
 
 ## Settings
 
-`our_domains` tells Factorial which email domains belong to Harbor (`ours`), so every speaker gets a `side` of `ours`,
+`our_domains` tells Factoid which email domains belong to Harbor (`ours`), so every speaker gets a `side` of `ours`,
 `theirs`, or `unknown`.
 
 ```ruby
 # config/application.rb
-class RevenueDesk < Factorial::Application
+class RevenueDesk < Factoid::Application
   our_domains ["harbor.example"]
 
   store :s3, bucket: "harbor-revenue-facts", key: ENV.fetch("S3_KEY")
@@ -313,12 +313,12 @@ Harbor (`harbor.example`) is working on "Acme Corp Renewal 2027" with Priya Nata
    "Negotiation"`. `CrmOpportunity#extract` writes one `DealAmount`, one `CloseDate`, and one `DealStage` with no model
    calls.
 2. **Gong call, October 8.** Priya (`theirs`) says, `"we have to get through security before the board meets in
-   November"`, and a Harbor rep (`ours`) suggests a pricing workshop that nobody confirms. Factorial adds `"Acme Corp's
+   November"`, and a Harbor rep (`ours`) suggests a pricing workshop that nobody confirms. Factoid adds `"Acme Corp's
    security review must finish before the November board meeting."` with tags `timeline` and `decision_commitment`.
    `AgreedJudge` rejects the workshop candidate. Tom (`theirs`) mentions `"a hundred thousand"`, which resolves into the
    existing `DealAmount` fact as a second quote.
 3. **Email, October 20.** Priya writes that the board meeting moved to December 12 and Acme cannot sign before it.
-   Factorial extracts a `CloseDate` after December 12 from `theirs`. Because the speaker side differs from the CRM
+   Factoid extracts a `CloseDate` after December 12 from `theirs`. Because the speaker side differs from the CRM
    record, it contradicts November 30, flags both facts, and runs `CloseDate#queue_for_owner`.
 4. **CRM record, October 22.** The Harbor deal owner moves `close_date` to December 19. `CloseDate#supersedes?` replaces
    the October 1 November 30 claim, and the newer value clears the contradiction. How a contradiction gets cleared when
@@ -326,10 +326,10 @@ Harbor (`harbor.example`) is working on "Acme Corp Renewal 2027" with Priya Nata
 
 ## New API this example needs
 
-- `Factorial::Entity` subclasses with `key`, `resolve`, and `find` to unify accounts, people, and deals across sources.
-- `tags` and `tag_threshold` on `Factorial::Fact`, backed by a `tag` hook that scores multi-label taxonomies in one
+- `Factoid::Entity` subclasses with `key`, `resolve`, and `find` to unify accounts, people, and deals across sources.
+- `tags` and `tag_threshold` on `Factoid::Fact`, backed by a `tag` hook that scores multi-label taxonomies in one
   pass.
-- `our_domains` on `Factorial::Application` and `speaker.side` (`ours`, `theirs`, or `unknown`) on passages and quotes.
+- `our_domains` on `Factoid::Application` and `speaker.side` (`ours`, `theirs`, or `unknown`) on passages and quotes.
 - `Fact.where` filtering by entity slots, `tags`, `since`, `limit`, and `learned_since` from the event log.
 - `Document#emit` and `fields` so a plain-code `extract` method can return typed facts cited to structured record
   fields.

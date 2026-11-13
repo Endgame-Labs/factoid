@@ -2,11 +2,11 @@
 
 Four kinds of things can be plugged in: **strategies** (one way to do a pipeline stage), **sources**, **stores** (where
 the log lives), and **indexes** (search views). Common ones are built in. Anything else is a plugin: a small program,
-in any language, that Factorial starts and talks to.
+in any language, that Factoid starts and talks to.
 
 ## How a plugin runs
 
-Factorial starts the program and exchanges JSON-RPC 2.0 messages with it over stdin and stdout, one JSON object per line.
+Factoid starts the program and exchanges JSON-RPC 2.0 messages with it over stdin and stdout, one JSON object per line.
 The program stays running and handles many requests. This is the same pattern MCP and Terraform providers use.
 
 ```yaml
@@ -16,16 +16,16 @@ pipeline:
 ```
 
 ```
-factorial → {"jsonrpc":"2.0","id":0,"method":"describe"}
+factoid → {"jsonrpc":"2.0","id":0,"method":"describe"}
 plugin    → {"jsonrpc":"2.0","id":0,"result":{"kind":"judge","name":"legal-judge","version":"3"}}
-factorial → {"jsonrpc":"2.0","id":1,"method":"judge","params":{"candidate":{...},"passages":[...],"document":{...},"settings":{"min":0.8}}}
+factoid → {"jsonrpc":"2.0","id":1,"method":"judge","params":{"candidate":{...},"passages":[...],"document":{...},"settings":{"min":0.8}}}
 plugin    → {"jsonrpc":"2.0","id":1,"result":{"pass":false,"scores":{"legal":0.42},"reasons":["states a guess as a decision"]}}
 ```
 
 `describe` comes first. Its `version` goes into the stage's fingerprint, so changing a plugin's behavior means bumping
 its version, and the facts it made become stale.
 
-A plugin that wants to call a model asks Factorial to (`model.generate`, `model.decide`, `model.embed`), so its calls are
+A plugin that wants to call a model asks Factoid to (`model.generate`, `model.decide`, `model.embed`), so its calls are
 archived, priced, budgeted, and replayable like every other call.
 
 ## The contracts
@@ -42,7 +42,7 @@ archived, priced, budgeted, and replayable like every other call.
 | store | `append`, `read` | events; a starting seq | ok; events |
 | index | `upsert`, `delete`, `query` | facts; ids; a query | ok; ok; ranked fact ids with scores |
 
-Note what extract returns: `cites` are passage numbers, never quote text. Factorial attaches quotes itself.
+Note what extract returns: `cites` are passage numbers, never quote text. Factoid attaches quotes itself.
 
 ## Built in
 
@@ -59,6 +59,6 @@ Note what extract returns: `cites` are passage numbers, never quote text. Factor
 
 ## Testing a plugin
 
-`factorial plugin check ./plugins/legal_judge.py` runs the contract tests for its kind: well-formed replies, stable output
-for the same input, sensible handling of empty and huge inputs. `factorial eval --set judge=./plugins/legal_judge.py`
+`factoid plugin check ./plugins/legal_judge.py` runs the contract tests for its kind: well-formed replies, stable output
+for the same input, sensible handling of empty and huge inputs. `factoid eval --set judge=./plugins/legal_judge.py`
 then tells you whether it is any good.

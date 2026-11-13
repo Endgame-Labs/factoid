@@ -1,20 +1,20 @@
 # Example: redwood_vc
 
-`redwood_vc` uses Factorial to run startup diligence across financial statements, pitch decks, and legal records.
+`redwood_vc` uses Factoid to run startup diligence across financial statements, pitch decks, and legal records.
 
 ## Fifteen minutes
 
-Install Factorial on Ruby 3.4+, create the project, ingest deal files, and query the extracted facts.
+Install Factoid on Ruby 3.4+, create the project, ingest deal files, and query the extracted facts.
 
 ```sh
-gem install factorial
-factorial new redwood_vc
+gem install factoid
+factoid new redwood_vc
 cd redwood_vc
-factorial ingest ./deal_docs
-factorial search "Orbital Inc. revenue and runway"
-factorial read fact_01j9k4m8p
-factorial eval
-factorial eval --vary judge=none,nli,jev_floors
+factoid ingest ./deal_docs
+factoid search "Orbital Inc. revenue and runway"
+factoid read fact_01j9k4m8p
+factoid eval
+factoid eval --vary judge=none,nli,jev_floors
 ```
 
 ## Layout
@@ -86,7 +86,7 @@ end
 
 ```ruby
 # app/facts/application_fact.rb
-class ApplicationFact < Factorial::Fact
+class ApplicationFact < Factoid::Fact
   judges :nli, :jev_floors
   resolve :hash, :slot, :vector_judge
 end
@@ -126,19 +126,19 @@ Sources ingest the financial inbox and legal folder, while `PolicyJudge` rejects
 
 ```ruby
 # app/sources/founder_inbox.rb
-class FounderInbox < Factorial::Source
+class FounderInbox < Factoid::Source
   adapter :imap, host: "imap.redwood.example", password: ENV.fetch("IMAP_PASSWORD")
   yields PitchDeck
 end
 
 # app/sources/legal_room.rb
-class LegalRoom < Factorial::Source
+class LegalRoom < Factoid::Source
   adapter :folder, path: "./data_room/legal"
   yields BoardMinutes
 end
 
 # app/judges/policy_judge.rb
-class PolicyJudge < Factorial::Judge
+class PolicyJudge < Factoid::Judge
   def judge(candidate)
     decide("policy", candidate:) > 0.75 ? accept : reject("unquoted number or speculative promise")
   end
@@ -168,7 +168,7 @@ Does the quote state a historical number verbatim without projections, targets, 
 
 ```ruby
 # config/application.rb
-class RedwoodVc < Factorial::Application
+class RedwoodVc < Factoid::Application
   store :s3, bucket: "redwood-diligence", key: ENV.fetch("S3_KEY")
   index :sqlite_fts, path: "./var/index.db"
   model :choice,   "typesafe/jev-1.13.0"
@@ -182,16 +182,16 @@ end
 
 Four files for Orbital Inc. arrive over two quarters:
 
-1. **`q3_minutes.pdf` (`BoardMinutes`, 2026-07-15).** Factorial extracts `IncorporationState` (`"Orbital Inc."`,
+1. **`q3_minutes.pdf` (`BoardMinutes`, 2026-07-15).** Factoid extracts `IncorporationState` (`"Orbital Inc."`,
    `"incorporation_state"`, `"Delaware"`) and `CashRunway` (`"Orbital Inc."`, `"runway_months"`, `18`). Both pass the
    judges and enter the log as `added`.
 2. **`series_a_deck.pdf` (`PitchDeck`, 2026-10-02).** `PitchDeck#extract` summarizes the slide footnotes first. A
    "$10M ARR next year" claim fails `PolicyJudge`, a footnote naming Delaware merges into `IncorporationState` as a
    duplicate quote, and Q3 ARR of $4,400,000 (`AnnualRevenue` with `arr_usd` set to `4400000`) logs as `added`.
-3. **`q3_audit.pdf` (`AuditedStatement`, 2026-10-20).** Factorial extracts Q3 ARR of $3,900,000 (`AnnualRevenue` with
+3. **`q3_audit.pdf` (`AuditedStatement`, 2026-10-20).** Factoid extracts Q3 ARR of $3,900,000 (`AnnualRevenue` with
    `"Orbital Inc."`, `"arr_usd"`, `3900000`). During `resolve`, `:vector_judge` marks it `contradicted` against the
    deck's `4400000` figure for the same quarter, and `after_contradict` sends both facts to `DiligenceQueue`.
-4. **`q4_minutes.pdf` (`BoardMinutes`, 2026-11-05).** Factorial extracts 14 months of runway (`CashRunway` with
+4. **`q4_minutes.pdf` (`BoardMinutes`, 2026-11-05).** Factoid extracts 14 months of runway (`CashRunway` with
    `"Orbital Inc."`, `"runway_months"`, `14`). `CashRunway#supersedes?` sees a newer `stated_at` date and retires `18`.
    `CashRunway.current(company: "Orbital Inc.").runway_months` returns `14`, and
    `CashRunway.history(company: "Orbital Inc.")` returns both versions with their quotes.

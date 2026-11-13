@@ -1,6 +1,6 @@
 # HTTP API and MCP
 
-`factorial serve` answers on one address. All bodies are JSON. Errors are `{"error": "...", "hint": "..."}` with `400`,
+`factoid serve` answers on one address. All bodies are JSON. Errors are `{"error": "...", "hint": "..."}` with `400`,
 `401`, `404`, `409`, or `429`.
 
 ## HTTP
@@ -19,7 +19,7 @@
 | `GET` | `/v1/status` | | counts, staleness, queue, and spend |
 | `GET` | `/healthz` | | `ok` |
 
-`/v1/events` is how other systems follow Factorial: a wiki rebuilding a page when its facts change, or a CRM sync
+`/v1/events` is how other systems follow Factoid: a wiki rebuilding a page when its facts change, or a CRM sync
 reacting to a superseded price.
 
 `search` fits its answer to `budget` tokens (default from config) and says how many matches it left out, so a model
@@ -29,7 +29,7 @@ Auth: a bearer key per client, read-only or read-write, stored hashed. Local and
 
 ## MCP
 
-The same server speaks MCP at `/mcp`, and `factorial mcp` speaks it over stdio. Its tools:
+The same server speaks MCP at `/mcp`, and `factoid mcp` speaks it over stdio. Its tools:
 
 | Tool | Does |
 | --- | --- |

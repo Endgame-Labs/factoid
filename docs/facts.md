@@ -35,7 +35,7 @@
 | `subject` | Who or what the fact is about, as named. Linking subjects to your own entities is a plugin, not core. |
 | `slot` | Optional. A typed field value, when the fact *is* one (a price, a date, a title, a stage). Slots let `resolve` supersede by rule. |
 | `quotes` | One to three. Each is an exact substring of its document's revision, with offsets. Never written by a model. |
-| `said_at` | When the source said it. `learned_at`: when Factorial accepted it. They differ, and both matter. |
+| `said_at` | When the source said it. `learned_at`: when Factoid accepted it. They differ, and both matter. |
 | `status` | `current`, `superseded`, `disputed`, or `retracted`. |
 | `related` | Links to other facts made by `resolve`. Duplicates are not stored twice; they become corroboration. |
 | `tags` | Optional classes with probabilities, from a `tag` strategy. |

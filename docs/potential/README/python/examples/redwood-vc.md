@@ -4,17 +4,17 @@
 
 ## Fifteen minutes
 
-Install Factorial with `uv` on Python 3.13+. Inside the project directory, `factorial` uses the project environment.
+Install Factoid with `uv` on Python 3.13+. Inside the project directory, `factoid` uses the project environment.
 
 ```sh
-uv tool install factorial
-factorial new redwood_vc
+uv tool install factoid
+factoid new redwood_vc
 cd redwood_vc
-factorial ingest ./data_room
-factorial search "Orbital revenue"
-factorial read fact_01j9z4m8p
-factorial eval
-factorial eval --vary judge=none,nli,policy_judge
+factoid ingest ./data_room
+factoid search "Orbital revenue"
+factoid read fact_01j9z4m8p
+factoid eval
+factoid eval --vary judge=none,nli,policy_judge
 ```
 
 ## Layout
@@ -43,7 +43,7 @@ Each document class defines its type in the docstring, lists its fact classes, a
 
 ```python
 # documents.py
-from factorial import Document
+from factoid import Document
 from redwood_vc.facts import AnnualRevenue, CashRunway, IncorporationState
 
 class PitchDeck(Document):
@@ -75,7 +75,7 @@ Each fact class defines one claim type and its typed slot. `AnnualRevenue` rejec
 
 ```python
 # facts.py
-from factorial import Entity, Fact
+from factoid import Entity, Fact
 
 class AnnualRevenue(Fact):
     """Recognized annual recurring revenue in US dollars for a completed reporting period."""
@@ -102,7 +102,7 @@ class IncorporationState(Fact):
 
 ```python
 # sources.py
-from factorial.sources import FolderSource
+from factoid.sources import FolderSource
 
 class DataRoom(FolderSource):
     """PDFs, decks, and board packets exported from the deal data room."""
@@ -111,7 +111,7 @@ class DataRoom(FolderSource):
 
 ```python
 # judges.py
-from factorial import Judge
+from factoid import Judge
 
 class PolicyJudge(Judge):
     """Reject unquoted numbers and speculative promises."""
@@ -122,7 +122,7 @@ class PolicyJudge(Judge):
 
 ## Prompts
 
-Templates in `prompts/` back custom model calls or extend Factorial's built-in hook prompts for a specific class.
+Templates in `prompts/` back custom model calls or extend Factoid's built-in hook prompts for a specific class.
 
 ```jinja
 {# prompts/pitch_deck/slide_context.md.j2 #}
@@ -134,7 +134,7 @@ List currency units, reporting periods, and footnote qualifiers across these sli
 
 ```jinja
 {# prompts/pitch_deck/extract.md.j2 #}
-{% extends "factorial/extract.md.j2" %}
+{% extends "factoid/extract.md.j2" %}
 {% block guidance %}
 Slide units and footnotes: {{ slide_context }}
 Expand unit shorthand such as "$3.9M" when the slide states the unit. Skip pipeline targets and multi-year forecasts.
@@ -155,9 +155,9 @@ Storage, search indexes, and pinned model versions live in `settings.py`.
 ```python
 # settings.py
 import os
-from factorial import Model, Search, Settings
-from factorial.indexes import SqliteFts
-from factorial.stores import S3Store
+from factoid import Model, Search, Settings
+from factoid.indexes import SqliteFts
+from factoid.stores import S3Store
 
 class Project(Settings):
     store = S3Store(bucket="redwood-diligence", key=os.environ["S3_KEY"])
@@ -175,7 +175,7 @@ class Project(Settings):
 Three files for Orbital Inc. arrive in `./data_room` in order:
 
 1. **Q3 board minutes (`2026-10-15`, `BoardMinutes`).** The minutes state that Orbital Inc. is incorporated in
-   Delaware, closed Q3 at $3,100,000 in ARR, and holds 18 months of runway. Factorial logs `added` events for
+   Delaware, closed Q3 at $3,100,000 in ARR, and holds 18 months of runway. Factoid logs `added` events for
    `("Orbital Inc.", "incorporation_state", "Delaware")`, `("Orbital Inc.", "arr_usd", 3100000)`, and
    `("Orbital Inc.", "runway_months", 18)`.
 2. **Series A pitch deck (`2027-01-12`, `PitchDeck`).** Slides report Delaware incorporation, Q4 ARR of $3,900,000, 14
@@ -187,6 +187,6 @@ Three files for Orbital Inc. arrive in `./data_room` in order:
    deck's $3,900,000 Q4 figure, so `resolve` flags both Q4 revenue facts as `contradicted`.
 
 After ingestion, `CashRunway.current(company="Orbital Inc.").runway_months` returns `14`, and
-`factorial search "Orbital revenue"` returns both Q4 revenue sentences, their quotes, and the contradiction flag.
+`factoid search "Orbital revenue"` returns both Q4 revenue sentences, their quotes, and the contradiction flag.
 
 The design is described in [the Python README](../README.md).

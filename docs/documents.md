@@ -1,6 +1,6 @@
 # Input: Documents
 
-A Document is one thing that was said or written. Everything Factorial knows comes from Documents, so this shape is
+A Document is one thing that was said or written. Everything Factoid knows comes from Documents, so this shape is
 small, strict, and easy to produce from anything.
 
 ## The shape
@@ -28,7 +28,7 @@ small, strict, and easy to produce from anything.
 | `revision` | no | Anything that changes when the content changes. Omitted: a hash of `text`. |
 | `type` | no | `call`, `email`, `chat`, `doc`, `record`, or your own. Omitted: the `classify` stage decides. |
 | `title` | no | Shown with citations. |
-| `at` | yes | When it was said or written, with an offset. Facts inherit dates from this; Factorial never invents one. |
+| `at` | yes | When it was said or written, with an offset. Facts inherit dates from this; Factoid never invents one. |
 | `text` | yes | The content. Plain text or Markdown. Transcripts use `Speaker Name: words` lines. |
 | `people` | no | Who took part. Used to name speakers in full and to attribute facts. Never inferred by a model. |
 | `url` | no | A link back to the original. |
@@ -41,10 +41,10 @@ retracted. A new revision replaces the facts of the old revision through `resolv
 
 | Way | Example |
 | --- | --- |
-| Files | `factorial ingest notes/*.md calls/*.vtt mail/*.eml`. File types map to documents by convention. |
-| JSON Lines | `factorial ingest docs.jsonl`, one Document per line. The universal adapter. |
+| Files | `factoid ingest notes/*.md calls/*.vtt mail/*.eml`. File types map to documents by convention. |
+| JSON Lines | `factoid ingest docs.jsonl`, one Document per line. The universal adapter. |
 | HTTP | `POST /v1/documents` with a Document or an array of them. |
-| A source | Declared in `factorial.yml`, pulled by `factorial sync` or the daemon. See below. |
+| A source | Declared in `factoid.yml`, pulled by `factoid sync` or the daemon. See below. |
 
 ## Sources
 

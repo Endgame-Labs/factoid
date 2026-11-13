@@ -1,9 +1,9 @@
-# Factorial 🧮
+# Factoid 🧮
 
 > **Status: Design draft.** Nothing is built yet. We update the docs and design first, before any code is written.
 
-Factorial turns documents into facts: short, self-contained sentences, each tied to an exact source quote, who said it,
-and when. As new documents arrive, Factorial updates its set of facts. It retires outdated facts, merges duplicate
+Factoid turns documents into facts: short, self-contained sentences, each tied to an exact source quote, who said it,
+and when. As new documents arrive, Factoid updates its set of facts. It retires outdated facts, merges duplicate
 facts, and flags facts that disagree. People and agents can access these facts through a CLI, an HTTP API, and MCP.
 
 ## Fifteen minutes
@@ -11,20 +11,20 @@ facts, and flags facts that disagree. People and agents can access these facts t
 Create a project, generate your declarations, ingest sample mail, query facts, and run an eval:
 
 ```sh
-factorial new support_desk
+factoid new support_desk
 cd support_desk
 
-factorial generate source inbox --kind imap
-factorial generate document support_thread --segment email
-factorial generate fact plan_tier --slot
-factorial generate judge specificity --kind llm
+factoid generate source inbox --kind imap
+factoid generate document support_thread --segment email
+factoid generate fact plan_tier --slot
+factoid generate judge specificity --kind llm
 
-factorial ingest ./sample_mail --source inbox
-factorial search "Acme renewal tier" --budget-tokens 800
-factorial read fact_01j8x9
+factoid ingest ./sample_mail --source inbox
+factoid search "Acme renewal tier" --budget-tokens 800
+factoid read fact_01j8x9
 
-factorial eval smoke
-factorial eval smoke --vary judge=none,nli,jev-floors
+factoid eval smoke
+factoid eval smoke --vary judge=none,nli,jev-floors
 ```
 
 ## Project files
@@ -104,7 +104,7 @@ Reject any fact that uses unresolved pronouns, omits the account name, or states
 a future guess as a settled commitment.
 ```
 
-Any run or eval can override any frontmatter setting from the CLI by stage name or dotted path, such as `factorial eval
+Any run or eval can override any frontmatter setting from the CLI by stage name or dotted path, such as `factoid eval
 smoke --vary judge=none,nli,jev-floors` or `--vary search.retrieve=bm25,vector,hybrid-rrf`.
 
 ## Core ideas
@@ -112,12 +112,12 @@ smoke --vary judge=none,nli,jev-floors` or `--vary search.retrieve=bm25,vector,h
 - **Facts are what a reader reads.** Queries return short sentences with provenance under a token budget. On dialogue
   benchmarks, fact retrieval beat chunk retrieval at about a seventh of the read tokens; see
   [docs/prior-art.md](docs/prior-art.md).
-- **Models never write evidence.** The extractor cites numbered source passages, and Factorial code attaches the exact
+- **Models never write evidence.** The extractor cites numbered source passages, and Factoid code attaches the exact
   quote, speaker, and timestamp.
 - **History is the truth.** Deduplication, superseding, and contradiction checks run on write at ingest. Every change
   writes to an append-only event log (`added`, `superseded`, `contradicted`, `retracted`, and `restored`). Current fact
   tables and search indexes are views rebuilt from that log.
-- **Algorithm choices are made by evals.** `factorial eval` scores a project against labeled sets and reports accuracy,
+- **Algorithm choices are made by evals.** `factoid eval` scores a project against labeled sets and reports accuracy,
   cost, and latency. Built-in defaults come from eval results.
 
 ## Pluggable seams
@@ -135,7 +135,7 @@ smoke --vary judge=none,nli,jev-floors` or `--vary search.retrieve=bm25,vector,h
 Prompts and rubrics sit next to the settings that govern them, so a person can read one short file to understand one
 document type, fact type, or judge. Git diffs stay small and readable, generators create clean starter files, and
 non-programmers can edit prose without touching code. The tradeoff is cross-file indirection: renaming a fact type,
-judge, or model touches multiple files and relies on `factorial check` to catch broken references. Expressing complex
+judge, or model touches multiple files and relies on `factoid check` to catch broken references. Expressing complex
 conditional logic in YAML also hits a ceiling quickly, which pushes edge cases out into `scripts/`.
 
 ## Read next

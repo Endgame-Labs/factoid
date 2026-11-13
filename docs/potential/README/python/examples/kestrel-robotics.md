@@ -4,16 +4,16 @@ Kestrel Robotics tracks part quotes and datasheets from suppliers alongside benc
 
 ## Fifteen minutes
 
-Install Factorial with `uv` on Python 3.13+, ingest purchasing and lab files, and query the extracted facts.
+Install Factoid with `uv` on Python 3.13+, ingest purchasing and lab files, and query the extracted facts.
 
 ```sh
-uv tool install factorial
+uv tool install factoid
 cd kestrel_robotics
-factorial ingest ./sample_docs
-factorial search "motor_x12 max operating temp"
-factorial read fact_01j9z4m8p
-factorial eval
-factorial eval --vary judge=none,nli,continuous_rating
+factoid ingest ./sample_docs
+factoid search "motor_x12 max operating temp"
+factoid read fact_01j9z4m8p
+factoid eval
+factoid eval --vary judge=none,nli,continuous_rating
 ```
 
 ## Layout
@@ -42,7 +42,7 @@ kestrel_robotics/
 
 ```python
 # documents.py
-from factorial import Document
+from factoid import Document
 from kestrel_robotics.facts import LeadTime, MaxOperatingTemp, UnitPrice
 
 class VendorQuote(Document):
@@ -74,7 +74,7 @@ class BenchTestLog(Document):
 # facts.py
 import json
 from pathlib import Path
-from factorial import Entity, Fact
+from factoid import Entity, Fact
 
 class UnitPrice(Fact):
     """The quoted price in USD for one unit of a hardware part."""
@@ -105,7 +105,7 @@ class MaxOperatingTemp(Fact):
 ```python
 # sources.py
 import os
-from factorial.sources import FolderSource, ImapSource
+from factoid.sources import FolderSource, ImapSource
 
 class SupplierInbox(ImapSource):
     """Mailbox receiving price quotes and availability emails from vendors."""
@@ -120,7 +120,7 @@ class LabAndSpecDrop(FolderSource):
 
 ```python
 # judges.py
-from factorial import Judge
+from factoid import Judge
 
 class ContinuousRating(Judge):
     """Accepts continuous operating limits and rejects storage limits or brief spikes."""
@@ -140,7 +140,7 @@ Map vendor catalog codes in these passages to Kestrel part IDs (for example, APX
 
 ```jinja
 {# prompts/vendor_quote/extract.md.j2 #}
-{% extends "factorial/extract.md.j2" %}
+{% extends "factoid/extract.md.j2" %}
 {% block guidance %}
 Normalize part identifiers with this mapping: {{ part_map }}
 Extract standard single-unit pricing and lead times. Skip expired promotional tiers and freight fees.
@@ -149,7 +149,7 @@ Extract standard single-unit pricing and lead times. Skip expired promotional ti
 
 ```jinja
 {# prompts/max_operating_temp/resolve.md.j2 #}
-{% extends "factorial/resolve.md.j2" %}
+{% extends "factoid/resolve.md.j2" %}
 {% block guidance %}
 Mark a vendor quote repeating an existing datasheet temperature for the same part as a duplicate.
 Mark a newer manufacturer datasheet revision as superseding an older datasheet temperature.
@@ -162,9 +162,9 @@ Mark a bench test temperature limit below the supplier rating as a contradiction
 ```python
 # settings.py
 import os
-from factorial import Model, Search, Settings
-from factorial.indexes import SqliteFts
-from factorial.stores import S3Store
+from factoid import Model, Search, Settings
+from factoid.indexes import SqliteFts
+from factoid.stores import S3Store
 
 class Project(Settings):
     store = S3Store(bucket="kestrel-facts", key=os.environ["S3_KEY"])
@@ -180,16 +180,16 @@ class Project(Settings):
 ## What happens as documents arrive
 
 1. **March 3, `x12_datasheet_rev2.pdf` (`PartDatasheet`):** Lists a 72 °C continuous limit for `motor_x12`.
-   `ContinuousRating` accepts the value, and Factorial adds `("motor_x12", "max_temp_c", 72)`.
+   `ContinuousRating` accepts the value, and Factoid adds `("motor_x12", "max_temp_c", 72)`.
 2. **March 5, `apex_quote_104.eml` (`VendorQuote`):** Quotes SKU `APX-X12` at $42.50 with an 8-week lead time and
-   repeats the 72 °C limit. `VendorQuote.extract` maps `APX-X12` to `motor_x12`. Factorial adds
+   repeats the 72 °C limit. `VendorQuote.extract` maps `APX-X12` to `motor_x12`. Factoid adds
    `("motor_x12", "unit_price_usd", 42.50)` and `("motor_x12", "lead_time_weeks", 8)`, and merges the 72 °C claim as
    a duplicate citation on the March 3 datasheet fact.
 3. **March 18, `apex_quote_109.eml` (`VendorQuote`):** Updates `motor_x12` to $39.00 and a 10-week lead time.
-   Factorial adds `("motor_x12", "unit_price_usd", 39.00)` and `("motor_x12", "lead_time_weeks", 10)`, and marks both
+   Factoid adds `("motor_x12", "unit_price_usd", 39.00)` and `("motor_x12", "lead_time_weeks", 10)`, and marks both
    March 5 facts `superseded`. `UnitPrice.current(part="motor_x12").unit_price_usd` returns `39.0`.
 4. **March 22, `bench_log_044.md` (`BenchTestLog`):** Logs a thermal chamber run on `motor_x12` where winding
-   insulation fails above 64 °C continuous load. Factorial extracts `("motor_x12", "max_temp_c", 64)`, flags both
+   insulation fails above 64 °C continuous load. Factoid extracts `("motor_x12", "max_temp_c", 64)`, flags both
    temperature facts `contradicted`, and runs `on_contradicted` to write `motor_x12` to `./var/part_holds.jsonl`.
 
 The design is described in [the Python README](../README.md).

@@ -1,6 +1,6 @@
 # Evals: how algorithms get chosen
 
-Factorial does not ask you to guess whether NLI beats a JEV judge, or whether 10 KB windows lose facts. It measures.
+Factoid does not ask you to guess whether NLI beats a JEV judge, or whether 10 KB windows lose facts. It measures.
 This doc is the contract for that measurement.
 
 ## Three nouns
@@ -23,7 +23,7 @@ evals/acme-calls/
 
 Every gold file is optional. A suite with only `questions.jsonl` still scores the whole pipeline end to end, and a suite
 with only `candidates.jsonl` scores extraction and judging. Suites can be imported from public benchmarks
-(`factorial eval import mediasumqa`, `enronqa`, `isc-rag`) and from your own data.
+(`factoid eval import mediasumqa`, `enronqa`, `isc-rag`) and from your own data.
 
 ```jsonl
 {"doc": "call:991", "text": "BetterUp's enablement team onboards in batches with a set curriculum.", "label": "keep"}
@@ -74,15 +74,15 @@ comparison can be reproduced exactly.
 
 ## Labeling
 
-Gold is the scarce part, so Factorial helps make it:
+Gold is the scarce part, so Factoid helps make it:
 
-- `factorial eval label` shows candidates one at a time, with the quote and its context. You press `k`, `r`, or `b`.
+- `factoid eval label` shows candidates one at a time, with the quote and its context. You press `k`, `r`, or `b`.
 - It shows the items where runs **disagree** first, because those labels move the comparison most.
 - Rejected candidates are in the log, so labels can come from real traffic, not only from suites.
 
 ## Adopting a result
 
 A default changes only with a checked-in comparison that shows the new choice is better on the shipped suites, or no
-worse at lower cost. `factorial defaults --why` lists each default with the run that chose it. Your own project can
-follow the same rule with `factorial eval adopt <run>`, which writes the winning settings into `factorial.yml` with a
+worse at lower cost. `factoid defaults --why` lists each default with the run that chose it. Your own project can
+follow the same rule with `factoid eval adopt <run>`, which writes the winning settings into `factoid.yml` with a
 comment citing the run.

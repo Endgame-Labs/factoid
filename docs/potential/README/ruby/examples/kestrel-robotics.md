@@ -5,17 +5,17 @@ test logs for a hardware purchasing and testing team.
 
 ## Fifteen minutes
 
-Install Factorial on Ruby 3.4+. Run the CLI inside the project to ingest documents, search facts, and run evals.
+Install Factoid on Ruby 3.4+. Run the CLI inside the project to ingest documents, search facts, and run evals.
 
 ```sh
-gem install factorial
-factorial new kestrel_robotics
+gem install factoid
+factoid new kestrel_robotics
 cd kestrel_robotics
-factorial ingest ./sample_docs
-factorial search "motor_x12 price and thermal limit"
-factorial read fact_01j9z4m8q
-factorial eval
-factorial eval --vary judge=none,nli,sustained_load
+factoid ingest ./sample_docs
+factoid search "motor_x12 price and thermal limit"
+factoid read fact_01j9z4m8q
+factoid eval
+factoid eval --vary judge=none,nli,sustained_load
 ```
 
 ## Layout
@@ -88,7 +88,7 @@ end
 
 ```ruby
 # app/facts/application_fact.rb
-class ApplicationFact < Factorial::Fact
+class ApplicationFact < Factoid::Fact
   judges :nli, :jev_floors
   resolve :hash, :slot, :vector_judge
 end
@@ -129,13 +129,13 @@ end
 
 ```ruby
 # app/sources/supplier_inbox.rb
-class SupplierInbox < Factorial::Source
+class SupplierInbox < Factoid::Source
   adapter :imap, host: "imap.kestrel.example", password: ENV.fetch("IMAP_PASSWORD")
   yields VendorQuote
 end
 
 # app/judges/sustained_load_judge.rb
-class SustainedLoadJudge < Factorial::Judge
+class SustainedLoadJudge < Factoid::Judge
   def judge(candidate)
     decide("sustained_load", candidate:) > 0.75 ? accept : reject("temperature is from a transient spike")
   end
@@ -164,7 +164,7 @@ Does this passage state a continuous thermal rating or steady-state test limit f
 
 ```ruby
 # config/application.rb
-class KestrelRobotics < Factorial::Application
+class KestrelRobotics < Factoid::Application
   store :s3, bucket: "kestrel-facts", key: ENV.fetch("S3_KEY")
   index :sqlite_fts, path: "./var/index.db"
 
@@ -181,10 +181,10 @@ end
 Four documents for `motor_x12` arrive in order:
 
 1. **`motor_x12_datasheet.pdf` (`PartDatasheet`, March 1).** `classify_view` sends the top and bottom text to the
-   choice model, which classifies the PDF above `0.85`. Factorial stores `("motor_x12", "max_temp_c", 85)`.
+   choice model, which classifies the PDF above `0.85`. Factoid stores `("motor_x12", "max_temp_c", 85)`.
 2. **`apex_quote_mar04.eml` (`VendorQuote`, March 4).** Apex Motion quotes SKU `APX-M12` at `$45.00` with a `10`-week
    lead time, and repeats the `85 C` rating. `VendorQuote#extract` maps `APX-M12` to `motor_x12` via `quote_context`.
-   Factorial adds `UnitPrice` (`45.00`) and `LeadTime` (`10`), merges the `85 C` claim into `MaxOperatingTemp` as a
+   Factoid adds `UnitPrice` (`45.00`) and `LeadTime` (`10`), merges the `85 C` claim into `MaxOperatingTemp` as a
    duplicate, and attaches the email quote as a second source.
 3. **`apex_quote_mar18.eml` (`VendorQuote`, March 18).** A revised quote drops `motor_x12` to `$42.50` and cuts lead
    time to `8` weeks. `UnitPrice#supersedes?` matches `:part` with a later `stated_at`, so

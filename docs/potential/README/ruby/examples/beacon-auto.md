@@ -4,17 +4,17 @@
 
 ## Fifteen minutes
 
-Install Factorial on Ruby 3.4+, create the project, ingest sample files, search facts, and run an eval.
+Install Factoid on Ruby 3.4+, create the project, ingest sample files, search facts, and run an eval.
 
 ```sh
-gem install factorial
-factorial new beacon_auto
+gem install factoid
+factoid new beacon_auto
 cd beacon_auto
-factorial ingest ./sample_docs
-factorial search "case_8841 northbound light"
-factorial read fact_01j9x8k2m
-factorial eval
-factorial eval --vary judge=none,nli,jev_floors
+factoid ingest ./sample_docs
+factoid search "case_8841 northbound light"
+factoid read fact_01j9x8k2m
+factoid eval
+factoid eval --vary judge=none,nli,jev_floors
 ```
 
 ## Layout
@@ -86,7 +86,7 @@ end
 
 ```ruby
 # app/facts/application_fact.rb
-class ApplicationFact < Factorial::Fact
+class ApplicationFact < Factoid::Fact
   judges :nli, :jev_floors
   resolve :hash, :slot, :vector_judge
 end
@@ -127,13 +127,13 @@ end
 
 ```ruby
 # app/sources/statements_inbox.rb
-class StatementsInbox < Factorial::Source
+class StatementsInbox < Factoid::Source
   adapter :imap, host: "imap.beacon.example", password: ENV.fetch("IMAP_PASSWORD")
   yields DriverStatement
 end
 
 # app/judges/eyewitness_judge.rb
-class EyewitnessJudge < Factorial::Judge
+class EyewitnessJudge < Factoid::Judge
   def judge(candidate)
     decide("eyewitness", candidate:) > 0.7 ? accept : reject("the speaker did not see the signal")
   end
@@ -164,7 +164,7 @@ Did the speaker observe the traffic signal firsthand when the vehicle entered th
 
 ```ruby
 # config/application.rb
-class BeaconAuto < Factorial::Application
+class BeaconAuto < Factoid::Application
   store :s3, bucket: "beacon-facts", key: ENV.fetch("S3_KEY")
   index :sqlite_fts, path: "./var/index.db"
 
@@ -181,14 +181,14 @@ end
 Four files arrive in order for incident `case_8841` and policy `policy_992`:
 
 1. **`driver_email.eml` (`DriverStatement`, May 2):** Dana Reyes reports `case_8841` under `policy_992` with a $500
-   deductible and a green northbound light. Factorial adds `CollisionDeductible("policy_992", "deductible_usd", 500)`
+   deductible and a green northbound light. Factoid adds `CollisionDeductible("policy_992", "deductible_usd", 500)`
    and `TrafficLightColor("case_8841", "northbound_light", "green")`.
 2. **`prelim_quote.pdf` (`ShopEstimate`, May 3):** Harbor Body quotes $1,950 for `case_8841` and lists the $500
-   deductible on `policy_992`. Factorial merges the duplicate `CollisionDeductible` with a second quote and adds
+   deductible on `policy_992`. Factoid merges the duplicate `CollisionDeductible` with a second quote and adds
    `RepairEstimate("case_8841", "repair_cost_usd", 1950)`.
 3. **`precinct_report.pdf` (`PoliceReport`, May 4):** Officer Patel quotes a corner witness who saw a red light.
    `EyewitnessJudge` accepts `TrafficLightColor("case_8841", "northbound_light", "red")`, which contradicts the
-   green-light fact; Factorial flags both contradicted and runs `after_contradict` to queue them in `AdjusterQueue`.
+   green-light fact; Factoid flags both contradicted and runs `after_contradict` to queue them in `AdjusterQueue`.
 4. **`teardown_quote.pdf` (`ShopEstimate`, May 6):** After bumper removal, Harbor Body submits a tear-down quote of
    $4,100 for `case_8841`. `RepairEstimate#supersedes?` sees a newer `stated_at` time, retires the $1,950 quote as
    superseded, and makes `RepairEstimate("case_8841", "repair_cost_usd", 4100)` current.

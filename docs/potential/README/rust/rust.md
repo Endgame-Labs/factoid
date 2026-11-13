@@ -1,29 +1,29 @@
-# Factorial 🧮
+# Factoid 🧮
 
-> **Design draft:** Factorial is in the design stage, nothing is built yet, and the docs get updated before code is
+> **Design draft:** Factoid is in the design stage, nothing is built yet, and the docs get updated before code is
 > written.
 
-Factorial turns documents into facts: short, self-contained sentences, each tied to an exact source quote, who said it,
-and when. As new documents arrive, Factorial updates its set of facts. It retires outdated facts, merges duplicate
+Factoid turns documents into facts: short, self-contained sentences, each tied to an exact source quote, who said it,
+and when. As new documents arrive, Factoid updates its set of facts. It retires outdated facts, merges duplicate
 facts, and flags facts that disagree. People and agents can access these facts through a CLI, an HTTP API, and MCP.
 
 ## Fifteen minutes
 
 ```sh
-factorial new support_kb && cd support_kb
-factorial generate document support_thread
-factorial generate fact plan_tier
-factorial ingest ./sample_tickets
-factorial search "Acme billing tier"
-factorial read fact_01j8x9
-factorial eval
-factorial eval --vary judge=none,nli,jev_floors
+factoid new support_kb && cd support_kb
+factoid generate document support_thread
+factoid generate fact plan_tier
+factoid ingest ./sample_tickets
+factoid search "Acme billing tier"
+factoid read fact_01j8x9
+factoid eval
+factoid eval --vary judge=none,nli,jev_floors
 ```
 
-A Factorial project is a small Rust crate (2024 edition). During development, the `factorial` CLI runs incremental
+A Factoid project is a small Rust crate (2024 edition). During development, the `factoid` CLI runs incremental
 `cargo build` behind the scenes and forwards subcommands to your compiled project binary. For deployment, `cargo build
 --release` builds a single binary that embeds your declarations, the CLI, the HTTP API, and the MCP server. When
-`factorial eval --vary` runs, the eval harness writes stage overrides into the runtime `Context` before each trial, so
+`factoid eval --vary` runs, the eval harness writes stage overrides into the runtime `Context` before each trial, so
 strategies vary across runs without editing files or recompiling.
 
 ## Project layout
@@ -33,7 +33,7 @@ support_kb/
   Cargo.toml
   evals/tickets.jsonl
   src/
-    main.rs          # calls factorial::run::<App>()
+    main.rs          # calls factoid::run::<App>()
     settings.rs      # models, storage, index, search, and default judges
     documents/       # one struct per document type
     facts/           # one struct per fact type
@@ -105,7 +105,7 @@ impl Settings for App {
     fn models(&self) -> Models {
         Models::new().pin("fast", "claude-haiku-4-5-20251001")
     }
-    fn store(&self, ctx: &Context) -> Store { Store::s3(ctx.env("FACTORIAL_BUCKET")) }
+    fn store(&self, ctx: &Context) -> Store { Store::s3(ctx.env("FACTOID_BUCKET")) }
     fn index(&self, _ctx: &Context) -> Index { Index::SqliteFts("./var/index.db") }
     fn judges(&self, _ctx: &Context) -> JudgeChain {
         // Runs in order and rejects at the first failure; cheap judges go first.
@@ -129,7 +129,7 @@ impl Settings for App {
 - **History is the truth.** Deduplication, supersede rules, and contradiction checks happen at ingest, on write. Every
   change appends to an immutable event log (`added`, `superseded`, `contradicted`, `retracted`, and `restored`), and
   current state and search indexes are views rebuilt from that log.
-- **Algorithm choices are made by evals.** `factorial eval` scores your pipeline (`classify`, `segment`, `extract`,
+- **Algorithm choices are made by evals.** `factoid eval` scores your pipeline (`classify`, `segment`, `extract`,
   `judge`, `repair`, `resolve`, and `tag`) and search setup against labeled data, reporting accuracy, cost, and latency.
   Built-in defaults come from eval runs.
 

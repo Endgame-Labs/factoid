@@ -4,17 +4,17 @@
 
 ## Fifteen minutes
 
-Install Factorial with `uv` on Python 3.13+, create `beacon_auto`, and ingest a folder of sample incident files.
+Install Factoid with `uv` on Python 3.13+, create `beacon_auto`, and ingest a folder of sample incident files.
 
 ```sh
-uv tool install factorial
-factorial new beacon_auto
+uv tool install factoid
+factoid new beacon_auto
 cd beacon_auto
-factorial ingest ./sample_docs
-factorial search "case_8841 northbound light"
-factorial read fact_01j9z4m8q
-factorial eval
-factorial eval --vary judge=none,nli,firsthand
+factoid ingest ./sample_docs
+factoid search "case_8841 northbound light"
+factoid read fact_01j9z4m8q
+factoid eval
+factoid eval --vary judge=none,nli,firsthand
 ```
 
 ## Layout
@@ -49,7 +49,7 @@ Each document class holds its docstring definition, the fact types that document
 
 ```python
 # documents.py
-from factorial import Document
+from factoid import Document
 from beacon_auto.facts import CollisionDeductible, RepairEstimate, TrafficLightColor
 
 class DriverStatement(Document):
@@ -84,7 +84,7 @@ Typed attributes define each fact's slot. `CollisionDeductible` uses `validate` 
 ```python
 # facts.py
 from typing import Literal
-from factorial import Entity, Fact
+from factoid import Entity, Fact
 
 class TrafficLightColor(Fact):
     """The color shown by a specific traffic light when vehicles entered the intersection."""
@@ -113,7 +113,7 @@ class CollisionDeductible(Fact):
 ```python
 # sources.py
 import os
-from factorial.sources import FolderSource, ImapSource
+from factoid.sources import FolderSource, ImapSource
 
 class IncidentInbox(ImapSource):
     """Adjuster mailbox receiving driver statements, police reports, and shop estimates."""
@@ -127,7 +127,7 @@ class PolicyExports(FolderSource):
 
 ```python
 # judges.py
-from factorial import Judge
+from factoid import Judge
 
 class Firsthand(Judge):
     """Accepts facts backed by direct sight, camera video, policy text, or physical shop inspection."""
@@ -138,11 +138,11 @@ class Firsthand(Judge):
 
 ## Prompts
 
-Templates in `prompts/` replace or extend Factorial's built-in Jinja prompts for a specific class and hook.
+Templates in `prompts/` replace or extend Factoid's built-in Jinja prompts for a specific class and hook.
 
 ```jinja
 {# prompts/shop_estimate/extract.md.j2 #}
-{% extends "factorial/extract.md.j2" %}
+{% extends "factoid/extract.md.j2" %}
 {% block guidance %}
 Stage: {{ stage }}. Skip part numbers, labor tables, and tax subtotals.
 Extract RepairEstimate from the grand total and CollisionDeductible from the policy header.
@@ -151,7 +151,7 @@ Extract RepairEstimate from the grand total and CollisionDeductible from the pol
 
 ```jinja
 {# prompts/repair_estimate/resolve.md.j2 #}
-{% extends "factorial/resolve.md.j2" %}
+{% extends "factoid/resolve.md.j2" %}
 {% block guidance %}
 On the same case, a teardown supplement supersedes an earlier visual quote; competing initial quotes disagree.
 {% endblock %}
@@ -162,9 +162,9 @@ On the same case, a teardown supplement supersedes an earlier visual quote; comp
 ```python
 # settings.py
 import os
-from factorial import Model, Search, Settings
-from factorial.indexes import SqliteFts
-from factorial.stores import S3Store
+from factoid import Model, Search, Settings
+from factoid.indexes import SqliteFts
+from factoid.stores import S3Store
 
 class Project(Settings):
     store = S3Store(bucket="beacon-auto-facts", key=os.environ["S3_KEY"])

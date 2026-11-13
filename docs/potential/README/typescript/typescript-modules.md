@@ -1,23 +1,23 @@
-# Factorial 🧮
+# Factoid 🧮
 
 > **Status:** Design draft. Nothing is built yet. Documentation is updated before code is written.
 
-Factorial turns documents into short, self-contained facts, each tied to an exact source quote, the speaker, and the
+Factoid turns documents into short, self-contained facts, each tied to an exact source quote, the speaker, and the
 timestamp.
 
-As new documents arrive, Factorial updates its set of facts. It retires outdated facts, merges duplicate facts, and
+As new documents arrive, Factoid updates its set of facts. It retires outdated facts, merges duplicate facts, and
 flags facts that disagree. People and agents can access these facts through a CLI, an HTTP API, and MCP.
 
 ## Core ideas
 
 - **Facts are what a reader reads.** On dialogue benchmarks, reading extracted facts beat chunk retrieval at about a
   seventh of the read tokens (see [docs/prior-art.md](docs/prior-art.md)).
-- **Models never write evidence.** The extractor cites numbered passages, and Factorial code attaches the exact quote
+- **Models never write evidence.** The extractor cites numbered passages, and Factoid code attaches the exact quote
   from the source document.
 - **History is the truth.** An append-only event log records every state change: `added`, `superseded`, `contradicted`,
   `retracted`, and `restored`. Deduplication, superseding, and contradiction checks run on write at ingest. Current
   state and search indexes are views rebuilt from the log.
-- **Algorithm choices are made by evals.** `factorial eval` scores a setup against labeled data and reports accuracy,
+- **Algorithm choices are made by evals.** `factoid eval` scores a setup against labeled data and reports accuracy,
   cost, and latency. Framework defaults are eval results.
 
 ## Fifteen minutes
@@ -25,26 +25,26 @@ flags facts that disagree. People and agents can access these facts through a CL
 Create a project, generate definitions, ingest documents, query facts, and evaluate variations:
 
 ```bash
-factorial new acme-kb
+factoid new acme-kb
 cd acme-kb
-factorial generate source inbox --kind imap
-factorial generate document meeting --segment turns --extract passages
-factorial generate fact ownership --slot service,owner
-factorial ingest ./sample-meetings
-factorial search "who owns billing?"
-factorial read fact_01j9x4k
-factorial eval
-factorial eval --vary judge=none,nli,jev-floors
+factoid generate source inbox --kind imap
+factoid generate document meeting --segment turns --extract passages
+factoid generate fact ownership --slot service,owner
+factoid ingest ./sample-meetings
+factoid search "who owns billing?"
+factoid read fact_01j9x4k
+factoid eval
+factoid eval --vary judge=none,nli,jev-floors
 ```
 
 ## Project layout
 
 Each file in `sources/`, `documents/`, `facts/`, and `judges/` declares one component named after its filename. Shared
-settings and pipeline defaults live in `factorial.config.ts`.
+settings and pipeline defaults live in `factoid.config.ts`.
 
 ```text
 acme-kb/
-  factorial.config.ts
+  factoid.config.ts
   sources/
     inbox.ts
   documents/
@@ -64,8 +64,8 @@ seven pipeline stages (`classify`, `segment`, `extract`, `judge`, `repair`, `res
 because the judge chain rejects at the first failure.
 
 ```ts
-// factorial.config.ts
-import { defineConfig } from "factorial";
+// factoid.config.ts
+import { defineConfig } from "factoid";
 
 export default defineConfig({
   store: { kind: "s3", bucket: "acme-facts", secretKey: process.env.S3_SECRET_KEY! },
@@ -88,14 +88,14 @@ Sources, document types, fact types, and custom judges each live in small, focus
 
 ```ts
 // sources/inbox.ts
-import { defineSource } from "factorial";
+import { defineSource } from "factoid";
 
 export default defineSource({ kind: "imap", host: "imap.acme.internal", password: process.env.IMAP_PASSWORD! });
 ```
 
 ```ts
 // documents/meeting.ts
-import { defineDocument } from "factorial";
+import { defineDocument } from "factoid";
 
 export default defineDocument({
   match: { path: "meetings/**" },
@@ -106,7 +106,7 @@ export default defineDocument({
 
 ```ts
 // facts/ownership.ts
-import { defineFact, slot } from "factorial";
+import { defineFact, slot } from "factoid";
 
 export default defineFact({
   description: "Which person or team owns a service.",
@@ -117,7 +117,7 @@ export default defineFact({
 
 ```ts
 // judges/speaker_present.ts
-import { defineJudge } from "factorial";
+import { defineJudge } from "factoid";
 
 export default defineJudge((candidate) => ({
   pass: Boolean(candidate.speaker && candidate.saidAt),
@@ -125,7 +125,7 @@ export default defineJudge((candidate) => ({
 }));
 ```
 
-**Overriding choices in evals.** At startup, Factorial loads `factorial.config.ts` and the conventional directories into
+**Overriding choices in evals.** At startup, Factoid loads `factoid.config.ts` and the conventional directories into
 one addressable configuration tree. Passing `--vary judge=none,nli,jev-floors` or `--vary
 documents.meeting.extract=passages,staged` clones that tree per trial and swaps the targeted path in memory before
 running the suite.
@@ -145,7 +145,7 @@ Conventional TypeScript modules give every source, document type, fact type, and
 and coding agents. Standard editors autocomplete built-in strategies, check model names, and validate slot definitions
 with zero extra build tooling. Custom classifiers, sources, and judges use plain functions in the same directory
 structure as declarative configs. This approach requires a JavaScript runtime such as Node or Bun, even when callers use
-Factorial through the CLI, HTTP API, or MCP. Because configuration files are executable code, external tooling must load
+Factoid through the CLI, HTTP API, or MCP. Because configuration files are executable code, external tooling must load
 the modules to inspect the resolved graph.
 
 ## Docs

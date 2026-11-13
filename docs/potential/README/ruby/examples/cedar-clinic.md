@@ -4,16 +4,16 @@
 
 ## Fifteen minutes
 
-Install Factorial on Ruby 3.4+, create the project, ingest sample chart files, and query the extracted facts.
+Install Factoid on Ruby 3.4+, create the project, ingest sample chart files, and query the extracted facts.
 
 ```sh
-gem install factorial
-factorial new cedar_clinic
+gem install factoid
+factoid new cedar_clinic
 cd cedar_clinic
-factorial ingest ./sample_charts
-factorial search "patient_402 lisinopril"
-factorial read fact_01j9x8k2m
-factorial eval --vary judge=none,nli,jev_floors
+factoid ingest ./sample_charts
+factoid search "patient_402 lisinopril"
+factoid read fact_01j9x8k2m
+factoid eval --vary judge=none,nli,jev_floors
 ```
 
 ## Layout
@@ -88,7 +88,7 @@ Shared defaults live on `ApplicationFact`. Fact classes declare typed slots, ext
 
 ```ruby
 # app/facts/application_fact.rb
-class ApplicationFact < Factorial::Fact
+class ApplicationFact < Factoid::Fact
   judges :nli, :jev_floors
   resolve :hash, :slot, :vector_judge
 end
@@ -130,13 +130,13 @@ A source links a feed to a document class. `ActiveOrderJudge` rejects discontinu
 
 ```ruby
 # app/sources/lab_feed.rb
-class LabFeed < Factorial::Source
+class LabFeed < Factoid::Source
   adapter :folder, path: "./incoming/labs"
   yields LabReport
 end
 
 # app/judges/active_order_judge.rb
-class ActiveOrderJudge < Factorial::Judge
+class ActiveOrderJudge < Factoid::Judge
   def judge(candidate)
     decide("active_order", candidate:) > 0.75 ? accept : reject("dose is discontinued or hypothetical")
   end
@@ -168,7 +168,7 @@ Does the clinician prescribe or confirm this daily dose as part of the patient's
 
 ```ruby
 # config/application.rb
-class CedarClinic < Factorial::Application
+class CedarClinic < Factoid::Application
   store :s3, bucket: "cedar-clinic-facts", key: ENV.fetch("S3_KEY")
   index :sqlite_fts, path: "./var/index.db"
 
@@ -185,10 +185,10 @@ end
 Four documents for `patient_402` arrive across two visits:
 
 1. **2026-03-03 `IntakeForm` (speaker: `patient_402`).** The patient checks blood type `O-` and `former` tobacco use.
-   Factorial adds `BloodType` `("patient_402", "O-")` and `SmokingStatus` `("patient_402", "former")`.
+   Factoid adds `BloodType` `("patient_402", "O-")` and `SmokingStatus` `("patient_402", "former")`.
 2. **2026-03-03 `DoctorNote` (speaker: `dr_chen`).** Dr. Chen starts lisinopril 10 mg daily and notes daily smoking.
-   Factorial adds `MedicationDose` `("patient_402", "lisinopril_daily_mg", 10)`. The `"current"` smoking fact
-   conflicts with the same-day `"former"` intake fact, so Factorial marks both `contradicted` and calls `flag_chart`.
+   Factoid adds `MedicationDose` `("patient_402", "lisinopril_daily_mg", 10)`. The `"current"` smoking fact
+   conflicts with the same-day `"former"` intake fact, so Factoid marks both `contradicted` and calls `flag_chart`.
 3. **2026-03-05 `LabReport` (speaker: `cedar_lab`).** The lab reports blood group `O-`. Resolution matches the stored
    `BloodType` `("patient_402", "O-")` slot, merges the duplicate, and attaches the lab quote, speaker, and date.
 4. **2026-06-18 `DoctorNote` (speaker: `dr_chen`).** Dr. Chen raises lisinopril to 20 mg daily. `supersedes?` retires

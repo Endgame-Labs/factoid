@@ -1,6 +1,6 @@
 # Prior art
 
-Factorial takes the best of three working fact systems and the findings of the ISC papers. This is what each taught us.
+Factoid takes the best of three working fact systems and the findings of the ISC papers. This is what each taught us.
 Surveyed on November 13, 2026.
 
 ## At a glance
@@ -17,7 +17,7 @@ Surveyed on November 13, 2026.
 | Storage | Postgres | append-only JSONL plus a SQLite index | AlloyDB, BigQuery, and turbopuffer | Postgres plus an index outbox |
 
 None of them deduplicates across sources at ingest, handles contradictions in extracted facts, or types documents with
-System One. Factorial does all three, and measures them.
+System One. Factoid does all three, and measures them.
 
 ## OpenEndgame (`Endgame-Labs/openendgame`)
 
@@ -97,7 +97,7 @@ Avoid:
 - **Measure** tokens and cost per stage, gate rejection rate, facts per document, gold evidence in context separately from
   reading accuracy, recall@k, calibration, and draw-to-draw variance. Archive raw calls so results can be replayed.
 - **An open negative result:** with an agent using tools, fixed chunks led facts on evidence coverage. The fact advantage
-  does not automatically survive the agent layer. Factorial's suites should include an agent reader.
+  does not automatically survive the agent layer. Factoid's suites should include an agent reader.
 
 ## System One (`dorkitude/system-one-techniques`)
 

@@ -4,17 +4,17 @@ Harbor Realty is a property management project that tracks unit leases, rent ren
 
 ## Fifteen minutes
 
-Install Factorial on Ruby 3.4+, ingest sample files, search facts, and run evals (`factorial` loads the project bundle):
+Install Factoid on Ruby 3.4+, ingest sample files, search facts, and run evals (`factoid` loads the project bundle):
 
 ```sh
-gem install factorial
-factorial new harbor_realty
+gem install factoid
+factoid new harbor_realty
 cd harbor_realty
-factorial ingest ./sample_docs
-factorial search "Unit 4B heater"
-factorial read fact_01j9x8k2m
-factorial eval
-factorial eval --vary judge=none,nli,first_hand
+factoid ingest ./sample_docs
+factoid search "Unit 4B heater"
+factoid read fact_01j9x8k2m
+factoid eval
+factoid eval --vary judge=none,nli,first_hand
 ```
 
 ## Layout
@@ -54,7 +54,7 @@ and `PlumberInvoice#classify_view` sends the letterhead and the invoice totals t
 
 ```ruby
 # app/documents/application_document.rb
-class ApplicationDocument < Factorial::Document; end
+class ApplicationDocument < Factoid::Document; end
 
 # app/documents/lease_agreement.rb
 class LeaseAgreement < ApplicationDocument
@@ -89,7 +89,7 @@ Every fact class inherits `:nli` and `:jev_floors` judging plus `:hash`, `:slot`
 
 ```ruby
 # app/facts/application_fact.rb
-class ApplicationFact < Factorial::Fact
+class ApplicationFact < Factoid::Fact
   judges :nli, :jev_floors
   resolve :hash, :slot, :vector_judge
 end
@@ -126,19 +126,19 @@ Leases arrive in a local folder, emails arrive over IMAP, and `FirstHandJudge` r
 
 ```ruby
 # app/sources/lease_folder.rb
-class LeaseFolder < Factorial::Source
+class LeaseFolder < Factoid::Source
   adapter :folder, path: "./incoming/leases"
   yields LeaseAgreement
 end
 
 # app/sources/repair_inbox.rb
-class RepairInbox < Factorial::Source
+class RepairInbox < Factoid::Source
   adapter :imap, host: "imap.harbor.example", password: ENV.fetch("IMAP_PASSWORD")
   yields TenantEmail
 end
 
 # app/judges/first_hand_judge.rb
-class FirstHandJudge < Factorial::Judge
+class FirstHandJudge < Factoid::Judge
   def judge(candidate) = decide("first_hand", candidate:) > 0.7 ? accept : reject("speaker did not inspect heater")
 end
 ```
@@ -167,7 +167,7 @@ Choose contradicted when a leak or failure is reported within 48 hours of a comp
 
 ```ruby
 # config/application.rb
-class HarborRealty < Factorial::Application
+class HarborRealty < Factoid::Application
   store :s3, bucket: "harbor-realty-facts", key: ENV.fetch("S3_KEY")
   index :sqlite_fts, path: "./var/index.db"
   model :choice,   "typesafe/jev-1.13.0"
