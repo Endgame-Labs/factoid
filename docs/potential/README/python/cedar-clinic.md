@@ -56,6 +56,9 @@ cedar_clinic/
 │   ├── documents.py   # document classes, segmentation, and extraction
 │   ├── facts.py       # fact classes, typed slots, and resolution methods
 │   └── judges.py      # custom verification steps
+├── prompts/
+│   └── doctor_note/
+│       └── extract.md.j2
 └── evals/
     └── clinic_gold.jsonl
 ```
@@ -166,6 +169,47 @@ boundary is a Python base class you can subclass:
 - **Sources:** `folder`, `jsonl`, `imap`, `mcp`, or custom `Source` subclasses.
 - **Models and judges:** pinned model aliases (`never "latest"`), plus `nli`, `jev-floors`, `llm`, and custom `Judge`
   classes that halt the chain on the first rejection.
+
+## Prompts
+
+Prompts are Jinja templates. Every step that calls a model has a built-in template, and Factorial fills it with the
+document, its numbered passages, and the fact types that the document class lists:
+
+```jinja
+{# factorial/extract.md.j2, the built-in extract template #}
+Extract facts from this {{ document.type }}, dated {{ document.at }}.
+
+{% block guidance %}{% endblock %}
+
+Fact types:
+{% for fact_type in fact_types %}
+- {{ fact_type.name }}: {{ fact_type.description }}
+{% endfor %}
+
+Passages:
+{% for passage in passages %}
+[{{ passage.n }}] {{ passage.speaker }}: {{ passage.text }}
+{% endfor %}
+
+Cite passages by number. Do not copy quote text.
+```
+
+A file in your project's `prompts/` folder takes the place of a built-in template. `prompts/extract.md.j2` applies to
+every document type, and `prompts/doctor_note/extract.md.j2` applies to `DoctorNote` only. A project template can extend
+the built-in template and change one block, the same way a class overrides one method:
+
+```jinja
+{# prompts/doctor_note/extract.md.j2 #}
+{% extends "factorial/extract.md.j2" %}
+
+{% block guidance %}
+Skip template headings and any section left blank.
+{% endblock %}
+```
+
+A class can add template variables by overriding `prompt_context()`. `factorial prompts copy extract` writes the
+built-in template into `prompts/` as a starting point. A template's text is part of its step's fingerprint, so changing
+a prompt marks the facts it produced as stale.
 
 ## Why this approach
 

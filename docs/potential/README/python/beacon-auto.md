@@ -52,6 +52,9 @@ beacon_auto/
     documents.py    # document classes: segmentation and extraction
     facts.py        # fact classes: typed slots and resolution rules
     judges.py       # custom verification passes
+  prompts/
+    driver_statement/
+      extract.md.j2   # Jinja template for DriverStatement extraction
   evals/
     incidents.jsonl # labeled documents and expected facts
 ```
@@ -144,6 +147,47 @@ trial, binds `ProjectSettings.judges` to the listed built-in or local `Judge` su
 Storage (`local`, `s3`), sources (`folder`, `jsonl`, `imap`, `mcp`), pinned models, indexes (`sqlite-fts`,
 `pgvectorscale`, `turbopuffer`), and judges (`nli`, `jev-floors`, `llm`) are base classes with standard methods. You
 extend any seam by subclassing its base class in your project files.
+
+## Prompts
+
+Prompts are Jinja templates. Every step that calls a model has a built-in template, and Factorial fills it with the
+document, its numbered passages, and the fact types that the document class lists:
+
+```jinja
+{# factorial/extract.md.j2, the built-in extract template #}
+Extract facts from this {{ document.type }}, dated {{ document.at }}.
+
+{% block guidance %}{% endblock %}
+
+Fact types:
+{% for fact_type in fact_types %}
+- {{ fact_type.name }}: {{ fact_type.description }}
+{% endfor %}
+
+Passages:
+{% for passage in passages %}
+[{{ passage.n }}] {{ passage.speaker }}: {{ passage.text }}
+{% endfor %}
+
+Cite passages by number. Do not copy quote text.
+```
+
+A file in your project's `prompts/` folder takes the place of a built-in template. `prompts/extract.md.j2` applies to
+every document type, and `prompts/driver_statement/extract.md.j2` applies to `DriverStatement` only. A project template
+can extend the built-in template and change one block, the same way a class overrides one method:
+
+```jinja
+{# prompts/driver_statement/extract.md.j2 #}
+{% extends "factorial/extract.md.j2" %}
+
+{% block guidance %}
+Extract what the driver says they saw. Skip what the driver assumes.
+{% endblock %}
+```
+
+A class can add template variables by overriding `prompt_context()`. `factorial prompts copy extract` writes the
+built-in template into `prompts/` as a starting point. A template's text is part of its step's fingerprint, so changing
+a prompt marks the facts it produced as stale.
 
 ## Why this approach
 

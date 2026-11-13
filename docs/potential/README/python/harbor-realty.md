@@ -42,6 +42,9 @@ harbor_realty/
 │   ├── documents.py   # LeaseAgreement, TenantEmail, PlumberInvoice
 │   ├── facts.py       # MonthlyRent, PetPolicy, HeaterStatus
 │   └── judges.py      # custom judges alongside built-in judges
+├── prompts/
+│   └── tenant_email/
+│       └── extract.md.j2
 └── evals/
     └── leases_and_repairs.jsonl
 ```
@@ -162,6 +165,47 @@ and binds the varied attribute or property for that run, leaving your Python fil
   classes against labeled data and reports accuracy, cost, and latency.
 - **Pluggable seams.** Storage (local folders and S3-compatible buckets), sources (`folder`, `jsonl`, `imap`, and
   `mcp`), pinned models, and judges all share small base classes that you can subclass in your project.
+
+## Prompts
+
+Prompts are Jinja templates. Every step that calls a model has a built-in template, and Factorial fills it with the
+document, its numbered passages, and the fact types that the document class lists:
+
+```jinja
+{# factorial/extract.md.j2, the built-in extract template #}
+Extract facts from this {{ document.type }}, dated {{ document.at }}.
+
+{% block guidance %}{% endblock %}
+
+Fact types:
+{% for fact_type in fact_types %}
+- {{ fact_type.name }}: {{ fact_type.description }}
+{% endfor %}
+
+Passages:
+{% for passage in passages %}
+[{{ passage.n }}] {{ passage.speaker }}: {{ passage.text }}
+{% endfor %}
+
+Cite passages by number. Do not copy quote text.
+```
+
+A file in your project's `prompts/` folder takes the place of a built-in template. `prompts/extract.md.j2` applies to
+every document type, and `prompts/tenant_email/extract.md.j2` applies to `TenantEmail` only. A project template can
+extend the built-in template and change one block, the same way a class overrides one method:
+
+```jinja
+{# prompts/tenant_email/extract.md.j2 #}
+{% extends "factorial/extract.md.j2" %}
+
+{% block guidance %}
+Skip greetings, signatures, and quoted replies.
+{% endblock %}
+```
+
+A class can add template variables by overriding `prompt_context()`. `factorial prompts copy extract` writes the
+built-in template into `prompts/` as a starting point. A template's text is part of its step's fingerprint, so changing
+a prompt marks the facts it produced as stale.
 
 ## Why this approach
 
