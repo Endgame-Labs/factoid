@@ -2,7 +2,7 @@
 
 > **Status: Design draft.** Nothing is built yet. These docs settle the design before code is written.
 
-Factoid turns `Documents` into `Facts`: short, self-contained sentences, each tied to an exact source quote, who said it,
+Factoid turns `Documents` into `Facts`.  A fact is a short, self-contained sentences, each tied to an exact source quote, who said it,
 and when. As new documents arrive, Factoid updates its set of facts. It retires outdated facts, merges duplicate
 facts, and flags facts that disagree.
 
