@@ -24,123 +24,145 @@ factorial eval --vary judge=none,nli,jev_floors
 `uv tool install` puts one `factorial` command on your path. Inside a project, that command finds the project's own
 environment and runs there, so you never type `uv run` or activate anything.
 
-## Project layout
+## Classes hold the AI work
 
-`factorial new` creates one Python package with conventional module names. Classes connect through standard Python
-imports with no registration step. When a project grows, split modules into plain Python sub-packages.
+Factorial organizes your AI code and prompts around the types they work on. Each document type and each fact type is a
+class. The class holds its definition, its prompts, its model choices, and any custom code for its steps.
 
 ```text
 harbor_realty/
 ├── pyproject.toml
 ├── harbor_realty/
-│   ├── settings.py    # storage, indexes, pinned models, judge chain, and search
-│   ├── sources.py     # folder, jsonl, imap, and mcp sources
+│   ├── settings.py    # storage, indexes, pinned models, and search
+│   ├── sources.py     # where documents come from
 │   ├── documents.py   # LeaseAgreement, TenantEmail, and PlumberInvoice
 │   ├── facts.py       # MonthlyRent, PetPolicy, and HeaterStatus
-│   └── judges.py      # custom judges alongside built-in judges
-├── prompts/tenant_email/extract.md.j2
+│   └── judges.py      # judges of your own
+├── prompts/
+│   ├── tenant_email/
+│   │   ├── extract.md.j2          # this type's extract prompt
+│   │   └── thread_summary.md.j2   # a prompt of your own
+│   └── heater_status/
+│       └── resolve.md.j2          # how two HeaterStatus facts are compared
 └── evals/leases_and_repairs.jsonl
 ```
 
-A `Fact` subclass adds an optional typed slot (`entity`, field, and value). Dedup, supersede, and contradiction run on
-write at ingest. By default, a newer value supersedes an older one for the same entity and field. Override a method
-to change that rule.
+Each pipeline step is a hook on the class that owns it:
 
-```python
-# facts.py
-from typing import Self
-from factorial import Fact
+| Class | Hooks | What the hook decides |
+| --- | --- | --- |
+| `Document` | `classify`, `segment`, and `extract` | Is a document this type? How is it cut into passages? How are facts pulled from it? |
+| `Fact` | `classify`, `judge`, `repair`, and `resolve` | Is a candidate this type? Is it good enough? How is it reworded? Does it repeat, replace, or disagree with a fact already stored? |
 
-class MonthlyRent(Fact):
-    monthly_rent_usd: int
+Every hook has the same three levels:
 
-    def supersedes(self, prior: Self) -> bool:
-        return self.entity == prior.entity and self.stated_at > prior.stated_at
-
-class PetPolicy(Fact):
-    pets_allowed: bool
-
-class HeaterStatus(Fact):
-    heater_status: str
-```
-
-`Document` subclasses set options as attributes, import `Fact` classes, and compute dynamic options with `@property`.
+1. **Do nothing.** The base class has a working default.
+2. **Add a prompt.** A file at `prompts/<class_name>/<hook>.md.j2` takes the place of the built-in prompt for that
+   class.
+3. **Override the method.** Write your own code for the step, and call `super()` to keep the default behavior around it.
 
 ```python
 # documents.py
-from factorial import Document, Extractor
-from factorial.extractors import Passages, Staged
-from factorial.segmenters import Auto, Email, Paragraphs
-from harbor_realty.facts import HeaterStatus, MonthlyRent, PetPolicy
-
-class LeaseAgreement(Document):
-    segmenter = Paragraphs
-    facts = [MonthlyRent, PetPolicy]
-
-    @property
-    def extractor(self) -> type[Extractor]:
-        return Staged if len(self.text) > 15_000 else Passages
+from factorial import Document
+from harbor_realty.facts import HeaterStatus, PetPolicy
 
 class TenantEmail(Document):
-    segmenter = Email
+    """An email from a tenant to the leasing office."""
     facts = [HeaterStatus, PetPolicy]
 
-class PlumberInvoice(Document):
-    segmenter = Auto
-    facts = [HeaterStatus]
+    def extract(self, passages):
+        # Summarize the quoted thread first, then extract with that summary as context.
+        thread = self.generate("thread_summary.md.j2", passages=passages)
+        return super().extract(passages, thread=thread)
 ```
-
-Sources and custom judges subclass `Source` and `Judge`. In `settings.py`, `Project` imports your classes, pins exact
-model versions, reads secrets from environment variables, and orders the judge chain so cheap checks fail first.
 
 ```python
-# judges.py
-from factorial import CandidateFact, Judge
+# facts.py
+from typing import Literal
+from factorial import Entity, Fact
 
-class SignedInvoiceJudge(Judge):
-    def check(self, candidate: CandidateFact) -> bool:
-        return "Authorized signature" in candidate.passage.text
+class HeaterStatus(Fact):
+    """Whether a unit's heater works, as reported by someone who checked it."""
+    unit: Entity
+    status: Literal["working", "leaking", "broken"]
+
+    @property
+    def resolve_neighbors(self) -> int:
+        # Compare against more stored facts when the unit has a long repair history.
+        return 40 if self.unit.fact_count > 200 else 20
 ```
+
+A class's docstring is prompt text. It is the definition a model reads when it classifies into that type, so the
+description lives on the thing it describes. Typed attributes are the fact's slot.
+
+### Classifying
+
+Classifiers are fast choice models by default. A choice model answers a typed question in one pass and writes no text:
+it returns a probability for each option. To type a document, Factorial sends one request whose options are the
+project's document classes, each described by its docstring. To type a candidate fact, Factorial does the same with the
+fact classes that the document lists. One request covers every type, so adding types does not add calls.
+
+```python
+class PlumberInvoice(Document):
+    """An invoice from a plumber for work done on a unit."""
+    facts = [HeaterStatus]
+    classify_threshold = 0.8          # the default threshold comes from calibration
+
+    def classify_view(self) -> str:
+        # What the classifier sees: the letterhead and the totals, which sit at the top and the bottom.
+        return self.head(400) + self.tail(400)
+```
+
+Override `classify` itself to replace the model with your own code, such as a rule on a header.
+
+### Calling models
+
+Inside a hook, a class calls models through four methods. Factorial logs, prices, budgets, and replays every call made
+this way, and each prompt is part of its step's fingerprint.
+
+| Method | Returns | Model kind |
+| --- | --- | --- |
+| `self.choose(prompt, options)` | A probability for each option | Choice model |
+| `self.decide(prompt)` | A probability that the answer is yes | Choice model |
+| `self.score(prompt, rubric)` | A rubric level | Choice model |
+| `self.generate(prompt)` | Text | Generative model |
+
+Models are named once in `settings.py` and pinned to exact versions. Secrets come from environment variables.
 
 ```python
 # settings.py
 import os
 from factorial import Model, Search, Settings
 from factorial.indexes import SqliteFts
-from factorial.judges import JevFloors, Nli
-from factorial.retrievers import HybridRrf
 from factorial.stores import S3Store
-from harbor_realty.documents import LeaseAgreement, PlumberInvoice, TenantEmail
-from harbor_realty.judges import SignedInvoiceJudge
-from harbor_realty.sources import LeaseFolder, RepairInbox
 
 class Project(Settings):
     store = S3Store(bucket="harbor-facts", key=os.environ["S3_KEY"])
     index = SqliteFts(path="./var/index.db")
-    sources = [LeaseFolder, RepairInbox]
-    documents = [LeaseAgreement, TenantEmail, PlumberInvoice]
     models = {
-        "extract": Model("fireworks/glm-5p3-flash"),
-        "judge": Model("typesafe/jev-1.13.0"),
+        "choice": Model("typesafe/jev-1.13.0"),        # classify, judge, and resolve
+        "generate": Model("fireworks/glm-5p3-flash"),  # extract and repair
         "embed": Model("openai/text-embedding-3-small"),
     }
-    judges = [Nli, JevFloors, SignedInvoiceJudge]
-    search = Search(retriever=HybridRrf, rerank=True, budget_tokens=1500)
+    search = Search(retrieve="hybrid-rrf", budget_tokens=1500)
 ```
 
-When you run `factorial eval --vary judge=none,nli,jev_floors`, the CLI clones `Project` in memory for each trial and
-binds the varied attribute or property for that run, leaving your Python files untouched.
+An eval run can swap any hook's strategy without touching your files. `factorial eval --vary classify=choice,llm,rules`
+runs the same documents once per value and compares quality, cost, and latency.
 
 ## Prompts
 
-Every model step renders a built-in Jinja template with the document, numbered passages, and listed fact types.
-Files in `prompts/` override built-in templates globally (`prompts/extract.md.j2`) or per document class, and
-`{% extends %}` changes one block. Prompt text is fingerprinted, so edits mark older extracted facts as stale.
+Prompts are Jinja templates. Every hook that calls a model has a built-in template. A file in `prompts/` takes its
+place: `prompts/extract.md.j2` for every document type, or `prompts/tenant_email/extract.md.j2` for `TenantEmail` only.
+A project template can extend the built-in template and change one block, the same way a class overrides one method.
 
 ```jinja
-{# factorial/extract.md.j2 #}
+{# factorial/extract.md.j2, the built-in extract template #}
 Extract facts from this {{ document.type }}, dated {{ document.at }}.
 {% block guidance %}{% endblock %}
+{% for fact_type in fact_types %}
+- {{ fact_type.name }}: {{ fact_type.doc }}
+{% endfor %}
 {% for passage in passages %}
 [{{ passage.n }}] {{ passage.speaker }}: {{ passage.text }}
 {% endfor %}
@@ -150,8 +172,18 @@ Cite passages by number. Do not copy quote text.
 ```jinja
 {# prompts/tenant_email/extract.md.j2 #}
 {% extends "factorial/extract.md.j2" %}
-{% block guidance %}Skip greetings, signatures, and quoted replies.{% endblock %}
+{% block guidance %}
+Earlier messages in this thread: {{ thread }}
+Skip greetings, signatures, and quoted replies.
+{% endblock %}
 ```
+
+## Plain code hooks
+
+Some steps need no model. A fact class can override `validate` to reject a candidate in code, override `supersedes` to
+change when a newer fact replaces an older one, and define `on_added`, `on_superseded`, `on_contradicted`,
+`on_retracted`, and `on_restored` to run code when that event happens to a fact. Typed reads return values your code can
+use: `HeaterStatus.current(unit="Unit 4B").status`.
 
 ## Three ways to use it
 
@@ -166,17 +198,20 @@ Cite passages by number. Do not copy quote text.
 from factorial import Document, Fact, Factorial, Model, Settings
 
 class PlanTier(Fact):
+    """The plan an account is on."""
     tier: str
 
 class AccountNote(Document):
+    """A note an account manager wrote about a customer."""
     facts = [PlanTier]
 
 class ServiceSettings(Settings):
-    models = {"extract": Model("fireworks/glm-5p3-flash"), "judge": Model("typesafe/jev-1.13.0")}
+    models = {"generate": Model("fireworks/glm-5p3-flash"), "choice": Model("typesafe/jev-1.13.0")}
 
 facts = Factorial(settings=ServiceSettings, documents=[AccountNote])
 facts.ingest_text("Acme Corp upgraded to Enterprise.", document_type=AccountNote)
-hits = facts.search("Acme Corp plan")
+hits = facts.search("Acme Corp plan")               # sentences, with quotes
+tier = PlanTier.current(entity="Acme Corp").tier   # a typed value
 ```
 
 ## Core ideas
