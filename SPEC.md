@@ -135,7 +135,7 @@ attribute such as `chunk_size = 4000` (tested on Pydantic 2.14), and plain attri
 - When an entity is stored, it claims stored facts: Factoid searches them for the entity's names, and the decision model
   confirms each hit.
 - Entities that share a strong identity merge by rule. Entities that share only a weak identity go to a question with a
-  high floor. Merge and split are events, so each can be undone.
+  high floor. Merge and split are logged as events, so each can be traced (and, if section 10's proposal holds, undone).
 
 Sources for these choices: cerebro's link ladder and its over-creation cleanup jobs, and OpenEndgame's claims,
 unlinked facts, and reversible merges (`docs/prior-art.md`, and the research summarized in the session of 2026-11-13).
@@ -306,11 +306,20 @@ work and needs evals before any claim about its quality.
 
 ## 10. History and fingerprints
 
-**Proposed** (Kyle has seen the trade-offs and has not confirmed).
+**Decided** (Kyle, 2026-11-14).
 
-- An append-only event log is the truth. Fact events are `added`, `superseded`, `contradicted`, `retracted`, and
-  `restored`. Entity events are `linked`, `merged`, and `split`. Current state and search indexes are views rebuilt
-  from the log.
+- **Current state is the truth.** The facts, entities, links, and labels tables say what is true now, and reads go to
+  them. Nothing is rebuilt from history.
+- **The event log is for audit and provenance.** Every change also writes an event. Fact events are `added`,
+  `superseded`, `contradicted`, `retracted`, and `restored`. Entity events are `linked`, `merged`, and `split`. Each
+  event names the facts or entities it touched, the step that made it, and the reason. The log lives in the same
+  SQLite database, and the state change and its event are written in one transaction.
+- **Responses can show history.** When a fact has superseded another, a read can query the log and return the older
+  fact, with when and why it changed.
+
+**Proposed.**
+
+- An event stores the state it replaced, so a merge, split, or supersede can be undone by applying the reverse change.
 - Each fact records a fingerprint of the prompts, questions, floors, and settings that made it. A change makes the old
   facts stale, and `factoid rebuild --estimate` prices re-deriving them. The model is left out of the fingerprint.
 
@@ -492,3 +501,4 @@ All dates are 2026-11-13 unless noted.
     turbopuffer-compatible endpoint for search.
 24. Judges are renamed fact evals (`FactEval`).
 25. Five levels of customization. Decision steps are worded as questions, and generation steps as prompts.
+26. Current state is the source of truth. The event log is kept for audit and provenance, and is not replayed.

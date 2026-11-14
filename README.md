@@ -489,9 +489,10 @@ recent = globex.facts(since="30d")     # every recent fact linked to Globex
   ([docs/prior-art.md](docs/prior-art.md)).
 - **Deterministic provenance.** The extractor cites numbered passages, and Factoid's code attaches the exact quote,
   speaker, and timestamp.
-- **Append-only event log.** Writes append fact events (`added`, `superseded`, `contradicted`, `retracted`, and
-  `restored`) and entity events (`linked`, `merged`, and `split`) to a log kept in the project's SQLite database.
-  Current state and the search index are views rebuilt from that log.
+- **Event log for history.** Current state in SQLite is the source of truth. Each change also writes a fact event
+  (`added`, `superseded`, `contradicted`, `retracted`, or `restored`) or an entity event (`linked`, `merged`, or
+  `split`) to a log in the same database. The log records where each fact came from and how it changed, so a response
+  can include the fact a newer one superseded.
 - **Eval-selected defaults.** Default strategies across `classify`, `segment`, `extract`, `evaluate`, `repair`, `label`,
   `link`, and `resolve` come from eval results. `factoid eval` measures accuracy, cost, and latency on labeled data.
 - **Pluggable backends.** Storage, search, sources (`folder`, `jsonl`, `imap`, and `mcp`), models, and fact evals share
