@@ -347,6 +347,14 @@ work and needs evals before any claim about its quality.
 - Writes go to SQLite first, then to the index. A write the index has not confirmed is retried, so the index catches
   up with the truth.
 - The SQLite file lives in a git-ignored folder in the project, unless `settings.py` points elsewhere.
+
+**Decided** (Kyle, 2026-11-14): writing to SQLite.
+
+- SQLite allows one writer at a time. In v1, model calls run in parallel, and every save goes through a single writer in
+  the process. Each document's results are saved in one short transaction.
+- WAL mode is on, so reads and searches are not blocked by ingest.
+- A second process writing to the same project waits its turn through SQLite's busy timeout.
+- Many processes writing at once, or a hosted deployment, is the case for a Postgres backend. It is not built in v1.
 - Later back ends behind the same interfaces: Postgres (pgvector and pgvectorscale) for the system of record and for
   search, and LanceDB on a bucket.
 
@@ -502,3 +510,5 @@ All dates are 2026-11-13 unless noted.
 24. Judges are renamed fact evals (`FactEval`).
 25. Five levels of customization. Decision steps are worded as questions, and generation steps as prompts.
 26. Current state is the source of truth. The event log is kept for audit and provenance, and is not replayed.
+
+27. SQLite in v1 has one writer per process, with WAL mode on. Many writers or hosting means a Postgres backend later.
