@@ -223,8 +223,10 @@ situation in front of its text. When it is off, the chunk's text alone is indexe
   own fields.
 - A chunk's entity ids are the entities linked by the facts extracted from it, so `about=` filters work on chunks too.
 - `facts.search(...)` returns facts, and `chunks.search(...)` returns chunks with their situation, document, and
-  position. A search for both runs both queries in parallel and fuses the
-  results with reciprocal rank fusion, or with the reranker when one is set.
+  position. A search for both runs hybrid search in each namespace in parallel,
+  then reranks the combined list (Kyle, 2026-11-14). Without a reranker, it falls back to reciprocal rank fusion.
+- Separate namespaces also let Factoid benchmark facts against chunks on the same corpus. See
+  `specs/benchmarks/facts-vs-chunks.md`.
 - Whether the default search returns facts only or both is an eval result.
 
 
@@ -523,6 +525,8 @@ retrieval methods, or thresholds. Make each a selectable strategy, and measure.
 `--vary` runs the same documents under each strategy. Defaults are eval results. The scorecard includes coverage: the
 share of facts with no label, and the share of mentions with no entity.
 
+Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
+
 ## 15. How the docs are written
 
 **Decided.**
@@ -588,3 +592,5 @@ All dates are 2026-11-13 unless noted.
 30. prosaic is a separate repo (`Endgame-Labs/prosaic`) and a dependency of Factoid. Endgame uses it too.
 31. Chunks are searchable as well as facts. A chunk is indexed with its situation when `situate` is on. Facts and
     chunks are in separate namespaces.
+32. Searching facts and chunks together is hybrid search in each, then a rerank. Benchmark specs live in
+    `specs/benchmarks/`, starting with facts versus chunks.
