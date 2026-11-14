@@ -216,11 +216,15 @@ situation in front of its text. When it is off, the chunk's text alone is indexe
 
 **Proposed.**
 
-- Facts and chunks share the project's search namespace. Each row has a `kind` attribute (`fact` or `chunk`), so a
-  query can ask for either or both.
+- Facts and chunks are in two namespaces, `<project-id>-facts` and `<project-id>-chunks`. Reasons: BM25 length and
+  term statistics are per namespace, and short facts mixed with long chunks would skew them; a namespace has one vector
+  size, and facts and chunks may want different embedding models; each can be dropped and rebuilt alone; chunk
+  searches would otherwise be filtered searches over a namespace that is mostly facts; and each schema holds only its
+  own fields.
 - A chunk's entity ids are the entities linked by the facts extracted from it, so `about=` filters work on chunks too.
 - `facts.search(...)` returns facts, and `chunks.search(...)` returns chunks with their situation, document, and
-  position. A search for both returns one list ranked together.
+  position. A search for both runs both queries in parallel and fuses the
+  results with reciprocal rank fusion, or with the reranker when one is set.
 - Whether the default search returns facts only or both is an eval result.
 
 
@@ -409,8 +413,8 @@ work and needs evals before any claim about its quality.
 
 - SQLite is the truth, and the turbopuffer namespace is a view. If the index is lost or its settings change,
   `factoid rebuild` repopulates it from SQLite.
-- One turbopuffer namespace per project, named from the project id. Each row is a fact or a chunk (with a `kind`
-  attribute), with its vector, its text for BM25, and its entity ids, labels, and times as filterable attributes.
+- Two turbopuffer namespaces per project, named from the project id: one for facts and one for chunks. Each row is a
+  fact or a chunk, with its vector, its text for BM25, and its entity ids, labels, and times as filterable attributes.
 - Writes go to SQLite first, then to the index. A write the index has not confirmed is retried, so the index catches
   up with the truth.
 - The SQLite file lives in a git-ignored folder in the project, unless `settings.py` points elsewhere.
@@ -582,4 +586,5 @@ All dates are 2026-11-13 unless noted.
     class with a column map. Factoid can write it with a model, or print the prompt for any coding agent, and it has a dry run.
 29. MIT license for Factoid and prosaic.
 30. prosaic is a separate repo (`Endgame-Labs/prosaic`) and a dependency of Factoid. Endgame uses it too.
-31. Chunks are searchable as well as facts. A chunk is indexed with its situation when `situate` is on.
+31. Chunks are searchable as well as facts. A chunk is indexed with its situation when `situate` is on. Facts and
+    chunks are in separate namespaces.
