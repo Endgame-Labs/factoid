@@ -572,12 +572,9 @@ work and needs evals before any claim about its quality.
 - Later back ends behind the same interfaces: Postgres (pgvector and pgvectorscale) for the system of record and for
   search, and LanceDB on a bucket.
 
-**Open.**
-
-- Production mode with SQLite: one writer at a time. Fine for a CLI project and an agent's memory, and a limit for a
-  backend with several ingest workers.
-- Local models: Ollama is a lead for a keyless local mode (embeddings such as EmbeddingGemma, generation, and a System
-  One API for decisions). Not verified.
+**Decided** (Kyle, 2026-11-14): **Factoid requires keys.** There is no keyless local mode in v1, and maybe never. The
+setup wizard makes getting keys easy. A provider can still be pointed at a custom base URL with no key (a gateway, or a
+local runtime such as Ollama), but local runtimes are not promised or tested.
 
 ## 12. Install, setup, and CLI
 
@@ -755,3 +752,4 @@ All dates are 2026-11-13 unless noted.
 40. The v1 entity class: a docstring, optional `unique_keys`, typed properties with `where()`, and per-class tuning of
     the AI steps. Domain methods, callbacks, and `normalize` are on the roadmap. No trait defaults per entity class.
 41. Prose extraction never fills entity properties; it writes facts only.
+42. Factoid requires API keys. No keyless local mode in v1, and maybe never.

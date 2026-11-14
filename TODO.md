@@ -7,7 +7,7 @@ Kyle wants to talk this through before anything is decided. Bring it up with him
 **Local mode.** Postgres with pgvector and pgvectorscale, plus a local embedding model (Gemma?).
 
 **2026-11-14:** decided for v1 (Kyle): storage is pluggable; SQLite is the system of record; search requires
-turbopuffer or a turbopuffer-compatible endpoint. See `SPEC.md` section 11. Still open: a keyless local mode.
+turbopuffer or a turbopuffer-compatible endpoint. See `SPEC.md` section 11.
 
 **Production mode.** Unknown.
 
