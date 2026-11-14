@@ -175,8 +175,24 @@ inherent content against rubrics Factoid provides: whether it depends on time, a
 Sources for these choices: cerebro's link ladder and its over-creation cleanup jobs, and OpenEndgame's claims,
 unlinked facts, and reversible merges (`docs/prior-art.md`, and the research summarized in the session of 2026-11-13).
 
-**Open.** Entity types of unknown kind, relations between entities, sides (ours and theirs), and how high-cardinality
-identifiers such as SKUs are handled.
+### Relations between entities
+
+**Decided** (Kyle, 2026-11-14). Relations are not declared. There is no `FactoidRelation` class and no relation schema.
+
+**Proposed.**
+
+- **Co-mention.** For each pair of entities, Factoid keeps the number of facts linked to both, the most recent one, and
+  the roles each entity plays in them. It is counting, with no model call.
+- **Relation facts.** A durable relation is a fact that links two or more entities, whose kind is stable or
+  slow-changing (see "Fact traits"), and that is still valid. It is a view over stored facts, with no extra extraction.
+  `entity.related()` returns connected entities, each with its co-mention count and its current relation facts.
+  Freshness weighting applies, so a relation that has ended ranks lower.
+- Direction is carried by the fact sentence.
+
+Pair summaries and relation types that emerge from the data are in `specs/roadmap/relations.md`.
+
+**Open.** Entity types of unknown kind, sides (ours and theirs), and how high-cardinality identifiers such as SKUs are
+handled.
 
 ## 8. Pipeline
 
@@ -644,3 +660,5 @@ All dates are 2026-11-13 unless noted.
 33. Fact traits: during labeling, the decision model also judges the kind of fact and how long it stays valid.
 34. Contradictions are settled only by evidence or by a person or agent, and go stale when their facts expire.
     Search results include a fact's contradictions by default.
+35. Relations between entities are not declared. Co-mention counts and relation facts (durable, valid facts that
+    link entities) are the relations. Pair summaries and emergent types are on the roadmap.
