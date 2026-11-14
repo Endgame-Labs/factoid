@@ -54,6 +54,13 @@ model, search returns results in their retrieval order. For the `choose` workloa
 TypeSafe. Jev is the best decision model and is cheap. Other decision models work too: OpenAI's decisions API,
 Fireworks' Rune, and Cloudflare's Clef.
 
+Factoid also needs a search index: turbopuffer, or any service with a turbopuffer-compatible API. Set its key the same
+way, and choose a compatible service by setting its base URL in `settings.py`.
+
+```sh
+factoid keys set turbopuffer  # the search index
+```
+
 Guided setup is available as a terminal UI. The terminal UI adds providers, checks each key, and lets you pick a model
 for each workload from the providers you have:
 
@@ -372,25 +379,27 @@ each prompt in the step's fingerprint.
 | `self.score(prompt, rubric)` | A rubric level | Decision model |
 | `self.generate(prompt)` | Text | Generative model |
 
-Define models once in `settings.py` with pinned versions. Read secrets from environment variables.
+Define models once in `settings.py` with pinned versions. Keys come from `factoid keys`, never from the file.
 
 ```python
 # settings.py
-import os
-from factoid import FactoidSettings, Model, Search
-from factoid.indexes import SqliteFts
-from factoid.stores import S3Store
+from factoid import FactoidSettings, Model
+from factoid.search import Turbopuffer
+from factoid.stores import Sqlite
 
 class Project(FactoidSettings):
-    store = S3Store(bucket="acme-facts", key=os.environ["S3_KEY"])
-    index = SqliteFts(path="./var/index.db")
+    store = Sqlite(path=".factoid/acme.db")            # the system of record
     models = {
         "choose": Model("typesafe/jev-1.13.0"),        # classify, judge, and resolve
         "generate": Model("fireworks/glm-5p3-flash"),  # extract and repair
         "embed": Model("openai/text-embedding-3-small"),
         "rerank": Model("fireworks/qwen3-reranker-8b"),    # optional
     }
-    search = Search(retrieve="hybrid-rrf", budget_tokens=1500)
+    search = Turbopuffer(
+        base_url="https://gcp-us-central1.turbopuffer.com",  # or any turbopuffer-compatible endpoint
+        retrieve="hybrid-rrf",
+        budget_tokens=1500,
+    )
 ```
 
 Eval runs can swap hook strategies from the CLI without modifying project files. `factoid eval --vary
@@ -479,12 +488,13 @@ recent = globex.facts(since="30d")     # every recent fact linked to Globex
 - **Deterministic provenance.** The extractor cites numbered passages, and Factoid's code attaches the exact quote,
   speaker, and timestamp.
 - **Append-only event log.** Writes append fact events (`added`, `superseded`, `contradicted`, `retracted`, and
-  `restored`) and entity events (`linked`, `merged`, and `split`) to a log. Current state and search indexes
-  (`sqlite-fts`, `pgvectorscale`, and `turbopuffer`) are views rebuilt from that log.
+  `restored`) and entity events (`linked`, `merged`, and `split`) to a log kept in the project's SQLite database.
+  Current state and the search index are views rebuilt from that log.
 - **Eval-selected defaults.** Default strategies across `classify`, `segment`, `extract`, `judge`, `repair`, `label`,
   `link`, and `resolve` come from eval results. `factoid eval` measures accuracy, cost, and latency on labeled data.
-- **Pluggable backends.** Storage (local folders and S3-compatible buckets), sources (`folder`, `jsonl`, `imap`, and
-  `mcp`), models, and judges share small base classes that projects can subclass.
+- **Pluggable backends.** Storage, search, sources (`folder`, `jsonl`, `imap`, and `mcp`), models, and judges share
+  small base classes that projects can subclass. In v1, Factoid stores data in SQLite and searches with turbopuffer or
+  a compatible endpoint, and either can be replaced.
 - **Unlinked facts are kept.** A mention that matches no entity stays on the fact as an unlinked mention, and a
   mention in a fact never creates an entity. When a new entity is stored, Factoid searches stored facts for the
   entity's names and asks the decision model to confirm each hit, linking facts that arrived before the entity existed.
