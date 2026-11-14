@@ -43,7 +43,7 @@ Factoid uses models for four kinds of work, and the fourth is optional:
 
 | Workload | Kind of model | Used for |
 | --- | --- | --- |
-| `choose` | Decision model | Classifying, judging, labeling, linking, and resolving |
+| `choose` | Decision model | Classifying, evaluating facts, labeling, linking, and resolving |
 | `generate` | Generative model | Extracting facts and describing chunks |
 | `embed` | Embedding model | Search |
 | `rerank` | Reranking model (optional) | Reordering search results |
@@ -110,7 +110,7 @@ factoid ingest ./sample_docs                     # documents in, facts and entit
 factoid search "Unit 4B heater"
 factoid read fact_01j9x8k2m                      # one fact, its quotes, its entities, and its history
 factoid eval                                     # score the run against labeled data
-factoid eval --vary judge=none,nli,jev_floors    # compare judge chains on the same documents
+factoid eval --vary fact_evals=none,nli,jev_floors  # compare fact eval chains on the same documents
 ```
 
 ## Documents, facts, and entities
@@ -127,7 +127,7 @@ acme/
 │   ├── documents.py   # LeaseAgreement, TenantEmail, and PlumberInvoice
 │   ├── entities.py    # Unit, Person, and Vendor
 │   ├── facts.py       # labels, and the project's base fact class
-│   └── judges.py      # custom judges
+│   └── fact_evals.py  # custom fact evals
 ├── prompts/
 │   └── tenant_email/
 │       ├── extract.md.j2          # extract prompt for TenantEmail
@@ -140,12 +140,13 @@ The three base classes expose hooks for each stage of the pipeline:
 | Class | Hooks | Responsibility |
 | --- | --- | --- |
 | `FactoidDocument` | `classify`, `segment`, `chunk`, `situate`, `extract`, and `discover` | Match a document to this type, split it into passages, group passages into chunks, describe each chunk, extract candidate facts, and propose entities. |
-| `FactoidFact` | `judge`, `repair`, `label`, `link`, and `resolve` | Check quality, rewrite a near miss, apply labels, link to entities, and compare against stored facts. |
+| `FactoidFact` | `evaluate`, `repair`, `label`, `link`, and `resolve` | Check quality, rewrite a near miss, apply labels, link to entities, and compare against stored facts. |
 | `FactoidEntity` | `identify`, `claim`, and `merge` | Match a mention to an entity of this type, claim stored facts, and decide whether two entities are the same. |
 
 Every class supports three levels of customization:
 
-- **Class definitions**: write a docstring and set class attributes for labels, judges, thresholds, and model settings.
+- **Class definitions**: write a docstring and set class attributes for labels, fact evals, thresholds, and model
+  settings.
 - **Prompt files**: place a template at `prompts/<class_name>/<hook>.md.j2` to override the default prompt for a hook.
 - **Hook methods**: override a hook method in Python to run custom code, render helper prompts, or call `super()`.
 
@@ -223,7 +224,7 @@ A label is a small `FactoidLabel` subclass with a docstring. The docstring is th
 asks one yes-or-no question per label. A fact can carry several labels, and a fact that matches no label is kept.
 
 A `FactoidFact` subclass is optional, and many projects need none. A `FactoidFact` subclass exists for behavior only: a
-custom definition, extraction guidance, shared labels, or custom judges.
+custom definition, extraction guidance, shared labels, or custom fact evals.
 
 ```python
 # facts.py
@@ -323,13 +324,14 @@ class PlumberInvoice(FactoidDocument):
 
 Override `classify` to replace the model call with Python logic, such as a header check.
 
-### Default judges
+### Default fact evals
 
-Every candidate fact passes a default chain of judges before being stored. A project gets this chain without writing
-any code, and custom judges run on top of the default chain while keeping the built-in checks. The chain runs in order
-and rejects a candidate at the first failure, so the cheap judge goes first.
+Every candidate fact passes a default chain of fact evals before being stored. A fact eval decides one thing: whether
+a candidate fact is good enough to keep. A project gets this chain without writing any code, and custom fact evals run
+on top of the default chain while keeping the built-in checks. The chain runs in order and rejects a candidate at the
+first failure, so the cheap fact eval goes first.
 
-| Judge | Responsibility |
+| Fact eval | Responsibility |
 | --- | --- |
 | `nli` | Small entailment model. Checks that the cited passage entails the sentence. Cheap, so `nli` runs first. |
 | `jev_floors` | Six yes-or-no questions in one decision-model call. Each probability has a floor; all six must pass. |
@@ -344,28 +346,28 @@ Each `jev_floors` answer is a probability that must clear the floor for that que
 - `distinct`: No stored fact already states the same claim.
 
 Factoid calibrates these floors on labeled data; no floor uses a fixed `0.5`. A candidate that narrowly fails gets
-one repair (a rewording), and Factoid judges the repaired candidate again. A project can change one floor or add a
-custom judge without replacing the default chain:
+one repair (a rewording), and Factoid evaluates the repaired candidate again. A project can change one floor or add a
+custom fact eval without replacing the default chain:
 
 ```python
 # facts.py
 from factoid import FactoidFact
-from factoid.judges import JevFloors, Nli
-from acme.judges import FirstHandJudge
+from factoid.fact_evals import JevFloors, Nli
+from acme.fact_evals import FirstHandEval
 
 class AcmeBaseFact(FactoidFact):
     """Shared defaults for this project's facts."""
     labels = [RepairIssue, Commitment, Cost]
-    judges = [Nli, JevFloors(useful=0.8)]             # the default chain, with one floor raised
+    fact_evals = [Nli, JevFloors(useful=0.8)]         # the default chain, with one floor raised
 
 class RepairReport(AcmeBaseFact):
     """A statement about the condition of a unit, from someone who checked it."""
-    judges = [*AcmeBaseFact.judges, FirstHandJudge]  # the chain, then a judge of our own
+    fact_evals = [*AcmeBaseFact.fact_evals, FirstHandEval]  # the chain, then a fact eval of our own
 ```
 
-`RepairReport` is a `FactoidFact` subclass that exists only to carry an extra judge.
+`RepairReport` is a `FactoidFact` subclass that exists only to carry an extra fact eval.
 
-`factoid eval --vary judge=none,nli,jev_floors` compares chains on the same documents.
+`factoid eval --vary fact_evals=none,nli,jev_floors` compares chains on the same documents.
 
 ### Model calls
 
@@ -390,7 +392,7 @@ from factoid.stores import Sqlite
 class Project(FactoidSettings):
     store = Sqlite(path=".factoid/acme.db")            # the system of record
     models = {
-        "choose": Model("typesafe/jev-1.13.0"),        # classify, judge, and resolve
+        "choose": Model("typesafe/jev-1.13.0"),        # classify, evaluate facts, and resolve
         "generate": Model("fireworks/glm-5p3-flash"),  # extract and repair
         "embed": Model("openai/text-embedding-3-small"),
         "rerank": Model("fireworks/qwen3-reranker-8b"),    # optional
@@ -454,7 +456,7 @@ of each.
 ## Usage
 
 - **Standalone CLI project.** Manage a RAG corpus in its own directory, tune retrieval units, and evaluate prompt,
-  extractor, and judge choices with `factoid ingest`, `factoid search`, and `factoid eval`.
+  extractor, and fact eval choices with `factoid ingest`, `factoid search`, and `factoid eval`.
 - **Agent memory over MCP.** Connect `imap`, `folder`, `jsonl`, and `mcp` sources for mail, calls, notes, and chats,
   then expose fact search and writes to an agent through `factoid mcp` or the CLI.
 - **Python library or HTTP service.** Run `factoid serve` as an HTTP sidecar, or `import factoid` inside an
@@ -490,9 +492,9 @@ recent = globex.facts(since="30d")     # every recent fact linked to Globex
 - **Append-only event log.** Writes append fact events (`added`, `superseded`, `contradicted`, `retracted`, and
   `restored`) and entity events (`linked`, `merged`, and `split`) to a log kept in the project's SQLite database.
   Current state and the search index are views rebuilt from that log.
-- **Eval-selected defaults.** Default strategies across `classify`, `segment`, `extract`, `judge`, `repair`, `label`,
+- **Eval-selected defaults.** Default strategies across `classify`, `segment`, `extract`, `evaluate`, `repair`, `label`,
   `link`, and `resolve` come from eval results. `factoid eval` measures accuracy, cost, and latency on labeled data.
-- **Pluggable backends.** Storage, search, sources (`folder`, `jsonl`, `imap`, and `mcp`), models, and judges share
+- **Pluggable backends.** Storage, search, sources (`folder`, `jsonl`, `imap`, and `mcp`), models, and fact evals share
   small base classes that projects can subclass. In v1, Factoid stores data in SQLite and searches with turbopuffer or
   a compatible endpoint, and either can be replaced.
 - **Unlinked facts are kept.** A mention that matches no entity stays on the fact as an unlinked mention, and a

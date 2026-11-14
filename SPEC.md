@@ -72,7 +72,7 @@ attribute such as `chunk_size = 4000` (tested on Pydantic 2.14), and plain attri
   projects.
 - Subclassing a base class is the declaration. There is no registration step.
 - The conventional files are defaults, not requirements: `settings.py`, `sources.py`, `documents.py`, `entities.py`,
-  `facts.py`, `judges.py`, and `prompts/`. The same classes work when defined anywhere and passed to `Factoid(...)`.
+  `facts.py`, `fact_evals.py`, and `prompts/`. The same classes work when defined anywhere and passed to `Factoid(...)`.
 
 **Proposed.**
 
@@ -94,7 +94,7 @@ attribute such as `chunk_size = 4000` (tested on Pydantic 2.14), and plain attri
 
 - Labels (section 6) are the fact's only classification.
 - A `FactoidFact` subclass is optional and exists for behavior only: its own definition, extraction guidance, or
-  judges.
+  fact evals.
 - A fact whose mentions match no entity is kept, with the mentions recorded as unlinked. (Kyle asked for facts to link
   to one or more entities, and separately asked that unclassified facts and entities be accounted for. Keeping unlinked
   facts is how the README squares the two.)
@@ -150,11 +150,11 @@ identifiers such as SKUs are handled.
 | Class | Hooks |
 | --- | --- |
 | `FactoidDocument` | `classify`, `segment`, `chunk`, `situate`, `extract`, and `discover` |
-| `FactoidFact` | `judge`, `repair`, `label`, `link`, and `resolve` |
+| `FactoidFact` | `evaluate`, `repair`, `label`, `link`, and `resolve` |
 | `FactoidEntity` | `identify`, `claim`, and `merge` |
 
 **Decided.** The framework is principally for organizing AI code and prompts. Hooks that customize model work
-(classifying, extracting, and judging) are the main case, and plain deterministic hooks are secondary.
+(classifying, extracting, and evaluating facts) are the main case, and plain deterministic hooks are secondary.
 
 Every hook can be customized three ways: class attributes, a prompt file, or a method override that may call `super()`.
 A setting can be a computed property.
@@ -188,7 +188,17 @@ probability per option and no generated text.
 **Proposed.** A document is typed with one request whose options are the document classes and their docstrings.
 `classify_view` controls what the classifier sees, and `classify_threshold` is calibrated.
 
-### Judging
+### Fact evals
+
+**Decided** (Kyle, 2026-11-14). The checks that decide whether a candidate fact is good enough to store are called
+**fact evals** (base class `FactEval`), not judges. A fact eval answers one question: keep this fact, or not.
+Labeling, linking, and resolving are separate decisions about facts already kept.
+
+Names that follow: the `FactoidFact` hook is `evaluate`, the class attribute is `fact_evals`, the module is
+`factoid.fact_evals`, a project's file is `fact_evals.py`, and the eval switch is `--vary fact_evals=...`.
+
+Note the overlap with `factoid eval`, which scores a whole configuration against labeled data. The two are different
+things: a fact eval gates one fact at ingest, and `factoid eval` measures the pipeline.
 
 **Proposed.**
 
@@ -198,8 +208,8 @@ probability per option and no generated text.
   distinct. Each has its own floor, and all six must pass. Scores are never averaged.
 - Starting floors, from OpenEndgame: grounded 0.75, attribution 0.7, self-contained 0.65, atomic 0.4, useful 0.7, and
   distinct 0.6. Floors are calibrated on labeled data.
-- A near miss gets one repair (a rewording), then is judged again.
-- A project changes one floor or adds a judge without replacing the chain.
+- A near miss gets one repair (a rewording), then is evaluated again.
+- A project changes one floor or adds a fact eval without replacing the chain.
 
 ### Resolving
 
@@ -226,7 +236,7 @@ work and needs evals before any claim about its quality.
 - "Prompt" is too narrow a word, and a `prompts/` folder may be the wrong abstraction (Kyle). The working decomposition
   of a model step is five parts: inputs, the view of each input, the question (type, instruction, and criteria), the
   rule that turns answers into a decision, and the model.
-- For Jev, each kind of use fixes the inputs, and the author supplies criteria. Classifying, judging, resolving,
+- For Jev, each kind of use fixes the inputs, and the author supplies criteria. Classifying, evaluating facts, resolving,
   identifying, and ranking may all become one `Question` shape.
 - The pieces an author writes (definition, guidance, examples, and rubric) may live on the class, with a type that
   outgrows one file getting its own folder.
@@ -235,7 +245,7 @@ work and needs evals before any claim about its quality.
 
 **Decided.**
 
-- The `choose` workload (classifying, judging, labeling, linking, and resolving) is done by a decision model, also
+- The `choose` workload (classifying, evaluating facts, labeling, linking, and resolving) is done by a decision model, also
   called a System One model. A generative model does not stand in for it.
 - Jev (TypeSafe) is the recommended decision model: it is the best and it is cheap. Other providers have one too, and
   Factoid supports them: OpenAI's decisions API, Fireworks' Rune, and Cloudflare's Clef.
@@ -395,7 +405,7 @@ or briefs, digests, and publishing are readers built on Factoid (`docs/potential
 
 ## 14. Evals
 
-**Decided.** Benchmarks decide algorithms. Do not ask Kyle to pick between judging chains, extraction strategies,
+**Decided.** Benchmarks decide algorithms. Do not ask Kyle to pick between fact eval chains, extraction strategies,
 retrieval methods, or thresholds. Make each a selectable strategy, and measure.
 
 **Proposed.** `factoid eval` scores a project against labeled data and reports quality, cost, and latency.
@@ -456,3 +466,4 @@ All dates are 2026-11-13 unless noted.
 22. No flat-file store for now. Postgres is the leading proposal for the system of record in both modes.
 23. Storage is pluggable. v1 uses SQLite as the system of record, and requires turbopuffer or a
     turbopuffer-compatible endpoint for search.
+24. Judges are renamed fact evals (`FactEval`).
