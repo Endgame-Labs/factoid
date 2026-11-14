@@ -1,0 +1,20 @@
+You are helping design Factoid, a Python framework that turns documents into facts linked to entities. Answer in plain markdown, under about 150 lines. Be concrete. No preamble.
+
+How Factoid works:
+- A fact is one self-contained sentence, plus exact source quotes (who said it, when), linked to one or more entities.
+- Labels are yes/no tags a project defines per domain.
+- NEW: traits. When labeling a fact, a fast decision model (one pass, returns a probability per option, no generated text) also judges the fact's inherent content against fixed rubrics that ship with Factoid. They must work across any corpus a user might bring.
+
+The draft traits were designed with a sales CRM corpus in mind (calls, emails, deal records):
+1. Kind of fact (choice): stable (true for years: "Northwind is headquartered in Austin"), slow-changing (role, plan, relationship: "Dana is VP of Sales"), current state (status/number that moves in days or weeks: "The renewal is in Negotiation"), event (happened at a time, stays true as history: "Northwind signed the pilot on March 3"), plan (intended or expected; expires when its date passes: "They plan to expand to Europe in Q3"), decision (a choice someone made: "Northwind chose annual billing over monthly").
+2. Validity (choice over ordered ranges): a day, a week, a month, a quarter, a year, several years, permanent. Factoid stores valid_until = when stated + the median range.
+3. Optional: hedged (yes/no), and opinion vs observed (choice).
+
+Traits are used to: rank stale facts lower in search; filter to facts likely still true at a date; decide whether two disagreeing facts are a supersede (state changed over time) or a real contradiction; let a contradiction go stale when its facts expire; list facts due for re-checking; and calibrate validity predictions against how long facts actually last.
+
+Your task:
+1. Brainstorm your own list of corpus types people would plausibly feed a system like this. Make them as different from CRM and from each other as you can. Pick the 6 that stress the draft traits hardest, and say briefly why you picked them.
+2. For each: 3 example facts, how the draft traits classify them, and where the traits fail, mislead, or are missing something.
+3. Gaps that show up across several corpora. For each, say whether it needs a new trait, a new option on an existing trait, or is better left to labels or entities.
+4. Propose a final general trait set: each trait, its type (yes/no, choice, or ordered ranges), its options with a one-line rubric each, and why it earns its place. Keep it small: each trait costs a question on every fact. Mark which are on by default.
+5. Name any risk in using a model's guess of validity at all, and how to keep it honest.

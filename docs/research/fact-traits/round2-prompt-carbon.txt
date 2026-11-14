@@ -1,0 +1,32 @@
+You are helping design Factoid, a Python framework that turns documents into facts linked to entities. Answer in plain markdown, under about 130 lines. Be concrete. No preamble.
+
+How Factoid works:
+- A fact is one self-contained sentence, plus exact source quotes (who said it, when), linked to one or more entities.
+- Labels are yes/no tags a project defines per domain. Entities can be anything with an identity: people, companies, tickets, software versions, jurisdictions, fictional works, and so on.
+- Traits: when labeling a fact, a fast decision model (one pass, returns a probability per option, no generated text) also judges the fact's inherent content against fixed rubrics that ship with Factoid. They must work across any corpus.
+- Traits are used to: rank facts that are probably no longer true lower in search; filter to facts likely true at a date; decide whether two disagreeing facts are a supersede (the state changed) or a real contradiction; list facts due for re-checking; and calibrate persistence guesses against how long facts actually last.
+
+A first round of review across many corpora (clinical notes, contracts and statutes, incident logs, release notes, scientific papers, depositions, oral histories, archives, and fiction) produced this revised draft:
+
+1. Kind (choice, on by default):
+   - fixed: cannot change once true (a birth date, a dated measurement, a completed result).
+   - state: a condition, attribute, role, relationship, or number that holds over an interval and can change.
+   - event: something that happened or was done at a time or over a bounded episode; stays true as history.
+   - decision: a choice someone made (a kind of event that matters on its own: "Northwind chose annual billing").
+   - plan: intended, predicted, scheduled, or expected to happen.
+   - rule: a requirement, permission, prohibition, definition, or conditional regularity ("tenants shall pay on the 1st", "if retries are off, each request is sent once").
+2. Stance (choice, on by default):
+   - direct: stated plainly as observed, recorded, or enacted (this says nothing about whether it is actually true).
+   - uncertain: hedged, approximate, hypothesized, or attributed to an unverified source ("probably", "the witness said").
+   - evaluative: a judgment, preference, or appraisal ("the onboarding is painful").
+   - hypothetical: holds only under an assumption or counterfactual premise.
+3. Time, as extracted fields rather than a trait: asserted_at (when the source said it); valid_from and valid_to only when the text supports them ("in 2019", "from Jan 2027 to Dec 2028", "until the v3 release"). A fact about the past is anchored to the time it describes, never to when it was said.
+4. Persistence (ordered ranges, asked only for "state" facts): hours, a day, a week, a month, a quarter, a year, several years, or unknown. It means "estimated time until this state changes", counted from valid_from when known, else asserted_at. Factoid keeps the whole distribution and uses the survival probability at a date for ranking; there is no hard expiry date. No "permanent" option: fixed facts cover that.
+5. Scope (version, jurisdiction, experimental setup, fictional continuity, environment) is handled by linking the fact to scope entities, not by a trait. Two facts are only compared for supersede or contradiction when their entities and scope match.
+
+Honesty rules adopted: survival probability instead of a cliff; calibration treats "never mentioned again" as censored, not as proof the fact stayed true; persistence is not estimated when the document has no date; entity names are masked while scoring persistence so the model cannot use what it already knows about famous entities; an expired or stale contradiction is not a resolution.
+
+Your task: stress-test this revised draft on the corpora below, which the first round did not cover.
+Corpora: (1) an AI agent's long-term memory of one user (chats, preferences, life events); (2) customer support tickets; (3) internal policies and employee handbooks; (4) fiction and game lore; (5) financial filings and earnings calls.
+
+For each corpus: 3 example facts, how the revised draft classifies them (kind, stance, time fields, persistence), and where it still fails, misleads, or is missing something. Then: a short list of changes you would make to the draft (new option, removed option, merged options, or a new trait), each with the corpus that motivates it. Keep the trait set small: every trait costs a question on every fact.
