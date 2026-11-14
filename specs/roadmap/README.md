@@ -6,3 +6,4 @@ says so.
 | Spec | Idea |
 | --- | --- |
 | [relations.md](relations.md) | Pair summaries, and relation types that emerge from the data |
+| [entities.md](entities.md) | Domain methods, lifecycle callbacks, and `normalize` on entity classes |

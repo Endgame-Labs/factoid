@@ -144,7 +144,7 @@ inherent content against rubrics Factoid provides: whether it depends on time, a
   - `factoid stats` lists facts past `valid_until`, so a person or agent can re-check them.
   - Calibration eval: when a fact is superseded, its real lifetime is compared with the predicted validity.
 - Name: `FactoidTrait`. A label is a yes-or-no tag. A trait is a property with options. Traits follow the levels of
-  customization: options and ranges at level 2 (per label or entity type), rubric wording at level 3. Projects can
+  customization: options and ranges at level 2 (per label), rubric wording at level 3. Projects can
   declare their own traits.
 
 ## 7. Entities
@@ -153,8 +153,18 @@ inherent content against rubrics Factoid provides: whether it depends on time, a
 
 **Proposed.**
 
-- An entity class declares its identities and how strong each is: `identities = {"email": "strong", "name": "weak"}`.
-  A class can define `normalize` to reduce variant mentions to one form.
+- **The v1 entity class** (Kyle, 2026-11-14; replaces the earlier `identities = {"email": "strong", ...}`):
+  - The docstring says what the class is. Discovery uses it to route entities into the class.
+  - `unique_keys` lists the identifiers that prove two records are the same thing. Optional: by default, email, domain,
+    and URL found in text count. Names are always the weak match, checked by the decision model.
+  - Typed, first-class properties, validated on write, with `Class.where(...)` queries (stored in the JSON `props`
+    column; see "Entity storage").
+  - Per-class tuning of the AI steps: guidance and examples for discovery, link and merge thresholds, the model, and the
+    wording of the link and merge questions. Factoid's point is wrapping AI work, so this is in v1.
+  - Every entity, typed or not, has `name`, `aliases`, `kind`, `props`, `find()`, `search()`, `facts()`, and
+    `related()`, plus the management commands.
+  - Not in v1 (see `specs/roadmap/entities.md`): domain methods built on reads, lifecycle callbacks, and `normalize`.
+    Level 4 overrides of `identify`, `claim`, and `merge` still work, but are not documented in v1.
 - Each link from a fact to an entity carries a role (`subject`, `about`, or `speaker`), the method that made it, and a
   confidence.
 - Linking goes from sure to unsure, and stops at the first step that settles it:
@@ -741,3 +751,5 @@ All dates are 2026-11-13 unless noted.
     altitude. Every entity has a JSON property bag; typed entities declare first-class properties.
 39. No ORM for entities: one SQLite table with a JSON `props` column, validated per class, plus an entities
     namespace in turbopuffer for search and linking.
+40. The v1 entity class: a docstring, optional `unique_keys`, typed properties with `where()`, and per-class tuning of
+    the AI steps. Domain methods, callbacks, and `normalize` are on the roadmap. No trait defaults per entity class.
