@@ -269,8 +269,8 @@ entity", and "a discovered entity is stored only with a strong identity or when 
   and it has patches, conditional writes, and strong reads. It has no nested objects, no multi-document transactions,
   no get-by-id, writes of about 165 ms p50, and 16 concurrent queries per namespace. So it is not the record.
 
-**Open.** Whether extraction from prose fills properties too, or only writes facts. Properties without provenance would
-compete with facts as a second source of truth.
+**Decided** (Kyle, 2026-11-14). Extraction from prose writes facts only, never properties. Properties come from
+structured rows, source records, and edits, so they always have clear provenance.
 
 ## 8. Pipeline
 
@@ -754,3 +754,4 @@ All dates are 2026-11-13 unless noted.
     namespace in turbopuffer for search and linking.
 40. The v1 entity class: a docstring, optional `unique_keys`, typed properties with `where()`, and per-class tuning of
     the AI steps. Domain methods, callbacks, and `normalize` are on the roadmap. No trait defaults per entity class.
+41. Prose extraction never fills entity properties; it writes facts only.
