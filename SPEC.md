@@ -191,8 +191,17 @@ unlinked facts, and reversible merges (`docs/prior-art.md`, and the research sum
 
 Pair summaries and relation types that emerge from the data are in `specs/roadmap/relations.md`.
 
-**Open.** Entity types of unknown kind, sides (ours and theirs), and how high-cardinality identifiers such as SKUs are
-handled.
+### Sides and groups
+
+**Decided** (Kyle, 2026-11-14). Factoid has no concept of sides (ours and theirs) or entity groups in v1. It is too
+fitted to CRM: many corpora (papers, news, lore) have no home team.
+
+**Known issue in CRM corpora.** The home company appears in nearly every fact, so it dominates co-mention counts and
+`related()`. Facts can also blur whose commitment or pain point something is ("Dana promised a discount" when there is a
+Dana on each side). A CRM project can work around this with labels, speaker identities, and filtering out its own
+company entity. Revisit if CRM evals show real harm.
+
+**Open.** Entity types of unknown kind, and how high-cardinality identifiers such as SKUs are handled.
 
 ## 8. Pipeline
 
@@ -662,3 +671,4 @@ All dates are 2026-11-13 unless noted.
     Search results include a fact's contradictions by default.
 35. Relations between entities are not declared. Co-mention counts and relation facts (durable, valid facts that
     link entities) are the relations. Pair summaries and emergent types are on the roadmap.
+36. No sides or entity groups in v1. Logged as a known issue for CRM corpora.
