@@ -235,8 +235,9 @@ entity", and "a discovered entity is stored only with a strong identity or when 
   game or a meeting). It also says which do not: amounts, dates, generic nouns, and placeholders.
 - **Every entity has a property bag.** `FactoidEntity` has `props`, a JSON dict, so untyped entities can hold
   properties too.
-- **Typed entities have first-class properties.** Subclassing `FactoidEntity` is roughly like defining an ORM model:
-  the class declares named, typed properties, which are stored and queryable as their own fields.
+- **Typed entities declare properties, without an ORM** (Kyle, 2026-11-14, revising the earlier "like an ORM model").
+  A subclass lists property names and types. They are validated on write and queryable, and live in the same JSON
+  column as untyped properties.
 
 **Proposed.**
 
@@ -244,6 +245,19 @@ entity", and "a discovered entity is stored only with a strong identity or when 
 - A property change is an event, with its source (a structured row, a source record, a person, or an agent).
 - Properties come from structured documents (a column map can map a column to a property), from source records, and
   from edits through the CLI, the API, and MCP.
+
+**Decided** (Kyle, 2026-11-14): entity storage.
+
+- Entities live in SQLite in one table for all classes: id, class, kind, name, aliases, `props` (JSON), and times. No
+  table per class, and no migrations when a class changes.
+- A class's declared properties are validated with Pydantic when written.
+- `Class.where(prop=value)` queries properties through SQLite's JSON functions. A busy property can get an index later
+  without a schema change.
+- Entities are mirrored into a third turbopuffer namespace, `<project-id>-entities` (names, aliases, kind, and a name
+  embedding), for entity search and fuzzy linking. SQLite stays the record.
+- turbopuffer was checked as a document store (2026-11-14): vectors are optional, attribute filters and ordering work,
+  and it has patches, conditional writes, and strong reads. It has no nested objects, no multi-document transactions,
+  no get-by-id, writes of about 165 ms p50, and 16 concurrent queries per namespace. So it is not the record.
 
 **Open.** Whether extraction from prose fills properties too, or only writes facts. Properties without provenance would
 compete with facts as a second source of truth.
@@ -725,3 +739,5 @@ All dates are 2026-11-13 unless noted.
     and can be applied later with `retype`.
 38. High-cardinality things (accounts, tickets, games) are ordinary entities. The discovery prompt teaches entity
     altitude. Every entity has a JSON property bag; typed entities declare first-class properties.
+39. No ORM for entities: one SQLite table with a JSON `props` column, validated per class, plus an entities
+    namespace in turbopuffer for search and linking.
