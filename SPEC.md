@@ -282,21 +282,35 @@ work and needs evals before any claim about its quality.
 
 ## 11. Storage and dependencies
 
-**Decided** (Kyle, 2026-11-14): no flat-file store, for now. That rules out a JSONL log on disk or in a bucket as the
-system of record, with SQLite or Lance tables as views. These were discussed and set aside:
+**Decided** (Kyle, 2026-11-14).
 
-- Files locally with a SQLite index (FTS5 and `sqlite-vec`), as endgame-wiki does.
-- A bucket-only store: an event log in S3 or R2, with LanceDB tables as the search views. Open-source
-  turbopuffer-like projects exist (LanceDB as the engine; Firn, Zeppelin, and Sana as young servers on top of it).
+- **Storage is pluggable.** The system of record and the search index are each behind an interface, and a project
+  swaps either one in `settings.py` without changing its classes.
+- **v1 system of record: SQLite.** One database file per project. It holds documents, chunks, facts, quotes, entity
+  links, labels, entities, and the event log, and it answers every lookup that is not a search: facts for an entity,
+  entities by identity, facts by label and time, and unlinked facts.
+- **v1 search: turbopuffer, or any endpoint compatible with its API.** It is required. It serves vector, BM25, and
+  hybrid search, and the nearest-neighbor queries that resolve and entity linking need. The endpoint's base URL is a
+  setting, so a compatible server can stand in for turbopuffer.
+- **No flat-file store for now.** Set aside: files with a SQLite index (as endgame-wiki does), and a bucket-only store
+  (an event log in S3 or R2, with LanceDB tables as views).
 
-**Proposed.** Postgres is the system of record in both modes, with pgvector and pgvectorscale for vectors and Postgres
-full-text search for BM25. This matches Kyle's first note in `TODO.md`. If the event log stays (section 10), it is a
-table, and the current-state tables and indexes are rebuilt from it.
+**Proposed.**
+
+- SQLite is the truth, and the turbopuffer namespace is a view. If the index is lost or its settings change,
+  `factoid rebuild` repopulates it from SQLite.
+- One turbopuffer namespace per project, named from the project id. Each row is a fact (or a chunk, if chunks are
+  searchable), with its vector, its text for BM25, and its entity ids, labels, and times as filterable attributes.
+- Writes go to SQLite first, then to the index. A write the index has not confirmed is retried, so the index catches
+  up with the truth.
+- The SQLite file lives in a git-ignored folder in the project, unless `settings.py` points elsewhere.
+- Later back ends behind the same interfaces: Postgres (pgvector and pgvectorscale) for the system of record and for
+  search, and LanceDB on a bucket.
 
 **Open.**
 
-- How local mode gets a Postgres with pgvector and pgvectorscale without wrecking the fifteen-minute quickstart.
-- Production mode: one Postgres per project, or shared with tenants.
+- Production mode with SQLite: one writer at a time. Fine for a CLI project and an agent's memory, and a limit for a
+  backend with several ingest workers.
 - Local models: Ollama is a lead for a keyless local mode (embeddings such as EmbeddingGemma, generation, and a System
   One API for decisions). Not verified.
 - Whether chunks are searchable, or only facts.
@@ -440,3 +454,5 @@ All dates are 2026-11-13 unless noted.
 21. `factoid setup` is smooth, charming, and colorful, with arrow keys and Enter or WASD and space, and clickable
     dashboard links. All flavor text lives in markdown files.
 22. No flat-file store for now. Postgres is the leading proposal for the system of record in both modes.
+23. Storage is pluggable. v1 uses SQLite as the system of record, and requires turbopuffer or a
+    turbopuffer-compatible endpoint for search.

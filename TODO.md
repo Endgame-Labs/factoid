@@ -6,8 +6,9 @@ Kyle wants to talk this through before anything is decided. Bring it up with him
 
 **Local mode.** Postgres with pgvector and pgvectorscale, plus a local embedding model (Gemma?).
 
-**2026-11-14:** flat-file stores are off the table for now (Kyle). Postgres is the leading proposal; see `SPEC.md`
-section 11.
+**2026-11-14:** decided for v1 (Kyle): storage is pluggable; SQLite is the system of record; search requires
+turbopuffer or a turbopuffer-compatible endpoint. See `SPEC.md` section 11. Still open: SQLite's single writer for
+backends, and a keyless local mode.
 
 **Production mode.** Unknown.
 
