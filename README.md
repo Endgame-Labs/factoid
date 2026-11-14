@@ -448,6 +448,7 @@ unit.facts(labels=[RepairIssue], since="90d")     # facts linked to the unit, ne
 unit.facts(role="subject", include_retired=True)  # the unit's full history
 facts.search("heater leaking", about=unit)        # search within one entity's facts
 facts.unlinked(since="30d")                       # facts with a mention that matched no entity
+chunks.search("heater leaking", about=unit)       # search the source chunks, with their situations
 ```
 
 `factoid stats` reports the share of facts with no label, the share of mentions with no entity, and the largest groups

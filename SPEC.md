@@ -211,7 +211,18 @@ Every step offers levels 2 to 4. What level 3 holds depends on the kind of step:
 - The situation is given to the extractor before the chunk's passages, and is indexed with the chunk's text.
 - Whether `situate` is on by default is an eval result. It costs one generative call per chunk.
 
-**Open.** Whether chunks are searchable at all, or only facts are.
+**Decided** (Kyle, 2026-11-14): **chunks are searchable too.** When `situate` is on, a chunk is indexed with its
+situation in front of its text. When it is off, the chunk's text alone is indexed.
+
+**Proposed.**
+
+- Facts and chunks share the project's search namespace. Each row has a `kind` attribute (`fact` or `chunk`), so a
+  query can ask for either or both.
+- A chunk's entity ids are the entities linked by the facts extracted from it, so `about=` filters work on chunks too.
+- `facts.search(...)` returns facts, and `chunks.search(...)` returns chunks with their situation, document, and
+  position. A search for both returns one list ranked together.
+- Whether the default search returns facts only or both is an eval result.
+
 
 ### Prose and structured documents
 
@@ -398,8 +409,8 @@ work and needs evals before any claim about its quality.
 
 - SQLite is the truth, and the turbopuffer namespace is a view. If the index is lost or its settings change,
   `factoid rebuild` repopulates it from SQLite.
-- One turbopuffer namespace per project, named from the project id. Each row is a fact (or a chunk, if chunks are
-  searchable), with its vector, its text for BM25, and its entity ids, labels, and times as filterable attributes.
+- One turbopuffer namespace per project, named from the project id. Each row is a fact or a chunk (with a `kind`
+  attribute), with its vector, its text for BM25, and its entity ids, labels, and times as filterable attributes.
 - Writes go to SQLite first, then to the index. A write the index has not confirmed is retried, so the index catches
   up with the truth.
 - The SQLite file lives in a git-ignored folder in the project, unless `settings.py` points elsewhere.
@@ -420,7 +431,6 @@ work and needs evals before any claim about its quality.
   backend with several ingest workers.
 - Local models: Ollama is a lead for a keyless local mode (embeddings such as EmbeddingGemma, generation, and a System
   One API for decisions). Not verified.
-- Whether chunks are searchable, or only facts.
 
 ## 12. Install, setup, and CLI
 
@@ -572,3 +582,4 @@ All dates are 2026-11-13 unless noted.
     class with a column map. Factoid can write it with a model, or print the prompt for any coding agent, and it has a dry run.
 29. MIT license for Factoid and prosaic.
 30. prosaic is a separate repo (`Endgame-Labs/prosaic`) and a dependency of Factoid. Endgame uses it too.
+31. Chunks are searchable as well as facts. A chunk is indexed with its situation when `situate` is on.
