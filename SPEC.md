@@ -642,6 +642,10 @@ Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
 - `docs/facts.md`, `docs/mental-model.md`, `docs/config.md`, `docs/plugins.md`, `docs/cli.md`, and
   `docs/potential/crm-starter.md` predate the entity redesign. `docs/config.md` and `docs/plugins.md` also describe
   the single-YAML design.
+- README.md, pending a Carbon pass for the decisions of 2026-11-14: it still says a mention never creates an entity and
+  that discovered entities need a strong identity or two documents (now untyped entities, decision 37). It does not
+  yet cover prose and structured documents, prosaic, fact traits, contradictions in search results, freshness
+  weighting, or relations.
 
 ## Decision log
 
