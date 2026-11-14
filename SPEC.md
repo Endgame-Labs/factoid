@@ -311,7 +311,27 @@ Every step offers levels 2 to 4. What level 3 holds depends on the kind of step:
 | Generation | situate, extract, repair, and discover | A prompt |
 | Plain code | segment and chunk | None: settings or a method override |
 
-**Open.** Whether level 3 wording lives on the class in Python, or in markdown files next to it (as flavor text does).
+**Decided** (Kyle, 2026-11-14): level 3 wording is assigned explicitly on the class, as a string or as a file reference.
+There is no lookup by naming convention.
+
+```python
+from factoid import FactoidEntity, template
+
+class Customer(FactoidEntity):
+    """A company that buys from us or might."""
+    link_question = "Is this mention the same company as {{ entity.name }}?"   # a string
+
+class CallTranscript(FactoidProseDocument):
+    """A recorded sales call."""
+    extract_prompt = template("prompts/call_extract.md")                       # a file
+```
+
+**Proposed.**
+
+- Both forms are Jinja templates. `template(path)` resolves the path relative to the file that defines the class.
+- A missing file or an undefined field fails when the class is defined, not at the first model call.
+- `factoid prompts show CallTranscript.extract` prints the wording in effect and where it came from (a string on the
+  class, a file, or the default).
 
 ### Chunking
 
@@ -765,3 +785,4 @@ All dates are 2026-11-13 unless noted.
 43. Factoid is a self-contained fact service. Briefs, digests, publishing, and agents' memory are uses built on it.
 44. Python 3.13+ with uv, confirmed. `factoid init` sets up the current folder and replaces `factoid new`. The setup
     wizard uses Textual.
+45. Level 3 wording is set explicitly on the class: a string, or `template("path.md")`. No naming-convention lookup.
