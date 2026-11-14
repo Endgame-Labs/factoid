@@ -159,6 +159,30 @@ identifiers such as SKUs are handled.
 Every hook can be customized three ways: class attributes, a prompt file, or a method override that may call `super()`.
 A setting can be a computed property.
 
+### Levels of customization
+
+**Decided** (Kyle, 2026-11-14). Every level is optional.
+
+| Level | What the user writes |
+| --- | --- |
+| 0. Nothing | No code. The defaults run. |
+| 1. Declare types | Classes with a description (`FactoidDocument`, `FactoidEntity`, `FactoidLabel`, and so on). |
+| 2. Tune a type | Settings on the class: guidance, examples, thresholds, and which model it uses. |
+| 3. Replace a step's wording | A question for a decision step, or a prompt for a generation step. |
+| 4. Replace a step's logic | Override the hook method, and call `super()` to keep the default. |
+
+Project-wide settings (`settings.py`) sit beside these: models, store, search, and budgets.
+
+Every step offers levels 2 to 4. What level 3 holds depends on the kind of step:
+
+| Kind of step | Steps | Level 3 |
+| --- | --- | --- |
+| Decision | classify, evaluate, label, link, resolve, and rerank | A question, with yes and no criteria or with options |
+| Generation | situate, extract, repair, and discover | A prompt |
+| Plain code | segment and chunk | None: settings or a method override |
+
+**Open.** Whether level 3 wording lives on the class in Python, or in markdown files next to it (as flavor text does).
+
 ### Chunking
 
 **Decided.**
@@ -467,3 +491,4 @@ All dates are 2026-11-13 unless noted.
 23. Storage is pluggable. v1 uses SQLite as the system of record, and requires turbopuffer or a
     turbopuffer-compatible endpoint for search.
 24. Judges are renamed fact evals (`FactEval`).
+25. Five levels of customization. Decision steps are worded as questions, and generation steps as prompts.
