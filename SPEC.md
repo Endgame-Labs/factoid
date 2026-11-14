@@ -163,10 +163,9 @@ inherent content against rubrics Factoid provides: whether it depends on time, a
   3. A name that matches exactly one entity in the same document.
   4. A name that matches exactly one entity in the store.
   5. A yes-or-no question to the decision model.
-- A mention in a fact never creates an entity.
-- Entities come from sources that carry records with identifiers, or from a discovery step per document. A discovered
-  entity is stored only when it has a strong identity or is named in two or more documents. Placeholder names are
-  refused. (The bar of two documents is a guess that needs an eval.)
+- Entities come from sources that carry records with identifiers, or from a discovery step per document. Every
+  discovered entity is kept, typed or not, once the link ladder finds no existing match (see "Untyped entities").
+  Placeholder names ("the customer", "someone") are refused.
 - When an entity is stored, it claims stored facts: Factoid searches them for the entity's names, and the decision model
   confirms each hit.
 - Entities that share a strong identity merge by rule. Entities that share only a weak identity go to a question with a
@@ -201,7 +200,31 @@ fitted to CRM: many corpora (papers, news, lore) have no home team.
 Dana on each side). A CRM project can work around this with labels, speaker identities, and filtering out its own
 company entity. Revisit if CRM evals show real harm.
 
-**Open.** Entity types of unknown kind, and how high-cardinality identifiers such as SKUs are handled.
+### Untyped entities
+
+**Decided** (Kyle, 2026-11-14). An entity does not need a declared class to be useful. Any entity Factoid can extract
+is kept and linked, whether or not it matches a class: linking is better than nothing. Untyped entities are searchable,
+mergeable, editable, and deletable through the CLI, the API, and MCP, like typed ones. The model is an emergent schema:
+data first, classes later if the developer wants them. This reverses two earlier proposals: "a mention never creates an
+entity", and "a discovered entity is stored only with a strong identity or when named in two or more documents".
+
+**Proposed.**
+
+- Discovery asks the decision model which declared class an entity is, with "none of these" as an option. With no
+  match, the entity is a plain `FactoidEntity`.
+- An untyped entity carries a free-text `kind` written by discovery ("S.F. Giants" is a "baseball team"), normalized
+  to lowercase and singular.
+- `factoid entities kinds` lists kinds by entity and fact count. `factoid entities retype --kind "baseball team"
+  SportsTeam` moves them to a declared class. The decision model confirms each one, and nothing is re-extracted.
+- Identity for untyped entities: name and aliases (weak), plus any strong identifier found (URL, email, or domain).
+  They are linked with the same ladder as typed entities.
+- Commands: `factoid entities search`, `show`, `edit`, `rename`, `merge`, `split`, `retype`, and `delete`. Each is an
+  event.
+- Guards against over-creation (the problem cerebro's cleanup jobs fixed): link before create; refuse placeholders;
+  dedupe continuously, with candidate duplicates (similar names, shared facts) sent to the decision model as merge
+  questions; and report entities with only one fact in `factoid stats`.
+
+**Open.** How high-cardinality identifiers such as SKUs are handled.
 
 ## 8. Pipeline
 
@@ -672,3 +695,5 @@ All dates are 2026-11-13 unless noted.
 35. Relations between entities are not declared. Co-mention counts and relation facts (durable, valid facts that
     link entities) are the relations. Pair summaries and emergent types are on the roadmap.
 36. No sides or entity groups in v1. Logged as a known issue for CRM corpora.
+37. Untyped entities: every extracted entity is kept and linked, with a free-text kind. Declared classes are optional
+    and can be applied later with `retype`.
