@@ -651,8 +651,16 @@ local runtime such as Ollama), but local runtimes are not promised or tested.
 
 ## 13. Out of scope
 
-**Proposed.** Factoid stops at facts and entities. Deciding which entities a workspace should cover, writing articles
-or briefs, digests, and publishing are readers built on Factoid (`docs/potential/crm-starter.md`).
+**Decided** (Kyle, 2026-11-14). Factoid is a self-contained fact service. It creates, changes, ranks, and serves facts
+and entities, and that is where it stops. It can be used in many ways, and those uses are built on it rather than in
+it: briefs and articles about an entity, digests of what changed, choosing which entities to track, publishing, and so
+on (`docs/potential/crm-starter.md` sketches one).
+
+One use the docs call out: personal agents can use Factoid over MCP as a more rigorous memory, with facts that carry
+sources, dates, validity, and contradictions instead of loose notes.
+
+Generated text that Factoid keeps and cites (situations, and pair summaries on the roadmap) is inside the line. Prose
+written for people to read is outside it.
 
 ## 14. Evals
 
@@ -753,3 +761,4 @@ All dates are 2026-11-13 unless noted.
     the AI steps. Domain methods, callbacks, and `normalize` are on the roadmap. No trait defaults per entity class.
 41. Prose extraction never fills entity properties; it writes facts only.
 42. Factoid requires API keys. No keyless local mode in v1, and maybe never.
+43. Factoid is a self-contained fact service. Briefs, digests, publishing, and agents' memory are uses built on it.
