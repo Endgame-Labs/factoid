@@ -224,7 +224,29 @@ entity", and "a discovered entity is stored only with a strong identity or when 
   dedupe continuously, with candidate duplicates (similar names, shared facts) sent to the decision model as merge
   questions; and report entities with only one fact in `factoid stats`.
 
-**Open.** How high-cardinality identifiers such as SKUs are handled.
+### Entity altitude and properties
+
+**Decided** (Kyle, 2026-11-14).
+
+- **High-cardinality things are entities like any other.** An account, an opportunity, a support ticket, an invoice,
+  or a baseball game each gets its own entity. There is no separate tag mechanism for identifiers.
+- **The discovery prompt teaches altitude.** It says which things make sense as entities: things with an identity that
+  facts can be about over time (people, organizations, accounts, deals, tickets, products, projects, events such as a
+  game or a meeting). It also says which do not: amounts, dates, generic nouns, and placeholders.
+- **Every entity has a property bag.** `FactoidEntity` has `props`, a JSON dict, so untyped entities can hold
+  properties too.
+- **Typed entities have first-class properties.** Subclassing `FactoidEntity` is roughly like defining an ORM model:
+  the class declares named, typed properties, which are stored and queryable as their own fields.
+
+**Proposed.**
+
+- `related()` ranks by co-mention count, so entities with one fact sink without special handling.
+- A property change is an event, with its source (a structured row, a source record, a person, or an agent).
+- Properties come from structured documents (a column map can map a column to a property), from source records, and
+  from edits through the CLI, the API, and MCP.
+
+**Open.** Whether extraction from prose fills properties too, or only writes facts. Properties without provenance would
+compete with facts as a second source of truth.
 
 ## 8. Pipeline
 
@@ -701,3 +723,5 @@ All dates are 2026-11-13 unless noted.
 36. No sides or entity groups in v1. Logged as a known issue for CRM corpora.
 37. Untyped entities: every extracted entity is kept and linked, with a free-text kind. Declared classes are optional
     and can be applied later with `retype`.
+38. High-cardinality things (accounts, tickets, games) are ordinary entities. The discovery prompt teaches entity
+    altitude. Every entity has a JSON property bag; typed entities declare first-class properties.
