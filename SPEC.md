@@ -121,6 +121,31 @@ attribute such as `chunk_size = 4000` (tested on Pydantic 2.14), and plain attri
 - "Use case" and "pain point" are labels, not fact subclasses.
 - Later: suggest new labels by clustering unlabeled facts, and apply a new label to stored facts without re-extracting.
 
+### Fact traits
+
+**Decided** (Kyle, 2026-11-14). When facts are labeled, the decision model (Jev by default) also judges the fact's
+inherent content against rubrics Factoid provides: whether it depends on time, and how long it is likely to stay valid.
+
+**Proposed.**
+
+- Traits are extra questions in the same request as the label questions, so they add no call.
+- **Kind of fact** (`choice`): stable (true for years), slow-changing (a role, plan, or relationship), current state (a
+  status or number that moves within days or weeks), event (happened at a time, and stays true as history), or plan
+  (intended or expected, and expires when its date passes).
+- **Validity** (`choice` over ordered ranges): a day, a week, a month, a quarter, a year, several years, or permanent.
+  Factoid keeps the distribution and stores `valid_until`: when the fact was stated, plus the median range.
+- Optional traits: hedged (`noul`), and opinion or observed (`choice`).
+- Uses:
+  - Search ranks facts past `valid_until` lower and flags them stale. `valid_at=` filters to facts likely still true.
+  - Resolve treats two disagreeing "current state" facts far apart in time as a supersede, and two disagreeing
+    "stable" facts as a contradiction.
+  - An open contradiction goes stale when its facts' `valid_until` passes. See "Resolving".
+  - `factoid stats` lists facts past `valid_until`, so a person or agent can re-check them.
+  - Calibration eval: when a fact is superseded, its real lifetime is compared with the predicted validity.
+- Name: `FactoidTrait`. A label is a yes-or-no tag. A trait is a property with options. Traits follow the levels of
+  customization: options and ranges at level 2 (per label or entity type), rubric wording at level 3. Projects can
+  declare their own traits.
+
 ## 7. Entities
 
 **Decided.** Entities are a base class (`FactoidEntity`), and a fact links to one or more of them.
@@ -594,3 +619,4 @@ All dates are 2026-11-13 unless noted.
     chunks are in separate namespaces.
 32. Searching facts and chunks together is hybrid search in each, then a rerank. Benchmark specs live in
     `specs/benchmarks/`, starting with facts versus chunks.
+33. Fact traits: during labeling, the decision model also judges the kind of fact and how long it stays valid.
