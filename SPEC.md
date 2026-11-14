@@ -342,7 +342,28 @@ one question with four answers: duplicate, supersedes, contradicts, or unrelated
 Neither cerebro nor OpenEndgame detects that a newer fact replaces or contradicts an older one, so this step is new
 work and needs evals before any claim about its quality.
 
-**Open.** How a contradiction gets cleared.
+**Decided** (Kyle, 2026-11-14): how contradictions are handled.
+
+- Two facts that contradict are both marked `contradicted`, and each points at the other. Reads show both.
+- A contradiction is settled by new evidence (resolve checks each new fact against open contradictions) or by a person
+  or agent picking a side (`factoid contradictions`). Either way the settlement is an event.
+- If neither happens, the contradiction goes stale when its facts pass `valid_until`. It is never settled
+  automatically: the facts rank lower, and `factoid stats` counts them.
+- **Search results carry contradictions by default.** A fact with known contradictions comes back with the first N
+  contradicting facts in full and the ids of the rest. Set per search: `contradictions=3` (the default count is a
+  proposal), `contradictions=0` for ids only, or `contradictions=False` to leave them out.
+
+**Proposed: freshness weighting in search.**
+
+- From a fact's validity distribution (see "Fact traits"), Factoid computes the probability the fact is still valid at
+  a date.
+- Search multiplies relevance by `floor + (1 - floor) * P(still valid at as_of)`. The floor keeps stale facts findable
+  and ranks them lower. Events and stable facts score near 1.
+- Per search: `as_of=` (default now), and `freshness="any"` to turn weighting off for history and research.
+- It runs in Factoid after retrieval: over-fetch from each namespace, weight, then rerank or fuse. Search queries stay
+  plain turbopuffer queries with no custom server-side scoring.
+- The floor and the over-fetch factor are eval results.
+
 
 ## 9. Model calls and prompts
 
@@ -621,3 +642,5 @@ All dates are 2026-11-13 unless noted.
 32. Searching facts and chunks together is hybrid search in each, then a rerank. Benchmark specs live in
     `specs/benchmarks/`, starting with facts versus chunks.
 33. Fact traits: during labeling, the decision model also judges the kind of fact and how long it stays valid.
+34. Contradictions are settled only by evidence or by a person or agent, and go stale when their facts expire.
+    Search results include a fact's contradictions by default.
