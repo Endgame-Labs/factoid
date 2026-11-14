@@ -59,6 +59,15 @@ Do not use the names "Rails" or "Django" in docs or file names.
   frontmatter markdown). Kyle likes the object-oriented feel of the Python and Ruby versions: inherited defaults, method
   overrides, and computed properties.
 
+**Decided** (Kyle, 2026-11-14): **MIT license**, for Factoid and for prosaic. Copyright holder: Endgame Labs. Kyle
+considered Apache 2.0 for its patent grant and chose MIT. If Endgame ever wants a patent on anything here, it has to
+file before the repo is made public.
+
+**Decided** (Kyle, 2026-11-14): **prosaic is a separate repo and a dependency** (`Endgame-Labs/prosaic`). Endgame will
+use it too. prosaic turns rows into sentences with cell citations and knows nothing about Factoid. Factoid builds
+`FactoidStructuredDocument` on it and adds entities, linking, and supersede by row key. See "Prose and structured
+documents" in section 8.
+
 **Proposed: Pydantic.** Use it underneath: model output schemas, stored records, and validating class settings when a
 subclass is defined. Do not make the classes users write into Pydantic models. A `BaseModel` subclass rejects a plain
 attribute such as `chunk_size = 4000` (tested on Pydantic 2.14), and plain attributes are the surface we want.
@@ -233,7 +242,13 @@ Every step offers levels 2 to 4. What level 3 holds depends on the kind of step:
   sentences, a file's layout is worked out once, and ID and email columns connect files. Left out: generating parser
   code with an unattended agent run, one long narrative per row, and fuzzy file-to-file joins.
 
-**Proposed.** Command names (Kyle asked for feedback on the hierarchy):
+**Decided** (Kyle, 2026-11-14): the generic parts live in prosaic, a separate repo that Factoid depends on. prosaic
+reads files, inspects them, holds the column map and sentence templates, writes parser prompts, and has the dry run.
+Factoid adds column roles that are entity identities, linking, supersede by row key, and free-text columns through the
+prose pipeline.
+
+**Proposed.** Command names (Kyle asked for feedback on the hierarchy). prosaic has the same commands on its own
+(`prosaic inspect`, `prosaic parser new`, and `prosaic run --dry-run`), and Factoid's wrap them:
 
 - `factoid inspect <file>` works on any file. It shows which document class matches and why. For a structured file,
   it also shows the columns, types, sample values, guessed identities, and the column map a parser would start from.
@@ -555,3 +570,5 @@ All dates are 2026-11-13 unless noted.
 27. SQLite in v1 has one writer per process, with WAL mode on. Many writers or hosting means a Postgres backend later.
 28. `FactoidDocument` splits into `FactoidProseDocument` and `FactoidStructuredDocument`. A structured parser is a Python
     class with a column map. Factoid can write it with a model, or print the prompt for any coding agent, and it has a dry run.
+29. MIT license for Factoid and prosaic.
+30. prosaic is a separate repo (`Endgame-Labs/prosaic`) and a dependency of Factoid. Endgame uses it too.
