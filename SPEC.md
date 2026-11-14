@@ -149,7 +149,7 @@ identifiers such as SKUs are handled.
 
 | Class | Hooks |
 | --- | --- |
-| `FactoidDocument` | `classify`, `segment`, `chunk`, `situate`, `extract`, and `discover` |
+| `FactoidDocument` | `classify`, `segment`, `chunk`, `situate`, `extract`, and `discover` (prose); `read`, `row_facts`, and `discover` (structured) |
 | `FactoidFact` | `evaluate`, `repair`, `label`, `link`, and `resolve` |
 | `FactoidEntity` | `identify`, `claim`, and `merge` |
 
@@ -203,6 +203,47 @@ Every step offers levels 2 to 4. What level 3 holds depends on the kind of step:
 - Whether `situate` is on by default is an eval result. It costs one generative call per chunk.
 
 **Open.** Whether chunks are searchable at all, or only facts are.
+
+### Prose and structured documents
+
+**Decided** (Kyle, 2026-11-14).
+
+- `FactoidDocument` is an abstract base with two kinds under it. `FactoidProseDocument` is text, and runs segment,
+  chunk, situate, and extract. `FactoidStructuredDocument` is rows: CSV, JSONL, a JSON array, or records from a source.
+- A structured document has a **column map**, worked out once per file layout and not once per row. Each column is one
+  of: an identity of an entity (an exact link, with no model call), a value with a sentence template (one fact per
+  value), free text (run through the prose pipeline with the row's entities already known), or ignored.
+- `key` names the column that identifies a row across re-imports. `row_entity` says what entity each row is. `when`
+  names the column that dates the row.
+- Joins across files come from entities: two files whose columns point at the same entity are connected through it.
+  There is no file-to-file join logic.
+- Provenance for a structured fact is the cell, with the file, row, and column.
+- On re-import, a changed value for the same row key and column supersedes the old fact by rule, with no model call.
+- A file is matched to a structured class by its header first. The decision model is the fallback.
+- **A parser is a Python class.** A `FactoidStructuredDocument` subclass is the parser: the column map at level 2,
+  templates at level 3, and `row_facts(row)` at level 4.
+- **Factoid can write the parser.** A command sends a model the parser prompt, the file's inspection, and a truncated
+  sample of the file, and writes the class to a Python file. The prompt is a markdown file in the package, like other
+  model text.
+- **A user's own coding agent can write it too.** The docs give instructions for a coding agent, and a command prints
+  the same prompt and inspection without calling a model, to paste into any agent.
+- **A parser has a dry run.** It runs the parser on a few rows and prints the facts, links, and warnings (such as
+  columns the map does not cover), and writes nothing. It is the loop a person or agent uses to test a parser.
+- Taken from prosaic (cerebro branch `kyle/frontend-bridge-integrations`, `src/briefs/briefs/prosaic/`): rows become
+  sentences, a file's layout is worked out once, and ID and email columns connect files. Left out: generating parser
+  code with an unattended agent run, one long narrative per row, and fuzzy file-to-file joins.
+
+**Proposed.** Command names (Kyle asked for feedback on the hierarchy):
+
+- `factoid inspect <file>` works on any file. It shows which document class matches and why. For a structured file,
+  it also shows the columns, types, sample values, guessed identities, and the column map a parser would start from.
+- `factoid parser new <file> [--name OpenDeals]` has a model write the parser class. `--prompt` prints the prompt and
+  inspection instead of calling a model.
+- `factoid ingest <file> --dry-run [--rows 20]` is the dry run. It works for every document kind, so prose classes get
+  it too.
+
+**Open.** Whether value columns read better in search as template sentences or as one model-written sentence per row.
+An eval decides, so both are built.
 
 ### Classification
 
@@ -512,3 +553,5 @@ All dates are 2026-11-13 unless noted.
 26. Current state is the source of truth. The event log is kept for audit and provenance, and is not replayed.
 
 27. SQLite in v1 has one writer per process, with WAL mode on. Many writers or hosting means a Postgres backend later.
+28. `FactoidDocument` splits into `FactoidProseDocument` and `FactoidStructuredDocument`. A structured parser is a Python
+    class with a column map. Factoid can write it with a model, or print the prompt for any coding agent, and it has a dry run.
