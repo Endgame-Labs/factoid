@@ -49,7 +49,7 @@ Do not use the names "Rails" or "Django" in docs or file names.
 
 ## 3. Language and packaging
 
-**Proposed** (the README assumes it; `docs/open-questions.md` still lists language as open).
+**Decided** (Kyle, 2026-11-14; it had been assumed all along and was only marked Proposed).
 
 - Python 3.13 or newer, installed and run with uv.
 - `uv tool install factoid` puts one `factoid` command on the path. Inside a project, the command finds the project's
@@ -85,8 +85,9 @@ attribute such as `chunk_size = 4000` (tested on Pydantic 2.14), and plain attri
 
 **Proposed.**
 
-- No code generators. `factoid new` creates a sample project once, and after that the CLI reads code and writes only
-  data. (Kyle called the generator commands confusing. Renaming `new` to `init` was floated and not taken up.)
+- `factoid init` sets up a project in the current folder, once (Kyle, 2026-11-14; it replaces `factoid new`). After
+  that the CLI reads code and writes only data. The exception is `factoid parser new`, which writes a parser class the
+  user asked for.
 - A project with no classes still works on the base classes' defaults.
 
 ## 5. Facts
@@ -511,7 +512,7 @@ work and needs evals before any claim about its quality.
   environment, the document, or anything else. Only the project id lives in `pyproject.toml`, since the launcher has to
   find the project before it can import any code.
 - Because settings are code, the CLI does not edit them. `factoid models` shows the assignments that `settings.py`
-  resolves to, and whether each has a working key. `factoid new` and `factoid setup` write `settings.py` once, when the
+  resolves to, and whether each has a working key. `factoid init` and `factoid setup` write `settings.py` once, when the
   project is created. After that, a person changes a model by editing the file.
 - A provider can be keyless: a local runtime, or a gateway that injects credentials.
 
@@ -593,7 +594,7 @@ local runtime such as Ollama), but local runtimes are not promised or tested.
   - Project level, in the repo: `settings.py` holds every non-secret setting and is committed. Data (the store and
     indexes) goes in a git-ignored directory in the project unless `settings.py` points elsewhere.
   - Per-project keys: different projects may need different keys (Kyle). Store them in the user's home, keyed by a
-    stable project id, at `~/.factoid/projects/<id>/.env`. `factoid new` writes the id into the project, and
+    stable project id, at `~/.factoid/projects/<id>/.env`. `factoid init` writes the id into the project, and
     `factoid keys set <provider> --project` writes there. Do not key by absolute path: a moved or renamed checkout
     would lose its keys, and two checkouts of one project would each need setup. Keeping keys in the home directory
     also keeps secrets out of the working tree, where coding agents and build tools read files. (A git-ignored
@@ -608,17 +609,17 @@ local runtime such as Ollama), but local runtimes are not promised or tested.
     alias, and it needs no root.
   - On each run it walks up from the current directory to find the project marker, the way `git` finds `.git`.
   - The marker is a `[tool.factoid]` table in the project's `pyproject.toml`, which holds the project id.
-    `factoid new` writes it. The id is the project's name plus a short random suffix, such as `acme-7k2m`, and it is
+    `factoid init` writes it. The id is the project's name plus a short random suffix, such as `acme-7k2m`, and it is
     committed, so every checkout and every teammate shares it.
   - With a project found, the command loads that project's keys, then re-runs itself inside the project's own
     environment, so it can import the project's classes and their dependencies.
   - The global command is a thin launcher. When a project pins its own version of Factoid, the project's version does
     the work.
-  - Outside a project, `new`, `keys`, `setup`, and `doctor` work with the user's defaults.
+  - Outside a project, `init`, `keys`, `setup`, and `doctor` work with the user's defaults.
 - Terms: the README says "decision model" (not "choice model"), and the settings key for that workload is `choose`.
 - The README's Setup section follows the workloads and providers model in section 9: one provider key to start, Jev
   recommended for `choose`, `factoid models` to review, and `factoid setup` as the terminal UI.
-- Commands in use across the docs: `new`, `ingest`, `search`, `read`, `eval`, `rebuild`, `stats`, `serve`, `mcp`,
+- Commands in use across the docs: `init`, `ingest`, `search`, `read`, `eval`, `rebuild`, `stats`, `serve`, `mcp`,
   `keys`, `doctor`, and `setup`.
 
 ### The setup wizard
@@ -647,7 +648,7 @@ local runtime such as Ollama), but local runtimes are not promised or tested.
 - Copy in these files follows the same rules as the docs: Carbon writes it, in a plain and pragmatic voice, with room
   for charm in the wizard.
 
-**Open.** The TUI library. Textual is the obvious candidate in Python.
+**Decided** (Kyle, 2026-11-14). The wizard is built with Textual.
 
 ## 13. Out of scope
 
@@ -697,7 +698,7 @@ Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
   that discovered entities need a strong identity or two documents (now untyped entities, decision 37). It does not
   yet cover prose and structured documents, prosaic, fact traits, contradictions in search results, freshness
   weighting, or relations. Its entity examples still use `identities = {...}` and lifecycle callbacks (now
-  `unique_keys`, with callbacks on the roadmap, decision 40).
+  `unique_keys`, with callbacks on the roadmap, decision 40). It says `factoid new` (now `factoid init`).
 
 ## Decision log
 
@@ -762,3 +763,5 @@ All dates are 2026-11-13 unless noted.
 41. Prose extraction never fills entity properties; it writes facts only.
 42. Factoid requires API keys. No keyless local mode in v1, and maybe never.
 43. Factoid is a self-contained fact service. Briefs, digests, publishing, and agents' memory are uses built on it.
+44. Python 3.13+ with uv, confirmed. `factoid init` sets up the current folder and replaces `factoid new`. The setup
+    wizard uses Textual.
