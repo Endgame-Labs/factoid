@@ -130,8 +130,9 @@ inherent content against rubrics Factoid provides: whether it depends on time, a
 
 - Traits are extra questions in the same request as the label questions, so they add no call.
 - **Kind of fact** (`choice`): stable (true for years), slow-changing (a role, plan, or relationship), current state (a
-  status or number that moves within days or weeks), event (happened at a time, and stays true as history), or plan
-  (intended or expected, and expires when its date passes).
+  status or number that moves within days or weeks), event (happened at a time, and stays true as history), plan
+  (intended or expected, and expires when its date passes), or decision (a choice someone made, such as "Northwind
+  chose annual billing"; Kyle, 2026-11-14).
 - **Validity** (`choice` over ordered ranges): a day, a week, a month, a quarter, a year, several years, or permanent.
   Factoid keeps the distribution and stores `valid_until`: when the fact was stated, plus the median range.
 - Optional traits: hedged (`noul`), and opinion or observed (`choice`).
