@@ -266,8 +266,10 @@ class ModelClient:
             raise ModelError(f"no model is set for the {workload!r} workload; set it in settings.py")
         return model
 
-    def _post(self, workload: str, model: Model, url_path: str, body: dict[str, Any]) -> tuple[dict[str, Any], bool]:
-        key = CallLog.key(workload, model.name, body)
+    def _post(self, workload: str, model: Model, url_path: str, body: dict[str, Any],
+              cache_kind: str | None = None) -> tuple[dict[str, Any], bool]:
+        # The cache key is the kind of call and the exact request; the workload only labels usage and cost.
+        key = CallLog.key(cache_kind or workload, model.name, body)
         if self.replay:
             cached = self.log.get(key)
             if cached is not None:
@@ -340,9 +342,15 @@ class ModelClient:
 
     # -- generate -------------------------------------------------------------------------------------------
 
+    def model_for(self, step: str | None) -> tuple[str, Model]:
+        """The model for a generation step (situate, extract, repair, discover), or `generate` when it has none."""
+        if step and step in self.models:
+            return step, self.models[step]
+        return "generate", self.model("generate")
+
     def generate(self, prompt: str, *, json_mode: bool = False, max_tokens: int = 4000,
-                 system: str | None = None) -> str:
-        model = self.model("generate")
+                 system: str | None = None, step: str | None = None) -> str:
+        workload, model = self.model_for(step)
         messages = []
         if system:
             messages.append({"role": "system", "content": system})
@@ -351,7 +359,7 @@ class ModelClient:
                                 "temperature": 0, **model.params}
         if json_mode:
             body["response_format"] = {"type": "json_object"}
-        data, _ = self._post("generate", model, "/chat/completions", body)
+        data, _ = self._post(step or workload, model, "/chat/completions", body, cache_kind="generate")
         choices = data.get("choices") or []
         if not choices:
             raise ModelError(f"{model.name}: no choices in response")

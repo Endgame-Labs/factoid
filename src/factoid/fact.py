@@ -276,7 +276,7 @@ class Fact(Registered, ModelCalls):
         split = any(name.endswith(".atomic") for name in result.failed)  # several claims: a rewording cannot fix it
         prompt = render(type(self).repair_prompt, fact=self, failed=result.failed, split=split,
                         passages=[q.text for q in self.quotes])
-        raw = self.generate(prompt, json_mode=True)
+        raw = self.generate(prompt, json_mode=True, step="repair")
         try:
             data = json.loads(raw)
         except json.JSONDecodeError:

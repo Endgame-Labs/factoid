@@ -548,7 +548,8 @@ class Project(Settings):
     store = Sqlite(path=".factoid/acme.db")            # the system of record
     models = {
         "choose": Model("typesafe/jev-1.13.0"),        # classify, evaluate facts, assess, and resolve
-        "generate": Model("fireworks/glm-5p3-flash"),  # extract and repair
+        "generate": Model("fireworks/glm-5p3-flash"),  # extract and repair, unless a step has its own model
+        "situate": Model("fireworks/glm-5p3-flash"),   # optional: a model for one generation step
         "embed": Model("openai/text-embedding-3-small"),
         "rerank": Model("fireworks/qwen3-reranker-8b"),    # optional
     }

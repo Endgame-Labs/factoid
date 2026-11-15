@@ -129,3 +129,23 @@ def test_fireworks_model_ids():
     assert Model("fireworks/glm-5p3-flash").wire_id() == "accounts/fireworks/models/glm-5p3-flash"
     assert Model("fireworks/nomic-ai/nomic-embed-text-v1.5").wire_id() == "nomic-ai/nomic-embed-text-v1.5"
     assert Model("fireworks/accounts/fireworks/routers/rune").wire_id() == "accounts/fireworks/routers/rune"
+
+
+def test_generation_steps_pick_their_own_model():
+    from factoid import Model
+    from factoid.models import CallLog, ModelClient
+
+    client = ModelClient({"generate": Model("fireworks/glm-5p3-flash"), "situate": Model("fireworks/kimi-k3")},
+                         CallLog(None))
+    seen = []
+
+    def post(workload, model, path, body, cache_kind=None):
+        seen.append((workload, model.name, cache_kind))
+        return {"choices": [{"message": {"content": "ok"}}]}, False
+
+    client._post = post  # type: ignore[method-assign]
+    client.generate("x", step="situate")
+    client.generate("x", step="extract")
+    client.generate("x")
+    assert seen == [("situate", "fireworks/kimi-k3", "generate"), ("extract", "fireworks/glm-5p3-flash", "generate"),
+                    ("generate", "fireworks/glm-5p3-flash", "generate")]

@@ -313,7 +313,7 @@ class ProseDocument(Document):
         return Chunk(id=f"{self.id}:c{n + 1}", n=n + 1, passages=list(group), context_passages=context)
 
     def situate_chunk(self, chunk: Chunk) -> str:
-        text = self.generate(type(self).situate_prompt, document=self, chunk=chunk)
+        text = self.generate(type(self).situate_prompt, step="situate", document=self, chunk=chunk)
         return " ".join(text.split())
 
     def extract(self, chunk: Chunk, **context: Any) -> list[Fact]:
@@ -334,7 +334,8 @@ class ProseDocument(Document):
             context_passages=chunk.context_passages,
             **context,
         )
-        raw = current().client.generate(prompt, json_mode=True, max_tokens=type(self).extract_max_tokens)
+        raw = current().client.generate(prompt, json_mode=True, max_tokens=type(self).extract_max_tokens,
+                                        step="extract")
         try:
             return self.parse_candidates(raw, chunk)
         except ExtractionError:

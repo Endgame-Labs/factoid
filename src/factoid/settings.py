@@ -24,7 +24,8 @@ class Settings:
 
     #: Where data lives. Relative paths are relative to the project folder.
     data_dir: ClassVar[str] = ".factoid"
-    #: The model for each workload: choose, generate, embed, and (optional) rerank.
+    #: The model for each workload: choose, generate, embed, and (optional) rerank. A generation step can have its
+    #: own model (situate, extract, repair, or discover); a step without one uses generate.
     models: ClassVar[dict[str, Model]] = DEFAULT_MODELS
     #: The system of record. `None` means `.factoid/store.db` under `data_dir`.
     store: ClassVar[Any] = None

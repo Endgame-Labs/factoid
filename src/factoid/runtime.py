@@ -66,11 +66,12 @@ class ModelCalls:
         """What the decision model sees about this item. Override to change the view."""
         return {"text": str(self)}
 
-    def generate(self, prompt: Any, *, json_mode: bool = False, **context: Any) -> str:
+    def generate(self, prompt: Any, *, json_mode: bool = False, step: str | None = None, **context: Any) -> str:
+        """Generate text. `step` picks that step's model (such as "situate"), falling back to `generate`."""
         from .templates import Template, render
 
         text = render(prompt, **context) if (context or isinstance(prompt, Template)) else str(prompt)
-        return current().client.generate(text, json_mode=json_mode)
+        return current().client.generate(text, json_mode=json_mode, step=step)
 
     def ask(self, **questions: Question) -> Judgments:
         return current().client.ask(self.state(), questions)

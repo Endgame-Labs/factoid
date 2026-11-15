@@ -716,10 +716,11 @@ work and needs evals before any claim about its quality.
   Factoid supports them: OpenAI's decisions API, Fireworks' Rune, and Cloudflare's Clef.
 - Keys belong to providers, and a provider can serve several kinds of model. The README must not pair one key with one
   kind of model.
-- **Generation is set per step** (Kyle, 2026-11-15; for a future version). One `generate` model is too broad: steps
-  need to be tuned separately, and `situate` and `extract` are the first two. Each generation step (`situate`,
-  `extract`, `repair`, and `discover`) gets its own model setting, falling back to `generate` when unset, so a project
-  can pick and evaluate a model per step. Today all of them use `generate`.
+- **Generation is set per step** (Kyle, 2026-11-15). One `generate` model is too broad: steps need to be tuned
+  separately, and `situate` and `extract` are the first two. Each generation step (`situate`, `extract`, `repair`, and
+  `discover`) can have its own entry in `models`, falling back to `generate` when unset, so a project can pick and
+  evaluate a model per step. Usage and cost are reported per step; the replay cache keys on the request, so moving a
+  step to its own entry with the same model still replays.
 
 **Proposed.**
 
@@ -1110,5 +1111,5 @@ All dates are 2026-11-13 unless noted.
 
 65. There are no fact kinds. `valid_from`, `expires`, `valid_until`, and `lifetime` are properties of each fact,
     filled in by `assess` from defaults on `Fact`. `FactKind` is gone. (2026-11-15)
-66. Generation models are set per step, starting with `situate` and `extract`, each falling back to `generate`. For a
-    future version. (2026-11-15)
+66. Generation models are set per step (`situate`, `extract`, `repair`, and `discover`), each falling back to
+    `generate`. (2026-11-15)

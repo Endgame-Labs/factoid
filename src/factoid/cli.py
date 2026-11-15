@@ -322,7 +322,8 @@ def models() -> None:
     """Each workload, its model, and whether its key is set."""
     _, app = _project(in_memory=True)
     click.echo(f"{'workload':<10} {'model':<34} key")
-    for workload in ("choose", "generate", "embed", "rerank"):
+    steps = [s for s in ("situate", "extract", "repair", "discover") if s in app.client.models]
+    for workload in ("choose", "generate", *steps, "embed", "rerank"):
         model = app.client.models.get(workload)
         if model is None:
             click.echo(f"{workload:<10} {'(none)':<34} -")
