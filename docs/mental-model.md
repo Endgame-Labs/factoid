@@ -21,7 +21,7 @@ happened to them, and an **eval loop** that measures the pipeline. Keep these th
 
 ## The pipeline
 
-```
+```text
  Source ──► Document ──► classify ──► segment ──► extract ──► gate ──► judge ──► resolve ──► log
                           what kind?   passages    candidates   code     models    vs. other
                                                                 checks   decide    facts
@@ -66,7 +66,7 @@ Every event says who acted: `code`, `rule`, `model`, `judge`, or `person`, with 
 
 ## The eval loop
 
-```
+```text
             ┌──────────── change one strategy ◄────────────┐
             ▼                                               │
   pipeline A, B, C ──► run each on a suite ──► scorecards ──► compare ──► adopt the winner

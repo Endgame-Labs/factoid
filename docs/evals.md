@@ -11,7 +11,7 @@ This doc is the contract for that measurement.
 
 ## A suite
 
-```
+```text
 evals/acme-calls/
   suite.yml
   corpus/            # Documents, as files or documents.jsonl
@@ -53,7 +53,7 @@ The **reader** used by `answer` is part of the suite, not the pipeline, so pipel
 
 ## A scorecard
 
-```
+```text
 run r_7d2  acme-calls  pipeline p_3fa9  2026-11-13 18:04
                           value      vs r_6c1   (p, Holm)
 extract  keep recall      0.91       +0.04      0.03

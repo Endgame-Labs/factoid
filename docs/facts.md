@@ -43,7 +43,7 @@
 
 ### Statuses
 
-```
+```text
             supersede              retract
  current ───────────► superseded ◄──────── (restore reverses either)
     │

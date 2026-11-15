@@ -15,7 +15,7 @@ pipeline:
     - {use: ./plugins/legal_judge.py, min: 0.8}   # settings are passed to the plugin
 ```
 
-```
+```text
 factoid → {"jsonrpc":"2.0","id":0,"method":"describe"}
 plugin    → {"jsonrpc":"2.0","id":0,"result":{"kind":"judge","name":"legal-judge","version":"3"}}
 factoid → {"jsonrpc":"2.0","id":1,"method":"judge","params":{"candidate":{...},"passages":[...],"document":{...},"settings":{"min":0.8}}}

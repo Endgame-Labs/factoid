@@ -4,7 +4,7 @@
 
 `factoid new acme-facts` makes this, and every command assumes it:
 
-```
+```text
 acme-facts/
   factoid.yml      # the one config file
   corpus/            # sample documents (delete when you have real ones)
