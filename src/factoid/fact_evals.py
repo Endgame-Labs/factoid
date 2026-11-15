@@ -61,26 +61,27 @@ class Nli(FactEval):
 #: Starting floors. They are fixed values until calibration from labeled data is built.
 DEFAULT_FLOORS: dict[str, float] = {
     "grounded": 0.6,
-    "attribution": 0.55,
-    "self_contained": 0.55,
-    "atomic": 0.45,
+    "attribution": 0.3,
+    "self_contained": 0.4,
+    "atomic": 0.25,
     "useful": 0.45,
     "distinct": 0.3,
 }
 
 QUESTIONS: dict[str, Noul] = {
     "grounded": Noul(
-        "Do the cited passages support everything the fact states? The fact may name the document, the people, "
-        "and the companies from the document's title and context, since a fact must name what its passage only "
-        "refers to.",
-        true="Every claim in the fact is supported by the cited passages.",
-        false="The fact states something the cited passages do not support.",
+        "Do the cited passages support the claim the fact makes? Judge the claim only. Words that name the "
+        "document, its section, or its parties may come from elsewhere in the document, so do not count them "
+        "against the fact.",
+        true="The passages support the claim.",
+        false="The fact claims something the passages do not say, or changes what they say.",
     ),
     "attribution": Noul(
-        "Does the fact keep who said it, and whether it was certain, conditional, hedged, or negated, the same as "
-        "the cited passages?",
-        true="Attribution and certainty match the passages.",
-        false="The fact changes who said it, or makes a hedge, condition, or negation into a plain claim.",
+        "Does the fact keep who said the claim, who it applies to, and whether the passages state it as certain, "
+        "conditional, hedged, or negated? Ignore words that only name the document or its parties.",
+        true="Who said it, who it applies to, and its certainty match the passages.",
+        false="The fact turns a condition, hedge, or negation into a plain claim, or changes who said it or who it "
+              "applies to.",
     ),
     "self_contained": Noul(
         "Can a reader understand the fact on its own? It must name its subject and the people, companies, and "

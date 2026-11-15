@@ -921,7 +921,11 @@ diligence app (`factoid-legal`, a separate repo), scored on CUAD.
   local index makes tests and small projects work without it.
 - **`Nli`** is in the default chain but runs only when a project sets an `nli` model. With none set, it is skipped
   and the scorecard says so, so the working default chain is `JevFloors`.
-- **Starting floors** for `JevFloors` are fixed values until calibration is built.
+- **Starting floors** for `JevFloors` are fixed values until calibration is built. The first values rejected most
+  good facts. On 10 CUAD contracts (2026-11-15), lowering attribution to 0.3, self-contained to 0.4, and atomic to
+  0.25, and narrowing the grounded and attribution questions to the claim (not the words that name the document),
+  raised the share of gold clauses quoted by a kept fact from 0.61 to 0.85, and span recall from 0.58 to 0.73.
+  Clause-detection F1 went from 0.84 to 0.79, and AUPR from 0.94 to 0.97. With no fact evals, coverage is 0.95.
 - **Not built yet:** `StructuredDocument` (waits for prosaic), `factoid struct`, sources (`imap`, `mcp`), MCP and
   HTTP serving, `factoid setup`, fact-class trust and visibility, entity `merge`, `split`, and `retype` commands,
   fingerprint-driven `rebuild`, and decision models other than Jev.

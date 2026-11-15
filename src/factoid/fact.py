@@ -103,6 +103,8 @@ class Fact(Registered, ModelCalls):
     resolve_threshold: ClassVar[float] = 0.6
     #: Run one repair (a rewording) on a near miss.
     repair_enabled: ClassVar[bool] = True
+    #: The longest fact sentence `validate` accepts, in characters.
+    max_length: ClassVar[int] = 600
 
     # -- level 3: wording -----------------------------------------------------------------------------------
 
@@ -235,7 +237,7 @@ class Fact(Registered, ModelCalls):
         problems = []
         if len(self.text) < 12:
             problems.append("too short")
-        if len(self.text) > 600:
+        if len(self.text) > type(self).max_length:
             problems.append("too long for one fact")
         if not self.quotes:
             problems.append("cites no passage")
