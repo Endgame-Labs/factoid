@@ -46,10 +46,6 @@ def build(make_app, fake):
     fake.generator = extractor
 
     def noul(question, state):
-        if "set the same term" in question.instructions:
-            key = re.search(r"stored fact (F\d+)", question.instructions).group(1)
-            both = state["new_fact"]["text"] + state["stored_facts"][key]["text"]
-            return 0.9 if both.count("cap") >= 2 or both.count("erritory") >= 2 else 0.1
         if "same company" in question.instructions:
             return 0.95
         if "trait" in question.instructions:
