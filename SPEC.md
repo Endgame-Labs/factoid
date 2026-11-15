@@ -55,9 +55,9 @@ Do not use the names "Rails" or "Django" in docs or file names.
 - `uv tool install factoid` puts one `factoid` command on the path. Inside a project, the command finds the project's
   environment and runs there. Users never type `uv run`.
 - A second install path is an `install.sh` piped into bash. It installs uv when missing, then installs Factoid.
-- Other languages were sketched and are kept for reference in `docs/potential/README/` (Ruby, Go, Rust, TypeScript, and
-  frontmatter markdown). Kyle likes the object-oriented feel of the Python and Ruby versions: inherited defaults, method
-  overrides, and computed properties.
+- Other languages (Ruby, Go, Rust, TypeScript, and frontmatter markdown) were sketched early and then removed; they are
+  in git history before 2026-11-15. Kyle liked the object-oriented feel of the Python and Ruby versions: inherited
+  defaults, method overrides, and computed properties.
 
 **Decided** (Kyle, 2026-11-14): **MIT license**, for Factoid and for prosaic. Copyright holder: Endgame Labs. Kyle
 considered Apache 2.0 for its patent grant and chose MIT. If Endgame ever wants a patent on anything here, it has to
@@ -903,8 +903,6 @@ Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
 ## 16. Docs that lag the design
 
 - The README intro names the base classes `Document`, `Fact`, and `Entity`. The body uses the `Factoid` prefix.
-- `docs/potential/README/python/README.md`, the Ruby README, and the twelve examples still show typed fields, the old
-  class names, and the Harbor example.
 - `docs/facts.md`, `docs/mental-model.md`, `docs/config.md`, `docs/plugins.md`, `docs/cli.md`, and
   `docs/potential/crm-starter.md` predate the entity redesign. `docs/config.md` and `docs/plugins.md` also describe
   the single-YAML design.
@@ -1012,3 +1010,4 @@ All dates are 2026-11-13 unless noted.
 61. Labels are renamed traits: `FactoidTrait`, with the design from decision 60, and `traits = [...]` on fact
     classes. Kind and lifetime are no longer called traits. The step that judges traits, kind, and lifetime in one
     request is `assess`; `characterize` is gone. (2026-11-15)
+62. The other-language README sketches in `docs/potential/README/` are removed. Python is the only language. (2026-11-15)

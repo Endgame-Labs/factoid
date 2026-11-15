@@ -605,4 +605,4 @@ recent = globex.facts(since="30d")     # every recent fact linked to Globex
 
 Read [docs/mental-model.md](docs/mental-model.md) first, then [docs/README.md](docs/README.md).
 [docs/config.md](docs/config.md) and [docs/plugins.md](docs/plugins.md) still cover the older single-YAML design and
-will be updated. Earlier proposals are in [docs/potential/README/](docs/potential/README/).
+will be updated.
