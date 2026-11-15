@@ -149,6 +149,97 @@ HELD_OUT: list[dict[str, Any]] = [
 ]
 
 
+# Fresh: labeled from the contract text before any run, and scored once, after the last change to the framework and
+# the app (2026-11-15). Nothing was tuned on these. Scored by `AmendmentsFresh`.
+FRESH: list[dict[str, Any]] = [
+    {
+        "name": "glu-fox",
+        "documents": [
+            {"key": "glu-base", "title": "GluMobileInc_20070319_S-1A_EX-10.09_436630_EX-10.09_Content License Agreement1",
+             "signed_at": "2004-12-16T00:00:00Z", "name": "Wireless Content License Agreement between Fox and Glu Mobile"},
+            {"key": "glu-a1", "title": "GluMobileInc_20070319_S-1A_EX-10.09_436630_EX-10.09_Content License Agreement2",
+             "signed_at": "2005-11-11T00:00:00Z", "name": "Amendment No. 1 to the Fox and Glu Mobile License Agreement"},
+            {"key": "glu-a2", "title": "GluMobileInc_20070319_S-1A_EX-10.09_436630_EX-10.09_Content License Agreement3",
+             "signed_at": "2006-03-27T00:00:00Z", "name": "Amendment No. 2 to the Fox and Glu Mobile License Agreement"},
+            {"key": "glu-a3", "title": "GluMobileInc_20070319_S-1A_EX-10.09_436630_EX-10.09_Content License Agreement4",
+             "signed_at": "2007-02-19T00:00:00Z", "name": "Amendment No. 3 to the Fox and Glu Mobile License Agreement"},
+        ],
+        "supersedes": [
+            ("glu-base", "continue in full force and effect for a period of eighteen (18) months after the initial "
+                         "theatrical release",
+             "glu-a3", "continue in full force and effect until March 31, 2008"),
+        ],
+        "unchanged": [],
+        "as_of": [
+            ("How long do the licenses for each Property last under the Fox and Glu Mobile license agreement?",
+             "2006-06-01T00:00:00Z",
+             ("glu-base", "continue in full force and effect for a period of eighteen (18) months after the initial "
+                          "theatrical release"),
+             ("glu-a3", "continue in full force and effect until March 31, 2008")),
+            ("How long do the licenses for each Property last under the Fox and Glu Mobile license agreement?",
+             "2007-06-01T00:00:00Z",
+             ("glu-a3", "continue in full force and effect until March 31, 2008"),
+             ("glu-base", "continue in full force and effect for a period of eighteen (18) months after the initial "
+                          "theatrical release")),
+        ],
+        "time": [("glu-a3", "continue in full force and effect until March 31, 2008", "valid_until", "2008")],
+    },
+    {
+        "name": "scansource-cisco",
+        "documents": [
+            {"key": "scan-base",
+             "title": "ScansourceInc_20190822_10-K_EX-10.38_11793958_EX-10.38_Distributor Agreement1",
+             "signed_at": "2007-01-22T00:00:00Z",
+             "name": "Nonexclusive Value Added Distributor Agreement between Cisco and ScanSource"},
+            {"key": "scan-a3",
+             "title": "ScansourceInc_20190822_10-K_EX-10.39_11793959_EX-10.39_Distributor Agreement",
+             "signed_at": "2010-08-04T00:00:00Z",
+             "name": "Amendment No. 3 to the Cisco and ScanSource Distributor Agreement"},
+        ],
+        "supersedes": [
+            ("scan-base", "Distributor may submit the inventory balance claim between the first and",
+             "scan-a3", "Distributor shall be entitled to return Product once per quarter"),
+            ("scan-base", "continue thereafter for a period of two (2) years",
+             "scan-a3", "The Term of the Agreement is hereby extended to January 20, 2012"),
+        ],
+        "unchanged": [
+            ("scan-base", "Distributor's use of Software is governed by the terms contained in Exhibit C"),
+        ],
+        "as_of": [
+            ("When does the Cisco and ScanSource distributor agreement end?", "2008-01-01T00:00:00Z",
+             ("scan-base", "continue thereafter for a period of two (2) years"),
+             ("scan-a3", "The Term of the Agreement is hereby extended to January 20, 2012")),
+            ("When does the Cisco and ScanSource distributor agreement end?", "2011-01-01T00:00:00Z",
+             ("scan-a3", "The Term of the Agreement is hereby extended to January 20, 2012"),
+             ("scan-base", "continue thereafter for a period of two (2) years")),
+        ],
+        "time": [("scan-a3", "The Term of the Agreement is hereby extended to January 20, 2012", "valid_until",
+                  "2012")],
+    },
+    {
+        "name": "pcquote-abw",
+        "documents": [
+            {"key": "pcq-base", "title": "PcquoteComInc_19990721_S-1A_EX-10.11_6377149_EX-10.11_Co-Branding Agreement1",
+             "signed_at": "1996-10-11T00:00:00Z", "name": "Co-Branding Agreement between PC Quote and A.B. Watley"},
+            {"key": "pcq-a1", "title": "PcquoteComInc_19990721_S-1A_EX-10.11_6377149_EX-10.11_Co-Branding Agreement2",
+             "signed_at": "1996-12-09T00:00:00Z", "name": "Amendment to Section 2 of the PC Quote Co-Branding Agreement"},
+            {"key": "pcq-a2", "title": "PcquoteComInc_19990721_S-1A_EX-10.11_6377149_EX-10.11_Co-Branding Agreement3",
+             "signed_at": "1998-02-23T00:00:00Z",
+             "name": "Second Amendment to the PC Quote and A.B. Watley Co-Branding Agreement"},
+        ],
+        "supersedes": [
+            ("pcq-base", "Notice expressing a desire to terminate this Agreement will be sent by certified mail",
+             "pcq-a2", "The text of Section 2. A. and B. of the Agreement is hereby deleted in its entirety"),
+        ],
+        "unchanged": [
+            ("pcq-base", "enforced in all respects in accordance with the laws of the State of Illinois"),
+        ],
+        "as_of": [],
+        "time": [],
+    },
+]
+
+
 @dataclass
 class Located:
     doc_id: str
@@ -192,13 +283,14 @@ class Amendments(Suite):
     description = "Real CUAD contract chains: supersession, as-of search, and time."
     parallel = 1  # a chain must be ingested in order
     held_out = False
+    fresh = False
 
     def documents(self, limit: int | None = None):
         from legal.documents import Contract
 
         full = load_full()
         self.texts: dict[str, str] = {}
-        source = HELD_OUT if self.held_out else CHAINS
+        source = FRESH if self.fresh else HELD_OUT if self.held_out else CHAINS
         chains = source[:limit] if limit else source
         self.chains = chains
         for chain in chains:
@@ -294,4 +386,10 @@ class AmendmentsHeldOut(Amendments):
     name = "amendments_heldout"
     description = "A contract chain never used while tuning: the NEON Systems distributor agreement."
     held_out = True
+
+
+class AmendmentsFresh(Amendments):
+    name = "amendments_fresh"
+    description = "Three chains labeled before any run and scored once: Glu and Fox, ScanSource and Cisco, PC Quote."
+    fresh = True
 
