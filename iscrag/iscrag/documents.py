@@ -23,8 +23,35 @@ class Transcript(ProseDocument):
         year, month, day = (int(x) for x in str(date).split("-"))
         return f"{year:04d}-{month:02d}-{day:02d}T00:00:00Z"
 
+    #: Give the extractor a roster that maps each short speaker tag ("VAUSE") to the speaker's full label from the
+    #: same transcript ("JOHN VAUSE, CNN ANCHOR"). Plain code, no model call.
+    speaker_roster = False
+
     def context(self):
-        return {k: self.metadata[k] for k in ("program", "title", "date") if self.metadata.get(k)}
+        out = {k: self.metadata[k] for k in ("program", "title", "date") if self.metadata.get(k)}
+        if type(self).speaker_roster:
+            roster = self.roster()
+            if roster:
+                out["speakers"] = "; ".join(f"{short} = {full}" for short, full in roster.items())
+        return out
+
+    def roster(self):
+        """Short speaker tags mapped to the fullest label the transcript gives for them."""
+        labels = []
+        for line in self.text.split("\n"):
+            speaker, sep, _ = line.partition(": ")
+            if sep and speaker not in labels:
+                labels.append(speaker)
+        full = [lab for lab in labels if "," in lab or len(lab.split()) > 1]
+        roster = {}
+        for label in labels:
+            if label in full:
+                continue
+            tag = label.split("(")[0].strip()
+            match = next((f for f in full if tag.upper() in f.split(",")[0].upper().split()), None)
+            if match:
+                roster[label] = match
+        return roster
 
     def segment(self):
         """One passage per sentence, each tagged with its speaker. Turns are paragraphs of "SPEAKER: text"."""

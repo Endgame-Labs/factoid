@@ -98,11 +98,13 @@ class HeldOut(Suite):
     name = "heldout"
     description = "ISC-RAG held-out 500 (MediaSum), 499 questions, facts against chunks across 7 read budgets."
     parallel = 8
+    sample = "heldout-500-20260726.txt"
+    budgets = BUDGETS
 
     def documents(self, limit: int | None = None):
         from iscrag.documents import Transcript
 
-        ids = (HERE / "heldout-500-20260726.txt").read_text().split()
+        ids = (HERE / self.sample).read_text().split()
         rows = load_transcripts(ids)
         self.ids = ids[:limit] if limit else ids
         for doc_id in self.ids:
@@ -155,7 +157,7 @@ class HeldOut(Suite):
         cells: dict[str, Any] = {}
         per_question: dict[str, dict[str, bool]] = {q["external_id"]: {} for q in questions}
         for arm in ("facts", "chunks"):
-            for budget in BUDGETS:
+            for budget in self.budgets:
                 packed = [pack(r[arm], budget, encoder) for r in retrieved]
 
                 def run(i: int, packed: list[tuple[str, int, int]] = packed) -> tuple[bool, int]:
@@ -171,7 +173,7 @@ class HeldOut(Suite):
                 for q, (ok, _) in zip(questions, outcomes):
                     per_question[q["external_id"]][key] = ok
         by_type: dict[str, dict[str, float]] = {}
-        for key in ("facts@2048", "chunks@2048"):
+        for key in (f"facts@{self.budgets[len(self.budgets) // 2]}", f"chunks@{self.budgets[len(self.budgets) // 2]}"):
             for q in questions:
                 row = by_type.setdefault(q["question_type"], {})
                 row[key] = row.get(key, 0) + per_question[q["external_id"]][key]
@@ -180,13 +182,25 @@ class HeldOut(Suite):
             for key in list(row):
                 row[key] = round(row[key] / n, 3)
         mcnemar = {}
-        for budget in BUDGETS:
+        for budget in self.budgets:
             b = sum(1 for r in per_question.values() if r[f"facts@{budget}"] and not r[f"chunks@{budget}"])
             c = sum(1 for r in per_question.values() if r[f"chunks@{budget}"] and not r[f"facts@{budget}"])
             mcnemar[str(budget)] = {"facts_only": b, "chunks_only": c, "p": _mcnemar(b, c)}
+        surname_only, total = 0, 0
+        for result in results:
+            roster = result.document.roster()
+            for fact in result.facts:
+                total += 1
+                for short, full in roster.items():
+                    first = full.split(",")[0].split()[0]
+                    tag = short.split("(")[0].strip().title()
+                    if tag in fact.text and first.title() not in fact.text:
+                        surname_only += 1
+                        break
         stats = app.stats()
         (Path(app.data_dir or ".") / "per_question.json").write_text(json.dumps(per_question))
-        return {"cells": cells, "mcnemar_facts_vs_chunks": mcnemar, "by_question_type_at_2048": by_type,
+        return {"surname_only_facts": round(surname_only / total, 4) if total else None,
+                "facts_per_document": round(total / len(results), 1) if results else None, "cells": cells, "mcnemar_facts_vs_chunks": mcnemar, "by_question_type_at_2048": by_type,
                 "facts_stored": stats["facts"], "entities": stats["entities"]}
 
 
@@ -200,3 +214,24 @@ def _mcnemar(b: int, c: int) -> float:
     k = min(b, c)
     tail = sum(comb(n, i) for i in range(k + 1)) / 2 ** n
     return round(min(1.0, 2 * tail), 6)
+
+
+class DevSample(HeldOut):
+    """The paper's 100-document development sample and its 200 questions (original and expansion). Tune here, never on
+    the held-out 500."""
+
+    name = "dev"
+    description = "ISC-RAG fact-development sample: 100 transcripts, 200 questions, for tuning."
+    sample = "fact-development-sample-100-20260725.txt"
+    budgets = [512, 2048, 8192]
+
+    def questions(self) -> list[dict[str, Any]]:
+        rows = []
+        for name in ("questions-100.jsonl", "questions-100-expansion.jsonl"):
+            for line in open(DATA / "dev" / name):
+                q = json.loads(line)
+                q["transcript_id"] = q["evidence"][0]["document_external_id"]
+                rows.append(q)
+        ids = set(self.ids)
+        return [q for q in rows if q["transcript_id"] in ids]
+
