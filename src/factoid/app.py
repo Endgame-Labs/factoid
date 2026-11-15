@@ -425,12 +425,19 @@ class Factoid:
         vector = getattr(fact, "vector", None)
         hits = self.index.hybrid(self.ns("facts"), fact.text, vector, limit * 3, filters={"entity_ids": entity_ids})
         out = []
+        same_document = 0
         for fact_id, _ in hits:
             if fact_id == fact.id:
                 continue
             other = self.load_fact(fact_id)
-            if other is not None and other.status in ("current", "contradicted"):
-                out.append(other)
+            if other is None or other.status not in ("current", "contradicted"):
+                continue
+            if other.document_id == fact.document_id:
+                # Most changes come from other documents, so a document's own facts get at most half the slots.
+                if same_document >= limit // 2:
+                    continue
+                same_document += 1
+            out.append(other)
             if len(out) >= limit:
                 break
         return out
