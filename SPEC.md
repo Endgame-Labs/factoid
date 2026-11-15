@@ -677,8 +677,8 @@ work and needs evals before any claim about its quality.
 
 **Proposed.**
 
-- Hooks call models through `choose`, `decide`, and `score` (decision model) and `generate` (generative model). Calls made
-  this way are logged, priced, budgeted, replayed, and fingerprinted.
+- Hooks call models through `choose`, `decide`, and `score` (decision model) and `generate` (generative model). Calls
+  made this way are logged, priced, budgeted, replayed, and fingerprinted.
 - Models are named once in settings and pinned to exact versions.
 - Prompts are Jinja templates. A file at `prompts/<class_name>/<hook>.md.j2` replaces a built-in prompt for one class,
   and a project template can extend a built-in one and change a block.
@@ -688,8 +688,8 @@ work and needs evals before any claim about its quality.
 - "Prompt" is too narrow a word, and a `prompts/` folder may be the wrong abstraction (Kyle). The working decomposition
   of a model step is five parts: inputs, the view of each input, the question (type, instruction, and criteria), the
   rule that turns answers into a decision, and the model.
-- For Jev, each kind of use fixes the inputs, and the author supplies criteria. Classifying, evaluating facts, resolving,
-  identifying, and ranking may all become one `Question` shape.
+- For Jev, each kind of use fixes the inputs, and the author supplies criteria. Classifying, evaluating facts,
+  resolving, identifying, and ranking may all become one `Question` shape.
 - The pieces an author writes (definition, guidance, examples, and rubric) may live on the class, with a type that
   outgrows one file getting its own folder.
 
@@ -697,8 +697,8 @@ work and needs evals before any claim about its quality.
 
 **Decided.**
 
-- The `choose` workload (classifying, evaluating facts, assessing, linking, and resolving) is done by a decision model, also
-  called a System One model. A generative model does not stand in for it.
+- The `choose` workload (classifying, evaluating facts, assessing, linking, and resolving) is done by a decision model,
+  also called a System One model. A generative model does not stand in for it.
 - Jev (TypeSafe) is the recommended decision model: it is the best and it is cheap. Other providers have one too, and
   Factoid supports them: OpenAI's decisions API, Fireworks' Rune, and Cloudflare's Clef.
 - Keys belong to providers, and a provider can serve several kinds of model. The README must not pair one key with one
@@ -949,8 +949,9 @@ All dates are 2026-11-13 unless noted.
 26. Current state is the source of truth. The event log is kept for audit and provenance, and is not replayed.
 
 27. SQLite in v1 has one writer per process, with WAL mode on. Many writers or hosting means a Postgres backend later.
-28. `FactoidDocument` splits into `FactoidProseDocument` and `FactoidStructuredDocument`. A structured parser is a Python
-    class with a column map. Factoid can write it with a model, or print the prompt for any coding agent, and it has a dry run.
+28. `FactoidDocument` splits into `FactoidProseDocument` and `FactoidStructuredDocument`. A structured parser is a
+    Python class with a column map. Factoid can write it with a model, or print the prompt for any coding agent, and it
+    has a dry run.
 29. MIT license for Factoid and prosaic.
 30. prosaic is a separate repo (`Endgame-Labs/prosaic`) and a dependency of Factoid. Endgame uses it too.
 31. Chunks are searchable as well as facts. A chunk is indexed with its situation when `situate` is on. Facts and
@@ -1010,6 +1011,7 @@ All dates are 2026-11-13 unless noted.
 61. Labels are renamed traits: `FactoidTrait`, with the design from decision 60, and `traits = [...]` on fact
     classes. Kind and lifetime are no longer called traits. The step that judges traits, kind, and lifetime in one
     request is `assess`; `characterize` is gone. (2026-11-15)
-62. The other-language README sketches in `docs/potential/README/` are removed. Python is the only language. (2026-11-15)
+62. The other-language README sketches in `docs/potential/README/` are removed. Python is the only language.
+    (2026-11-15)
 63. The README's running example is legal due diligence (a firm advising Acme on buying Orion), replacing the
     apartment-rental and CRM examples. (2026-11-15)
