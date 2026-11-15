@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from .dates import format_datetime, now, parse_datetime
 from .fact_evals import EvalResult, FactEval, JevFloors, Nli
-from .judge import Choice, Judgments, Question
+from .judge import Choice, Judgments, Noul, Question
 from .runtime import ModelCalls, Registered, current
 from .steps import run_step
 from .templates import Template, builtin, render
@@ -107,6 +107,8 @@ class Fact(Registered, ModelCalls):
     #: Below these, the next best answer is used.
     duplicate_threshold: ClassVar[float] = 0.8
     contradiction_threshold: ClassVar[float] = 0.75
+    #: When both facts set the same term and the new one is later and from another document, it supersedes.
+    same_subject_threshold: ClassVar[float] = 0.7
     #: Run one repair (a rewording) on a near miss.
     repair_enabled: ClassVar[bool] = True
     #: The longest fact sentence `validate` accepts, in characters.
@@ -122,6 +124,10 @@ class Fact(Registered, ModelCalls):
     )
     resolve_question: ClassVar[str] = (
         "Compare the new fact with stored fact {key}. Which answer describes how the new fact relates to it?"
+    )
+    same_subject_question: ClassVar[str] = (
+        "Do the new fact and stored fact {key} set the same term for the same parties: the same right, duty, price, "
+        "amount, date, period, territory, or rule, whether or not the value is the same?"
     )
     repair_prompt: ClassVar[str | Template] = builtin("repair.md.j2")
 
@@ -221,6 +227,9 @@ class Fact(Registered, ModelCalls):
         if self.document is not None:
             state["document"] = {"type": self.document.type, "title": self.document.title,
                                  **self.document.context()}
+        what_counts = " ".join(p for p in (type(self).description(), type(self).guidance.strip()) if p)
+        if what_counts:
+            state["what_counts_as_a_fact"] = what_counts
         app = current()
         state["similar_stored_facts"] = [
             {"text": f.text, "source": app.document_title(f.document_id), "date": _fmt(f.valid_from or f.source_datetime)}
@@ -355,7 +364,10 @@ class Fact(Registered, ModelCalls):
                 for key, other in zip(keys, candidates)
             },
         }
-        questions = {key: Choice(type(self).resolve_question.format(key=key), RESOLVE_ANSWERS) for key in keys}
+        questions: dict[str, Question] = {
+            key: Choice(type(self).resolve_question.format(key=key), RESOLVE_ANSWERS) for key in keys}
+        for key in keys:
+            questions[f"{key}_same"] = Noul(type(self).same_subject_question.format(key=key))
         judgments = app.client.ask(state, questions)
         out = []
         klass = type(self)
@@ -364,14 +376,14 @@ class Fact(Registered, ModelCalls):
         for key, other in zip(keys, candidates):
             answer = judgments[key]
             theirs = other.valid_from or other.source_datetime
-            same_subject = answer.get("duplicate", 0) + answer.get("supersedes", 0)
-            if (max(answer, key=answer.get) in ("duplicate", "supersedes")
-                    and answer[max(answer, key=answer.get)] < bars.get("duplicate", 1)
-                    and same_subject >= klass.resolve_threshold and other.document_id != self.document_id
+            same = float(judgments[f"{key}_same"])
+            confident = {c for c in ("duplicate", "contradicts") if answer.get(c, 0) >= bars[c]}
+            if (same >= klass.same_subject_threshold and not confident
+                    and other.document_id != self.document_id
                     and mine is not None and theirs is not None and mine > theirs):
-                # Sure it is the same claim, unsure whether the value changed, and newer from another source:
-                # the newer version supersedes. Superseding a true duplicate only ends the old one at the new date.
-                out.append(("supersedes", other, same_subject))
+                # The same term, set again later by another document: the newer version supersedes. Superseding
+                # a true duplicate only ends the old fact where the new one starts.
+                out.append(("supersedes", other, same))
                 continue
             for choice in sorted(answer, key=answer.get, reverse=True):
                 if answer[choice] >= bars.get(choice, klass.resolve_threshold):

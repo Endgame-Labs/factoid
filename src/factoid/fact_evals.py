@@ -97,7 +97,7 @@ QUESTIONS: dict[str, Noul] = {
     ),
     "useful": Noul(
         "Is the fact worth keeping: a specific claim someone might later look up? Boilerplate, headings, "
-        "definitions of ordinary words, and filler are not useful.",
+        "definitions of ordinary words, and filler are not useful. When what_counts_as_a_fact is given, judge by it.",
         true="Worth keeping.",
         false="Not worth keeping.",
     ),
