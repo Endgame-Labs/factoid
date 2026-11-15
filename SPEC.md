@@ -104,8 +104,8 @@ attribute such as `chunk_size = 4000` (tested on Pydantic 2.14), and plain attri
 - A fact whose mentions match no entity is kept, with the mentions recorded as unlinked. (Kyle asked for facts to link
   to one or more entities, and separately asked that unclassified facts and entities be accounted for. Keeping unlinked
   facts is how the README squares the two.)
-- Reads are by entity and trait, plus search: `entity.facts(traits=..., since=...)`, `facts.search(query, about=...)`,
-  and `facts.unlinked(...)`. There are no typed reads.
+- Reads are by entity and trait, plus search: `entity.facts(traits=..., since=...)`, `Fact.search(query, about=...)`,
+  and `Fact.unlinked(...)`. There are no typed reads.
 
 ### Fact classes
 
@@ -507,7 +507,7 @@ situation in front of its text. When it is off, the chunk's text alone is indexe
   searches would otherwise be filtered searches over a namespace that is mostly facts; and each schema holds only its
   own fields.
 - A chunk's entity ids are the entities linked by the facts extracted from it, so `about=` filters work on chunks too.
-- `facts.search(...)` returns facts, and `chunks.search(...)` returns chunks with their situation, document, and
+- `Fact.search(...)` returns facts, and `chunks.search(...)` returns chunks with their situation, document, and
   position. A search for both runs hybrid search in each namespace in parallel,
   then reranks the combined list (Kyle, 2026-11-14). Without a reranker, it falls back to reciprocal rank fusion.
 - Separate namespaces also let Factoid benchmark facts against chunks on the same corpus. See

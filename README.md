@@ -599,10 +599,10 @@ agreement = Agreement.find("ORN-0042")
 agreement.facts(traits=[ConsentRequired], since="90d")            # facts linked to the agreement, newest first
 agreement.facts(include_retired=True)                             # the agreement's full history
 vega.related()                                                    # connected entities, co-mentions, and relation facts
-facts.search("change of control", about=vega)                     # includes up to 3 contradicting facts by default
-facts.search("liability cap", about=agreement, as_of="2027-02-01")  # weight relevance by validity as of a date
+Fact.search("change of control", about=vega)                      # includes up to 3 contradicting facts by default
+Fact.search("liability cap", about=agreement, as_of="2027-02-01")   # weight relevance by validity as of a date
 CounselFact.search("closing risk")                                # search scoped to one fact class
-facts.unlinked(since="30d")                                       # facts with a mention that matched no entity
+Fact.unlinked(since="30d")                                        # facts with a mention that matched no entity
 chunks.search("assignment consent", about=agreement)              # search source chunks, indexed with situations
 ```
 
@@ -621,11 +621,11 @@ validity, and open contradictions.
   prompt, extractor, and fact eval choices with `factoid ingest`, `factoid search`, and `factoid eval`.
 - **Agent memory over MCP.** Connect `imap`, `folder`, `jsonl`, and `mcp` sources for mail, calls, notes, and chats,
   then expose fact search and writes to an agent through `factoid mcp` or the CLI.
-- **Python library or HTTP service.** Run `factoid serve` as an HTTP sidecar, or `import factoid` inside an
+- **Python library or HTTP service.** Run `factoid serve` as an HTTP sidecar, or use Factoid as a library inside an
   application and pass classes to `Factoid(...)`:
 
 ```python
-from factoid import Entity, Factoid, Model, ProseDocument, Settings
+from factoid import Entity, Fact, Factoid, Model, ProseDocument, Settings
 
 class Company(Entity):
     """A company that is a party to a deal or a contract."""
@@ -637,9 +637,9 @@ class DealMemo(ProseDocument):
 class ServiceSettings(Settings):
     models = {"generate": Model("fireworks/glm-5p3-flash"), "choose": Model("typesafe/jev-1.13.0")}
 
-facts = Factoid(settings=ServiceSettings, documents=[DealMemo], entities=[Company])
-facts.ingest_text("Orion's lease in Austin ends in March 2027.", document_type=DealMemo)
-hits = facts.search("Orion lease")     # fact sentences, source quotes, and any contradictions
+factoid = Factoid(settings=ServiceSettings, documents=[DealMemo], entities=[Company])
+factoid.ingest_text("Orion's lease in Austin ends in March 2027.", document_type=DealMemo)
+hits = Fact.search("Orion lease")      # fact sentences, source quotes, and any contradictions
 orion = Company.find("Orion")
 recent = orion.facts(since="30d")      # every recent fact linked to Orion
 ```
