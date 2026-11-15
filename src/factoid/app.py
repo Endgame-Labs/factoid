@@ -250,6 +250,11 @@ class Factoid:
             instruction = [f for f in facts if any(q.passage_n == passage.n for q in f.quotes)]
             deleted_only = re.search(r"deleted\s+in\s+(?:its|their)\s+entirety", passage.text, re.I) is not None \
                 and re.search(r"replaced|as follows|to read", passage.text, re.I) is None
+            # "Section 3.2 is amended to read in its entirety" replaces the whole section: every older clause in it
+            # is gone, however the new text is organized. "The first paragraph of Section 4", "Section 2.8(b)(ii)",
+            # or "the definition of ..." replaces a part, so each older fact is checked before it is retired.
+            partial = re.search(r"paragraph|subsection|clause|sentence|definition|proviso|\d\s*\([a-z0-9]+\)",
+                                passage.text, re.I) is not None
             for section in sections:
                 same = [f for f in facts if f.status == "current" and in_section(f, section) and f not in instruction]
                 candidates = same or instruction
@@ -273,14 +278,17 @@ class Factoid:
                         run_step(instruction[0], "end", old)
                         retired += 1
                         continue
-                    best = self._replacing_fact(old, candidates, section)
+                    best = self._replacing_fact(old, candidates, section, require=partial)
                     if best is not None:
                         run_step(best, "supersede", old)
                         retired += 1
+                    elif not partial and instruction:
+                        run_step(instruction[0], "end", old)
+                        retired += 1
         return retired
 
-    def _replacing_fact(self, old: Fact, candidates: list[Fact], section: str) -> Fact | None:
-        """The new fact the decision model judges replaces `old`, or None."""
+    def _replacing_fact(self, old: Fact, candidates: list[Fact], section: str, require: bool = True) -> Fact | None:
+        """The new fact that best replaces `old`. With `require`, only one the decision model judges replaces it."""
         if not candidates:
             return None
         candidates = candidates[:12]
@@ -291,8 +299,9 @@ class Factoid:
                      for k in keys}
         judgments = self.client.ask(state, questions)
         best = max(keys, key=lambda k: judgments[k])
-        threshold = type(old).replace_threshold
-        return candidates[keys.index(best)] if judgments[best] >= threshold else None
+        if require and judgments[best] < type(old).replace_threshold:
+            return None
+        return candidates[keys.index(best)]
 
     def _classify_fact(self, fact: Fact, classes: list[type[Fact]]) -> Fact:
         if len(classes) == 1:

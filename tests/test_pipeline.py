@@ -376,3 +376,24 @@ def test_a_sibling_clause_in_a_replaced_section_stays_current(make_app, fake):
         document_type=Contract, metadata={"signed_at": "2007-02-19T00:00:00Z"}, uri="glu-a3.txt")
     statuses = {f.text.split(", ", 1)[1][:20]: Fact.get(f.id).status for f in base.facts}
     assert statuses == {"Section 4 TERM. The ": "superseded", "Glu has a right of f": "current"}
+
+
+def test_a_whole_section_replaced_retires_restructured_clauses(make_app, fake):
+    app = build(make_app, fake)
+
+    def generator(prompt):
+        facts = []
+        for n, text in re.findall(r"^\[(\d+)\] (.+)$", prompt, re.M):
+            facts.append({"text": f"Under the agreement between Neon and Peregrine, {text}", "passages": [int(n)],
+                          "mentions": [{"name": "Neon", "kind": "company"}, {"name": "Peregrine", "kind": "company"}]})
+        return json.dumps({"facts": facts})
+
+    inner = fake.noul
+    fake.generator = generator
+    fake.noul = lambda q, s: 0.2 if "was replaced as a whole" in q.instructions else inner(q, s)
+    base = app.ingest_text("Section 3.2 PAYMENT. Fees are payable 120 days after the invoice.",
+                           document_type=Contract, metadata={"signed_at": "1996-01-01T00:00:00Z"}, uri="n.txt")
+    app.ingest_text("1. Section 3.2 is hereby amended to read in its entirety as follows.\n\n"
+                    "Section 3.2 PAYMENT. Neon pays quarterly royalty advances.",
+                    document_type=Contract, metadata={"signed_at": "1999-01-01T00:00:00Z"}, uri="n1.txt")
+    assert Fact.get(base.facts[0].id).status == "superseded"
