@@ -225,3 +225,21 @@ def test_a_compound_near_miss_is_split(make_app, fake):
     assert sorted(f.text for f in result.facts) == ["Orion may not assign the agreement without Vega's consent.",
                                                     "Vega's liability to Orion is capped at $1M."]
     assert all(f.scores["repaired_from"] for f in result.facts) and all(f.quotes for f in result.facts)
+
+
+def test_same_claim_from_a_later_document_supersedes(make_app, fake):
+    app = build(make_app, fake)
+    inner = fake.choice
+
+    def choice(question, state, name):
+        if name.startswith("F"):
+            probs = {"duplicate": 0.4, "supersedes": 0.32, "unrelated": 0.18, "contradicts": 0.06}
+            return {k: probs.get(k, 0.01) for k, _ in question.options}
+        return inner(question, state, name)
+
+    fake.choice = choice
+    first = app.ingest_text("The territory is the United States and [*].", document_type=Contract,
+                            metadata={"signed_at": "1996-10-01T00:00:00Z"}, uri="i.txt")
+    app.ingest_text("The territory is amended to be United States, [*].", document_type=Contract,
+                    metadata={"signed_at": "1998-07-15T00:00:00Z"}, uri="j.txt")
+    assert Fact.get(first.facts[0].id).status == "superseded"

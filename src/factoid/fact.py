@@ -360,8 +360,19 @@ class Fact(Registered, ModelCalls):
         out = []
         klass = type(self)
         bars = {"duplicate": klass.duplicate_threshold, "contradicts": klass.contradiction_threshold}
+        mine = self.valid_from or self.source_datetime
         for key, other in zip(keys, candidates):
             answer = judgments[key]
+            theirs = other.valid_from or other.source_datetime
+            same_subject = answer.get("duplicate", 0) + answer.get("supersedes", 0)
+            if (max(answer, key=answer.get) in ("duplicate", "supersedes")
+                    and answer[max(answer, key=answer.get)] < bars.get("duplicate", 1)
+                    and same_subject >= klass.resolve_threshold and other.document_id != self.document_id
+                    and mine is not None and theirs is not None and mine > theirs):
+                # Sure it is the same claim, unsure whether the value changed, and newer from another source:
+                # the newer version supersedes. Superseding a true duplicate only ends the old one at the new date.
+                out.append(("supersedes", other, same_subject))
+                continue
             for choice in sorted(answer, key=answer.get, reverse=True):
                 if answer[choice] >= bars.get(choice, klass.resolve_threshold):
                     if choice != "unrelated":
