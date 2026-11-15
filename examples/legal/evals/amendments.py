@@ -393,3 +393,109 @@ class AmendmentsFresh(Amendments):
     description = "Three chains labeled before any run and scored once: Glu and Fox, ScanSource and Cisco, PC Quote."
     fresh = True
 
+
+
+# SEC chains: base agreements and amendments from public EDGAR exhibits (the MIT-licensed SEC_Exhibit_10 dataset,
+# 2005 to 2007), each amending a covenant "in its entirety". Labeled from the text before any run (2026-11-15) and kept
+# out of every tuning step. The texts are in data/sec/ (not in git).
+SEC: list[dict[str, Any]] = [
+    {
+        "name": "tyson",
+        "documents": [
+            {"key": "tyson-base", "file": "tyson-base.txt", "signed_at": "2005-09-28T00:00:00Z",
+             "name": "Five-Year Credit Agreement of Tyson Foods"},
+            {"key": "tyson-a2", "file": "tyson-a2.txt", "signed_at": "2006-04-28T00:00:00Z",
+             "name": "Amendment No. 2 to the Tyson Foods Five-Year Credit Agreement"},
+        ],
+        "supersedes": [
+            ("tyson-base", "The Borrower shall not permit the Leverage Ratio at any time to exceed 3.00:1.00",
+             "tyson-a2", "at any time during any of the periods set forth below to exceed the ratio set forth opposite"),
+            ("tyson-base", "for any period of four consecutive fiscal quarters to be less than 3.50:1.00",
+             "tyson-a2", "for any period of four consecutive fiscal quarters to be less than 3.00:1.00"),
+        ],
+        "unchanged": [
+            ("tyson-base", "GOVERNED BY, AND CONSTRUED IN ACCORDANCE WITH, THE LAWS OF THE STATE OF NEW YORK"),
+        ],
+        "as_of": [
+            ("What is the maximum Leverage Ratio Tyson Foods may have under its Five-Year Credit Agreement?",
+             "2006-01-15T00:00:00Z",
+             ("tyson-base", "The Borrower shall not permit the Leverage Ratio at any time to exceed 3.00:1.00"),
+             ("tyson-a2", "at any time during any of the periods set forth below to exceed the ratio set forth opposite")),
+            ("What is the maximum Leverage Ratio Tyson Foods may have under its Five-Year Credit Agreement?",
+             "2006-09-01T00:00:00Z",
+             ("tyson-a2", "at any time during any of the periods set forth below to exceed the ratio set forth opposite"),
+             ("tyson-base", "The Borrower shall not permit the Leverage Ratio at any time to exceed 3.00:1.00")),
+        ],
+        "time": [],
+    },
+    {
+        "name": "furniture-brands",
+        "documents": [
+            {"key": "furniture-base", "file": "furniture-base.txt", "signed_at": "2006-05-17T00:00:00Z",
+             "name": "Note Purchase Agreement of Furniture Brands International"},
+            {"key": "furniture-a1", "file": "furniture-a1.txt", "signed_at": "2007-04-16T00:00:00Z",
+             "name": "Amendment 1 to the Furniture Brands Note Purchase Agreement"},
+        ],
+        "supersedes": [
+            ("furniture-base", "to be greater than 3.50 to 1.00 at any time",
+             "furniture-a1", "to be greater than or equal to 3.25 to 1.00 at any time"),
+        ],
+        "unchanged": [
+            ("furniture-base", "The Company will not permit Priority Debt to exceed 20% of Consolidated Net Worth"),
+        ],
+        "as_of": [
+            ("What is the highest ratio of Consolidated Debt to Consolidated EBITDA that Furniture Brands' note purchase "
+             "agreement allows?", "2006-10-01T00:00:00Z",
+             ("furniture-base", "to be greater than 3.50 to 1.00 at any time"),
+             ("furniture-a1", "to be greater than or equal to 3.25 to 1.00 at any time")),
+            ("What is the highest ratio of Consolidated Debt to Consolidated EBITDA that Furniture Brands' note purchase "
+             "agreement allows?", "2007-09-01T00:00:00Z",
+             ("furniture-a1", "to be greater than or equal to 3.25 to 1.00 at any time"),
+             ("furniture-base", "to be greater than 3.50 to 1.00 at any time")),
+        ],
+        "time": [("furniture-a1", "through and including June 29, 2007", "valid_until", "2007")],
+    },
+    {
+        "name": "life-sciences-research",
+        "documents": [
+            {"key": "lsr-base", "file": "lsr-base.txt", "signed_at": "2006-03-01T00:00:00Z",
+             "name": "Financing Agreement of Life Sciences Research"},
+            {"key": "lsr-a1", "file": "lsr-a1.txt", "signed_at": "2007-08-01T00:00:00Z",
+             "name": "First Amendment to the Life Sciences Research Financing Agreement"},
+        ],
+        "supersedes": [
+            ("lsr-base", "on or prior to the first anniversary of the Effective Date. After the first anniversary",
+             "lsr-a1", "on or prior to July 31, 2008"),
+        ],
+        "unchanged": [],
+        "as_of": [
+            ("Until when may the Borrowers not prepay the Term Loan under the Life Sciences Research Financing "
+             "Agreement?", "2006-06-01T00:00:00Z",
+             ("lsr-base", "on or prior to the first anniversary of the Effective Date. After the first anniversary"),
+             ("lsr-a1", "on or prior to July 31, 2008")),
+            ("Until when may the Borrowers not prepay the Term Loan under the Life Sciences Research Financing "
+             "Agreement?", "2007-10-01T00:00:00Z",
+             ("lsr-a1", "on or prior to July 31, 2008"),
+             ("lsr-base", "on or prior to the first anniversary of the Effective Date. After the first anniversary")),
+        ],
+        "time": [],
+    },
+]
+
+
+class AmendmentsSec(Amendments):
+    name = "amendments_sec"
+    description = "Three SEC credit-agreement chains with covenants amended in their entirety, labeled before any run."
+
+    def documents(self, limit: int | None = None):
+        from legal.documents import Contract
+
+        folder = DATA.parent / "sec"
+        self.texts = {}
+        self.chains = SEC[:limit] if limit else SEC
+        for chain in self.chains:
+            for spec in chain["documents"]:
+                text = (folder / spec["file"]).read_text()
+                self.texts[spec["key"]] = text
+                yield Contract(text, id=f"amend_{spec['key'].replace('-', '_')}", uri=f"sec:{spec['file']}",
+                               title=spec["name"], metadata={"signed_at": spec["signed_at"]})
