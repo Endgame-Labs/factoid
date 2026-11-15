@@ -945,6 +945,10 @@ diligence app (`factoid-legal`, a separate repo), scored on CUAD.
   claim but not whether the value changed, and the new one is later and from another document, it supersedes. A
   fact's own document gets at most half of resolve's candidate slots.
 - **Search** reranks the best 50 candidates after freshness weighting.
+- **Tried and reverted** (2026-11-15): a yes-or-no question in resolve asking whether two facts set the same term,
+  with a later document's version superseding at 0.7, and giving the "useful" check the fact class's guidance. It
+  aimed at a restructured payment clause in the held-out NEON chain. It did not catch that clause, raised false
+  supersessions (signature and date facts), and broke 4 of 12 checks on the sample deal.
 - **Held-out check** (2026-11-15). The values above were tuned on CUAD contracts 1 to 20 and three amendment
   chains. On CUAD contracts 21 to 40, never looked at while tuning, clause F1 was 0.85 (0.82 on the tuning set),
   coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
