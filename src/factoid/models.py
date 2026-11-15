@@ -154,7 +154,8 @@ class Model:
 
     def wire_id(self) -> str:
         """The model id the provider's API expects."""
-        if self.provider_name == "fireworks" and not self.model_id.startswith("accounts/"):
+        # "glm-5p3-flash" is short for a Fireworks model; "nomic-ai/nomic-embed-text-v1.5" is another org's, as is.
+        if self.provider_name == "fireworks" and "/" not in self.model_id:
             return f"accounts/fireworks/models/{self.model_id}"
         return self.model_id
 

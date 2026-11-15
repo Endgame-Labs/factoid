@@ -121,3 +121,11 @@ def test_init_scaffolds_a_project(tmp_path, monkeypatch):
     assert result.exit_code == 0, result.output
     assert (tmp_path / "deal" / "facts.py").is_file()
     assert "[tool.factoid]" in (tmp_path / "pyproject.toml").read_text()
+
+
+def test_fireworks_model_ids():
+    from factoid import Model
+
+    assert Model("fireworks/glm-5p3-flash").wire_id() == "accounts/fireworks/models/glm-5p3-flash"
+    assert Model("fireworks/nomic-ai/nomic-embed-text-v1.5").wire_id() == "nomic-ai/nomic-embed-text-v1.5"
+    assert Model("fireworks/accounts/fireworks/routers/rune").wire_id() == "accounts/fireworks/routers/rune"
