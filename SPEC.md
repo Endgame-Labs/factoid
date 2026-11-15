@@ -133,7 +133,9 @@ inherent content against rubrics Factoid provides: whether it depends on time, a
 - **Kind of fact** (`choice`): stable (true for years), slow-changing (a role, plan, or relationship), current state (a
   status or number that moves within days or weeks), event (happened at a time, and stays true as history), plan
   (intended or expected, and expires when its date passes), or decision (a choice someone made, such as "Northwind
-  chose annual billing"; Kyle, 2026-11-14).
+  chose annual billing"; Kyle, 2026-11-14). Kept as its own kind after the trait research, though both reviewers would
+  fold it into event (Kyle, 2026-11-15). What a decision sets up, such as an obligation or a new state, is extracted as
+  its own fact.
 - **Validity** (`choice` over ordered ranges): a day, a week, a month, a quarter, a year, several years, or permanent.
   Factoid keeps the distribution and stores `valid_until`: when the fact was stated, plus the median range.
 - Optional traits: hedged (`noul`), and opinion or observed (`choice`).
@@ -786,3 +788,4 @@ All dates are 2026-11-13 unless noted.
 44. Python 3.13+ with uv, confirmed. `factoid init` sets up the current folder and replaces `factoid new`. The setup
     wizard uses Textual.
 45. Level 3 wording is set explicitly on the class: a string, or `template("path.md")`. No naming-convention lookup.
+46. `decision` stays its own kind of fact, separate from `event`, after the trait research. (2026-11-15)
