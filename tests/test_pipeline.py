@@ -46,6 +46,9 @@ def build(make_app, fake):
     fake.generator = extractor
 
     def noul(question, state):
+        if "specific named thing" in question.instructions and \
+                str(state.get("mention", "")).lower() in ("agreement", "the agreement", "amendment"):
+            return 0.1
         if "same company" in question.instructions:
             return 0.95
         if "trait" in question.instructions:
@@ -253,30 +256,30 @@ def test_sections_are_labeled():
     assert [p.section for p in passages] == ["3", "3.1", "3.1", "3.2"]
 
 
-def test_a_replaced_section_retires_the_old_facts(make_app, fake):
+def test_a_generic_defined_term_does_not_link_across_documents(make_app, fake):
     app = build(make_app, fake)
 
     def generator(prompt):
-        facts = []
-        for n, text in re.findall(r"^\[(\d+)\] (.+)$", prompt, re.M):
-            item = {"text": f"Under the supply agreement between Vega and Orion, {text}", "passages": [int(n)],
-                    "mentions": [{"name": "Vega", "kind": "company"}, {"name": "Orion", "kind": "company"}]}
-            if "in their entirety" in text:
-                item["replaces_sections"] = ["3.2"]
-            facts.append(item)
-        return json.dumps({"facts": facts})
+        name, alias = ("Supply Agreement between Orion and Vega", ["Agreement"]) if "Orion" in prompt else \
+            ("Services Agreement between Acme and Globex", ["Agreement"])
+        n = int(re.search(r"^\[(\d+)\]", prompt, re.M).group(1))
+        return json.dumps({"facts": [{"text": f"The {name} is governed by Delaware law.", "passages": [n],
+                                      "mentions": [{"name": name, "kind": "agreement", "aliases": alias}]}]})
 
-    fake.generator = generator
-    base = app.ingest_text(
-        "Section 3.1 FEES. Orion pays Vega a fee of 50% of revenues.\n\n"
-        "Section 3.2 PAYMENT. Orion pays each fee 120 days after the invoice.\n\n"
-        "Section 4 GOVERNING LAW. Delaware law governs the supply agreement.",
-        document_type=Contract, metadata={"signed_at": "1996-01-01T00:00:00Z"}, uri="base.txt")
-    app.ingest_text(
-        "1. Section 3.2 of the supply agreement is amended to read in their entirety as follows.\n\n"
-        "Section 3.2 PAYMENT. Orion pays each royalty 60 days after the invoice.",
-        document_type=Contract, metadata={"signed_at": "1999-01-01T00:00:00Z"}, uri="amend.txt")
-    statuses = {f.text.split(", ", 1)[1][:30]: Fact.get(f.id).status for f in base.facts}
-    assert statuses["Section 3.2 PAYMENT. Orion pay"] == "superseded"
-    assert statuses["Section 3.1 FEES. Orion pays V"] == "current"
-    assert statuses["Section 4 GOVERNING LAW. Delaw"] == "current"
+    inner = fake.noul
+
+    def noul(question, state):
+        if question.instructions.startswith("Is the mention") and " the same " in question.instructions:
+            names = re.findall(r'"([^"]+)"', question.instructions)
+            return 0.95 if len(names) == 2 and names[0] == names[1] else 0.05
+        return inner(question, state)
+
+    fake.generator, fake.noul = generator, noul
+    app.ingest_text("The Orion supply agreement is governed by Delaware law.", document_type=Contract,
+                    metadata={"signed_at": "2025-03-01T00:00:00Z"}, uri="k.txt")
+    second = app.ingest_text("The Acme services agreement is governed by Delaware law.", document_type=Contract,
+                             metadata={"signed_at": "2025-04-01T00:00:00Z"}, uri="l.txt")
+    rows = app.store.query("select name, aliases from entities where name like '%Agreement between%'")
+    assert len(rows) == 2 and all(json.loads(r["aliases"]) == [] for r in rows)
+    linked = {f.mentions[0].entity_id for f in Fact.all()}
+    assert len(linked) == 2 and second.facts

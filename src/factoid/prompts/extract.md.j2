@@ -39,9 +39,6 @@ the fact ends or is due, write it as valid_until. When the text gives a start da
 "for six months from April 1, 1999", compute the end date. Resolve relative dates against the document's date. Use
 ISO-8601 with a timezone, such as 2027-01-01T00:00:00Z. Leave either out when no exact date follows from the text.
 
-When a fact says that numbered sections of another document are replaced, deleted, or amended to read in their
-entirety, list those section numbers as replaces_sections, such as ["3.1", "3.2"]. Otherwise leave it out.
-
 Answer with JSON only:
 {"facts": [{"text": "...", "passages": [1], "mentions": [{"name": "...", "kind": "...", "role": "subject", "aliases": []}],
-"valid_from": null, "valid_until": null, "replaces_sections": []}]}
+"valid_from": null, "valid_until": null}]}

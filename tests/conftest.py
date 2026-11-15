@@ -23,7 +23,9 @@ class FakeClient:
         self.meter = Meter()
         self.asked: list[tuple[Any, dict[str, Question]]] = []
         self.prompts: list[str] = []
-        self.noul: Callable[[Noul, Any], float] = lambda q, s: 0.9
+        self.noul: Callable[[Noul, Any], float] = (
+            lambda q, s: 0.1 if "specific named thing" in q.instructions and str(s.get("mention", "")).lower()
+            in ("agreement", "the agreement", "amendment") else 0.9)
         self.choice: Callable[[Choice, Any, str], dict[str, float]] = self._default_choice
         self.generator: Callable[[str], str] = lambda prompt: json.dumps({"facts": []})
 

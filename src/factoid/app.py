@@ -101,6 +101,7 @@ class Factoid:
         self.fact_classes: list[type[Fact]] = fact_classes or [Fact]
         self.document_entities: dict[str, dict[str, str]] = {}
         self.placeholders: set[str] = set()
+        self._name_checks: dict[str, bool] = {}
         self.rejected: list[Rejected] = []
         self._pool = ThreadPoolExecutor(max_workers=max(1, settings.concurrency))
         use(self)
@@ -227,51 +228,7 @@ class Factoid:
                 run_step(fact, step, other)
             run_step(fact, "save")
             saved.append(fact)
-        self._replace_sections(saved)
         return saved
-
-    def _replace_sections(self, facts: list[Fact]) -> None:
-        """A fact that says sections of an earlier document are replaced retires the facts quoting those sections.
-
-        Each retired fact is superseded by the most similar new fact from the same section of the new document, or
-        ended by the replacing fact when the new document gives no text for that section."""
-        for fact in facts:
-            if not fact.replaces_sections:
-                continue
-            # The extractor proposes; the decision model confirms the sections are replaced as a whole.
-            whole = self.client.ask(fact.state(), {"whole": Noul(
-                "Does the fact say the named sections are replaced as a whole: deleted, or amended to read in their "
-                "entirety? A change to part of a section, or an addition to it, is not.")})["whole"]
-            if whole < type(fact).replace_threshold:
-                continue
-            entity_ids = sorted({m.entity_id for m in fact.mentions if m.entity_id})
-            if not entity_ids:
-                continue
-            mine = fact.valid_from or fact.source_datetime
-            marks = ",".join("?" * len(entity_ids))
-            rows = self.store.query(
-                f"select distinct f.id from facts f join mentions m on m.fact_id = f.id where m.entity_id in ({marks}) "
-                "and f.document_id != ? and f.status in ('current', 'contradicted')", (*entity_ids, fact.document_id))
-            for row in rows:
-                old = self.load_fact(row["id"])
-                if old is None:
-                    continue
-                theirs = old.valid_from or old.source_datetime
-                if mine is not None and theirs is not None and theirs >= mine:
-                    continue
-                sections = {q.section for q in old.quotes if q.section}
-                hit = next((s for s in fact.replaces_sections for q in sections
-                            if q == s or q.startswith(s + ".")), None)
-                if hit is None:
-                    continue
-                same = [f for f in facts if any(q.section and (q.section == hit or q.section.startswith(hit + "."))
-                                                for q in f.quotes)]
-                if same:
-                    vectors = self.client.embed([old.text] + [f.text for f in same])
-                    best = max(range(len(same)), key=lambda i: _cosine(vectors[0], vectors[i + 1]))
-                    run_step(same[best], "supersede", old)
-                else:
-                    run_step(fact, "end", old)
 
     def _classify_fact(self, fact: Fact, classes: list[type[Fact]]) -> Fact:
         if len(classes) == 1:
@@ -392,12 +349,26 @@ class Factoid:
                                                  "class": type(entity).__qualname__}])
 
     def add_alias(self, entity_id: str, alias: str) -> None:
-        """Record another name for an entity, and make it findable by that name."""
+        """Record another name for an entity, and make it findable by that name.
+
+        Only a specific name becomes an alias of the entity. A generic defined term, such as "the Agreement" or
+        "Amendment", stays an alias within its own document, or it would link other documents' mentions here."""
+        if not self.is_specific_name(alias):
+            return
         self.store.add_alias(entity_id, alias)
         row = self.store.entity_row(entity_id)
         if row is not None:
             names = [row["name"], *json.loads(row["aliases"])]
             self.index.upsert(self.ns("entities"), [{"id": row["id"], "text": " ".join(names), "class": row["class"]}])
+
+    def is_specific_name(self, name: str) -> bool:
+        key = " ".join(name.lower().split())
+        if key not in self._name_checks:
+            from .entity import PLACEHOLDER_QUESTION
+
+            answer = self.client.ask({"mention": name}, {"named": PLACEHOLDER_QUESTION})["named"]
+            self._name_checks[key] = answer >= self.placeholder_floor
+        return self._name_checks[key]
 
     def load_entity(self, entity_id: str) -> Entity | None:
         row = self.store.entity_row(entity_id)
@@ -674,12 +645,6 @@ def _since(value: str) -> str:
     if value[:-1].isdigit() and value[-1] in units:
         return format_datetime(now() - timedelta(**{units[value[-1]]: int(value[:-1])}))
     return format_datetime(parse_datetime(value))
-
-
-def _cosine(a: list[float], b: list[float]) -> float:
-    dot = sum(x * y for x, y in zip(a, b))
-    norm = (sum(x * x for x in a) ** 0.5) * (sum(y * y for y in b) ** 0.5)
-    return dot / norm if norm else 0.0
 
 
 def _durable(fact: Fact) -> bool:

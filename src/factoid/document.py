@@ -380,12 +380,9 @@ class ProseDocument(Document):
                                and a.strip().lower() != m["name"].strip().lower()]
                     mentions.append(Mention(text=m["name"].strip(), kind=(kind or "").strip().lower() or None,
                                             role=role, aliases=aliases))
-            fact = Fact(item["text"], quotes=quotes, mentions=mentions, document=self, chunk_id=chunk.id,
-                        source_datetime=dated, valid_from=_date_or_none(item.get("valid_from")),
-                        valid_until=_date_or_none(item.get("valid_until")))
-            fact.replaces_sections = [_section_key(x) for x in item.get("replaces_sections") or []
-                                      if isinstance(x, (str, int, float)) and _section_key(x)]
-            out.append(fact)
+            out.append(Fact(item["text"], quotes=quotes, mentions=mentions, document=self, chunk_id=chunk.id,
+                            source_datetime=dated, valid_from=_date_or_none(item.get("valid_from")),
+                            valid_until=_date_or_none(item.get("valid_until"))))
         return out
 
     def ingest(self, app: Factoid) -> list[Fact]:
@@ -456,12 +453,6 @@ def classify_raw(raw: Raw, classes: list[type[Document]], ask: Callable[[Any, di
 
 
 _SECTION = re.compile(r"^(?:(?:section|sec\.|article|clause|§)\s*)?(\d+(?:\.\d+)*)(?:\.|\)|\s)", re.I)
-
-
-def _section_key(value: Any) -> str:
-    """"Section 3.2", "3.2.", and "§ 3.2" all become "3.2"."""
-    match = re.search(r"\d+(?:\.\d+)*", str(value))
-    return match.group(0).rstrip(".") if match else ""
 
 
 def label_sections(passages: list[Passage]) -> list[Passage]:
