@@ -55,19 +55,22 @@ no longer a clean held-out set.
 | CUAD gold clauses quoted by a fact with the right trait | 0.83 | 0.82 | 0.83 |
 | CUAD dates: agreement, effective, expiration | 16/18, 12/14, 8/9 | 16/18, 10/12, 5/5 | 17/18, 7/7, 2/2 |
 
-| Amendment chains | NETGEAR, Federated, BioAmber | NEON Systems |
-| --- | --- | --- |
-| Supersessions found | 2/2 | 2/2 |
-| Untouched clauses kept | 4/4 | 1/1 |
-| As-of search | 3/3 | 2/2 |
-| Dated windows | 2/2 | none labeled |
-| False changes to base facts | 3.0% | 7.1% (mostly real changes the gold labels do not list) |
+| Amendment chains | Tuning (NETGEAR, Federated, BioAmber) | NEON (looked at) | Fresh (Glu, ScanSource, PC Quote) |
+| --- | --- | --- | --- |
+| Supersessions found | 2/2 | 1/2 | 2/4 |
+| Untouched clauses kept | 4/4 | 1/1 | 2/2 |
+| As-of search | 3/3 | 2/2 | 3/4 |
+| Dated windows | 2/2 | none labeled | 2/2 |
+| False changes to base facts | 3.1% | 5.1% | 2.5% |
 
 The sample deal (diligence suite) passes 12 of 12.
 
-NEON's restructured payment clause (Sections 3.1 and 3.2 "amended to read in their entirety") is retired by the
-amendment's new Section 3.2 through the framework's replaced-sections step, and its compound authority
-representation is now split into one fact per claim. Two general fixes were tried first and removed; see SPEC section
-17 in the framework.
+The fresh chains were labeled from the contract text before any run (commit "Fresh amendment suite") and scored
+once. They are the honest measure for amendments. Their misses: a base clause never kept as a fact (ScanSource's
+inventory claim window), a section deleted and replaced with fully redacted text (PC Quote), and one as-of question.
+
+Two choices made while looking at NEON were tested on the fresh chains and turned off: retiring the facts of a section
+an amendment rewrites in its entirety (no gain, and more false changes) and a lower "useful" floor (no effect). See
+SPEC section 17 in the framework.
 
 Cost on CUAD: about 700 model calls and 1M tokens per contract, 60 to 95 seconds per contract at the median.
