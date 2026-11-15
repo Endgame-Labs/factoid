@@ -86,8 +86,8 @@ attribute such as `chunk_size = 4000` (tested on Pydantic 2.14), and plain attri
 **Proposed.**
 
 - `factoid init` sets up a project in the current folder, once (Kyle, 2026-11-14; it replaces `factoid new`). After
-  that the CLI reads code and writes only data. The exception is `factoid parser new`, which writes a parser class the
-  user asked for.
+  that the CLI reads code and writes only data. The exception is `factoid struct parser`, which writes a parser class
+  the user asked for.
 - A project with no classes still works on the base classes' defaults.
 
 ## 5. Facts
@@ -454,15 +454,17 @@ reads files, inspects them, holds the column map and sentence templates, writes 
 Factoid adds column roles that are entity identities, linking, supersede by row key, and free-text columns through the
 prose pipeline.
 
-**Proposed.** Command names (Kyle asked for feedback on the hierarchy). prosaic has the same commands on its own
-(`prosaic inspect`, `prosaic parser new`, and `prosaic run --dry-run`), and Factoid's wrap them:
+**Decided** (Kyle, 2026-11-15): structured-document commands sit under `factoid struct`. prosaic has the same commands
+on its own (`prosaic inspect`, `prosaic parser new`, and `prosaic run --dry-run`), and Factoid's wrap them:
 
-- `factoid inspect <file>` works on any file. It shows which document class matches and why. For a structured file,
-  it also shows the columns, types, sample values, guessed identities, and the column map a parser would start from.
-- `factoid parser new <file> [--name OpenDeals]` has a model write the parser class. `--prompt` prints the prompt and
-  inspection instead of calling a model.
-- `factoid ingest <file> --dry-run [--rows 20]` is the dry run. It works for every document kind, so prose classes get
-  it too.
+- `factoid struct inspect <file>` shows the columns, types, sample values, guessed identities, the column map a parser
+  would start from, and which structured class matches the file and why.
+- `factoid struct parser <file> [--name OpenDeals]` has a model write the parser class. `--prompt` prints the prompt
+  and inspection instead of calling a model.
+- `factoid struct try <file> [--rows 20]` is the parser's dry run: it prints the sentences and their citations and
+  writes nothing.
+- The real import is `factoid ingest <file>`, the same as for prose. `factoid ingest --dry-run` runs the whole pipeline
+  on any document kind and writes nothing.
 
 **Open.** Whether value columns read better in search as template sentences or as one model-written sentence per row.
 An eval decides, so both are built.
@@ -859,3 +861,5 @@ All dates are 2026-11-13 unless noted.
 52. A fact's expiration is decided per fact: an exact time from the text when there is one, otherwise a range from
     an hour to longer than a few years, chosen by a model. The clock restarts when the fact is confirmed. (2026-11-15)
 53. Stance (hedged, opinion) is Open and out of v1, to be judged on real examples. (2026-11-15)
+54. Structured-document commands: `factoid struct inspect`, `factoid struct parser`, and `factoid struct try`.
+    (2026-11-15)
