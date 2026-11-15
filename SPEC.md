@@ -408,7 +408,13 @@ situation in front of its text. When it is off, the chunk's text alone is indexe
   news articles carry dates and authors outside their text. A document class says where to find them, and Factoid
   gives them to the extractor ahead of the passages, so fact dates come from the text plus this structure. Proposed
   shape for prose documents:
-  - `written_at()` returns the document's own date (an email's sent time, an article's publish date).
+  - Every document has one universal date field for its own date (an email's sent time, an article's publish date, a
+    wiki page's last edit). Name not settled; `written_at` and `as_of` were rejected. Factoid separately sets
+    `ingested_at`, which is never used as a fact's date. (After Keen IO's `keen.timestamp` and `keen.created_at`.)
+  - The date is validated by Pydantic and stored as an ISO-8601 UTC string with microseconds. Accepted inputs: ISO-8601
+    strings, which must carry a timezone offset or `Z` (Kyle, 2026-11-15); epoch seconds, milliseconds, or microseconds,
+    with the unit inferred from the size of the number; and timezone-aware `datetime` values. A re-ingested, edited
+    document gets the newer date.
   - `context()` returns a dict shown to the extractor before the passages (sender, channel, speakers, and the like).
   - Passages can carry their own time from `segment` (a transcript turn's timestamp, each message in a thread).
   - Built-in document classes for email, Slack, transcripts, and news fill these in. With no declared date, the
