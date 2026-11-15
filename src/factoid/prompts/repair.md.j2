@@ -1,0 +1,12 @@
+This candidate fact failed these checks: {{ failed | join(", ") }}.
+
+Fact: {{ fact.text }}
+
+Cited passages:
+{% for passage in passages %}
+- {{ passage }}
+{% endfor %}
+
+Rewrite the fact as one self-contained sentence that states one claim, supported by the passages. Name its subject
+and the people, companies, and documents it refers to. Keep who said it, and keep conditions, hedges, and negations.
+Answer with JSON only: {"text": "..."}

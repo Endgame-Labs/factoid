@@ -1,0 +1,40 @@
+Extract facts from this {{ document.type }}{% if document.source_datetime %}, dated {{ document.source_datetime }}{% endif %}.
+{% if document.title %}Title: {{ document.title }}
+{% endif %}
+{% if context %}
+Context:
+{% for key, value in context.items() %}
+- {{ key }}: {{ value }}
+{% endfor %}
+{% endif %}
+{% if situation %}
+Where this part sits in the document: {{ situation }}
+{% endif %}
+{% block guidance %}{% if guidance %}{{ guidance }}
+{% endif %}{% endblock %}
+A fact is one self-contained sentence that states one claim. Write each fact so a reader understands it alone: name
+the people, companies, and documents it is about instead of "this Agreement", "the Company", "he", or "they". Keep
+who said it, and keep conditions, hedges, and negations. Skip headings, boilerplate, and filler.
+
+{% if context_passages %}
+Earlier text, for context only. Do not cite it:
+{% for passage in context_passages %}
+({{ passage.n }}) {{ passage.text }}
+{% endfor %}
+
+{% endif %}
+Passages:
+{% for passage in passages %}
+[{{ passage.n }}]{% if passage.speaker %} {{ passage.speaker }}:{% endif %} {{ passage.text }}
+{% endfor %}
+
+Cite passages by number. Do not copy quote text.
+For each fact, list the things it mentions by name, with a short lowercase kind for each (such as "company",
+"person", "agreement", "court", or "product") and a role: "subject" for what the fact is mainly about, otherwise
+"about". When the text gives an exact date the fact takes effect, write it as valid_from. When it gives an exact date
+the fact ends or is due, write it as valid_until. Resolve relative dates against the document's date. Use ISO-8601
+with a timezone, such as 2027-01-01T00:00:00Z. Leave either out when the text gives no exact date.
+
+Answer with JSON only:
+{"facts": [{"text": "...", "passages": [1], "mentions": [{"name": "...", "kind": "...", "role": "subject"}],
+"valid_from": null, "valid_until": null}]}
