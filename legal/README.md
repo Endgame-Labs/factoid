@@ -1,6 +1,6 @@
 # factoid-legal
 
-Legal due diligence on [Factoid](../factoid): contracts, amendments, and counsel emails in; facts with legal traits,
+Legal due diligence on [Factoid](https://github.com/Endgame-Labs/factoid): contracts, amendments, and counsel emails in; facts with legal traits,
 linked to companies, agreements, and people, out. It is the first app built on Factoid, and it drives what the
 framework needs.
 

@@ -54,7 +54,7 @@ wheels = [
 [[package]]
 name = "factoid"
 version = "0.1.0"
-source = { editable = "../factoid" }
+source = { editable = "../../factoid" }
 dependencies = [
     { name = "click" },
     { name = "httpx" },
@@ -92,7 +92,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "factoid", editable = "../factoid" }]
+requires-dist = [{ name = "factoid", editable = "../../factoid" }]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=8" }]
