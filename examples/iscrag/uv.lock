@@ -160,7 +160,7 @@ wheels = [
 [[package]]
 name = "factoid"
 version = "0.1.0"
-source = { editable = "../../factoid" }
+source = { editable = "../../" }
 dependencies = [
     { name = "click" },
     { name = "httpx" },
@@ -195,7 +195,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "factoid", editable = "../../factoid" },
+    { name = "factoid", editable = "../../" },
     { name = "tiktoken", specifier = ">=0.8" },
 ]
 

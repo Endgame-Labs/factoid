@@ -6,7 +6,7 @@ requires-python = ">=3.13"
 dependencies = ["factoid"]
 
 [tool.uv.sources]
-factoid = { path = "../../factoid", editable = true }
+factoid = { path = "../..", editable = true }
 
 [tool.factoid]
 package = "legal"

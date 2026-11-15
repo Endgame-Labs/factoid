@@ -6,7 +6,7 @@ requires-python = ">=3.13"
 dependencies = ["factoid", "tiktoken>=0.8"]
 
 [tool.uv.sources]
-factoid = { path = "../../factoid", editable = true }
+factoid = { path = "../..", editable = true }
 
 [tool.factoid]
 package = "iscrag"

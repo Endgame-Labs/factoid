@@ -932,7 +932,7 @@ Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
 
 The first code is in `src/factoid`. It follows this spec, with these differences and gaps. Each is either a choice
 the code had to make that the spec leaves open, or work not done yet. The first app built on it is the legal
-diligence app (`factoid-legal`, a separate repo), scored on CUAD.
+diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the ISC-RAG held-out benchmark.
 
 - **Built:** prose documents (segment, chunk, situate, extract), steps as methods with `before_` and `after_` hooks,
   `@judge` with Noul, Choice, and Score, the document classifier registry, fact classes with per-fact
@@ -997,7 +997,7 @@ diligence app (`factoid-legal`, a separate repo), scored on CUAD.
 - **Held-out check** (2026-11-15). The values above were tuned on CUAD contracts 1 to 20 and three amendment
   chains. On CUAD contracts 21 to 40, never looked at while tuning, clause F1 was 0.85 (0.82 on the tuning set),
   coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
-  supersession 1 of 2. Details are in the legal app's README.
+  supersession 1 of 2. Details are in `examples/legal/README.md`.
 - **Not on PyPI yet:** `uv tool install factoid` does not work until a release is published. Install from the repo.
 - **Keys:** with no key set for a provider, the client calls that provider's exe.dev integration host, which injects
   credentials. With a key set, it calls the vendor.
@@ -1113,3 +1113,5 @@ All dates are 2026-11-13 unless noted.
     filled in by `assess` from defaults on `Fact`. `FactKind` is gone. (2026-11-15)
 66. Generation models are set per step (`situate`, `extract`, `repair`, and `discover`), each falling back to
     `generate`. (2026-11-15)
+67. Example apps live in this repo under `examples/` (`legal` and `iscrag`), each its own Factoid project using the
+    framework from the repo root. (2026-11-15)
