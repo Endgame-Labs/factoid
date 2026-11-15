@@ -102,14 +102,41 @@ attribute such as `chunk_size = 4000` (tested on Pydantic 2.14), and plain attri
 
 **Proposed.**
 
-- Labels (section 6) are the fact's only classification.
-- A `FactoidFact` subclass is optional and exists for behavior only: its own definition, extraction guidance, or
-  fact evals.
+- Labels (section 6) and the kind (see "Fact traits") classify a fact. A fact's class, when a project has several,
+  says what kind of evidence it is (see "Fact classes").
 - A fact whose mentions match no entity is kept, with the mentions recorded as unlinked. (Kyle asked for facts to link
   to one or more entities, and separately asked that unclassified facts and entities be accounted for. Keeping unlinked
   facts is how the README squares the two.)
 - Reads are by entity and label, plus search: `entity.facts(labels=..., since=...)`, `facts.search(query, about=...)`,
   and `facts.unlinked(...)`. There are no typed reads.
+
+### Fact classes
+
+**Decided** (Kyle, 2026-11-15). A `FactoidFact` subclass is like a model without custom fields: a fact's fields are
+fixed, and the class holds the rules and behavior around them. Many projects have one fact class, and many have a few.
+
+- **One class per project** is the common case: the project's rules for facts.
+- **A few classes for different kinds of evidence** is also common: in a CRM, what a customer told us (`CustomerFact`)
+  versus what our own team said internally (`InternalFact`). These are not tied to document types: an email or a call
+  can produce both.
+
+**Proposed.** What a fact class can own:
+
+1. What counts as a fact: extraction guidance.
+2. Which labels are asked.
+3. Quality rules: `validate()`, fact evals, and thresholds.
+4. Trust: how much its facts weigh in search, and whether they can contradict facts of another class (a rep's hunch
+   should not contradict what a customer said).
+5. Visibility: who may read them (an agent writing to a customer never sees `InternalFact`).
+6. How a fact is shown to a reader or a model: `render()`.
+7. Reactions: the `after_` hooks, such as notifying a deal owner when a pricing fact is superseded.
+8. Queries scoped to the class: `InternalFact.search(...)`.
+
+With several fact classes, each extracted fact is classified on its own, with the same registry pattern as documents:
+every `FactoidFact` subclass registers itself and has a `classify(fact, judgments)` classmethod, and the central
+classifier picks one class per fact. Its class is picked before its labels, since the class says which labels are
+asked. Known structure helps: a quote's speaker from a transcript or an email header. A document can optionally narrow
+the candidates (`fact_classes = [InternalFact]` on a sales Slack channel); otherwise every fact class is a candidate.
 
 ## 6. Labels
 
@@ -945,4 +972,7 @@ All dates are 2026-11-13 unless noted.
     (2026-11-15)
 58. A document's class normally comes from its source. Classification is a registry of every document class, each
     with a `classify` classmethod; the default is one Choice over the docstrings plus an "any of these?" Noul.
+    (2026-11-15)
+59. Fact classes: one per project is common, and a few for different kinds of evidence (such as customer-stated
+    versus internal) is also common. They are not tied to document types; each fact is classified on its own.
     (2026-11-15)
