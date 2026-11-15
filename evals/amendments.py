@@ -228,8 +228,12 @@ class Amendments(Suite):
                 total += 1
                 old = self.quoting(app, self.locate(old_key, old_snip))
                 new_ids = {f.id for f in self.quoting(app, self.locate(new_key, new_snip))}
+                # Retired by a fact from the amending document. When an amendment rewrites a whole section, the
+                # old clause can be replaced by any fact of the new section, not only the one the gold pair names.
+                new_doc = self.locate(new_key, new_snip).doc_id
                 replaced = [f for f in old if f.status in ("superseded", "ended") and any(
-                    r["fact_id"] in new_ids for r in app.store.relations(f.id)
+                    (r["fact_id"] in new_ids or (app.load_fact(r["fact_id"]) or f).document_id == new_doc)
+                    for r in app.store.relations(f.id)
                     if r["relation"] in ("supersedes", "ends") and r["other_id"] == f.id)]
                 ok = bool(replaced)
                 hits += ok
