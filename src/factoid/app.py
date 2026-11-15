@@ -355,6 +355,12 @@ class Factoid:
         entity.props = json.loads(row["props"])
         return entity
 
+    def document_title(self, document_id: str | None) -> str | None:
+        if not document_id:
+            return None
+        row = self.store.one("select title, uri from documents where id = ?", (document_id,))
+        return (row["title"] or row["uri"]) if row else None
+
     def similar_entities(self, text: str, limit: int = 5) -> list[Any]:
         ids = self.index.bm25(self.ns("entities"), text, limit)
         rows = [self.store.entity_row(i) for i in ids]

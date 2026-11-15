@@ -323,9 +323,11 @@ class Fact(Registered, ModelCalls):
             return []
         keys = [f"F{i + 1}" for i in range(len(candidates))]
         state = {
-            "new_fact": {"text": self.text, "date": _fmt(self.valid_from or self.source_datetime)},
+            "new_fact": {"text": self.text, "date": _fmt(self.valid_from or self.source_datetime),
+                         "source": app.document_title(self.document_id)},
             "stored_facts": {
-                key: {"text": other.text, "date": _fmt(other.valid_from or other.source_datetime)}
+                key: {"text": other.text, "date": _fmt(other.valid_from or other.source_datetime),
+                      "source": app.document_title(other.document_id)}
                 for key, other in zip(keys, candidates)
             },
         }
