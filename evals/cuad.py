@@ -33,7 +33,7 @@ from factoid.evals import Suite, aupr, precision_at_recall, prf
 DATA = Path(__file__).resolve().parent.parent / "data" / "cuad"
 URL = "https://github.com/TheAtticusProject/cuad/raw/main/data.zip"
 
-TIME_CATEGORIES = {"Effective Date": "valid_from", "Expiration Date": "valid_until"}
+TIME_CATEGORIES = {"Agreement Date": "valid_from", "Effective Date": "valid_from", "Expiration Date": "valid_until"}
 
 
 def fetch() -> Path:
@@ -81,6 +81,7 @@ def jaccard(a: str, b: str) -> float:
 class Cuad(Suite):
     name = "cuad"
     description = "CUAD test split: clause traits and contract dates."
+    parallel = 4
 
     def documents(self, limit: int | None = None):
         from legal.documents import Contract
@@ -163,5 +164,6 @@ class Cuad(Suite):
                 if any(getattr(f, attribute) is not None and str(getattr(f, attribute).year) in years
                        for f in quoting):
                     hit += 1
-            out[attribute] = {"contracts": total, "captured": round(hit / total, 3) if total else None}
+            out[category] = {"field": attribute, "contracts": total,
+                             "captured": round(hit / total, 3) if total else None}
         return out
