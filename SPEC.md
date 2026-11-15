@@ -42,7 +42,7 @@ Audiences, which the design has to serve at once:
 | Base classes | `FactoidDocument`, `FactoidFact`, and `FactoidEntity` |
 | Example company in docs | Acme Corp, project name `acme`. Acme's shared fact class is `AcmeBaseFact`. |
 
-**Proposed.** `FactoidFactLabel` and `FactoidSettings` follow the same prefix. `FactoidSettings` avoids a clash with
+**Proposed.** `FactoidTrait` and `FactoidSettings` follow the same prefix. `FactoidSettings` avoids a clash with
 `BaseSettings` in `pydantic-settings`.
 
 Do not use the names "Rails" or "Django" in docs or file names.
@@ -102,12 +102,12 @@ attribute such as `chunk_size = 4000` (tested on Pydantic 2.14), and plain attri
 
 **Proposed.**
 
-- Labels (section 6) and the kind (see "Fact traits") classify a fact. A fact's class, when a project has several,
-  says what kind of evidence it is (see "Fact classes").
+- Traits (section 6) and the kind (see "Kinds and expiration") classify a fact. A fact's class, when a project has
+  several, says what kind of evidence it is (see "Fact classes").
 - A fact whose mentions match no entity is kept, with the mentions recorded as unlinked. (Kyle asked for facts to link
   to one or more entities, and separately asked that unclassified facts and entities be accounted for. Keeping unlinked
   facts is how the README squares the two.)
-- Reads are by entity and label, plus search: `entity.facts(labels=..., since=...)`, `facts.search(query, about=...)`,
+- Reads are by entity and trait, plus search: `entity.facts(traits=..., since=...)`, `facts.search(query, about=...)`,
   and `facts.unlinked(...)`. There are no typed reads.
 
 ### Fact classes
@@ -123,7 +123,7 @@ fixed, and the class holds the rules and behavior around them. Many projects hav
 **Proposed.** What a fact class can own:
 
 1. What counts as a fact: extraction guidance.
-2. Which labels are asked.
+2. Which traits are asked.
 3. Quality rules: `validate()`, fact evals, and thresholds.
 4. Trust: how much its facts weigh in search, and whether they can contradict facts of another class (a rep's hunch
    should not contradict what a customer said).
@@ -134,23 +134,23 @@ fixed, and the class holds the rules and behavior around them. Many projects hav
 
 With several fact classes, each extracted fact is classified on its own, with the same registry pattern as documents:
 every `FactoidFact` subclass registers itself and has a `classify(fact, judgments)` classmethod, and the central
-classifier picks one class per fact. Its class is picked before its labels, since the class says which labels are
+classifier picks one class per fact. Its class is picked before its traits, since the class says which traits are
 asked. Known structure helps: a quote's speaker from a transcript or an email header. A document can optionally narrow
 the candidates (`fact_classes = [InternalFact]` on a sales Slack channel); otherwise every fact class is a candidate.
 
-## 6. Labels
+## 6. Traits
 
-**Decided** (Kyle, 2026-11-15). A label is a `FactoidFactLabel` subclass. A simple label is just its docstring; a label
-that needs more holds settings and code on the class. A fact class lists the labels it asks, so one label can be shared
-by several fact classes.
+**Decided** (Kyle, 2026-11-15). A trait is a `FactoidTrait` subclass (earlier drafts called these labels). A simple
+trait is just its docstring; a trait that needs more holds settings and code on the class. A fact class lists the
+traits it asks, so one trait can be shared by several fact classes.
 
 ```python
-from factoid import FactoidFact, FactoidFactLabel, Noul, judge
+from factoid import FactoidFact, FactoidTrait, Noul, judge
 
-class PainPoint(FactoidFactLabel):
+class PainPoint(FactoidTrait):
     """A problem the customer says they have today."""
 
-class Pricing(FactoidFactLabel):
+class Pricing(FactoidTrait):
     """Budget, price, discount, or contract terms."""
     threshold = 0.8
     examples = ["Globex's budget for the tool is $40k a year."]
@@ -165,30 +165,31 @@ class Pricing(FactoidFactLabel):
         notify(fact.account.owner, f"Pricing changed: {older.text} → {fact.text}")
 
 class CustomerFact(FactoidFact):
-    labels = [PainPoint, Pricing]
+    traits = [PainPoint, Pricing]
 ```
 
 **Proposed.**
 
 - The docstring is the definition a model reads. With no `decide`, the default is Jev's yes-or-no question built from
-  the docstring, compared with `threshold`. A `decide` method gets that answer as `judgments.<label name>`, plus any
+  the docstring, compared with `threshold`. A `decide` method gets that answer as `judgments.<trait name>`, plus any
   factor questions it declares with `@judge`.
-- A label can carry `after_` hooks that run for facts with that label.
-- Reads take the class: `globex.facts(labels=[Pricing])`.
-- A fact carries zero or more labels. The tagger asks one yes-or-no question per label. Labels are not mutually
+- A trait can carry `after_` hooks that run for facts with that trait.
+- Reads take the class: `globex.facts(traits=[Pricing])`.
+- A fact carries zero or more traits. By default each trait is one yes-or-no question. Traits are not mutually
   exclusive.
-- A fact that matches no label is kept.
-- "Use case" and "pain point" are labels, not fact subclasses.
-- Later: suggest new labels by clustering unlabeled facts, and apply a new label to stored facts without re-extracting.
+- A fact that matches no trait is kept.
+- "Use case" and "pain point" are traits, not fact subclasses.
+- Later: suggest new traits by clustering facts with none, and apply a new trait to stored facts without re-extracting.
 
-### Fact traits
+### Kinds and expiration
 
-**Decided** (Kyle, 2026-11-14). When facts are labeled, the decision model (Jev by default) also judges the fact's
-inherent content against rubrics Factoid provides: whether it depends on time, and how long it is likely to stay valid.
+**Decided** (Kyle, 2026-11-14). When a fact's traits are judged, the decision model (Jev by default) also judges its
+kind and how long it is likely to stay valid, against rubrics Factoid provides. (Earlier drafts called the kind and
+lifetime "traits"; that word now means what labels did, section 6.)
 
 **Proposed.**
 
-- Traits are extra questions in the same request as the label questions, so they add no call.
+- The kind and lifetime questions go in the same request as the trait questions, so they add no call.
 - **Kind of fact** (`choice`; Kyle, 2026-11-15). Kind says what the fact is about, not its tense. How fast a fact
   changes is the lifetime range's job, not the kind's.
   - fixed: can never change, such as a birth date, a founding year, or a closed quarter's revenue. A reading of
@@ -206,7 +207,7 @@ inherent content against rubrics Factoid provides: whether it depends on time, a
   - General world knowledge has no kind of its own. "Water boils at 100°C at sea level" is fixed. "Paris is the capital
     of France" is a state with the longest lifetime range.
 - **Kinds are declared on `FactoidFact`** (Decided, Kyle, 2026-11-15), so a project can override and extend them.
-  Proposed shape: a kind is a small `FactoidKind` class, like a label. Its docstring is the rubric the model reads, and
+  Proposed shape: a kind is a small `FactoidKind` class, like a trait. Its docstring is the rubric the model reads, and
   three attributes set its behavior:
   - `expires`: `"never"` (fixed, event, and decision: true for good, as history), `"estimated"` (state and rule: they
     last until something changes them, so the model estimates how long that usually takes), or `"at_deadline"` (plan
@@ -223,7 +224,7 @@ inherent content against rubrics Factoid provides: whether it depends on time, a
     hour, a day, a week, a month, a quarter, a year, a few years, or longer. Factoid keeps the distribution over
     ranges, not one cutoff, and computes the chance the fact is still true at a given time.
   - The clock starts at the most recent time the fact was seen to be true, and each confirmation restarts it.
-- **Open** (Kyle, 2026-11-15): stance, meaning how confidently a fact is stated. The draft had two optional traits,
+- **Open** (Kyle, 2026-11-15): stance, meaning how confidently a fact is stated. The draft had two optional questions,
   hedged and opinion-or-observed; the research suggests one question (direct, uncertain, or evaluative). Left out of v1
   until it can be judged on about 20 real facts from a test corpus, with Jev's answers and what each would change in
   search and contradictions.
@@ -234,9 +235,7 @@ inherent content against rubrics Factoid provides: whether it depends on time, a
   - An open contradiction goes stale when its facts' `valid_until` passes. See "Resolving".
   - `factoid stats` lists facts past `valid_until`, so a person or agent can re-check them.
   - Calibration eval: when a fact is superseded, its real lifetime is compared with the predicted validity.
-- Name: `FactoidTrait`. A label is a yes-or-no tag. A trait is a property with options. Traits follow the levels of
-  customization: options and ranges at level 2 (per label), rubric wording at level 3. Projects can
-  declare their own traits.
+- Kinds follow the levels of customization: options and ranges at level 2, rubric wording at level 3.
 
 ## 7. Entities
 
@@ -283,10 +282,10 @@ unlinked facts, and reversible merges (`docs/prior-art.md`, and the research sum
 
 - **Co-mention.** For each pair of entities, Factoid keeps the number of facts linked to both, the most recent one, and
   the roles each entity plays in them. It is counting, with no model call.
-- **Relation facts.** A durable relation is a fact that links two or more entities, whose kind is fixed or
-  state with a lifetime of months or longer (see "Fact traits"), and that is still valid. It is a view over stored
-  facts, with no extra extraction. `entity.related()` returns connected entities, each with its co-mention count and
-  its current relation facts. Freshness weighting applies, so a relation that has ended ranks lower.
+- **Relation facts.** A durable relation is a fact that links two or more entities, whose kind is fixed or state with
+  a lifetime of months or longer (see "Kinds and expiration"), and that is still valid. It is a view over stored facts,
+  with no extra extraction. `entity.related()` returns connected entities, each with its co-mention count and its
+  current relation facts. Freshness weighting applies, so a relation that has ended ranks lower.
 - Direction is carried by the fact sentence.
 
 Pair summaries and relation types that emerge from the data are in `specs/roadmap/relations.md`.
@@ -298,7 +297,7 @@ fitted to CRM: many corpora (papers, news, lore) have no home team.
 
 **Known issue in CRM corpora.** The home company appears in nearly every fact, so it dominates co-mention counts and
 `related()`. Facts can also blur whose commitment or pain point something is ("Dana promised a discount" when there is a
-Dana on each side). A CRM project can work around this with labels, speaker identities, and filtering out its own
+Dana on each side). A CRM project can work around this with traits, speaker identities, and filtering out its own
 company entity. Revisit if CRM evals show real harm.
 
 ### Untyped entities
@@ -370,7 +369,7 @@ structured rows, source records, and edits, so they always have clear provenance
 | Class | Hooks |
 | --- | --- |
 | `FactoidDocument` | `classify`, `segment`, `chunk`, `situate`, `extract`, and `discover` (prose); `read`, `row_facts`, and `discover` (structured) |
-| `FactoidFact` | `validate`, `evaluate`, `repair`, `label`, `characterize`, `link`, and `resolve` |
+| `FactoidFact` | `validate`, `evaluate`, `repair`, `assess`, `link`, and `resolve` |
 | `FactoidEntity` | `identify`, `claim`, `merge`, and `split` |
 
 The full list, with classmethods and instance methods, is in "Steps are methods".
@@ -400,7 +399,7 @@ callbacks (`on_added` and the rest are gone).
 | Class | Classmethods | Instance methods |
 | --- | --- | --- |
 | `FactoidDocument` | `classify(raw, judgments)` | Prose: `segment`, `chunk`, `situate`, and `extract`. Structured: `read` and `row_facts`. Both: `discover`, `context`, the `source_datetime` property, and `ingest`, which runs the steps in order |
-| `FactoidFact` | Reads, such as `search` | `validate`, `evaluate`, `repair`, `label`, `characterize` (kind and lifetime), `expiration`, `link`, `resolve`, and `save`; outcomes `supersede`, `end`, `correct`, `contradict`, `retract`, and `restore` |
+| `FactoidFact` | Reads, such as `search` | `validate`, `evaluate`, `repair`, `assess` (traits, kind, and lifetime, in one request), `expiration`, `link`, `resolve`, and `save`; outcomes `supersede`, `end`, `correct`, `contradict`, `retract`, and `restore` |
 | `FactoidEntity` | `identify(mention)`, `create`, and reads `find` and `where` | `claim`, `merge`, `split`, `retype`, `related`, and `facts` |
 
 - Overriding an outcome (such as `supersede`) and calling `super()`, or defining `after_supersede`, is how a project
@@ -448,7 +447,7 @@ class TenantEmail(FactoidProseDocument):
 | Level | What the user writes |
 | --- | --- |
 | 0. Nothing | No code. The defaults run. |
-| 1. Declare types | Classes with a description (`FactoidDocument`, `FactoidEntity`, `FactoidFactLabel`, and so on). |
+| 1. Declare types | Classes with a description (`FactoidDocument`, `FactoidEntity`, `FactoidTrait`, and so on). |
 | 2. Tune a type | Settings on the class: guidance, examples, thresholds, and which model it uses. |
 | 3. Replace a step's wording | A question for a decision step, or a prompt for a generation step. |
 | 4. Replace a step's logic | Override the hook method, and call `super()` to keep the default. |
@@ -459,7 +458,7 @@ Every step offers levels 2 to 4. What level 3 holds depends on the kind of step:
 
 | Kind of step | Steps | Level 3 |
 | --- | --- | --- |
-| Decision | classify, evaluate, label, link, resolve, and rerank | A question, with yes and no criteria or with options |
+| Decision | classify, evaluate, assess, link, resolve, and rerank | A question, with yes and no criteria or with options |
 | Generation | situate, extract, repair, and discover | A prompt |
 | Plain code | segment and chunk | None: settings or a method override |
 
@@ -615,7 +614,7 @@ it is unknown (for example, a folder of unmarked files).
 
 **Decided** (Kyle, 2026-11-14). The checks that decide whether a candidate fact is good enough to store are called
 **fact evals** (base class `FactEval`), not judges. A fact eval answers one question: keep this fact, or not.
-Labeling, linking, and resolving are separate decisions about facts already kept.
+Assessing, linking, and resolving are separate decisions about facts already kept.
 
 Names that follow: the `FactoidFact` hook is `evaluate`, the class attribute is `fact_evals`, the module is
 `factoid.fact_evals`, a project's file is `fact_evals.py`, and the eval switch is `--vary fact_evals=...`.
@@ -664,8 +663,8 @@ work and needs evals before any claim about its quality.
 
 **Proposed: freshness weighting in search.**
 
-- From a fact's validity distribution (see "Fact traits"), Factoid computes the probability the fact is still valid at
-  a date.
+- From a fact's validity distribution (see "Kinds and expiration"), Factoid computes the probability the fact is still
+  valid at a date.
 - Search multiplies relevance by `floor + (1 - floor) * P(still valid at as_of)`. The floor keeps stale facts findable
   and ranks them lower. Events and stable facts score near 1.
 - Per search: `as_of=` (default now), and `freshness="any"` to turn weighting off for history and research.
@@ -698,7 +697,7 @@ work and needs evals before any claim about its quality.
 
 **Decided.**
 
-- The `choose` workload (classifying, evaluating facts, labeling, linking, and resolving) is done by a decision model, also
+- The `choose` workload (classifying, evaluating facts, assessing, linking, and resolving) is done by a decision model, also
   called a System One model. A generative model does not stand in for it.
 - Jev (TypeSafe) is the recommended decision model: it is the best and it is cheap. Other providers have one too, and
   Factoid supports them: OpenAI's decisions API, Fireworks' Rune, and Cloudflare's Clef.
@@ -737,7 +736,7 @@ work and needs evals before any claim about its quality.
 
 **Decided** (Kyle, 2026-11-14).
 
-- **Current state is the truth.** The facts, entities, links, and labels tables say what is true now, and reads go to
+- **Current state is the truth.** The facts, entities, links, and traits tables say what is true now, and reads go to
   them. Nothing is rebuilt from history.
 - **The event log is for audit and provenance.** Every change also writes an event. Fact events are `added`,
   `superseded`, `ended`, `corrected`, `contradicted`, `retracted`,
@@ -760,8 +759,8 @@ work and needs evals before any claim about its quality.
 - **Storage is pluggable.** The system of record and the search index are each behind an interface, and a project
   swaps either one in `settings.py` without changing its classes.
 - **v1 system of record: SQLite.** One database file per project. It holds documents, chunks, facts, quotes, entity
-  links, labels, entities, and the event log, and it answers every lookup that is not a search: facts for an entity,
-  entities by identity, facts by label and time, and unlinked facts.
+  links, traits, entities, and the event log, and it answers every lookup that is not a search: facts for an entity,
+  entities by identity, facts by trait and time, and unlinked facts.
 - **v1 search: turbopuffer, or any endpoint compatible with its API.** It is required. It serves vector, BM25, and
   hybrid search, and the nearest-neighbor queries that resolve and entity linking need. The endpoint's base URL is a
   setting, so a compatible server can stand in for turbopuffer.
@@ -773,7 +772,7 @@ work and needs evals before any claim about its quality.
 - SQLite is the truth, and the turbopuffer namespace is a view. If the index is lost or its settings change,
   `factoid rebuild` repopulates it from SQLite.
 - Two turbopuffer namespaces per project, named from the project id: one for facts and one for chunks. Each row is a
-  fact or a chunk, with its vector, its text for BM25, and its entity ids, labels, and times as filterable attributes.
+  fact or a chunk, with its vector, its text for BM25, and its entity ids, traits, and times as filterable attributes.
 - Writes go to SQLite first, then to the index. A write the index has not confirmed is retried, so the index catches
   up with the truth.
 - The SQLite file lives in a git-ignored folder in the project, unless `settings.py` points elsewhere.
@@ -885,7 +884,7 @@ retrieval methods, or thresholds. Make each a selectable strategy, and measure.
 
 **Proposed.** `factoid eval` scores a project against labeled data and reports quality, cost, and latency.
 `--vary` runs the same documents under each strategy. Defaults are eval results. The scorecard includes coverage: the
-share of facts with no label, and the share of mentions with no entity.
+share of facts with no trait, and the share of mentions with no entity.
 
 Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
 
@@ -911,7 +910,7 @@ Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
   the single-YAML design.
 - README.md was brought up to date with the decisions through 2026-11-15 (decision 55).
 - README.md does not yet cover decisions 56 to 60: steps as methods with `before_` and `after_` hooks, `@judge`, the
-  classifier registry, fact classes, and `FactoidFactLabel` replacing `FactoidLabel`. Its Classification section should
+  classifier registry, fact classes, and `FactoidTrait` replacing `FactoidLabel`. Its Classification section should
   use the `TenantEmail` example from "Jev judges, code decides".
 
 ## Decision log
@@ -1010,3 +1009,6 @@ All dates are 2026-11-13 unless noted.
     (2026-11-15)
 60. Labels are `FactoidFactLabel` subclasses (renamed from `FactoidLabel`): a docstring for simple ones, settings and
     a `decide` method with `@judge` for the rest. Fact classes list the labels they ask. (2026-11-15)
+61. Labels are renamed traits: `FactoidTrait`, with the design from decision 60, and `traits = [...]` on fact
+    classes. Kind and lifetime are no longer called traits. The step that judges traits, kind, and lifetime in one
+    request is `assess`; `characterize` is gone. (2026-11-15)
