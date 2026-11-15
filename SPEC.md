@@ -146,6 +146,15 @@ inherent content against rubrics Factoid provides: whether it depends on time, a
   - rule: a policy, obligation, definition, or "if X then Y", as in leases, laws, and runbooks.
   - General world knowledge has no kind of its own. "Water boils at 100°C at sea level" is fixed. "Paris is the capital
     of France" is a state with the longest lifetime range.
+- **Kinds are declared on `FactoidFact`** (Decided, Kyle, 2026-11-15), so a project can override and extend them.
+  Proposed shape: a kind is a small `FactoidKind` class, like a label. Its docstring is the rubric the model reads, and
+  three attributes set its behavior:
+  - `lifetime`: `"none"` (fixed, event, decision), `"guess"` (state and rule: a lifetime is guessed while ongoing), or
+    `"target"` (plan and forecast: the fact carries a target date).
+  - `on_disagree`: `"contradict"` (fixed, event, and decision) or `"supersede"` (state, rule, plan, and forecast).
+  - `when_target_passes`: `"overdue"` (plan) or `"unsettled"` (forecast). Only for `lifetime="target"`.
+  - `FactoidFact.kinds` lists the built-ins. A subclass adds to the list (`kinds = FactoidFact.kinds + [Symptom]`),
+    replaces it, or overrides one built-in by subclassing it (`class State(kinds.State)`) with new wording or behavior.
 - **Validity** (`choice` over ordered ranges): a day, a week, a month, a quarter, a year, several years, or permanent.
   Factoid keeps the distribution and stores `valid_until`: when the fact was stated, plus the median range.
 - Optional traits: hedged (`noul`), and opinion or observed (`choice`).
@@ -394,6 +403,15 @@ situation in front of its text. When it is off, the chunk's text alone is indexe
   value), free text (run through the prose pipeline with the row's entities already known), or ignored.
 - `key` names the column that identifies a row across re-imports. `row_entity` says what entity each row is. `when`
   names the column that dates the row.
+- **Documents declare their dates and context** (Decided, Kyle, 2026-11-15). Emails, Slack messages, transcripts, and
+  news articles carry dates and authors outside their text. A document class says where to find them, and Factoid
+  gives them to the extractor ahead of the passages, so fact dates come from the text plus this structure. Proposed
+  shape for prose documents:
+  - `written_at()` returns the document's own date (an email's sent time, an article's publish date).
+  - `context()` returns a dict shown to the extractor before the passages (sender, channel, speakers, and the like).
+  - Passages can carry their own time from `segment` (a transcript turn's timestamp, each message in a thread).
+  - Built-in document classes for email, Slack, transcripts, and news fill these in. With no declared date, the
+    extractor reads dates from the text only, and nothing is anchored to the ingest time.
 - Joins across files come from entities: two files whose columns point at the same entity are connected through it.
   There is no file-to-file join logic.
 - Provenance for a structured fact is the cell, with the file, row, and column.
@@ -813,3 +831,6 @@ All dates are 2026-11-13 unless noted.
 48. `plan` and `forecast` are separate kinds: an intended action versus an expected outcome. (2026-11-15)
 49. Kinds of fact are fixed, state, event, decision, plan, forecast, and rule. Stable, slow-changing, and current state
     are dropped; lifetime ranges say how fast a state changes. World knowledge has no kind of its own. (2026-11-15)
+50. Kinds of fact are declared on `FactoidFact` as `FactoidKind` classes, so projects can override and extend them.
+    Documents declare their own dates and context for the extractor. Fact dates come from the text and that
+    context, not from ingest time. (2026-11-15)
