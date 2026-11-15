@@ -456,16 +456,15 @@ class Factoid:
                 continue
             weight = 1.0 if freshness in (False, "any") else (0.25 + 0.75 * p)
             hits.append(SearchHit(fact, score * weight, p))
+        hits.sort(key=lambda h: -h.score)
         if self.client.models.get("rerank") and hits:
-            head = hits[:30]
+            head = hits[:50]
             scores = self.client.rerank(query, [h.fact.text for h in head])
             if scores:
                 for hit, s in zip(head, scores):
                     weight = 1.0 if freshness in (False, "any") else (0.25 + 0.75 * hit.validity)
                     hit.score = s * weight
-                hits = sorted(head, key=lambda h: -h.score) + hits[30:]
-        else:
-            hits.sort(key=lambda h: -h.score)
+                hits = sorted(head, key=lambda h: -h.score)  # reranked scores are not comparable to the rest
         hits = hits[:top_k]
         if contradictions is not False:
             limit = int(contradictions)

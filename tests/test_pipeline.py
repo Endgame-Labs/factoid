@@ -172,3 +172,15 @@ def test_cut_off_extraction_is_retried_in_halves(make_app, fake):
     result = app.ingest_text("Vega's liability is capped at $1M.\n\nOrion may not assign the agreement.",
                              document_type=Contract, metadata={"signed_at": "2025-03-01T00:00:00Z"})
     assert len(calls) == 3 and len(result.facts) == 2
+
+
+def test_rerank_sees_the_best_weighted_candidates(make_app, fake):
+    app = build(make_app, fake)
+    app.client.models["rerank"] = "fake"
+    fake.rerank = lambda query, docs: [1.0 if "$2M" in d else 0.1 for d in docs]
+    app.ingest_text("Vega's liability to Orion is capped at $1M.", document_type=Contract,
+                    metadata={"signed_at": "2025-03-01T00:00:00Z"}, uri="e.txt")
+    app.ingest_text("Amendment 2 raises Vega's liability cap to Orion to $2M from January 1, 2027.",
+                    document_type=Contract, metadata={"signed_at": "2026-10-03T00:00:00Z"}, uri="f.txt")
+    hits = Fact.search("liability cap", as_of="2027-06-01T00:00:00Z")
+    assert "$2M" in hits[0].fact.text and hits[0].score > hits[-1].score
