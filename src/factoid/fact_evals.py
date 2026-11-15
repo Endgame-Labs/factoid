@@ -58,7 +58,7 @@ class Nli(FactEval):
         raise NotImplementedError("nli models are not wired up yet")
 
 
-#: Starting floors, used until `factoid calibrate` sets floors from labeled data.
+#: Starting floors. They are fixed values until calibration from labeled data is built.
 DEFAULT_FLOORS: dict[str, float] = {
     "grounded": 0.6,
     "attribution": 0.55,
@@ -70,7 +70,9 @@ DEFAULT_FLOORS: dict[str, float] = {
 
 QUESTIONS: dict[str, Noul] = {
     "grounded": Noul(
-        "Do the cited passages support everything the fact states?",
+        "Do the cited passages support everything the fact states? The fact may name the document, the people, "
+        "and the companies from the document's title and context, since a fact must name what its passage only "
+        "refers to.",
         true="Every claim in the fact is supported by the cited passages.",
         false="The fact states something the cited passages do not support.",
     ),

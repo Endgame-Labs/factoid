@@ -209,6 +209,9 @@ class Fact(Registered, ModelCalls):
     def eval_state(self) -> dict[str, Any]:
         state = self.state()
         state["cited_passages"] = state.pop("quotes")
+        if self.document is not None:
+            state["document"] = {"type": self.document.type, "title": self.document.title,
+                                 **self.document.context()}
         state["similar_stored_facts"] = [f.text for f in self.similar]
         return state
 
