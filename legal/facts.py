@@ -5,6 +5,7 @@ needs that CUAD does not label.
 """
 
 from factoid import Fact, FactTrait, Noul, judge
+from factoid.fact_evals import JevFloors, Nli
 
 
 # -- traits CUAD labels ---------------------------------------------------------------------------------------
@@ -115,6 +116,10 @@ class SourceFact(Fact):
 
     traits = [*CUAD_TRAITS, ConsentRequired, Deadline]
     max_length = 900  # contract clauses run long
+    # Representations, warranties, and covenants read as boilerplate to a general "useful" question, but a deal team
+    # checks them clause by clause. A lower useful floor made no difference on CUAD contracts 1 to 20 (F1, AUPR, and
+    # coverage unchanged), so this is a domain choice, not a tuned number.
+    fact_evals = [Nli(), JevFloors(useful=0.35)]
 
 
 class CounselFact(Fact):
