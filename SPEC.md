@@ -611,8 +611,12 @@ it is unknown (for example, a folder of unmarked files).
 - A prose document's `replacements` step finds passages that say numbered sections are replaced as a whole ("Sections
   3.1 and 3.2 ... are amended to read in their entirety", "deleted in its entirety"). It is plain code on the text,
   using the class setting `replacement_pattern`, not a model. A change to part of a section does not match.
-- **Off by default** until this design is decided. A document class turns it on with
-  `replacement_pattern = ProseDocument.ENTIRETY`; the legal app's `Contract` does.
+- **Off by default**, and the evidence is against turning it on as built. A class can turn it on with
+  `replacement_pattern = ProseDocument.ENTIRETY`. It was designed while looking at the NEON chain. On three chains
+  labeled before any run and scored once (Glu and Fox, ScanSource and Cisco, PC Quote), it found no supersession that
+  `resolve` missed, and raised false changes from 2.5% to 3.6%: an amendment replacing "the first paragraph of
+  Section 4" retired all of Section 4. Labeling sections by number is too coarse for that; a design would need
+  paragraph- or clause-level scope.
 - After the document's facts are saved, facts from earlier documents that share an entity with the facts quoting
   that passage, and that quote a replaced section, are retired: superseded by the most similar new fact from the
   same section of the new document, or ended when the new document gives no text for it.
@@ -976,7 +980,12 @@ diligence app (`factoid-legal`, a separate repo), scored on CUAD.
   supersessions (signature and date facts), and broke 4 of 12 checks on the sample deal.
 - **Repair splits on an atomic failure**: a fact that failed the atomic check states several claims, so repair must
   split it rather than reword it.
-- **Final results** (2026-11-15): every amendment check passes on all four chains (supersessions 4 of 4, untouched
+- **Fresh amendment chains** (2026-11-15), labeled before any run and scored once: supersessions 2 of 4, untouched
+  clauses 2 of 2, as-of search 3 of 4, dated windows 2 of 2, false changes 2.5% with replaced sections off. The
+  misses: a base clause never kept as a fact (ScanSource's inventory claim window), a section deleted and replaced
+  with fully redacted text (PC Quote), and one as-of question. These are the honest numbers for amendments; the
+  chains used while tuning score higher.
+- **Results while tuning** (2026-11-15): every amendment check passes on all four chains (supersessions 4 of 4, untouched
   clauses 5 of 5, as-of search 5 of 5, dated windows 2 of 2), the sample deal passes 12 of 12, and CUAD clause F1
   is 0.82, 0.84, and 0.81 on contracts 1 to 20, 21 to 40, and 41 to 60.
 - **Held-out check** (2026-11-15). The values above were tuned on CUAD contracts 1 to 20 and three amendment
