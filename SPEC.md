@@ -132,7 +132,9 @@ inherent content against rubrics Factoid provides: whether it depends on time, a
 - Traits are extra questions in the same request as the label questions, so they add no call.
 - **Kind of fact** (`choice`): stable (true for years), slow-changing (a role, plan, or relationship), current state (a
   status or number that moves within days or weeks), event (happened at a time, and stays true as history), plan
-  (intended or expected, and expires when its date passes), or decision (a choice someone made, such as "Northwind
+  (an action someone intends to take, with a target date; overdue, not false, when the date passes without
+  confirmation), forecast (an outcome that is expected but that nobody committed to, such as "the bank is expected to
+  cut rates"; Kyle, 2026-11-15), or decision (a choice someone made, such as "Northwind
   chose annual billing"; Kyle, 2026-11-14). Kept as its own kind after the trait research, though both reviewers would
   fold it into event (Kyle, 2026-11-15). What a decision sets up, such as an obligation or a new state, is extracted as
   its own fact.
@@ -800,3 +802,4 @@ All dates are 2026-11-13 unless noted.
 45. Level 3 wording is set explicitly on the class: a string, or `template("path.md")`. No naming-convention lookup.
 46. `decision` stays its own kind of fact, separate from `event`, after the trait research. (2026-11-15)
 47. Resolve gains two answers, ends and corrects, so endings and corrections need no per-fact trait. (2026-11-15)
+48. `plan` and `forecast` are separate kinds: an intended action versus an expected outcome. (2026-11-15)
