@@ -84,6 +84,10 @@ class ClassificationError(RuntimeError):
     """Two classes claimed one document."""
 
 
+class ExtractionError(ValueError):
+    """The extractor's answer could not be read."""
+
+
 class Document(Registered, ModelCalls):
     """Base class for documents. Subclass `ProseDocument` or `StructuredDocument`."""
 
@@ -216,6 +220,8 @@ class ProseDocument(Document):
     situate: ClassVar[bool | Callable[..., Any]] = False
     situate_prompt: ClassVar[str | Template] = builtin("situate.md.j2")
     extract_prompt: ClassVar[str | Template] = builtin("extract.md.j2")
+    #: The longest extractor answer, in tokens. A cut-off answer is retried as two half chunks.
+    extract_max_tokens: ClassVar[int] = 12000
     #: Extraction guidance shown to the extractor.
     guidance: ClassVar[str] = ""
 
@@ -317,8 +323,18 @@ class ProseDocument(Document):
             context_passages=chunk.context_passages,
             **context,
         )
-        raw = self.generate(prompt, json_mode=True)
-        return self.parse_candidates(raw, chunk)
+        raw = current().client.generate(prompt, json_mode=True, max_tokens=type(self).extract_max_tokens)
+        try:
+            return self.parse_candidates(raw, chunk)
+        except ExtractionError:
+            if len(chunk.passages) < 2:
+                return []
+            # The answer was cut off or malformed: extract each half of the chunk instead of losing it.
+            half = len(chunk.passages) // 2
+            first = Chunk(f"{chunk.id}a", chunk.n, chunk.passages[:half], chunk.context_passages, chunk.situation)
+            second = Chunk(f"{chunk.id}b", chunk.n, chunk.passages[half:], chunk.passages[:half][-2:],
+                           chunk.situation)
+            return self.extract(first, **context) + self.extract(second, **context)
 
     def extraction_guidance(self) -> str:
         parts = [type(self).guidance.strip()]
@@ -333,13 +349,14 @@ class ProseDocument(Document):
         return list(classes)
 
     def parse_candidates(self, raw: str, chunk: Chunk) -> list[Fact]:
+        """Facts from the extractor's JSON. Raises `ExtractionError` when the JSON is cut off or malformed."""
         try:
             data = json.loads(_strip_fences(raw))
-        except json.JSONDecodeError:
-            return []
+        except json.JSONDecodeError as err:
+            raise ExtractionError(str(err)) from err
         items = data.get("facts") if isinstance(data, dict) else data
         if not isinstance(items, list):
-            return []
+            raise ExtractionError("the answer has no list of facts")
         owned = {p.n: p for p in chunk.passages}
         dated = self.dated()
         out = []

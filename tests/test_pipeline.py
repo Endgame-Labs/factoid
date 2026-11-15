@@ -155,3 +155,20 @@ def test_as_of_search_sees_facts_valid_then(make_app, fake):
     after = Fact.search("liability cap", as_of="2027-06-01T00:00:00Z")
     assert "$1M" in before[0].fact.text and before[0].fact.status == "superseded"
     assert "$2M" in after[0].fact.text
+
+
+def test_cut_off_extraction_is_retried_in_halves(make_app, fake):
+    app = build(make_app, fake)
+    calls = []
+
+    def generator(prompt):
+        calls.append(prompt)
+        passages = re.findall(r"^\[(\d+)\] (.+)$", prompt, re.M)
+        if len(passages) > 1:
+            return '{"facts": [{"text": "cut off'  # truncated JSON
+        return extractor(prompt)
+
+    fake.generator = generator
+    result = app.ingest_text("Vega's liability is capped at $1M.\n\nOrion may not assign the agreement.",
+                             document_type=Contract, metadata={"signed_at": "2025-03-01T00:00:00Z"})
+    assert len(calls) == 3 and len(result.facts) == 2
