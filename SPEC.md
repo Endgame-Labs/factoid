@@ -164,7 +164,10 @@ inherent content against rubrics Factoid provides: whether it depends on time, a
     hour, a day, a week, a month, a quarter, a year, a few years, or longer. Factoid keeps the distribution over
     ranges, not one cutoff, and computes the chance the fact is still true at a given time.
   - The clock starts at the most recent time the fact was seen to be true, and each confirmation restarts it.
-- Optional traits: hedged (`noul`), and opinion or observed (`choice`).
+- **Open** (Kyle, 2026-11-15): stance, meaning how confidently a fact is stated. The draft had two optional traits,
+  hedged and opinion-or-observed; the research suggests one question (direct, uncertain, or evaluative). Left out of v1
+  until it can be judged on about 20 real facts from a test corpus, with Jev's answers and what each would change in
+  search and contradictions.
 - Uses:
   - Search ranks facts past `valid_until` lower and flags them stale. `valid_at=` filters to facts likely still true.
   - Resolve treats two disagreeing "state" facts far apart in time as a likely supersede, and two disagreeing "fixed"
@@ -855,3 +858,4 @@ All dates are 2026-11-13 unless noted.
     internal use. (2026-11-15)
 52. A fact's expiration is decided per fact: an exact time from the text when there is one, otherwise a range from
     an hour to longer than a few years, chosen by a model. The clock restarts when the fact is confirmed. (2026-11-15)
+53. Stance (hedged, opinion) is Open and out of v1, to be judged on real examples. (2026-11-15)
