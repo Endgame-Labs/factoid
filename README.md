@@ -56,17 +56,18 @@ no longer a clean held-out set.
 
 | Amendment chains | NETGEAR, Federated, BioAmber | NEON Systems |
 | --- | --- | --- |
-| Supersessions found | 2/2 | 1/2 |
+| Supersessions found | 2/2 | 2/2 |
 | Untouched clauses kept | 4/4 | 0/1 |
 | As-of search | 3/3 | 2/2 |
 | Dated windows | 2/2 | none labeled |
 
 The sample deal (diligence suite) passes 12 of 12.
 
-NEON's misses: the amendment rewrites Sections 3.1 and 3.2 "in their entirety", turning a graduated payment schedule
-(120 days after invoice in the first year) into royalty advances with 60 days for any excess, and resolve judges the
-old and new clauses unrelated. Its representations clause is never kept as a fact. Two general fixes were tried for
-the first (a same-term question in resolve, and retiring a rewritten section's facts) and removed, because they did
-not fix it and caused false changes elsewhere. See SPEC section 17 in the framework.
+NEON's restructured payment clause (Sections 3.1 and 3.2 "amended to read in their entirety") is now retired by the
+amendment's new Section 3.2, through the framework's replaced-sections step. Its one failing check is recall, not a
+false change: the authority representation ("all requisite power and authority ... and duly executed") is extracted
+as one compound sentence, and the repair does not split it, so it is rejected as not atomic. The four other Licensee
+representations next to it are kept and current. Most of NEON's 8% "false changes" are real changes to Sections 2.x,
+3.x, 14.1, 13.1, and 15.2 that the gold labels do not list.
 
 Cost on CUAD: about 700 model calls and 1M tokens per contract, 60 to 95 seconds per contract at the median.
