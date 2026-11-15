@@ -42,19 +42,28 @@ CUAD, the Contract Understanding Atticus Dataset, is CC BY 4.0: https://www.atti
 
 ## Results (2026-11-15)
 
-Jev for decisions, GLM 5.3 Flash for extraction, Qwen3 embeddings, and the Qwen3 reranker.
+Jev for decisions, GLM 5.3 Flash for extraction, Qwen3 embeddings, and the Qwen3 reranker. Floors, thresholds, and
+prompts were tuned while looking at CUAD contracts 1 to 20 and the NETGEAR, Federated, and BioAmber chains. CUAD
+contracts 21 to 40 and the NEON Systems chain were held out: scored once, after tuning, with nothing changed for them.
 
-| Suite | Result |
-| --- | --- |
-| diligence (sample deal) | 12 of 12 checks pass |
-| CUAD, first 20 test contracts | clause recall 1.0, precision 0.68, F1 0.81, mean AUPR 0.97 |
-| | gold clauses quoted by a kept fact (coverage) 0.96; quoted by a fact with the right trait 0.83 |
-| | dates in the right year: agreement date 0.89, effective date 0.86, expiration date 0.67 |
-| amendments (3 real chains) | supersessions 2 of 2; untouched clauses kept 4 of 4; as-of search 3 of 3; dated windows 2 of 2 |
-| | false changes to base-agreement facts 2.5% |
+| Suite | Tuning set | Held out |
+| --- | --- | --- |
+| CUAD clause detection (F1, mean AUPR) | 0.82, 0.97 | 0.85, 0.96 |
+| CUAD gold clauses quoted by a kept fact | 0.95 | 0.93 |
+| CUAD gold clauses quoted by a fact with the right trait | 0.82 | 0.84 |
+| CUAD dates in the right year: agreement, effective, expiration | 16/18, 12/14, 8/9 | 16/18, 10/12, 5/5 |
+| Amendments: supersessions found | 2/2 | 1/2 |
+| Amendments: untouched clauses kept | 4/4 | 0/1 |
+| Amendments: as-of search | 3/3 | 2/2 |
+| Amendments: false changes to base facts | 3.4% | 6.0% |
+| Sample deal (diligence) | 12/12 | |
 
-Cost on CUAD: about 700 model calls and 1M tokens per contract, 62 seconds per contract at the median. Most calls
-are decisions (Jev).
+The one tuning-set expiration miss is a term defined by reference to another agreement (the Sales Dealer
+Agreement). On the held-out chain, the missed supersession is a payment clause the amendment restructured (120 days
+after invoice became royalty advances with 60 days after invoice for the excess), and the untouched clause is a
+boilerplate representation that was never kept as a fact.
 
-Open: precision of clause detection (a fact about a nearby clause can carry the trait), and expiration dates that are
-defined by reference to another document.
+Cost on CUAD: about 700 model calls and 1M tokens per contract, 60 to 85 seconds per contract at the median.
+
+Open: clause-detection precision (0.70 and 0.75), restructured clauses in amendments, and the size of the amendment
+suites (5 chains in all), which is too small to measure supersession precisely.
