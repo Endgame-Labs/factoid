@@ -149,10 +149,11 @@ inherent content against rubrics Factoid provides: whether it depends on time, a
 - **Kinds are declared on `FactoidFact`** (Decided, Kyle, 2026-11-15), so a project can override and extend them.
   Proposed shape: a kind is a small `FactoidKind` class, like a label. Its docstring is the rubric the model reads, and
   three attributes set its behavior:
-  - `lifetime`: `"none"` (fixed, event, decision), `"guess"` (state and rule: a lifetime is guessed while ongoing), or
-    `"target"` (plan and forecast: the fact carries a target date).
+  - `expires`: `"never"` (fixed, event, and decision: true for good, as history), `"estimated"` (state and rule: they
+    last until something changes them, so the model estimates how long that usually takes), or `"at_deadline"` (plan
+    and forecast: the fact carries a deadline).
   - `on_disagree`: `"contradict"` (fixed, event, and decision) or `"supersede"` (state, rule, plan, and forecast).
-  - `when_target_passes`: `"overdue"` (plan) or `"unsettled"` (forecast). Only for `lifetime="target"`.
+  - `after_deadline`: `"overdue"` (plan) or `"unsettled"` (forecast). Only for `expires="at_deadline"`.
   - `FactoidFact.kinds` lists the built-ins. A subclass adds to the list (`kinds = FactoidFact.kinds + [Symptom]`),
     replaces it, or overrides one built-in by subclassing it (`class State(kinds.State)`) with new wording or behavior.
 - **Validity** (`choice` over ordered ranges): a day, a week, a month, a quarter, a year, several years, or permanent.
