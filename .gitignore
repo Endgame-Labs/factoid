@@ -1,2 +1,11 @@
 # Per-developer files: local notes, logs, and overrides. Never commit these.
 *.local
+
+# Python
+__pycache__/
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# Factoid project data
+.factoid/
