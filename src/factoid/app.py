@@ -79,6 +79,7 @@ class Factoid:
         in_memory: bool = False,
         replay: bool | None = None,
         data_dir: Path | str | None = None,
+        calls_path: Path | str | None = None,
     ):
         self.settings = settings
         self.root = Path(root) if root else Path.cwd()
@@ -86,7 +87,7 @@ class Factoid:
         data = Path(data_dir) if data_dir else settings.data_path(self.root)
         self.data_dir = None if in_memory else data
         self.store = _store(None if in_memory else data / "store.db")
-        self.calls = CallLog(None if in_memory else data / "calls.db")
+        self.calls = CallLog(Path(calls_path) if calls_path else None if in_memory else data / "calls.db")
         self.meter = Meter()
         self.client = ModelClient(settings.all_models(), self.calls, self.meter,
                                   replay=settings.replay if replay is None else replay)

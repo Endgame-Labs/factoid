@@ -53,7 +53,14 @@ def describe_steps(cls: type) -> list[dict[str, Any]]:
     for name in getattr(cls, "STEPS", ()):
         owner = next((klass for klass in cls.__mro__ if name in vars(klass)), None)
         raw = inspect.getattr_static(cls, name, None)
-        kind = "classmethod" if isinstance(raw, classmethod) else "property" if isinstance(raw, property) else "method"
+        if isinstance(raw, classmethod):
+            kind = "classmethod"
+        elif isinstance(raw, property):
+            kind = "property"
+        elif callable(raw):
+            kind = "method"
+        else:
+            kind = f"setting={raw!r}"
         hooks = []
         for prefix in ("before_", "after_"):
             hook_owner = next((k for k in cls.__mro__ if f"{prefix}{name}" in vars(k)), None)
