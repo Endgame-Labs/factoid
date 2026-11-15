@@ -206,7 +206,8 @@ class ProseDocument(Document):
     """Text: emails, transcripts, contracts, memos, and articles."""
 
     STEPS: ClassVar[tuple[str, ...]] = (
-        "classify", "segment", "chunk", "situate", "extract", "discover", "context", "source_datetime", "ingest",
+        "classify", "segment", "chunk", "situate", "extract", "replacements", "discover", "context",
+        "source_datetime", "ingest",
     )
 
     #: The largest chunk, in characters.
@@ -221,6 +222,11 @@ class ProseDocument(Document):
     situate: ClassVar[bool | Callable[..., Any]] = False
     situate_prompt: ClassVar[str | Template] = builtin("situate.md.j2")
     extract_prompt: ClassVar[str | Template] = builtin("extract.md.j2")
+    #: Wording that says sections are replaced as a whole. Matched by code, not a model. None turns it off.
+    replacement_pattern: ClassVar[str | None] = (
+        r"(?:amended|restated)\s+(?:and\s+restated\s+)?(?:to\s+read\s+)?in\s+(?:its|their)\s+entirety"
+        r"|deleted\s+in\s+(?:its|their)\s+entirety|replaced\s+in\s+(?:its|their)\s+entirety"
+    )
     #: The longest extractor answer, in tokens. A cut-off answer is retried as two half chunks.
     extract_max_tokens: ClassVar[int] = 12000
     #: Extraction guidance shown to the extractor.
@@ -400,7 +406,32 @@ class ProseDocument(Document):
         app.index_chunks(self, chunks)
         batches = app.map(lambda c: run_step(self, "extract", c), chunks)
         candidates = [fact for batch in batches if batch is not SKIPPED for fact in batch]
-        return app.process_candidates(self, candidates)
+        facts = app.process_candidates(self, candidates)
+        replaced = run_step(self, "replacements", passages)
+        if replaced and replaced is not SKIPPED:
+            app.replace_sections(self, replaced, facts)
+        return facts
+
+    def replacements(self, passages: list[Passage]) -> list[tuple[Passage, list[str]]]:
+        """Passages that say numbered sections of an earlier document are replaced as a whole, with those numbers.
+
+        Plain code on the text, using `replacement_pattern`: "Sections 3.1 and 3.2 ... are amended to read in their
+        entirety", or "Section 4 ... is deleted in its entirety and replaced". A change to part of a section does
+        not match."""
+        pattern = type(self).replacement_pattern
+        if not pattern:
+            return []
+        found = []
+        for passage in passages:
+            match = re.search(pattern, passage.text, re.I)
+            if match is None:
+                continue
+            head = passage.text[:match.start()]
+            numbers = re.findall(r"\d+(?:\.\d+)*", " ".join(re.findall(r"sections?\s+[\d.,\sand]+", head, re.I)))
+            sections = list(dict.fromkeys(n.rstrip(".") for n in numbers if n.rstrip(".")))
+            if sections:
+                found.append((passage, sections))
+        return found
 
 
 class StructuredDocument(Document):

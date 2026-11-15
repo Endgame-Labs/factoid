@@ -230,6 +230,48 @@ class Factoid:
             saved.append(fact)
         return saved
 
+    def replace_sections(self, document: Document, replaced: list[Any], facts: list[Fact]) -> int:
+        """Retire facts from earlier documents that quote sections this document replaces as a whole.
+
+        The earlier documents are those that share an entity with the facts quoting the replacing passage. Each
+        retired fact is superseded by the most similar new fact from the same section of this document, or ended by
+        the fact quoting the replacing passage when this document gives no text for that section."""
+        mine = document.dated()
+        retired = 0
+        for passage, sections in replaced:
+            instruction = [f for f in facts if any(q.passage_n == passage.n for q in f.quotes)]
+            entity_ids = sorted({m.entity_id for f in instruction for m in f.mentions if m.entity_id})
+            if not entity_ids:
+                continue
+            marks = ",".join("?" * len(entity_ids))
+            rows = self.store.query(
+                f"select distinct f.id from facts f join mentions m on m.fact_id = f.id where m.entity_id in ({marks}) "
+                "and f.document_id != ? and f.status in ('current', 'contradicted')", (*entity_ids, document.id))
+            for row in rows:
+                old = self.load_fact(row["id"])
+                if old is None:
+                    continue
+                theirs = old.valid_from or old.source_datetime
+                if mine is not None and theirs is not None and theirs >= mine:
+                    continue
+                hit = next((s for s in sections for q in old.quotes
+                            if q.section and (q.section == s or q.section.startswith(s + "."))), None)
+                if hit is None:
+                    continue
+                same = [f for f in facts if f.status == "current" and any(
+                    q.section and (q.section == hit or q.section.startswith(hit + ".")) for q in f.quotes)
+                    and f not in instruction]
+                if same:
+                    vectors = self.client.embed([old.text] + [f.text for f in same])
+                    best = max(range(len(same)), key=lambda i: _cosine(vectors[0], vectors[i + 1]))
+                    run_step(same[best], "supersede", old)
+                elif instruction:
+                    run_step(instruction[0], "end", old)
+                else:
+                    continue
+                retired += 1
+        return retired
+
     def _classify_fact(self, fact: Fact, classes: list[type[Fact]]) -> Fact:
         if len(classes) == 1:
             chosen = classes[0]
@@ -645,6 +687,12 @@ def _since(value: str) -> str:
     if value[:-1].isdigit() and value[-1] in units:
         return format_datetime(now() - timedelta(**{units[value[-1]]: int(value[:-1])}))
     return format_datetime(parse_datetime(value))
+
+
+def _cosine(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    norm = (sum(x * x for x in a) ** 0.5) * (sum(y * y for y in b) ** 0.5)
+    return dot / norm if norm else 0.0
 
 
 def _durable(fact: Fact) -> bool:

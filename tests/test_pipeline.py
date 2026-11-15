@@ -283,3 +283,32 @@ def test_a_generic_defined_term_does_not_link_across_documents(make_app, fake):
     assert len(rows) == 2 and all(json.loads(r["aliases"]) == [] for r in rows)
     linked = {f.mentions[0].entity_id for f in Fact.all()}
     assert len(linked) == 2 and second.facts
+
+
+def test_a_section_replaced_in_its_entirety_retires_the_old_facts(make_app, fake):
+    app = build(make_app, fake)
+
+    def generator(prompt):
+        facts = []
+        for n, text in re.findall(r"^\[(\d+)\] (.+)$", prompt, re.M):
+            facts.append({"text": f"Under the supply agreement between Vega and Orion, {text}", "passages": [int(n)],
+                          "mentions": [{"name": "Vega", "kind": "company"}, {"name": "Orion", "kind": "company"}]})
+        return json.dumps({"facts": facts})
+
+    fake.generator = generator
+    base = app.ingest_text(
+        "Section 3.1 FEES. Orion pays Vega a fee of 50% of revenues.\n\n"
+        "Section 3.2 PAYMENT. Orion pays each fee 120 days after the invoice.\n\n"
+        "Section 4 GOVERNING LAW. Delaware law governs the supply agreement.",
+        document_type=Contract, metadata={"signed_at": "1996-01-01T00:00:00Z"}, uri="base.txt")
+    app.ingest_text(
+        "1. Section 3.2 of the supply agreement is amended to read in its entirety as follows.\n\n"
+        "Section 3.2 PAYMENT. Orion pays each royalty 60 days after the invoice.",
+        document_type=Contract, metadata={"signed_at": "1999-01-01T00:00:00Z"}, uri="amend.txt")
+    statuses = {f.text.split(", ", 1)[1][:12]: Fact.get(f.id).status for f in base.facts}
+    assert statuses == {"Section 3.1 ": "current", "Section 3.2 ": "superseded", "Section 4 GO": "current"}
+
+
+def test_a_partial_amendment_does_not_retire_a_section():
+    doc = Contract("1. Section 2.2 of the Development Agreement is hereby amended to allow Cargill to add staff.")
+    assert doc.replacements(doc.segment()) == []

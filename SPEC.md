@@ -603,10 +603,19 @@ it is unknown (for example, a folder of unmarked files).
 - Two `True` answers for one file is an error. Files no class claims go to an unclassified list for review.
 - `classify_view` controls what the classifier sees. `factoid classifiers show` lists the registry.
 
-### Sections
+### Sections and replaced sections
 
-**Proposed** (2026-11-15, for Kyle to confirm). `segment` labels each passage with the numbered section it falls under
-("3.2", "14.1"), and quotes carry the label. It is provenance only for now.
+**Proposed** (2026-11-15, for Kyle to confirm).
+
+- `segment` labels each passage with the numbered section it falls under ("3.2", "14.1"), and quotes carry the label.
+- A prose document's `replacements` step finds passages that say numbered sections are replaced as a whole ("Sections
+  3.1 and 3.2 ... are amended to read in their entirety", "deleted in its entirety"). It is plain code on the text,
+  using the class setting `replacement_pattern`, not a model. A change to part of a section does not match.
+- After the document's facts are saved, facts from earlier documents that share an entity with the facts quoting
+  that passage, and that quote a replaced section, are retired: superseded by the most similar new fact from the
+  same section of the new document, or ended when the new document gives no text for it.
+- Why: an amendment that rewrites a section often restructures it, so no single new fact reads as replacing a single
+  old one, and `resolve` judged them unrelated.
 
 ### Fact evals
 
@@ -950,10 +959,11 @@ diligence app (`factoid-legal`, a separate repo), scored on CUAD.
   claim but not whether the value changed, and the new one is later and from another document, it supersedes. A
   fact's own document gets at most half of resolve's candidate slots.
 - **Search** reranks the best 50 candidates after freshness weighting.
-- **Sections:** passages and quotes carry section labels (see "Sections").
-- **Tried and removed** (2026-11-15): retiring every older fact from a section an amendment rewrites "in its
-  entirety". The extractor flagged the new section's facts instead of the instruction, so it did not fix the
-  held-out NEON chain, and it spread a linking error across unrelated contracts (below).
+- **Sections:** passages and quotes carry section labels, and a section replaced in its entirety retires the older
+  facts quoting it (see "Sections and replaced sections").
+- **First try at replaced sections, removed** (2026-11-15): the extractor flagged which facts replace sections. It
+  flagged the new section's facts instead of the instruction, so it missed, and a linking error (below) spread its
+  changes across unrelated contracts. The current version finds the instruction with code instead.
 - **Generic defined terms stay local.** An alias becomes an entity's alias only when the placeholder question says
   it is a specific name. Before, "Agreement" and "Amendment" from one contract became global aliases, and mentions
   in an unrelated contract linked to them, which led resolve to supersede facts across contracts.
