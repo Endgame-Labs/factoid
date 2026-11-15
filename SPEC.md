@@ -42,7 +42,7 @@ Audiences, which the design has to serve at once:
 | Base classes | `FactoidDocument`, `FactoidFact`, and `FactoidEntity` |
 | Example company in docs | Acme Corp, project name `acme`. Acme's shared fact class is `AcmeBaseFact`. |
 
-**Proposed.** `FactoidLabel` and `FactoidSettings` follow the same prefix. `FactoidSettings` avoids a clash with
+**Proposed.** `FactoidFactLabel` and `FactoidSettings` follow the same prefix. `FactoidSettings` avoids a clash with
 `BaseSettings` in `pydantic-settings`.
 
 Do not use the names "Rails" or "Django" in docs or file names.
@@ -140,9 +140,41 @@ the candidates (`fact_classes = [InternalFact]` on a sales Slack channel); other
 
 ## 6. Labels
 
+**Decided** (Kyle, 2026-11-15). A label is a `FactoidFactLabel` subclass. A simple label is just its docstring; a label
+that needs more holds settings and code on the class. A fact class lists the labels it asks, so one label can be shared
+by several fact classes.
+
+```python
+from factoid import FactoidFact, FactoidFactLabel, Noul, judge
+
+class PainPoint(FactoidFactLabel):
+    """A problem the customer says they have today."""
+
+class Pricing(FactoidFactLabel):
+    """Budget, price, discount, or contract terms."""
+    threshold = 0.8
+    examples = ["Globex's budget for the tool is $40k a year."]
+
+    @classmethod
+    @judge(states_amount=Noul("Does it state an amount of money?"))
+    def decide(cls, fact, judgments):
+        return judgments.pricing > cls.threshold and judgments.states_amount > 0.5
+
+    @classmethod
+    def after_supersede(cls, fact, older):
+        notify(fact.account.owner, f"Pricing changed: {older.text} → {fact.text}")
+
+class CustomerFact(FactoidFact):
+    labels = [PainPoint, Pricing]
+```
+
 **Proposed.**
 
-- A label is a small class with a docstring. The docstring is the definition a model reads.
+- The docstring is the definition a model reads. With no `decide`, the default is Jev's yes-or-no question built from
+  the docstring, compared with `threshold`. A `decide` method gets that answer as `judgments.<label name>`, plus any
+  factor questions it declares with `@judge`.
+- A label can carry `after_` hooks that run for facts with that label.
+- Reads take the class: `globex.facts(labels=[Pricing])`.
 - A fact carries zero or more labels. The tagger asks one yes-or-no question per label. Labels are not mutually
   exclusive.
 - A fact that matches no label is kept.
@@ -354,7 +386,7 @@ A setting can be a computed property.
 **Decided** (Kyle, 2026-11-15). Every core pipeline step is a classmethod or an instance method, so it can be inspected
 and overridden. Class attributes are inputs to the default method, not behavior of their own.
 
-**Decided** (Kyle, 2026-11-15): **before and after hooks, like Rails.** Every step has `before_<step>` and
+**Decided** (Kyle, 2026-11-15): **before and after hooks.** Every step has `before_<step>` and
 `after_<step>`. They do nothing in the base class, but they are always called. There are no separate lifecycle
 callbacks (`on_added` and the rest are gone).
 
@@ -416,7 +448,7 @@ class TenantEmail(FactoidProseDocument):
 | Level | What the user writes |
 | --- | --- |
 | 0. Nothing | No code. The defaults run. |
-| 1. Declare types | Classes with a description (`FactoidDocument`, `FactoidEntity`, `FactoidLabel`, and so on). |
+| 1. Declare types | Classes with a description (`FactoidDocument`, `FactoidEntity`, `FactoidFactLabel`, and so on). |
 | 2. Tune a type | Settings on the class: guidance, examples, thresholds, and which model it uses. |
 | 3. Replace a step's wording | A question for a decision step, or a prompt for a generation step. |
 | 4. Replace a step's logic | Override the hook method, and call `super()` to keep the default. |
@@ -976,3 +1008,5 @@ All dates are 2026-11-13 unless noted.
 59. Fact classes: one per project is common, and a few for different kinds of evidence (such as customer-stated
     versus internal) is also common. They are not tied to document types; each fact is classified on its own.
     (2026-11-15)
+60. Labels are `FactoidFactLabel` subclasses (renamed from `FactoidLabel`): a docstring for simple ones, settings and
+    a `decide` method with `@judge` for the rest. Fact classes list the labels they ask. (2026-11-15)
