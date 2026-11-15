@@ -344,3 +344,35 @@ def test_replaced_sections_are_off_by_default():
     doc = Memo("1. Section 3.2 of the agreement is amended to read in its entirety as follows.")
     assert doc.replacements(doc.segment()) == []
 
+
+
+def test_a_sibling_clause_in_a_replaced_section_stays_current(make_app, fake):
+    app = build(make_app, fake)
+
+    def generator(prompt):
+        facts = []
+        for n, text in re.findall(r"^\[(\d+)\] (.+)$", prompt, re.M):
+            facts.append({"text": f"Under the license between Fox and Glu, {text}", "passages": [int(n)],
+                          "mentions": [{"name": "Fox", "kind": "company"}, {"name": "Glu", "kind": "company"}]})
+        return json.dumps({"facts": facts})
+
+    inner = fake.noul
+
+    def noul(question, state):
+        if "was replaced as a whole" in question.instructions:
+            key = re.search(r"new fact (N\d+)", question.instructions).group(1)
+            both = state["old_fact"] + state["new_facts"][key]
+            return 0.9 if both.count("term") >= 2 else 0.05
+        return inner(question, state)
+
+    fake.generator, fake.noul = generator, noul
+    base = app.ingest_text(
+        "Section 4 TERM. The license term ends 18 months after each release.\n\n"
+        "Glu has a right of first negotiation on new films during the Term.",
+        document_type=Contract, metadata={"signed_at": "2004-12-16T00:00:00Z"}, uri="glu.txt")
+    app.ingest_text(
+        "1. The first paragraph of Section 4 is deleted in its entirety and replaced with the following.\n\n"
+        "Section 4 TERM. The license term ends March 31, 2008.",
+        document_type=Contract, metadata={"signed_at": "2007-02-19T00:00:00Z"}, uri="glu-a3.txt")
+    statuses = {f.text.split(", ", 1)[1][:20]: Fact.get(f.id).status for f in base.facts}
+    assert statuses == {"Section 4 TERM. The ": "superseded", "Glu has a right of f": "current"}

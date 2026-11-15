@@ -108,6 +108,8 @@ class Fact(Registered, ModelCalls):
     #: Below these, the next best answer is used.
     duplicate_threshold: ClassVar[float] = 0.8
     contradiction_threshold: ClassVar[float] = 0.75
+    #: How sure the decision model must be that a new fact replaces an older one in a section replaced as a whole.
+    replace_threshold: ClassVar[float] = 0.6
     #: Run one repair (a rewording) on a near miss.
     repair_enabled: ClassVar[bool] = True
     #: The longest fact sentence `validate` accepts, in characters.

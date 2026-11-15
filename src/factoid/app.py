@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -231,11 +232,13 @@ class Factoid:
         return saved
 
     def replace_sections(self, document: Document, replaced: list[Any], facts: list[Fact]) -> int:
-        """Retire facts from earlier documents that quote sections this document replaces as a whole.
+        """Retire the older facts that a section replaced as a whole made out of date.
 
-        The earlier documents are those that share an entity with the facts quoting the replacing passage. Each
-        retired fact is superseded by the most similar new fact from the same section of this document, or ended by
-        the fact quoting the replacing passage when this document gives no text for that section."""
+        Scope: earlier documents that share an entity with the facts quoting the replacing passage (or, when none was
+        kept, with the new section's facts), and older facts that quote the named section. Within that scope, the
+        decision model confirms each one: an older fact is superseded only by a new fact from the same section that
+        it judges replaces what the older fact says, so a sibling clause the amendment did not touch stays current.
+        A section deleted with no replacement text ends its older facts."""
         mine = document.dated()
         retired = 0
 
@@ -245,10 +248,11 @@ class Factoid:
 
         for passage, sections in replaced:
             instruction = [f for f in facts if any(q.passage_n == passage.n for q in f.quotes)]
+            deleted_only = re.search(r"deleted\s+in\s+(?:its|their)\s+entirety", passage.text, re.I) is not None \
+                and re.search(r"replaced|as follows|to read", passage.text, re.I) is None
             for section in sections:
                 same = [f for f in facts if f.status == "current" and in_section(f, section) and f not in instruction]
-                # Scope to earlier documents about the same thing: entities of the facts quoting the instruction,
-                # or, when none was kept, of the new section's own facts.
+                candidates = same or instruction
                 scope = instruction or same
                 entity_ids = sorted({m.entity_id for f in scope for m in f.mentions if m.entity_id})
                 if not entity_ids:
@@ -258,7 +262,6 @@ class Factoid:
                     f"select distinct f.id from facts f join mentions m on m.fact_id = f.id "
                     f"where m.entity_id in ({marks}) and f.document_id != ? "
                     "and f.status in ('current', 'contradicted')", (*entity_ids, document.id))
-                vectors_for: dict[str, list[float]] = {}
                 for row in rows:
                     old = self.load_fact(row["id"])
                     if old is None or not in_section(old, section):
@@ -266,19 +269,30 @@ class Factoid:
                     theirs = old.valid_from or old.source_datetime
                     if mine is not None and theirs is not None and theirs >= mine:
                         continue
-                    if same:
-                        if not vectors_for:
-                            for f, v in zip(same, self.client.embed([f.text for f in same])):
-                                vectors_for[f.id] = v
-                        old_vector = self.client.embed([old.text])[0]
-                        best = max(same, key=lambda f: _cosine(old_vector, vectors_for[f.id]))
-                        run_step(best, "supersede", old)
-                    elif instruction:
+                    if deleted_only and instruction:
                         run_step(instruction[0], "end", old)
-                    else:
+                        retired += 1
                         continue
-                    retired += 1
+                    best = self._replacing_fact(old, candidates, section)
+                    if best is not None:
+                        run_step(best, "supersede", old)
+                        retired += 1
         return retired
+
+    def _replacing_fact(self, old: Fact, candidates: list[Fact], section: str) -> Fact | None:
+        """The new fact the decision model judges replaces `old`, or None."""
+        if not candidates:
+            return None
+        candidates = candidates[:12]
+        keys = [f"N{i + 1}" for i in range(len(candidates))]
+        state = {"section": section, "old_fact": old.text, "new_facts": {k: f.text for k, f in zip(keys, candidates)}}
+        questions = {k: Noul(f"Section {section} was replaced as a whole. Does new fact {k} replace what the old fact "
+                             "says: the same term, right, duty, amount, or rule, now worded or set differently?")
+                     for k in keys}
+        judgments = self.client.ask(state, questions)
+        best = max(keys, key=lambda k: judgments[k])
+        threshold = type(old).replace_threshold
+        return candidates[keys.index(best)] if judgments[best] >= threshold else None
 
     def _classify_fact(self, fact: Fact, classes: list[type[Fact]]) -> Fact:
         if len(classes) == 1:
