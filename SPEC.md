@@ -933,6 +933,15 @@ diligence app (`factoid-legal`, a separate repo), scored on CUAD.
   class replaces it.
 - **A duplicate** adds its quotes to the stored fact, which restarts its clock, and writes no event.
 - **A passed deadline** (Open in "Time on a fact") is scored as one half in validity until it is decided.
+- **Extraction never drops a chunk silently.** An answer that is cut off or malformed is retried as two half chunks.
+  Before this, about 1% of chunks were lost, and with them clauses such as a governing-law section.
+- **Mentions carry aliases**: the extractor lists other names the document uses for a thing (a defined short name
+  such as "Vega" for Vega Components Corp.), and linking matches on them. Without this, the same company became two
+  entities across documents.
+- **As-of search** includes superseded and ended facts that were still valid on the `as_of` date.
+- **Known gap:** on the amendments suite, as-of search finds the clause in force on the first date but not after
+  the territory was amended twice, even with a reranker. The supersessions themselves are right; ranking is not.
+- **Not on PyPI yet:** `uv tool install factoid` does not work until a release is published. Install from the repo.
 - **Keys:** with no key set for a provider, the client calls that provider's exe.dev integration host, which injects
   credentials. With a key set, it calls the vendor.
 
