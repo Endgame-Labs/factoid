@@ -1,0 +1,15 @@
+From: Dana Whitfield <dana.whitfield@hallbrook-law.example>
+To: Sam Ortiz <sam.ortiz@acme.example>
+Subject: Orion diligence: Vega supply agreement
+
+Sam,
+
+We finished our review of Orion's Supply Agreement with Vega. Two points matter for the Acme deal.
+
+First, the agreement lets Vega terminate if a competitor of Vega acquires Orion. Acme does not compete with Vega, so we do not think Vega can use that clause against this deal.
+
+Second, Orion needs Vega's written consent to assign the agreement, and the deal is structured as an asset purchase, which is an assignment. Our view is that Vega's consent is a closing risk for the Acme deal, because the supply agreement covers most of Orion's motors.
+
+We recommend that Orion send Vega the consent request by November 20, 2026, so Vega's 15-business-day answer period ends before the planned closing.
+
+Dana

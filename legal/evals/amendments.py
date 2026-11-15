@@ -1,0 +1,395 @@
+"""Amendments: real contract chains from CUAD, scored on supersession, as-of search, and time.
+
+Each chain is a base agreement and its amendments, ingested in signing order. The gold labels are ours, written by
+reading the contracts:
+
+- supersedes: a base clause an amendment replaces. Scored when the fact quoting the old clause is no longer current
+  and a fact quoting the new clause superseded or ended it.
+- unchanged: a clause no amendment touches. Scored when the fact quoting it is still current. This catches false
+  supersession, the failure that matters most in diligence.
+- as of: a search with `as_of=` must rank a fact quoting the clause in force on that date above a fact quoting the
+  clause that was not.
+- time: a clause with a dated window must give its fact `valid_from` or `valid_until` in the right year.
+
+Text: CUAD (CC BY 4.0). Some text is redacted in the filings (shown as [*] or [***]).
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import dataclass
+from typing import Any
+
+from factoid.evals import Suite
+
+from .cuad import DATA, URL
+
+CHAINS: list[dict[str, Any]] = [
+    {
+        "name": "netgear",
+        "documents": [
+            {"key": "netgear-base", "title": "NETGEAR,INC_04_21_2003-EX-10.16-DISTRIBUTOR AGREEMENT",
+             "end": r"AMENDMENT\s+TO THE\s+DISTRIBUTOR AGREEMENT", "signed_at": "1996-03-01T00:00:00Z",
+             "name": "Distributor Agreement between Ingram Micro and NETGEAR"},
+            {"key": "netgear-a1",
+             "title": "NETGEAR,INC_04_21_2003-EX-10.16- AMENDMENT #2 TO THE DISTRIBUTION AGREEMENT",
+             "start": r"This Amendment is entered into effective October 1,1996", "end": r"\[INGRAM MICRO LOGO\]",
+             "signed_at": "1996-10-01T00:00:00Z",
+             "name": "Amendment to the Distributor Agreement between Ingram Micro and NETGEAR"},
+            {"key": "netgear-a2",
+             "title": "NETGEAR,INC_04_21_2003-EX-10.16- AMENDMENT #2 TO THE DISTRIBUTION AGREEMENT",
+             "start": r"AMENDMENT #2 TO THE", "signed_at": "1998-07-15T00:00:00Z",
+             "name": "Amendment #2 to the Distribution Agreement between Ingram Micro and NETGEAR"},
+        ],
+        "supersedes": [
+            ("netgear-base", "outside of the Territory identified herein as the United States",
+             "netgear-a1", "is amended to be the United States and [*]"),
+            ("netgear-a1", "is amended to be the United States and [*]",
+             "netgear-a2", "Section 2, TERRITORY, is amended to be United States, [*]"),
+        ],
+        "unchanged": [
+            ("netgear-base", "governed by the laws of the State of California"),
+            ("netgear-base", "may be canceled at any time without cause, by either party upon ninety (90) days"),
+        ],
+        "as_of": [
+            ("In what territory may Ingram Micro distribute NETGEAR products?", "1996-06-01T00:00:00Z",
+             ("netgear-base", "outside of the Territory identified herein as the United States"),
+             ("netgear-a1", "is amended to be the United States and [*]")),
+            ("In what territory may Ingram Micro distribute NETGEAR products?", "1997-06-01T00:00:00Z",
+             ("netgear-a1", "is amended to be the United States and [*]"),
+             ("netgear-base", "outside of the Territory identified herein as the United States")),
+            ("In what territory may Ingram Micro distribute NETGEAR products?", "2000-01-01T00:00:00Z",
+             ("netgear-a2", "Section 2, TERRITORY, is amended to be United States, [*]"),
+             ("netgear-a1", "is amended to be the United States and [*]")),
+        ],
+        "time": [
+            ("netgear-a1", "During the initial one year period beginning on the Amendment Date", "valid_until", "1997"),
+        ],
+    },
+    {
+        "name": "federated",
+        "documents": [
+            {"key": "federated-base",
+             "title": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_2020-EX-99.SERV AGREE-SERVICES AGREEMENT",
+             "signed_at": "2004-01-01T00:00:00Z",
+             "name": "Services Agreement between Federated Investment Management Company and Federated Advisory "
+                     "Services Company"},
+            {"key": "federated-a1",
+             "title": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_2020-EX-99.SERV AGREE-SERVICES AGREEMENT_AMENDMENT",
+             "signed_at": "2009-03-30T00:00:00Z",
+             "name": "Amendment to the Federated Services Agreement"},
+            {"key": "federated-a2",
+             "title": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_2020-EX-99.SERV AGREE-SERVICES "
+                      "AGREEMENT_SECONDAMENDMENT",
+             "signed_at": "2016-03-01T00:00:00Z",
+             "name": "Second Amendment to the Federated Services Agreement"},
+        ],
+        "supersedes": [],
+        "unchanged": [
+            ("federated-base", "responsible for data integrity, creation of attribution reports"),
+        ],
+        "as_of": [],
+        "time": [],
+    },
+    {
+        "name": "bioamber",
+        "documents": [
+            {"key": "bioamber-base", "title": "BIOAMBERINC_04_10_2013-EX-10.34-DEVELOPMENT AGREEMENT (1)",
+             "end": r"AMENDMENT 1 TO DEVELOPMENT AGREEMENT", "signed_at": "2010-04-15T00:00:00Z",
+             "name": "Development Agreement between Cargill and BioAmber"},
+            {"key": "bioamber-a1", "title": "BIOAMBERINC_04_10_2013-EX-10.34-DEVELOPMENT AGREEMENT - First Amendment",
+             "start": r"AMENDMENT 1 TO DEVELOPMENT AGREEMENT", "end": r"AMENDMENTS TO COMMERCIAL LICENSE AGREEMENT",
+             "signed_at": "2011-07-05T00:00:00Z",
+             "name": "First Amendment to the Development Agreement between Cargill and BioAmber"},
+        ],
+        "supersedes": [],
+        "unchanged": [
+            ("bioamber-base", "Cargill will make available up to [***] FTE persons per year"),
+        ],
+        "as_of": [],
+        "time": [
+            ("bioamber-a1", "during the period of July 5, 2011, through September 30, 2011", "valid_until", "2011"),
+        ],
+    },
+]
+
+
+# Held out: never looked at while tuning floors, thresholds, or prompts. Scored by `AmendmentsHeldOut`.
+HELD_OUT: list[dict[str, Any]] = [
+    {
+        "name": "neon",
+        "documents": [
+            {"key": "neon-base", "title": "NEONSYSTEMSINC_03_01_1999-EX-10.5-DISTRIBUTOR AGREEMENT_New",
+             "signed_at": "1996-01-01T00:00:00Z",
+             "name": "Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems"},
+            {"key": "neon-a1", "title": "NEONSYSTEMSINC_03_01_1999-EX-10.5-DISTRIBUTOR AGREEMENT_Amendment",
+             "start": r"FIRST AMENDMENT TO DISTRIBUTOR AGREEMENT", "signed_at": "1999-01-01T00:00:00Z",
+             "name": "First Amendment to the Distributor Agreement between Peregrine/Bridge and NEON Systems"},
+        ],
+        "supersedes": [
+            ("neon-base", "a licensee fee equal to 50% of all revenues received",
+             "neon-a1", "a royalty equal to the Specified Royalty Percentage of all revenues received"),
+            ("neon-base", "during the first year of the term hereof will be payable one hundred and twenty (120) days",
+             "neon-a1", "sixty (60) days after the date of the applicable invoice"),
+        ],
+        "unchanged": [
+            ("neon-base", "Licensee represents and warrants that it has all requisite power and authority to execute"),
+        ],
+        "as_of": [
+            ("How many days after the invoice must NEON Systems pay Peregrine/Bridge?", "1997-06-01T00:00:00Z",
+             ("neon-base", "during the first year of the term hereof will be payable one hundred and twenty (120) days"),
+             ("neon-a1", "sixty (60) days after the date of the applicable invoice")),
+            ("How many days after the invoice must NEON Systems pay Peregrine/Bridge?", "2000-01-01T00:00:00Z",
+             ("neon-a1", "sixty (60) days after the date of the applicable invoice"),
+             ("neon-base", "during the first year of the term hereof will be payable one hundred and twenty (120) days")),
+        ],
+        "time": [],
+    },
+]
+
+
+# Fresh: labeled from the contract text before any run, and scored once, after the last change to the framework and
+# the app (2026-11-15). Nothing was tuned on these. Scored by `AmendmentsFresh`.
+FRESH: list[dict[str, Any]] = [
+    {
+        "name": "glu-fox",
+        "documents": [
+            {"key": "glu-base", "title": "GluMobileInc_20070319_S-1A_EX-10.09_436630_EX-10.09_Content License Agreement1",
+             "signed_at": "2004-12-16T00:00:00Z", "name": "Wireless Content License Agreement between Fox and Glu Mobile"},
+            {"key": "glu-a1", "title": "GluMobileInc_20070319_S-1A_EX-10.09_436630_EX-10.09_Content License Agreement2",
+             "signed_at": "2005-11-11T00:00:00Z", "name": "Amendment No. 1 to the Fox and Glu Mobile License Agreement"},
+            {"key": "glu-a2", "title": "GluMobileInc_20070319_S-1A_EX-10.09_436630_EX-10.09_Content License Agreement3",
+             "signed_at": "2006-03-27T00:00:00Z", "name": "Amendment No. 2 to the Fox and Glu Mobile License Agreement"},
+            {"key": "glu-a3", "title": "GluMobileInc_20070319_S-1A_EX-10.09_436630_EX-10.09_Content License Agreement4",
+             "signed_at": "2007-02-19T00:00:00Z", "name": "Amendment No. 3 to the Fox and Glu Mobile License Agreement"},
+        ],
+        "supersedes": [
+            ("glu-base", "continue in full force and effect for a period of eighteen (18) months after the initial "
+                         "theatrical release",
+             "glu-a3", "continue in full force and effect until March 31, 2008"),
+        ],
+        "unchanged": [],
+        "as_of": [
+            ("How long do the licenses for each Property last under the Fox and Glu Mobile license agreement?",
+             "2006-06-01T00:00:00Z",
+             ("glu-base", "continue in full force and effect for a period of eighteen (18) months after the initial "
+                          "theatrical release"),
+             ("glu-a3", "continue in full force and effect until March 31, 2008")),
+            ("How long do the licenses for each Property last under the Fox and Glu Mobile license agreement?",
+             "2007-06-01T00:00:00Z",
+             ("glu-a3", "continue in full force and effect until March 31, 2008"),
+             ("glu-base", "continue in full force and effect for a period of eighteen (18) months after the initial "
+                          "theatrical release")),
+        ],
+        "time": [("glu-a3", "continue in full force and effect until March 31, 2008", "valid_until", "2008")],
+    },
+    {
+        "name": "scansource-cisco",
+        "documents": [
+            {"key": "scan-base",
+             "title": "ScansourceInc_20190822_10-K_EX-10.38_11793958_EX-10.38_Distributor Agreement1",
+             "signed_at": "2007-01-22T00:00:00Z",
+             "name": "Nonexclusive Value Added Distributor Agreement between Cisco and ScanSource"},
+            {"key": "scan-a3",
+             "title": "ScansourceInc_20190822_10-K_EX-10.39_11793959_EX-10.39_Distributor Agreement",
+             "signed_at": "2010-08-04T00:00:00Z",
+             "name": "Amendment No. 3 to the Cisco and ScanSource Distributor Agreement"},
+        ],
+        "supersedes": [
+            ("scan-base", "Distributor may submit the inventory balance claim between the first and",
+             "scan-a3", "Distributor shall be entitled to return Product once per quarter"),
+            ("scan-base", "continue thereafter for a period of two (2) years",
+             "scan-a3", "The Term of the Agreement is hereby extended to January 20, 2012"),
+        ],
+        "unchanged": [
+            ("scan-base", "Distributor's use of Software is governed by the terms contained in Exhibit C"),
+        ],
+        "as_of": [
+            ("When does the Cisco and ScanSource distributor agreement end?", "2008-01-01T00:00:00Z",
+             ("scan-base", "continue thereafter for a period of two (2) years"),
+             ("scan-a3", "The Term of the Agreement is hereby extended to January 20, 2012")),
+            ("When does the Cisco and ScanSource distributor agreement end?", "2011-01-01T00:00:00Z",
+             ("scan-a3", "The Term of the Agreement is hereby extended to January 20, 2012"),
+             ("scan-base", "continue thereafter for a period of two (2) years")),
+        ],
+        "time": [("scan-a3", "The Term of the Agreement is hereby extended to January 20, 2012", "valid_until",
+                  "2012")],
+    },
+    {
+        "name": "pcquote-abw",
+        "documents": [
+            {"key": "pcq-base", "title": "PcquoteComInc_19990721_S-1A_EX-10.11_6377149_EX-10.11_Co-Branding Agreement1",
+             "signed_at": "1996-10-11T00:00:00Z", "name": "Co-Branding Agreement between PC Quote and A.B. Watley"},
+            {"key": "pcq-a1", "title": "PcquoteComInc_19990721_S-1A_EX-10.11_6377149_EX-10.11_Co-Branding Agreement2",
+             "signed_at": "1996-12-09T00:00:00Z", "name": "Amendment to Section 2 of the PC Quote Co-Branding Agreement"},
+            {"key": "pcq-a2", "title": "PcquoteComInc_19990721_S-1A_EX-10.11_6377149_EX-10.11_Co-Branding Agreement3",
+             "signed_at": "1998-02-23T00:00:00Z",
+             "name": "Second Amendment to the PC Quote and A.B. Watley Co-Branding Agreement"},
+        ],
+        "supersedes": [
+            ("pcq-base", "Notice expressing a desire to terminate this Agreement will be sent by certified mail",
+             "pcq-a2", "The text of Section 2. A. and B. of the Agreement is hereby deleted in its entirety"),
+        ],
+        "unchanged": [
+            ("pcq-base", "enforced in all respects in accordance with the laws of the State of Illinois"),
+        ],
+        "as_of": [],
+        "time": [],
+    },
+]
+
+
+@dataclass
+class Located:
+    doc_id: str
+    start: int
+    end: int
+
+
+def _pattern(snippet: str) -> re.Pattern[str]:
+    words = snippet.split()
+    return re.compile(r"\s+".join(re.escape(w) for w in words))
+
+
+def load_full() -> dict[str, str]:
+    target = DATA / "CUADv1.json"
+    if not target.exists():
+        import io
+        import urllib.request
+        import zipfile
+
+        DATA.mkdir(parents=True, exist_ok=True)
+        with urllib.request.urlopen(URL) as response:  # noqa: S310 - fixed https URL
+            zipfile.ZipFile(io.BytesIO(response.read())).extract("CUADv1.json", DATA)
+    return {x["title"]: x["paragraphs"][0]["context"] for x in json.loads(target.read_text())["data"]}
+
+
+def _cut(text: str, start: str | None, end: str | None) -> str:
+    if start:
+        match = re.search(start, text)
+        if match is None:
+            raise ValueError(f"start marker {start!r} not found")
+        text = text[match.start():]
+    if end:
+        match = re.search(end, text)
+        if match is not None and match.start() > 0:
+            text = text[:match.start()]
+    return text
+
+
+class Amendments(Suite):
+    name = "amendments"
+    description = "Real CUAD contract chains: supersession, as-of search, and time."
+    parallel = 1  # a chain must be ingested in order
+    held_out = False
+    fresh = False
+
+    def documents(self, limit: int | None = None):
+        from legal.documents import Contract
+
+        full = load_full()
+        self.texts: dict[str, str] = {}
+        source = FRESH if self.fresh else HELD_OUT if self.held_out else CHAINS
+        chains = source[:limit] if limit else source
+        self.chains = chains
+        for chain in chains:
+            for spec in chain["documents"]:
+                text = _cut(full[spec["title"]], spec.get("start"), spec.get("end"))
+                doc_id = f"amend_{spec['key'].replace('-', '_')}"
+                self.texts[spec["key"]] = text
+                yield Contract(text, id=doc_id, uri=f"cuad:{spec['title']}#{spec['key']}", title=spec["name"],
+                               metadata={"signed_at": spec["signed_at"]})
+
+    def locate(self, key: str, snippet: str) -> Located:
+        match = _pattern(snippet).search(self.texts[key])
+        if match is None:
+            raise ValueError(f"snippet not found in {key}: {snippet!r}")
+        return Located(f"amend_{key.replace('-', '_')}", match.start(), match.end())
+
+    def quoting(self, app: Any, located: Located) -> list[Any]:
+        facts = app.list_facts(document_id=located.doc_id)
+        return [f for f in facts if any(q.start < located.end and located.start < q.end for q in f.quotes)]
+
+    def score(self, app, results) -> dict[str, Any]:
+        out: dict[str, Any] = {}
+        hits = total = 0
+        details = []
+        for chain in self.chains:
+            for old_key, old_snip, new_key, new_snip in chain["supersedes"]:
+                total += 1
+                old = self.quoting(app, self.locate(old_key, old_snip))
+                new_ids = {f.id for f in self.quoting(app, self.locate(new_key, new_snip))}
+                # Retired by a fact from the amending document. When an amendment rewrites a whole section, the
+                # old clause can be replaced by any fact of the new section, not only the one the gold pair names.
+                new_doc = self.locate(new_key, new_snip).doc_id
+                replaced = [f for f in old if f.status in ("superseded", "ended") and any(
+                    (r["fact_id"] in new_ids or (app.load_fact(r["fact_id"]) or f).document_id == new_doc)
+                    for r in app.store.relations(f.id)
+                    if r["relation"] in ("supersedes", "ends") and r["other_id"] == f.id)]
+                ok = bool(replaced)
+                hits += ok
+                details.append({"supersedes": old_snip, "ok": ok, "old_facts": len(old), "new_facts": len(new_ids)})
+        out["supersede_recall"] = round(hits / total, 3) if total else None
+
+        kept = total = 0
+        for chain in self.chains:
+            for key, snippet in chain["unchanged"]:
+                total += 1
+                facts = self.quoting(app, self.locate(key, snippet))
+                ok = bool(facts) and all(f.status == "current" for f in facts)
+                kept += ok
+                details.append({"unchanged": snippet, "ok": ok, "facts": len(facts),
+                                "statuses": [f.status for f in facts]})
+        out["unchanged_kept"] = round(kept / total, 3) if total else None
+
+        base_ids = {f"amend_{d['key'].replace('-', '_')}" for c in self.chains for d in c["documents"][:1]}
+        base_facts = [f for doc_id in base_ids for f in app.list_facts(document_id=doc_id)]
+        expected_old = set()
+        for chain in self.chains:
+            for old_key, old_snip, _, _ in chain["supersedes"]:
+                expected_old |= {f.id for f in self.quoting(app, self.locate(old_key, old_snip))}
+        changed = [f for f in base_facts if f.status != "current" and f.id not in expected_old]
+        out["false_change_rate"] = round(len(changed) / len(base_facts), 3) if base_facts else None
+        out["false_changes"] = [f"{f.status}: {f.text[:160]}" for f in changed[:8]]
+
+        good = total = 0
+        for chain in self.chains:
+            for query, as_of, (want_key, want_snip), (old_key, old_snip) in chain["as_of"]:
+                total += 1
+                want = {f.id for f in self.quoting(app, self.locate(want_key, want_snip))}
+                stale = {f.id for f in self.quoting(app, self.locate(old_key, old_snip))}
+                hits_ = app.search_facts(query, as_of=as_of, top_k=5)
+                ranks = [h.fact.id for h in hits_]
+                first_want = next((i for i, fid in enumerate(ranks) if fid in want), None)
+                first_stale = next((i for i, fid in enumerate(ranks) if fid in stale), None)
+                ok = first_want is not None and (first_stale is None or first_want < first_stale)
+                good += ok
+                details.append({"as_of": as_of, "ok": ok, "want_rank": first_want, "stale_rank": first_stale})
+        out["as_of_accuracy"] = round(good / total, 3) if total else None
+
+        good = total = 0
+        for chain in self.chains:
+            for key, snippet, attribute, year in chain["time"]:
+                total += 1
+                facts = self.quoting(app, self.locate(key, snippet))
+                ok = any(getattr(f, attribute) is not None and str(getattr(f, attribute).year) == year for f in facts)
+                good += ok
+                details.append({"time": snippet, "ok": ok,
+                                "values": [str(getattr(f, attribute)) for f in facts]})
+        out["time_captured"] = round(good / total, 3) if total else None
+        out["details"] = details
+        return out
+
+
+class AmendmentsHeldOut(Amendments):
+    name = "amendments_heldout"
+    description = "A contract chain never used while tuning: the NEON Systems distributor agreement."
+    held_out = True
+
+
+class AmendmentsFresh(Amendments):
+    name = "amendments_fresh"
+    description = "Three chains labeled before any run and scored once: Glu and Fox, ScanSource and Cisco, PC Quote."
+    fresh = True
+
