@@ -454,7 +454,16 @@ things: a fact eval gates one fact at ingest, and `factoid eval` measures the pi
 ### Resolving
 
 **Proposed.** For each new fact, Factoid gathers the stored facts that share its entities, and asks the decision model
-one question with four answers: duplicate, supersedes, contradicts, or unrelated.
+one question with six answers: duplicate, supersedes, ends, corrects, contradicts, or unrelated.
+
+**Decided** (Kyle, 2026-11-15): ends and corrects are answers here, not a trait asked of every fact.
+
+- **Supersedes:** the new fact gives a new value for the same thing ("Dana now leads sales" replaces "Maya leads
+  sales"). The old fact was true until then.
+- **Ends:** the new fact says a state stopped, with no new value ("the hotfix resolved the 502s" ends "Acme gets 502s").
+  The old fact gets an end date and was true until then.
+- **Corrects:** the new fact says the old one was wrong from the start ("restated Q1 revenue was $380M" corrects
+  "$402M"). The old fact is marked `corrected` and is not shown as true at any time.
 
 Neither cerebro nor OpenEndgame detects that a newer fact replaces or contradicts an older one, so this step is new
 work and needs evals before any claim about its quality.
@@ -548,7 +557,8 @@ work and needs evals before any claim about its quality.
 - **Current state is the truth.** The facts, entities, links, and labels tables say what is true now, and reads go to
   them. Nothing is rebuilt from history.
 - **The event log is for audit and provenance.** Every change also writes an event. Fact events are `added`,
-  `superseded`, `contradicted`, `retracted`, and `restored`. Entity events are `linked`, `merged`, and `split`. Each
+  `superseded`, `ended`, `corrected`, `contradicted`, `retracted`,
+  and `restored`. Entity events are `linked`, `merged`, and `split`. Each
   event names the facts or entities it touched, the step that made it, and the reason. The log lives in the same
   SQLite database, and the state change and its event are written in one transaction.
 - **Responses can show history.** When a fact has superseded another, a read can query the log and return the older
@@ -789,3 +799,4 @@ All dates are 2026-11-13 unless noted.
     wizard uses Textual.
 45. Level 3 wording is set explicitly on the class: a string, or `template("path.md")`. No naming-convention lookup.
 46. `decision` stays its own kind of fact, separate from `event`, after the trait research. (2026-11-15)
+47. Resolve gains two answers, ends and corrects, so endings and corrections need no per-fact trait. (2026-11-15)
