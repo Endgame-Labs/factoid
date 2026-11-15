@@ -426,11 +426,14 @@ class ProseDocument(Document):
         if not pattern:
             return []
         found = []
-        for passage in passages:
+        for i, passage in enumerate(passages):
             match = re.search(pattern, passage.text, re.I)
             if match is None:
                 continue
             head = passage.text[:match.start()]
+            if not re.search(r"sections?\s+\d", head, re.I) and i > 0:
+                # "Section 2. A. and B. ... is deleted": a sentence split can leave the number in the passage before
+                head = passages[i - 1].text[-200:] + " " + head
             numbers = re.findall(r"\d+(?:\.\d+)*", " ".join(re.findall(r"sections?\s+[\d.,\sand]+", head, re.I)))
             sections = list(dict.fromkeys(n.rstrip(".") for n in numbers if n.rstrip(".")))
             if sections:

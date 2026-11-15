@@ -397,3 +397,12 @@ def test_a_whole_section_replaced_retires_restructured_clauses(make_app, fake):
                     "Section 3.2 PAYMENT. Neon pays quarterly royalty advances.",
                     document_type=Contract, metadata={"signed_at": "1999-01-01T00:00:00Z"}, uri="n1.txt")
     assert Fact.get(base.facts[0].id).status == "superseded"
+
+
+def test_a_rewrite_split_across_sentences_is_found():
+    from factoid.document import Passage
+
+    doc = Contract("x")
+    passages = [Passage(1, 0, 1, "2. The text of Section 2."),
+                Passage(2, 0, 1, "A. and B. of the Agreement is hereby deleted in its entirety and replaced.")]
+    assert [s for _, s in doc.replacements(passages)] == [["2"]]
