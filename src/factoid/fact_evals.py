@@ -60,7 +60,7 @@ class Nli(FactEval):
 
 #: Starting floors. They are fixed values until calibration from labeled data is built.
 DEFAULT_FLOORS: dict[str, float] = {
-    "grounded": 0.6,
+    "grounded": 0.45,
     "attribution": 0.3,
     "self_contained": 0.4,
     "atomic": 0.25,
