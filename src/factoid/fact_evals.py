@@ -130,8 +130,11 @@ class JevFloors(FactEval):
         judgments = app.client.ask(state, dict(QUESTIONS))
         scores = {name: float(judgments[name]) for name in QUESTIONS}
         failed = [name for name, floor in self.floors.items() if scores[name] < floor]
-        near = bool(failed) and all(
-            name in self.repairable and scores[name] >= self.floors[name] - self.repair_margin for name in failed
+        # A near miss: every failure is within the margin, and at least one is something a rewording or a split can
+        # fix. A narrow "useful" failure rides along, since splitting a compound fact often makes each part useful.
+        near = bool(failed) and any(name in self.repairable for name in failed) and all(
+            name in (*self.repairable, "useful") and scores[name] >= self.floors[name] - self.repair_margin
+            for name in failed
         )
         return EvalResult(passed=not failed, scores=scores, failed=failed, near_miss=near)
 
