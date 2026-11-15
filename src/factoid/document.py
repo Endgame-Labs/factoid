@@ -222,8 +222,11 @@ class ProseDocument(Document):
     situate: ClassVar[bool | Callable[..., Any]] = False
     situate_prompt: ClassVar[str | Template] = builtin("situate.md.j2")
     extract_prompt: ClassVar[str | Template] = builtin("extract.md.j2")
-    #: Wording that says sections are replaced as a whole. Matched by code, not a model. None turns it off.
-    replacement_pattern: ClassVar[str | None] = (
+    #: Wording that says sections are replaced as a whole, matched by code, not a model. Off (None) by default until
+    #: the design is decided (SPEC "Sections and replaced sections"); a class turns it on, for example with
+    #: `replacement_pattern = ProseDocument.ENTIRETY`.
+    replacement_pattern: ClassVar[str | None] = None
+    ENTIRETY: ClassVar[str] = (
         r"(?:amended|restated)\s+(?:and\s+restated\s+)?(?:to\s+read\s+)?in\s+(?:its|their)\s+entirety"
         r"|deleted\s+in\s+(?:its|their)\s+entirety|replaced\s+in\s+(?:its|their)\s+entirety"
     )

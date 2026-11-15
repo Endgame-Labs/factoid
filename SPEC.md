@@ -611,6 +611,8 @@ it is unknown (for example, a folder of unmarked files).
 - A prose document's `replacements` step finds passages that say numbered sections are replaced as a whole ("Sections
   3.1 and 3.2 ... are amended to read in their entirety", "deleted in its entirety"). It is plain code on the text,
   using the class setting `replacement_pattern`, not a model. A change to part of a section does not match.
+- **Off by default** until this design is decided. A document class turns it on with
+  `replacement_pattern = ProseDocument.ENTIRETY`; the legal app's `Contract` does.
 - After the document's facts are saved, facts from earlier documents that share an entity with the facts quoting
   that passage, and that quote a replaced section, are retired: superseded by the most similar new fact from the
   same section of the new document, or ended when the new document gives no text for it.

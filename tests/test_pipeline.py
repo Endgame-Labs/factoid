@@ -26,6 +26,8 @@ class SourceFact(Fact):
 class Contract(ProseDocument):
     """A signed contract or an amendment to one."""
 
+    replacement_pattern = ProseDocument.ENTIRETY
+
     @property
     def source_datetime(self):
         return self.metadata["signed_at"]
@@ -333,3 +335,12 @@ def test_a_replaced_section_without_a_kept_instruction_fact(make_app, fake):
                     "Section 3.2 PAYMENT. Orion pays each royalty 60 days after the invoice.",
                     document_type=Contract, metadata={"signed_at": "1999-01-01T00:00:00Z"}, uri="a2.txt")
     assert Fact.get(base.facts[0].id).status == "superseded"
+
+
+def test_replaced_sections_are_off_by_default():
+    class Memo(ProseDocument):
+        """A memo."""
+
+    doc = Memo("1. Section 3.2 of the agreement is amended to read in its entirety as follows.")
+    assert doc.replacements(doc.segment()) == []
+
