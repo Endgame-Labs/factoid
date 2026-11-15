@@ -50,24 +50,24 @@ no longer a clean held-out set.
 
 | Suite | Tuning set | Held out (21 to 40) | Fresh (41 to 60) |
 | --- | --- | --- | --- |
-| CUAD clause detection (F1, mean AUPR) | 0.81, 0.97 | 0.83, 0.96 | 0.81, 0.95 |
-| CUAD gold clauses quoted by a kept fact | 0.97 | 0.93 | 0.93 |
-| CUAD dates: agreement, effective, expiration | 17/18, 13/14, 8/9 | 15/18, 9/12, 5/5 | 17/18, 7/7, 1/2 |
+| CUAD clause detection (F1, mean AUPR) | 0.82, 0.97 | 0.84, 0.97 | 0.81, 0.95 |
+| CUAD gold clauses quoted by a kept fact | 0.97 | 0.92 | 0.97 |
+| CUAD gold clauses quoted by a fact with the right trait | 0.83 | 0.82 | 0.83 |
+| CUAD dates: agreement, effective, expiration | 16/18, 12/14, 8/9 | 16/18, 10/12, 5/5 | 17/18, 7/7, 2/2 |
 
 | Amendment chains | NETGEAR, Federated, BioAmber | NEON Systems |
 | --- | --- | --- |
 | Supersessions found | 2/2 | 2/2 |
-| Untouched clauses kept | 4/4 | 0/1 |
+| Untouched clauses kept | 4/4 | 1/1 |
 | As-of search | 3/3 | 2/2 |
 | Dated windows | 2/2 | none labeled |
+| False changes to base facts | 3.0% | 7.1% (mostly real changes the gold labels do not list) |
 
 The sample deal (diligence suite) passes 12 of 12.
 
-NEON's restructured payment clause (Sections 3.1 and 3.2 "amended to read in their entirety") is now retired by the
-amendment's new Section 3.2, through the framework's replaced-sections step. Its one failing check is recall, not a
-false change: the authority representation ("all requisite power and authority ... and duly executed") is extracted
-as one compound sentence, and the repair does not split it, so it is rejected as not atomic. The four other Licensee
-representations next to it are kept and current. Most of NEON's 8% "false changes" are real changes to Sections 2.x,
-3.x, 14.1, 13.1, and 15.2 that the gold labels do not list.
+NEON's restructured payment clause (Sections 3.1 and 3.2 "amended to read in their entirety") is retired by the
+amendment's new Section 3.2 through the framework's replaced-sections step, and its compound authority
+representation is now split into one fact per claim. Two general fixes were tried first and removed; see SPEC section
+17 in the framework.
 
 Cost on CUAD: about 700 model calls and 1M tokens per contract, 60 to 95 seconds per contract at the median.
