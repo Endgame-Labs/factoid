@@ -985,9 +985,10 @@ diligence app (`factoid-legal`, a separate repo), scored on CUAD.
   misses: a base clause never kept as a fact (ScanSource's inventory claim window), a section deleted and replaced
   with fully redacted text (PC Quote), and one as-of question. These are the honest numbers for amendments; the
   chains used while tuning score higher.
-- **Results while tuning** (2026-11-15): every amendment check passes on all four chains (supersessions 4 of 4, untouched
-  clauses 5 of 5, as-of search 5 of 5, dated windows 2 of 2), the sample deal passes 12 of 12, and CUAD clause F1
-  is 0.82, 0.84, and 0.81 on contracts 1 to 20, 21 to 40, and 41 to 60.
+- **Results while tuning** (2026-11-15), with replaced sections on: every amendment check passed on the four chains
+  used while tuning (supersessions 4 of 4, untouched clauses 5 of 5, as-of search 5 of 5, dated windows 2 of 2),
+  the sample deal passed 12 of 12, and CUAD clause F1 was 0.82, 0.84, and 0.81 on contracts 1 to 20, 21 to 40,
+  and 41 to 60.
 - **Held-out check** (2026-11-15). The values above were tuned on CUAD contracts 1 to 20 and three amendment
   chains. On CUAD contracts 21 to 40, never looked at while tuning, clause F1 was 0.85 (0.82 on the tuning set),
   coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
