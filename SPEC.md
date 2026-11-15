@@ -906,10 +906,10 @@ Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
 - `docs/facts.md`, `docs/mental-model.md`, `docs/config.md`, `docs/plugins.md`, `docs/cli.md`, and
   `docs/potential/crm-starter.md` predate the entity redesign. `docs/config.md` and `docs/plugins.md` also describe
   the single-YAML design.
-- README.md was brought up to date with the decisions through 2026-11-15 (decision 55).
-- README.md does not yet cover decisions 56 to 60: steps as methods with `before_` and `after_` hooks, `@judge`, the
-  classifier registry, fact classes, and `FactoidTrait` replacing `FactoidLabel`. Its Classification section should
-  use the `TenantEmail` example from "Jev judges, code decides".
+- README.md is up to date with the decisions through 62, and uses the legal example (Acme buying Orion, and
+  Orion's supply agreement with Vega).
+- The `TenantEmail` example in "Jev judges, code decides" is from the old rental example. The README uses
+  `Contract.classify` instead.
 
 ## Decision log
 
@@ -1011,3 +1011,5 @@ All dates are 2026-11-13 unless noted.
     classes. Kind and lifetime are no longer called traits. The step that judges traits, kind, and lifetime in one
     request is `assess`; `characterize` is gone. (2026-11-15)
 62. The other-language README sketches in `docs/potential/README/` are removed. Python is the only language. (2026-11-15)
+63. The README's running example is legal due diligence (a firm advising Acme on buying Orion), replacing the
+    apartment-rental and CRM examples. (2026-11-15)
