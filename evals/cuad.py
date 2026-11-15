@@ -82,12 +82,14 @@ class Cuad(Suite):
     name = "cuad"
     description = "CUAD test split: clause traits and contract dates."
     parallel = 4
+    offset = 0
 
     def documents(self, limit: int | None = None):
         from legal.documents import Contract
 
         self.contracts = {}
-        for contract in load_contracts()[:limit]:
+        contracts = load_contracts()[self.offset:]
+        for contract in contracts[:limit]:
             doc_id = "cuad_" + re.sub(r"[^a-z0-9]+", "_", contract["title"].lower())[:80]
             self.contracts[doc_id] = contract
             yield Contract(contract["text"], uri=f"cuad:{contract['title']}", id=doc_id, title=contract["title"])
@@ -161,9 +163,24 @@ class Cuad(Suite):
                     continue
                 total += 1
                 quoting = [f for f in facts for q in f.quotes for s, e, _ in gold if overlaps((q.start, q.end), (s, e))]
-                if any(getattr(f, attribute) is not None and str(getattr(f, attribute).year) in years
+                # An end given as a length of time ("24 months from January 10, 2019") ends after the years shown.
+                computed = attribute == "valid_until" and re.search(r"\b(months?|years?)\b", " ".join(
+                    text for _, _, text in gold), re.I) is not None
+                if any(getattr(f, attribute) is not None and (
+                        str(getattr(f, attribute).year) in years
+                        or (computed and getattr(f, attribute).year > max(int(y) for y in years)))
                        for f in quoting):
                     hit += 1
             out[category] = {"field": attribute, "contracts": total,
                              "captured": round(hit / total, 3) if total else None}
         return out
+
+
+class CuadHeldOut(Cuad):
+    """Contracts 21 to 40 of the same shuffled test split. Never used while tuning floors, thresholds, or prompts
+    (tuning used contracts 1 to 20)."""
+
+    name = "cuad_heldout"
+    description = "CUAD test contracts 21 to 40, held out from tuning."
+    offset = 20
+

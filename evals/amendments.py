@@ -115,6 +115,40 @@ CHAINS: list[dict[str, Any]] = [
 ]
 
 
+# Held out: never looked at while tuning floors, thresholds, or prompts. Scored by `AmendmentsHeldOut`.
+HELD_OUT: list[dict[str, Any]] = [
+    {
+        "name": "neon",
+        "documents": [
+            {"key": "neon-base", "title": "NEONSYSTEMSINC_03_01_1999-EX-10.5-DISTRIBUTOR AGREEMENT_New",
+             "signed_at": "1996-01-01T00:00:00Z",
+             "name": "Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems"},
+            {"key": "neon-a1", "title": "NEONSYSTEMSINC_03_01_1999-EX-10.5-DISTRIBUTOR AGREEMENT_Amendment",
+             "start": r"FIRST AMENDMENT TO DISTRIBUTOR AGREEMENT", "signed_at": "1999-01-01T00:00:00Z",
+             "name": "First Amendment to the Distributor Agreement between Peregrine/Bridge and NEON Systems"},
+        ],
+        "supersedes": [
+            ("neon-base", "a licensee fee equal to 50% of all revenues received",
+             "neon-a1", "a royalty equal to the Specified Royalty Percentage of all revenues received"),
+            ("neon-base", "during the first year of the term hereof will be payable one hundred and twenty (120) days",
+             "neon-a1", "sixty (60) days after the date of the applicable invoice"),
+        ],
+        "unchanged": [
+            ("neon-base", "Licensee represents and warrants that it has all requisite power and authority to execute"),
+        ],
+        "as_of": [
+            ("How many days after the invoice must NEON Systems pay Peregrine/Bridge?", "1997-06-01T00:00:00Z",
+             ("neon-base", "during the first year of the term hereof will be payable one hundred and twenty (120) days"),
+             ("neon-a1", "sixty (60) days after the date of the applicable invoice")),
+            ("How many days after the invoice must NEON Systems pay Peregrine/Bridge?", "2000-01-01T00:00:00Z",
+             ("neon-a1", "sixty (60) days after the date of the applicable invoice"),
+             ("neon-base", "during the first year of the term hereof will be payable one hundred and twenty (120) days")),
+        ],
+        "time": [],
+    },
+]
+
+
 @dataclass
 class Located:
     doc_id: str
@@ -157,13 +191,15 @@ class Amendments(Suite):
     name = "amendments"
     description = "Real CUAD contract chains: supersession, as-of search, and time."
     parallel = 1  # a chain must be ingested in order
+    held_out = False
 
     def documents(self, limit: int | None = None):
         from legal.documents import Contract
 
         full = load_full()
         self.texts: dict[str, str] = {}
-        chains = CHAINS[:limit] if limit else CHAINS
+        source = HELD_OUT if self.held_out else CHAINS
+        chains = source[:limit] if limit else source
         self.chains = chains
         for chain in chains:
             for spec in chain["documents"]:
@@ -248,3 +284,10 @@ class Amendments(Suite):
         out["time_captured"] = round(good / total, 3) if total else None
         out["details"] = details
         return out
+
+
+class AmendmentsHeldOut(Amendments):
+    name = "amendments_heldout"
+    description = "A contract chain never used while tuning: the NEON Systems distributor agreement."
+    held_out = True
+
