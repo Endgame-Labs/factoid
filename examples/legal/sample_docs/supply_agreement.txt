@@ -1,0 +1,19 @@
+SUPPLY AGREEMENT
+
+This Supply Agreement (the "Agreement") is made on March 1, 2025 between Orion Robotics, Inc., a Delaware corporation ("Orion"), and Vega Components Corp., a Texas corporation ("Vega").
+
+1. SUPPLY. Vega will supply Orion with servo motors and controllers under purchase orders that Orion issues under this Agreement.
+
+2. TERM. This Agreement begins on March 1, 2025 and continues for three years, until February 28, 2028, unless terminated earlier under Section 8.
+
+3. MINIMUM PURCHASES. Orion will purchase at least 10,000 servo motors from Vega in each calendar year.
+
+4. ASSIGNMENT. Orion may not assign this Agreement, or any of its rights under it, without Vega's prior written consent. Vega will answer any request for consent within 15 business days after receiving it.
+
+5. CHANGE OF CONTROL. If a competitor of Vega acquires Orion, or acquires more than 50% of Orion's voting stock, Vega may terminate this Agreement by giving Orion 30 days' written notice.
+
+6. LIMITATION OF LIABILITY. Vega's total liability to Orion under this Agreement will not exceed $1,000,000.
+
+7. GOVERNING LAW. This Agreement is governed by the laws of the State of Delaware.
+
+8. TERMINATION. Either party may terminate this Agreement if the other party materially breaches it and does not cure the breach within 30 days after written notice.

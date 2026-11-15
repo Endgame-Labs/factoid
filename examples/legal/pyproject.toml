@@ -1,0 +1,15 @@
+[project]
+name = "factoid-legal"
+version = "0.1.0"
+description = "Legal due diligence on Factoid: contracts in, facts with legal traits out."
+requires-python = ">=3.13"
+dependencies = ["factoid"]
+
+[tool.uv.sources]
+factoid = { path = "../../factoid", editable = true }
+
+[tool.factoid]
+package = "legal"
+
+[dependency-groups]
+dev = ["pytest>=8"]

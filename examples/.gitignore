@@ -1,0 +1,10 @@
+# Keys and per-developer files
+.env
+*.env
+*.local
+# Data, caches, and outputs
+.factoid/
+data/
+runs/
+.venv/
+__pycache__/
