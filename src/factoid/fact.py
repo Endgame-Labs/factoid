@@ -221,7 +221,11 @@ class Fact(Registered, ModelCalls):
         if self.document is not None:
             state["document"] = {"type": self.document.type, "title": self.document.title,
                                  **self.document.context()}
-        state["similar_stored_facts"] = [f.text for f in self.similar]
+        app = current()
+        state["similar_stored_facts"] = [
+            {"text": f.text, "source": app.document_title(f.document_id), "date": _fmt(f.valid_from or f.source_datetime)}
+            for f in self.similar
+        ]
         return state
 
     # -- fact classes ---------------------------------------------------------------------------------------

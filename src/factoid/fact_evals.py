@@ -65,7 +65,7 @@ DEFAULT_FLOORS: dict[str, float] = {
     "self_contained": 0.4,
     "atomic": 0.25,
     "useful": 0.45,
-    "distinct": 0.3,
+    "distinct": 0.2,  # dropping a fact as a repeat needs the same confidence as a duplicate in resolve
 }
 
 QUESTIONS: dict[str, Noul] = {
@@ -102,7 +102,8 @@ QUESTIONS: dict[str, Noul] = {
         false="Not worth keeping.",
     ),
     "distinct": Noul(
-        "Is the fact different from every stored fact listed in similar_stored_facts? If none are listed, answer yes.",
+        "Is the fact different from every stored fact listed in similar_stored_facts? A fact from a different source "
+        "or date that gives a new or changed value is different. If none are listed, answer yes.",
         true="It states something no listed fact states.",
         false="A listed fact already states the same claim.",
     ),
