@@ -114,6 +114,7 @@ class SourceFact(Fact):
     """What a contract, a client, or the other side says."""
 
     traits = [*CUAD_TRAITS, ConsentRequired, Deadline]
+    max_length = 900  # contract clauses run long
 
 
 class CounselFact(Fact):
