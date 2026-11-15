@@ -201,3 +201,27 @@ def test_an_unsure_duplicate_keeps_the_new_fact(make_app, fake):
     second = app.ingest_text("Vega's liability to Orion is capped at $1M in total.", document_type=Contract,
                              metadata={"signed_at": "2025-04-01T00:00:00Z"}, uri="h.txt")
     assert len(second.facts) == 1 and second.duplicates == 0
+
+
+def test_a_compound_near_miss_is_split(make_app, fake):
+    app = build(make_app, fake)
+
+    def generator(prompt):
+        if "failed these checks" in prompt:
+            return json.dumps({"facts": ["Vega's liability to Orion is capped at $1M.",
+                                         "Orion may not assign the agreement without Vega's consent."]})
+        return extractor(prompt)
+
+    inner = fake.noul
+
+    def noul(question, state):
+        if "one claim" in question.instructions:
+            return 0.15 if " and " in state["fact"] else 0.9
+        return inner(question, state)
+
+    fake.generator, fake.noul = generator, noul
+    result = app.ingest_text("Vega's liability is capped at $1M and Orion may not assign the agreement.",
+                             document_type=Contract, metadata={"signed_at": "2025-03-01T00:00:00Z"})
+    assert sorted(f.text for f in result.facts) == ["Orion may not assign the agreement without Vega's consent.",
+                                                    "Vega's liability to Orion is capped at $1M."]
+    assert all(f.scores["repaired_from"] for f in result.facts) and all(f.quotes for f in result.facts)

@@ -7,6 +7,8 @@ Cited passages:
 - {{ passage }}
 {% endfor %}
 
-Rewrite the fact as one self-contained sentence that states one claim, supported by the passages. Name its subject
-and the people, companies, and documents it refers to. Keep who said it, and keep conditions, hedges, and negations.
-Answer with JSON only: {"text": "..."}
+Rewrite the fact as one self-contained sentence that states one claim, supported by the passages. If it states
+several claims, split it into one sentence per claim. Name the subject and the people, companies, and documents each
+sentence refers to. Keep who said it, and keep conditions, hedges, and negations, in the sentence they limit.
+Keep redaction markers such as [*] as they appear.
+Answer with JSON only: {"facts": ["...", "..."]}

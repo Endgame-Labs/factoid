@@ -269,16 +269,30 @@ class Fact(Registered, ModelCalls):
                 break
         return combined
 
-    def repair(self, result: EvalResult) -> str | None:
-        """One rewording for a near miss. Returns the new sentence, or None."""
+    def repair(self, result: EvalResult) -> list[str]:
+        """One repair for a near miss: a rewording, or a split into several facts when it states several claims.
+        Returns the new sentences, or an empty list."""
         prompt = render(type(self).repair_prompt, fact=self, failed=result.failed,
                         passages=[q.text for q in self.quotes])
         raw = self.generate(prompt, json_mode=True)
         try:
-            text = json.loads(raw).get("text")
-        except (json.JSONDecodeError, AttributeError):
-            return None
-        return text if isinstance(text, str) and text.strip() else None
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return []
+        if not isinstance(data, dict):
+            return []
+        texts = data.get("facts") if isinstance(data.get("facts"), list) else [data.get("text")]
+        return [t for t in texts if isinstance(t, str) and t.strip()][:6]
+
+    def copy(self, text: str) -> Fact:
+        """A new candidate with the same evidence and mentions, and a different sentence."""
+        clone = type(self)(text, quotes=self.quotes, mentions=[Mention(**{**vars(m), "entity_id": None})
+                                                                 for m in self.mentions],
+                           document=self.document, chunk_id=self.chunk_id, valid_from=self.valid_from,
+                           valid_until=self.valid_until, source_datetime=self.source_datetime,
+                           extracted_at=self.extracted_at, document_id=self.document_id)
+        clone.similar = self.similar
+        return clone
 
     @classmethod
     def assess_questions(cls) -> dict[str, Question]:

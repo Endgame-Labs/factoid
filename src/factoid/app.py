@@ -209,7 +209,7 @@ class Factoid:
             fact.vector = vector
             fact.similar = self._similar_facts(fact, vector, limit=3)
         evaluated = self.map(self._evaluate, kept)
-        passed = [f for f in evaluated if f is not None]
+        passed = [f for group in evaluated for f in group]
         self.map(lambda f: run_step(f, "assess"), passed)
         saved = []
         for fact in passed:
@@ -246,29 +246,39 @@ class Factoid:
             return fact
         return _recast(fact, chosen)
 
-    def _evaluate(self, fact: Fact) -> Fact | None:
+    def _evaluate(self, fact: Fact) -> list[Fact]:
+        """The facts to keep from one candidate: itself, its repair (a rewording or a split), or none."""
         result = run_step(fact, "evaluate")
         if result is SKIPPED:
-            return fact
-        if not result.passed and result.near_miss and type(fact).repair_enabled:
-            text = run_step(fact, "repair", result)
-            if text and text is not SKIPPED:
-                original = fact.text
-                fact.text = " ".join(text.split())
-                second = run_step(fact, "evaluate")
-                if second is not SKIPPED and second.passed:
-                    fact.scores["repaired_from"] = original
-                    fact.vector = self.client.embed([fact.text])[0]
-                    result = second
-                else:
-                    fact.text = original
+            return [fact]
+        if result.passed:
+            self._record(fact, result)
+            return [fact]
+        if result.near_miss and type(fact).repair_enabled:
+            texts = run_step(fact, "repair", result)
+            if texts and texts is not SKIPPED:
+                kept = []
+                for text in texts:
+                    candidate = fact.copy(" ".join(text.split()))
+                    second = run_step(candidate, "evaluate")
+                    if second is SKIPPED or second.passed:
+                        candidate.scores["repaired_from"] = fact.text
+                        if second is not SKIPPED:
+                            self._record(candidate, second)
+                        kept.append(candidate)
+                if kept:
+                    vectors = self.client.embed([c.text for c in kept])
+                    for candidate, vector in zip(kept, vectors):
+                        candidate.vector = vector
+                    return kept
+        self._record(fact, result)
+        self.rejected.append(Rejected(fact.text, result.failed, result.scores, fact.document_id))
+        return []
+
+    def _record(self, fact: Fact, result: Any) -> None:
         fact.scores.update(result.scores)
         if result.note:
             fact.scores["note"] = result.note
-        if not result.passed:
-            self.rejected.append(Rejected(fact.text, result.failed, result.scores, fact.document_id))
-            return None
-        return fact
 
     def _confirm(self, existing: Fact, new: Fact) -> None:
         """A duplicate confirms a stored fact: its quotes are added, which restarts the clock."""
