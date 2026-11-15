@@ -253,7 +253,7 @@ the old fact by rule, with no model call. Files that point to the same entity co
 
 ```python
 # documents.py
-from factoid import StructuredDocument, Identity, Ignore, Property, Text
+from factoid import Identity, Ignore, Property, StructuredDocument, Text
 from acme.entities import Agreement
 
 class ContractRegister(StructuredDocument):
@@ -459,7 +459,7 @@ to review. This is the general pattern: steps ask the decision model several sma
 decides from the probabilities.
 
 ```python
-from factoid import Choice, ProseDocument, Noul, judge
+from factoid import Choice, Noul, ProseDocument, judge
 
 class Contract(ProseDocument):
     """A signed contract or an amendment to one."""
