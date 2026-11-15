@@ -238,6 +238,12 @@ class Factoid:
         for fact in facts:
             if not fact.replaces_sections:
                 continue
+            # The extractor proposes; the decision model confirms the sections are replaced as a whole.
+            whole = self.client.ask(fact.state(), {"whole": Noul(
+                "Does the fact say the named sections are replaced as a whole: deleted, or amended to read in their "
+                "entirety? A change to part of a section, or an addition to it, is not.")})["whole"]
+            if whole < type(fact).replace_threshold:
+                continue
             entity_ids = sorted({m.entity_id for m in fact.mentions if m.entity_id})
             if not entity_ids:
                 continue
