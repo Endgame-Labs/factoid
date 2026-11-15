@@ -31,10 +31,11 @@ Passages:
 Cite passages by number. Do not copy quote text.
 For each fact, list the things it mentions by name, with a short lowercase kind for each (such as "company",
 "person", "agreement", "court", or "product") and a role: "subject" for what the fact is mainly about, otherwise
-"about". When the text gives an exact date the fact takes effect, write it as valid_from. When it gives an exact date
+"about". Use each thing's full name, and list other names the document uses for it as aliases, such as a defined
+short name ("Vega" for Vega Components Corp.) or an abbreviation. When the text gives an exact date the fact takes effect, write it as valid_from. When it gives an exact date
 the fact ends or is due, write it as valid_until. Resolve relative dates against the document's date. Use ISO-8601
 with a timezone, such as 2027-01-01T00:00:00Z. Leave either out when the text gives no exact date.
 
 Answer with JSON only:
-{"facts": [{"text": "...", "passages": [1], "mentions": [{"name": "...", "kind": "...", "role": "subject"}],
+{"facts": [{"text": "...", "passages": [1], "mentions": [{"name": "...", "kind": "...", "role": "subject", "aliases": []}],
 "valid_from": null, "valid_until": null}]}

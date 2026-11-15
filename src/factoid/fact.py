@@ -64,6 +64,7 @@ class Mention:
     method: str | None = None
     confidence: float | None = None
     keys: dict[str, str] = field(default_factory=dict)
+    aliases: list[str] = field(default_factory=list)  # other names the source uses for the same thing
 
 
 RESOLVE_ANSWERS: dict[str, str] = {

@@ -209,19 +209,29 @@ def link_mention(mention: Mention, fact: Fact) -> None:
         entity_id = store.entity_by_key(key, value)
         if entity_id:
             return _linked(mention, entity_id, "key", 1.0)
-    # 3: same document
+    # 3: same document, by name or by an alias the document gave
     norm = " ".join(mention.text.lower().split())
+    names = [norm, *(" ".join(a.lower().split()) for a in mention.aliases)]
     doc_names = app.document_entities.setdefault(fact.document_id or "", {})
-    if norm in doc_names:
-        return _linked(mention, doc_names[norm], "document_name", 1.0)
+    for name in names:
+        if name in doc_names:
+            _remember(doc_names, names, doc_names[name])
+            return _linked(mention, doc_names[name], "document_name", 1.0)
     # remembered placeholder decisions
     if norm in app.placeholders:
         mention.method = "placeholder"
         return None
-    # 4: one entity in the store with that name
+    # 4: one entity in the store with that name or alias
     rows = store.entities_named(mention.text)
+    if not rows:
+        for alias in mention.aliases:
+            rows = store.entities_named(alias)
+            if rows:
+                break
     if len(rows) == 1:
-        doc_names[norm] = rows[0]["id"]
+        _remember(doc_names, names, rows[0]["id"])
+        for alias in mention.aliases:
+            app.add_alias(rows[0]["id"], alias)
         return _linked(mention, rows[0]["id"], "store_name", 1.0)
     # 5: ask about close candidates
     candidates = rows or app.similar_entities(mention.text, limit=5)
@@ -233,6 +243,7 @@ def link_mention(mention: Mention, fact: Fact) -> None:
                              entity={"name": row["name"]})
             questions[f"E{i}"] = Noul(wording.strip())
         state = {"fact": fact.text, "mention": mention.text, "mention_kind": mention.kind,
+                 "mention_aliases": mention.aliases,
                  "candidates": {f"E{i}": {"name": r["name"], "kind": r["kind"],
                                           "aliases": json.loads(r["aliases"])} for i, r in enumerate(candidates)}}
         judgments = app.client.ask(state, questions)
@@ -241,8 +252,9 @@ def link_mention(mention: Mention, fact: Fact) -> None:
         cls = app.entity_class(candidates[best]["class"])
         if p >= cls.link_threshold:
             entity_id = candidates[best]["id"]
-            store.add_alias(entity_id, mention.text)
-            doc_names[norm] = entity_id
+            for alias in [mention.text, *mention.aliases]:
+                app.add_alias(entity_id, alias)
+            _remember(doc_names, names, entity_id)
             return _linked(mention, entity_id, "decision", p)
     # discovery: route to a class, refuse placeholders, or create
     entity = discover_entity(mention, fact)
@@ -252,7 +264,9 @@ def link_mention(mention: Mention, fact: Fact) -> None:
         return None
     for key, value in keys.items():
         store.save_entity_key(key, value, entity.id)
-    doc_names[norm] = entity.id
+    for alias in mention.aliases:
+        app.add_alias(entity.id, alias)
+    _remember(doc_names, names, entity.id)
     _linked(mention, entity.id, "created", 1.0)
     app.claim(entity)
     return None
@@ -279,6 +293,11 @@ def discover_entity(mention: Mention, fact: Fact) -> Entity | None:
             cls = app.entity_class(best)
     kind = mention.kind if cls is Entity else None
     return cls.create(mention.text, kind=kind)
+
+
+def _remember(doc_names: dict[str, str], names: list[str], entity_id: str) -> None:
+    for name in names:
+        doc_names.setdefault(name, entity_id)
 
 
 def _linked(mention: Mention, entity_id: str, method: str, confidence: float) -> None:

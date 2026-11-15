@@ -121,3 +121,37 @@ def test_failed_floors_reject(make_app, fake):
     result = app.ingest_text("Vega's liability is capped at $1M.", document_type=Contract,
                              metadata={"signed_at": "2025-03-01T00:00:00Z"})
     assert result.facts == [] and result.rejected[0].reasons == ["jev_floors.useful"]
+
+
+def test_aliases_link_short_names_across_documents(make_app, fake):
+    app = build(make_app, fake)
+
+    def generator(prompt):
+        name = "Vega Components Corp." if "Components" in prompt else "Vega"
+        aliases = ["Vega"] if name != "Vega" else []
+        n = int(re.search(r"^\[(\d+)\]", prompt, re.M).group(1))
+        return json.dumps({"facts": [{"text": f"{name} supplies servo motors to Orion under a contract.",
+                                      "passages": [n],
+                                      "mentions": [{"name": name, "kind": "company", "aliases": aliases}]}]})
+
+    fake.generator = generator
+    app.ingest_text("Vega Components Corp. (\"Vega\") supplies servo motors.", document_type=Contract,
+                    metadata={"signed_at": "2025-03-01T00:00:00Z"}, uri="a.txt")
+    app.ingest_text("Vega supplies the motors.", document_type=Contract,
+                    metadata={"signed_at": "2025-04-01T00:00:00Z"}, uri="b.txt")
+    vega = Company.find("Vega")
+    assert vega is not None and vega.name == "Vega Components Corp."
+    assert {f.document_id for f in vega.facts()} == {"doc_" + __import__("hashlib").sha256(b"a.txt").hexdigest()[:16],
+                                                     "doc_" + __import__("hashlib").sha256(b"b.txt").hexdigest()[:16]}
+
+
+def test_as_of_search_sees_facts_valid_then(make_app, fake):
+    app = build(make_app, fake)
+    app.ingest_text("Vega's liability to Orion is capped at $1M.", document_type=Contract,
+                    metadata={"signed_at": "2025-03-01T00:00:00Z"}, uri="c.txt")
+    app.ingest_text("Amendment 2 raises Vega's liability cap to Orion to $2M from January 1, 2027.",
+                    document_type=Contract, metadata={"signed_at": "2026-10-03T00:00:00Z"}, uri="d.txt")
+    before = Fact.search("liability cap", as_of="2026-06-01T00:00:00Z")
+    after = Fact.search("liability cap", as_of="2027-06-01T00:00:00Z")
+    assert "$1M" in before[0].fact.text and before[0].fact.status == "superseded"
+    assert "$2M" in after[0].fact.text

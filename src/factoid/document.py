@@ -356,8 +356,10 @@ class ProseDocument(Document):
                 if isinstance(m, dict) and isinstance(m.get("name"), str) and m["name"].strip():
                     role = m.get("role") if m.get("role") in ("subject", "about", "speaker") else "about"
                     kind = m.get("kind") if isinstance(m.get("kind"), str) else None
+                    aliases = [a.strip() for a in m.get("aliases") or [] if isinstance(a, str) and a.strip()
+                               and a.strip().lower() != m["name"].strip().lower()]
                     mentions.append(Mention(text=m["name"].strip(), kind=(kind or "").strip().lower() or None,
-                                            role=role))
+                                            role=role, aliases=aliases))
             out.append(Fact(item["text"], quotes=quotes, mentions=mentions, document=self, chunk_id=chunk.id,
                             source_datetime=dated, valid_from=_date_or_none(item.get("valid_from")),
                             valid_until=_date_or_none(item.get("valid_until"))))

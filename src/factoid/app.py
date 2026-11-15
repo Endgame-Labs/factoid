@@ -336,6 +336,14 @@ class Factoid:
         self.index.upsert(self.ns("entities"), [{"id": entity.id, "text": " ".join([entity.name, *entity.aliases]),
                                                  "class": type(entity).__qualname__}])
 
+    def add_alias(self, entity_id: str, alias: str) -> None:
+        """Record another name for an entity, and make it findable by that name."""
+        self.store.add_alias(entity_id, alias)
+        row = self.store.entity_row(entity_id)
+        if row is not None:
+            names = [row["name"], *json.loads(row["aliases"])]
+            self.index.upsert(self.ns("entities"), [{"id": row["id"], "text": " ".join(names), "class": row["class"]}])
+
     def load_entity(self, entity_id: str) -> Entity | None:
         row = self.store.entity_row(entity_id)
         if row is None:
@@ -434,7 +442,9 @@ class Factoid:
             if fact is None:
                 continue
             if not include_retired and fact.status not in ("current", "contradicted"):
-                continue
+                # with as_of, a superseded or ended fact still counts if it was valid then
+                if as_of is None or fact.status not in ("superseded", "ended") or fact.valid_until is None:
+                    continue
             p = fact.valid_at(moment)
             if valid_at is not None and fact.valid_at(parse_datetime(valid_at)) < 0.5:
                 continue
