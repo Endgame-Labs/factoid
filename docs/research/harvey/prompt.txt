@@ -1,0 +1,21 @@
+Research task. Use web search heavily. Read primary sources where you can: Harvey's own blog, engineering posts, product docs, press releases, customer case studies, conference talks, podcasts and interviews with its founders and engineers, OpenAI's case studies about Harvey, partner announcements (such as LexisNexis), job postings, and credible reporting. Cite a URL for every claim. Mark anything you infer, rather than read, as "inferred".
+
+## The subject
+
+Harvey (harvey.ai), the AI company for law firms and legal teams.
+
+## What I want to know
+
+1. Architecture: models and model partners, fine-tuning or custom models, retrieval, agents, how they ground answers and cite sources, evaluation (such as BigLaw Bench), and the main products (Assistant, Vault, Workflows, Knowledge sources, and anything newer). How documents flow in and what comes out.
+2. Domain: who uses it, for what tasks (diligence, contract review, litigation, regulatory research, drafting), and which document types dominate.
+3. How Harvey treats facts and extracted information: do they extract structured fields or facts from documents (for example, Vault's review tables with columns), how they handle citations to the source passage, conflicting information across documents, dates and effective periods, jurisdiction, versions of a document, privilege and confidentiality, and hallucination control.
+4. Traits for legal facts. Context: I am designing Factoid, a framework that turns documents into facts. A fact is one self-contained sentence with exact source quotes, linked to entities. Each fact can carry zero or more project-defined "traits": a trait is a definition (a docstring) that a small decision model judges per fact, by default as a yes-or-no question, optionally with code. Examples from a CRM project: PainPoint, UseCase, Competitor, Pricing, NextStep. Separately, each fact has exactly one built-in "kind" (fixed, state, event, decision, plan, forecast, or rule) that sets how it expires, and a project can have a few "fact classes" for different kinds of evidence (for example, what a client said versus what our own lawyers concluded).
+   - From what Harvey does (and what review-table columns, workflows, and legal practice suggest), propose the traits a legal Factoid project would want. Group them by practice area or task: M&A diligence, contract review and negotiation, litigation and discovery, regulatory and compliance, and employment or others you find.
+   - For each trait: a one-line docstring as it would appear in code, an example fact sentence that has it, and where the idea comes from (a cited Harvey source, or "legal practice", or "inferred").
+   - Say which traits would need code beyond a yes-or-no question (for example, Deadline needs a date; Governing law needs a jurisdiction), and which would be better as entities (a party, a court, a statute) or as a fact class (privileged versus not) than as traits.
+   - Say what legal corpora would stress Factoid's built-in kinds and expiration (for example, superseded statutes, amended contracts, effective dates in the future).
+5. What Factoid should learn from Harvey: features or design choices worth copying, and mistakes or limits they have hit, if public.
+
+## Output
+
+Markdown, with headings for the five parts above, then a "Sources" list of every URL you used. Be specific and concise. Plain words. Do not pad. If public information is thin on a point, say so instead of guessing.
