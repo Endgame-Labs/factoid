@@ -9,7 +9,6 @@ class Contract(ProseDocument):
     not_for = "Emails, memos, and drafts that discuss a contract."
     fact_classes = [SourceFact]  # a contract says what it says; our lawyers' views come from elsewhere
     sentence_passages = True  # quotes are single sentences, so a fact cites exactly the clause it rests on
-    replacement_pattern = ProseDocument.ENTIRETY  # amendments that rewrite a section retire its old facts
     chunk_size = 6000
     chunk_overlap = "10%"
     guidance = (
