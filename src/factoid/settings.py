@@ -26,6 +26,8 @@ class Settings:
     data_dir: ClassVar[str] = ".factoid"
     #: The model for each workload: choose, generate, embed, and (optional) rerank.
     models: ClassVar[dict[str, Model]] = DEFAULT_MODELS
+    #: The system of record. `None` means `.factoid/store.db` under `data_dir`.
+    store: ClassVar[Any] = None
     #: The search backend. `None` means the built-in local index in the project's SQLite store.
     search: ClassVar[Any] = None
     #: How many model calls run at once.
