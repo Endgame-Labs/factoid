@@ -174,10 +174,10 @@ class CounselEmail(ProseDocument):
     def source_datetime(self):
         return self.metadata["sent_at"]
 
-    def extract(self, passages):
+    def extract(self, chunk):
         # Summarize the quoted thread first, then extract with that summary as context.
-        thread = self.generate(template("prompts/thread_summary.md.j2"), passages=passages)
-        return super().extract(passages, thread=thread)
+        thread = self.generate(template("prompts/thread_summary.md.j2"), passages=chunk.passages)
+        return super().extract(chunk, thread=thread)
 ```
 
 Every document has `source_datetime`, its own date from its metadata, such as an email's sent time, a contract's signing
