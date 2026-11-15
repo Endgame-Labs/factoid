@@ -903,6 +903,35 @@ Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
 - The `TenantEmail` example in "Jev judges, code decides" is from the old rental example. The README uses
   `Contract.classify` instead.
 
+## 17. Implementation status
+
+The first code is in `src/factoid`. It follows this spec, with these differences and gaps. Each is either a choice
+the code had to make that the spec leaves open, or work not done yet. The first app built on it is the legal
+diligence app (`factoid-legal`, a separate repo), scored on CUAD.
+
+- **Built:** prose documents (segment, chunk, situate, extract), steps as methods with `before_` and `after_` hooks,
+  `@judge` with Noul, Choice, and Score, the document classifier registry, fact classes with per-fact
+  classification, traits with `decide`, time properties, the fact eval chain with repair, entity linking with the
+  five-step ladder, discovery, untyped entities and claiming, resolve with the six answers, the SQLite store with an
+  event log, search over facts and chunks with freshness weighting, the model client with a replay cache, `factoid`
+  CLI commands (`init`, `ingest`, `search`, `read`, `stats`, `entities`, `steps show`, `classifiers show`,
+  `prompts show`, `keys set`, `models`, `doctor`, and `eval`), and the eval harness with `--vary`.
+- **Search backend:** with no `search` setting, a project uses `LocalIndex`, a SQLite file with FTS5 for BM25 and
+  exact vector search. `Turbopuffer` is built and used when set. The spec says a project needs turbopuffer; the
+  local index makes tests and small projects work without it.
+- **`Nli`** is in the default chain but runs only when a project sets an `nli` model. With none set, it is skipped
+  and the scorecard says so, so the working default chain is `JevFloors`.
+- **Starting floors** for `JevFloors` are fixed values until calibration is built.
+- **Not built yet:** `StructuredDocument` (waits for prosaic), `factoid struct`, sources (`imap`, `mcp`), MCP and
+  HTTP serving, `factoid setup`, fact-class trust and visibility, entity `merge`, `split`, and `retype` commands,
+  fingerprint-driven `rebuild`, and decision models other than Jev.
+- **`situate`:** the setting `situate = True` runs the built-in step (`situate_chunk`); a method named `situate` on a
+  class replaces it.
+- **A duplicate** adds its quotes to the stored fact, which restarts its clock, and writes no event.
+- **A passed deadline** (Open in "Time on a fact") is scored as one half in validity until it is decided.
+- **Keys:** with no key set for a provider, the client calls that provider's exe.dev integration host, which injects
+  credentials. With a key set, it calls the vendor.
+
 ## Decision log
 
 All dates are 2026-11-13 unless noted.
