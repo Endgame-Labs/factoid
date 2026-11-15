@@ -39,11 +39,10 @@ Audiences, which the design has to serve at once:
 | Project and repo | Factoid, `Endgame-Labs/factoid` (renamed from Factorial on 2026-11-13) |
 | Command | `factoid` |
 | Python package | `factoid` |
-| Base classes | `FactoidDocument`, `FactoidFact`, and `FactoidEntity` |
+| Base classes | `Document` (with `ProseDocument` and `StructuredDocument`), `Fact`, `FactTrait`, `FactKind`, `Entity`, and `Settings`, with no `Factoid` prefix (Kyle, 2026-11-15). Import them from `factoid`. |
 | Example company in docs | Acme Corp, project name `acme`. Acme's shared fact class is `AcmeBaseFact`. |
 
-**Proposed.** `FactoidTrait` and `FactoidSettings` follow the same prefix. `FactoidSettings` avoids a clash with
-`BaseSettings` in `pydantic-settings`.
+**Open.** `FactKind` keeps its name until kind versus trait is settled (see "Kinds and expiration").
 
 Do not use the names "Rails" or "Django" in docs or file names.
 
@@ -65,7 +64,7 @@ file before the repo is made public.
 
 **Decided** (Kyle, 2026-11-14): **prosaic is a separate repo and a dependency** (`Endgame-Labs/prosaic`). Endgame will
 use it too. prosaic turns rows into sentences with cell citations and knows nothing about Factoid. Factoid builds
-`FactoidStructuredDocument` on it and adds entities, linking, and supersede by row key. See "Prose and structured
+`StructuredDocument` on it and adds entities, linking, and supersede by row key. See "Prose and structured
 documents" in section 8.
 
 **Proposed: Pydantic.** Use it underneath: model output schemas, stored records, and validating class settings when a
@@ -112,7 +111,7 @@ attribute such as `chunk_size = 4000` (tested on Pydantic 2.14), and plain attri
 
 ### Fact classes
 
-**Decided** (Kyle, 2026-11-15). A `FactoidFact` subclass is like a model without custom fields: a fact's fields are
+**Decided** (Kyle, 2026-11-15). A `Fact` subclass is like a model without custom fields: a fact's fields are
 fixed, and the class holds the rules and behavior around them. Many projects have one fact class, and many have a few.
 
 - **One class per project** is the common case: the project's rules for facts.
@@ -133,24 +132,24 @@ fixed, and the class holds the rules and behavior around them. Many projects hav
 8. Queries scoped to the class: `InternalFact.search(...)`.
 
 With several fact classes, each extracted fact is classified on its own, with the same registry pattern as documents:
-every `FactoidFact` subclass registers itself and has a `classify(fact, judgments)` classmethod, and the central
+every `Fact` subclass registers itself and has a `classify(fact, judgments)` classmethod, and the central
 classifier picks one class per fact. Its class is picked before its traits, since the class says which traits are
 asked. Known structure helps: a quote's speaker from a transcript or an email header. A document can optionally narrow
 the candidates (`fact_classes = [InternalFact]` on a sales Slack channel); otherwise every fact class is a candidate.
 
 ## 6. Traits
 
-**Decided** (Kyle, 2026-11-15). A trait is a `FactoidTrait` subclass (earlier drafts called these labels). A simple
+**Decided** (Kyle, 2026-11-15). A trait is a `FactTrait` subclass (earlier drafts called these labels). A simple
 trait is just its docstring; a trait that needs more holds settings and code on the class. A fact class lists the
 traits it asks, so one trait can be shared by several fact classes.
 
 ```python
-from factoid import FactoidFact, FactoidTrait, Noul, judge
+from factoid import Fact, FactTrait, Noul, judge
 
-class PainPoint(FactoidTrait):
+class PainPoint(FactTrait):
     """A problem the customer says they have today."""
 
-class Pricing(FactoidTrait):
+class Pricing(FactTrait):
     """Budget, price, discount, or contract terms."""
     threshold = 0.8
     examples = ["Globex's budget for the tool is $40k a year."]
@@ -164,7 +163,7 @@ class Pricing(FactoidTrait):
     def after_supersede(cls, fact, older):
         notify(fact.account.owner, f"Pricing changed: {older.text} → {fact.text}")
 
-class CustomerFact(FactoidFact):
+class CustomerFact(Fact):
     traits = [PainPoint, Pricing]
 ```
 
@@ -206,15 +205,15 @@ lifetime "traits"; that word now means what labels did, section 6.)
   - rule: a policy, obligation, definition, or "if X then Y", as in leases, laws, and runbooks.
   - General world knowledge has no kind of its own. "Water boils at 100°C at sea level" is fixed. "Paris is the capital
     of France" is a state with the longest lifetime range.
-- **Kinds are declared on `FactoidFact`** (Decided, Kyle, 2026-11-15), so a project can override and extend them.
-  Proposed shape: a kind is a small `FactoidKind` class, like a trait. Its docstring is the rubric the model reads, and
+- **Kinds are declared on `Fact`** (Decided, Kyle, 2026-11-15), so a project can override and extend them.
+  Proposed shape: a kind is a small `FactKind` class, like a trait. Its docstring is the rubric the model reads, and
   three attributes set its behavior:
   - `expires`: `"never"` (fixed, event, and decision: true for good, as history), `"estimated"` (state and rule: they
     last until something changes them, so the model estimates how long that usually takes), or `"at_deadline"` (plan
     and forecast: the fact carries a deadline).
   - `on_disagree`: `"contradict"` (fixed, event, and decision) or `"supersede"` (state, rule, plan, and forecast).
   - `after_deadline`: `"overdue"` (plan) or `"unsettled"` (forecast). Only for `expires="at_deadline"`.
-  - `FactoidFact.kinds` lists the built-ins. A subclass adds to the list (`kinds = FactoidFact.kinds + [Symptom]`),
+  - `Fact.kinds` lists the built-ins. A subclass adds to the list (`kinds = Fact.kinds + [Symptom]`),
     replaces it, or overrides one built-in by subclassing it (`class State(kinds.State)`) with new wording or behavior.
 - **Expiration** (Kyle, 2026-11-15). Decided per fact, not per kind: the kind says whether a fact expires, but how soon
   can't be known at dev time.
@@ -239,7 +238,7 @@ lifetime "traits"; that word now means what labels did, section 6.)
 
 ## 7. Entities
 
-**Decided.** Entities are a base class (`FactoidEntity`), and a fact links to one or more of them.
+**Decided.** Entities are a base class (`Entity`), and a fact links to one or more of them.
 
 **Proposed.**
 
@@ -276,7 +275,7 @@ unlinked facts, and reversible merges (`docs/prior-art.md`, and the research sum
 
 ### Relations between entities
 
-**Decided** (Kyle, 2026-11-14). Relations are not declared. There is no `FactoidRelation` class and no relation schema.
+**Decided** (Kyle, 2026-11-14). Relations are not declared. There is no `Relation` class and no relation schema.
 
 **Proposed.**
 
@@ -311,7 +310,7 @@ entity", and "a discovered entity is stored only with a strong identity or when 
 **Proposed.**
 
 - Discovery asks the decision model which declared class an entity is, with "none of these" as an option. With no
-  match, the entity is a plain `FactoidEntity`.
+  match, the entity is a plain `Entity`.
 - An untyped entity carries a free-text `kind` written by discovery ("S.F. Giants" is a "baseball team"), normalized
   to lowercase and singular.
 - `factoid entities kinds` lists kinds by entity and fact count. `factoid entities retype --kind "baseball team"
@@ -333,7 +332,7 @@ entity", and "a discovered entity is stored only with a strong identity or when 
 - **The discovery prompt teaches altitude.** It says which things make sense as entities: things with an identity that
   facts can be about over time (people, organizations, accounts, deals, tickets, products, projects, events such as a
   game or a meeting). It also says which do not: amounts, dates, generic nouns, and placeholders.
-- **Every entity has a property bag.** `FactoidEntity` has `props`, a JSON dict, so untyped entities can hold
+- **Every entity has a property bag.** `Entity` has `props`, a JSON dict, so untyped entities can hold
   properties too.
 - **Typed entities declare properties, without an ORM** (Kyle, 2026-11-14, revising the earlier "like an ORM model").
   A subclass lists property names and types. They are validated on write and queryable, and live in the same JSON
@@ -368,9 +367,9 @@ structured rows, source records, and edits, so they always have clear provenance
 
 | Class | Hooks |
 | --- | --- |
-| `FactoidDocument` | `classify`, `segment`, `chunk`, `situate`, `extract`, and `discover` (prose); `read`, `row_facts`, and `discover` (structured) |
-| `FactoidFact` | `validate`, `evaluate`, `repair`, `assess`, `link`, and `resolve` |
-| `FactoidEntity` | `identify`, `claim`, `merge`, and `split` |
+| `Document` | `classify`, `segment`, `chunk`, `situate`, `extract`, and `discover` (prose); `read`, `row_facts`, and `discover` (structured) |
+| `Fact` | `validate`, `evaluate`, `repair`, `assess`, `link`, and `resolve` |
+| `Entity` | `identify`, `claim`, `merge`, and `split` |
 
 The full list, with classmethods and instance methods, is in "Steps are methods".
 
@@ -398,9 +397,9 @@ callbacks (`on_added` and the rest are gone).
 
 | Class | Classmethods | Instance methods |
 | --- | --- | --- |
-| `FactoidDocument` | `classify(raw, judgments)` | Prose: `segment`, `chunk`, `situate`, and `extract`. Structured: `read` and `row_facts`. Both: `discover`, `context`, the `source_datetime` property, and `ingest`, which runs the steps in order |
-| `FactoidFact` | Reads, such as `search` | `validate`, `evaluate`, `repair`, `assess` (traits, kind, and lifetime, in one request), `expiration`, `link`, `resolve`, and `save`; outcomes `supersede`, `end`, `correct`, `contradict`, `retract`, and `restore` |
-| `FactoidEntity` | `identify(mention)`, `create`, and reads `find` and `where` | `claim`, `merge`, `split`, `retype`, `related`, and `facts` |
+| `Document` | `classify(raw, judgments)` | Prose: `segment`, `chunk`, `situate`, and `extract`. Structured: `read` and `row_facts`. Both: `discover`, `context`, the `source_datetime` property, and `ingest`, which runs the steps in order |
+| `Fact` | Reads, such as `search` | `validate`, `evaluate`, `repair`, `assess` (traits, kind, and lifetime, in one request), `expiration`, `link`, `resolve`, and `save`; outcomes `supersede`, `end`, `correct`, `contradict`, `retract`, and `restore` |
+| `Entity` | `identify(mention)`, `create`, and reads `find` and `where` | `claim`, `merge`, `split`, `retype`, `related`, and `facts` |
 
 - Overriding an outcome (such as `supersede`) and calling `super()`, or defining `after_supersede`, is how a project
   reacts to a change. An agent outside the project reads the event log instead.
@@ -422,9 +421,9 @@ default, not the ideal.
 - The example the docs use:
 
 ```python
-from factoid import Choice, FactoidProseDocument, Noul, judge
+from factoid import Choice, ProseDocument, Noul, judge
 
-class TenantEmail(FactoidProseDocument):
+class TenantEmail(ProseDocument):
     """An email from a tenant to the leasing office."""
 
     @classmethod
@@ -447,7 +446,7 @@ class TenantEmail(FactoidProseDocument):
 | Level | What the user writes |
 | --- | --- |
 | 0. Nothing | No code. The defaults run. |
-| 1. Declare types | Classes with a description (`FactoidDocument`, `FactoidEntity`, `FactoidTrait`, and so on). |
+| 1. Declare types | Classes with a description (`Document`, `Entity`, `FactTrait`, and so on). |
 | 2. Tune a type | Settings on the class: guidance, examples, thresholds, and which model it uses. |
 | 3. Replace a step's wording | A question for a decision step, or a prompt for a generation step. |
 | 4. Replace a step's logic | Override the hook method, and call `super()` to keep the default. |
@@ -466,13 +465,13 @@ Every step offers levels 2 to 4. What level 3 holds depends on the kind of step:
 There is no lookup by naming convention.
 
 ```python
-from factoid import FactoidEntity, template
+from factoid import Entity, template
 
-class Customer(FactoidEntity):
+class Customer(Entity):
     """A company that buys from us or might."""
     link_question = "Is this mention the same company as {{ entity.name }}?"   # a string
 
-class CallTranscript(FactoidProseDocument):
+class CallTranscript(ProseDocument):
     """A recorded sales call."""
     extract_prompt = template("prompts/call_extract.md")                       # a file
 ```
@@ -526,8 +525,8 @@ situation in front of its text. When it is off, the chunk's text alone is indexe
 
 **Decided** (Kyle, 2026-11-14).
 
-- `FactoidDocument` is an abstract base with two kinds under it. `FactoidProseDocument` is text, and runs segment,
-  chunk, situate, and extract. `FactoidStructuredDocument` is rows: CSV, JSONL, a JSON array, or records from a source.
+- `Document` is an abstract base with two kinds under it. `ProseDocument` is text, and runs segment,
+  chunk, situate, and extract. `StructuredDocument` is rows: CSV, JSONL, a JSON array, or records from a source.
 - A structured document has a **column map**, worked out once per file layout and not once per row. Each column is one
   of: an identity of an entity (an exact link, with no model call), a value with a sentence template (one fact per
   value), free text (run through the prose pipeline with the row's entities already known), or ignored.
@@ -556,7 +555,7 @@ situation in front of its text. When it is off, the chunk's text alone is indexe
 - Provenance for a structured fact is the cell, with the file, row, and column.
 - On re-import, a changed value for the same row key and column supersedes the old fact by rule, with no model call.
 - A file is matched to a structured class by its header first. The decision model is the fallback.
-- **A parser is a Python class.** A `FactoidStructuredDocument` subclass is the parser: the column map at level 2,
+- **A parser is a Python class.** A `StructuredDocument` subclass is the parser: the column map at level 2,
   templates at level 3, and `row_facts(row)` at level 4.
 - **Factoid can write the parser.** A command sends a model the parser prompt, the file's inspection, and a truncated
   sample of the file, and writes the class to a Python file. The prompt is a markdown file in the package, like other
@@ -599,7 +598,7 @@ it is unknown (for example, a folder of unmarked files).
 
 **Proposed.**
 
-- Every `FactoidDocument` subclass registers itself when it is defined (`__init_subclass__`), so the registry builds
+- Every `Document` subclass registers itself when it is defined (`__init_subclass__`), so the registry builds
   itself. The central classifier loops over the registry.
 - Each class's `classify(raw, judgments)` classmethod returns `True`, `False`, or `None` (not sure), or a score. A class
   can declare factor questions with `@judge` (see "Jev judges, code decides").
@@ -616,7 +615,7 @@ it is unknown (for example, a folder of unmarked files).
 **fact evals** (base class `FactEval`), not judges. A fact eval answers one question: keep this fact, or not.
 Assessing, linking, and resolving are separate decisions about facts already kept.
 
-Names that follow: the `FactoidFact` hook is `evaluate`, the class attribute is `fact_evals`, the module is
+Names that follow: the `Fact` hook is `evaluate`, the class attribute is `fact_evals`, the module is
 `factoid.fact_evals`, a project's file is `fact_evals.py`, and the eval switch is `--vary fact_evals=...`.
 
 Note the overlap with `factoid eval`, which scores a whole configuration against labeled data. The two are different
@@ -902,7 +901,6 @@ Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
 
 ## 16. Docs that lag the design
 
-- The README intro names the base classes `Document`, `Fact`, and `Entity`. The body uses the `Factoid` prefix.
 - `docs/facts.md`, `docs/mental-model.md`, `docs/config.md`, `docs/plugins.md`, `docs/cli.md`, and
   `docs/potential/crm-starter.md` predate the entity redesign. `docs/config.md` and `docs/plugins.md` also describe
   the single-YAML design.
@@ -1015,3 +1013,5 @@ All dates are 2026-11-13 unless noted.
     (2026-11-15)
 63. The README's running example is legal due diligence (a firm advising Acme on buying Orion), replacing the
     apartment-rental and CRM examples. (2026-11-15)
+64. Base classes drop the `Factoid` prefix: `Document`, `ProseDocument`, `StructuredDocument`, `Fact`, `FactTrait`,
+    `FactKind`, `Entity`, and `Settings`. This matches the README intro. (2026-11-15)

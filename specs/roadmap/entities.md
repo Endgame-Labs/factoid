@@ -12,10 +12,10 @@ Plain Python methods and computed properties on an entity class that use Factoid
 domain question without knowing about facts and labels:
 
 ```python
-class ChurnRisk(FactoidLabel):
+class ChurnRisk(FactLabel):
     """The customer said or did something suggesting they may leave or not renew."""
 
-class Customer(FactoidEntity):
+class Customer(Entity):
     """A company that buys from us or might."""
 
     @property

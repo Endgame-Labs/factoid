@@ -135,14 +135,14 @@ acme/
 └── evals/diligence.jsonl
 ```
 
-`FactoidDocument` has two base subclasses: `FactoidProseDocument` for text and `FactoidStructuredDocument` for tabular
+`Document` has two base subclasses: `ProseDocument` for text and `StructuredDocument` for tabular
 rows. Every pipeline step is a classmethod or an instance method on the class that owns it:
 
 | Class | Classmethods | Instance methods |
 | --- | --- | --- |
-| `FactoidDocument` | `classify(raw, judgments)` | Prose: `segment`, `chunk`, `situate`, and `extract`. Structured: `read` and `row_facts`. Both: `discover`, `context`, the `source_datetime` property, and `ingest`, which runs the steps in order. |
-| `FactoidFact` | Reads, such as `search` | `validate`, `evaluate`, `repair`, `assess` (traits, kind, and lifetime, in one request), `expiration`, `link`, `resolve`, and `save`; outcomes `supersede`, `end`, `correct`, `contradict`, `retract`, and `restore`. |
-| `FactoidEntity` | `identify(mention)`, `create`, and reads `find` and `where` | `claim`, `merge`, `split`, `retype`, `related`, and `facts`. |
+| `Document` | `classify(raw, judgments)` | Prose: `segment`, `chunk`, `situate`, and `extract`. Structured: `read` and `row_facts`. Both: `discover`, `context`, the `source_datetime` property, and `ingest`, which runs the steps in order. |
+| `Fact` | Reads, such as `search` | `validate`, `evaluate`, `repair`, `assess` (traits, kind, and lifetime, in one request), `expiration`, `link`, `resolve`, and `save`; outcomes `supersede`, `end`, `correct`, `contradict`, `retract`, and `restore`. |
+| `Entity` | `identify(mention)`, `create`, and reads `find` and `where` | `claim`, `merge`, `split`, `retype`, `related`, and `facts`. |
 
 Every step has `before_<step>` and `after_<step>` hooks, which do nothing by default and are always called.
 `before_<step>` can raise `factoid.Skip` to skip the step for that item; `after_<step>` gets the result and can return
@@ -164,9 +164,9 @@ thread before calling the built-in `extract` step:
 
 ```python
 # documents.py
-from factoid import FactoidProseDocument, template
+from factoid import ProseDocument, template
 
-class CounselEmail(FactoidProseDocument):
+class CounselEmail(ProseDocument):
     """An email between our lawyers and the client or the other side."""
     extract_prompt = template("prompts/counsel_email_extract.md.j2")
 
@@ -214,7 +214,7 @@ whether `situate` is on by default is an eval result.
 
 ```python
 # documents.py
-class Contract(FactoidProseDocument):
+class Contract(ProseDocument):
     """A signed contract or an amendment to one."""
     chunk_size = 4000        # characters
     chunk_overlap = "15%"    # or a number of characters, such as 400
@@ -241,7 +241,7 @@ Name the people, organizations, and things it refers to. Answer with the situati
 
 ### Structured documents
 
-`FactoidStructuredDocument` ingests CSV, JSONL, JSON arrays, and records from structured sources. Structured documents
+`StructuredDocument` ingests CSV, JSONL, JSON arrays, and records from structured sources. Structured documents
 are built on prosaic, a separate MIT library.
 
 A structured document subclass defines a column map once per file layout. Each column is an entity identity (an exact
@@ -253,10 +253,10 @@ the old fact by rule, with no model call. Files that point to the same entity co
 
 ```python
 # documents.py
-from factoid import FactoidStructuredDocument, Identity, Ignore, Property, Text
+from factoid import StructuredDocument, Identity, Ignore, Property, Text
 from acme.entities import Agreement
 
-class ContractRegister(FactoidStructuredDocument):
+class ContractRegister(StructuredDocument):
     """The data room's list of the target's contracts."""
     row_entity = Agreement
     key = "contract_id"
@@ -288,14 +288,14 @@ A fact is one self-contained sentence, exact source quotes (with who said each q
 entities, a fact kind with an expiration, and zero or more traits. A fact has no typed fields; the sentence carries the
 meaning.
 
-A trait is a `FactoidTrait` subclass whose docstring is the definition the model reads. With no `decide` method, the
+A trait is a `FactTrait` subclass whose docstring is the definition the model reads. With no `decide` method, the
 trait is one yes-or-no question built from the docstring and compared against `threshold`; `decide` gets that answer
 (such as `judgments.liability_cap`) plus any factor questions it declares with `@judge`. Traits can also define
 `after_` hooks for facts that carry them. A fact can carry several traits, and a fact that matches no trait is kept.
 
-In the same `assess` request, Factoid classifies each fact into a kind declared on `FactoidFact.kinds` and estimates its
+In the same `assess` request, Factoid classifies each fact into a kind declared on `Fact.kinds` and estimates its
 lifetime. The built-in kinds are `fixed`, `state`, `event`, `decision`, `plan`, `forecast`, and `rule`. Each kind is a
-`FactoidKind` subclass whose docstring is the rubric the model reads and whose `expires` attribute sets how facts of
+`FactKind` subclass whose docstring is the rubric the model reads and whose `expires` attribute sets how facts of
 that kind age: `"never"` (`fixed`, `event`, and `decision`), `"estimated"` (`state` and `rule`), or `"at_deadline"`
 (`plan` and `forecast`).
 
@@ -312,18 +312,18 @@ runs.
 
 ```python
 # facts.py
-from factoid import FactoidFact, FactoidKind, FactoidTrait, Noul, judge
+from factoid import Fact, FactKind, FactTrait, Noul, judge
 
-class ChangeOfControl(FactoidTrait):
+class ChangeOfControl(FactTrait):
     """A consequence triggered by a change in who owns or controls a party."""
 
-class ConsentRequired(FactoidTrait):
+class ConsentRequired(FactTrait):
     """A named party must approve an action before it happens."""
 
-class Deadline(FactoidTrait):
+class Deadline(FactTrait):
     """The latest time an action is allowed."""
 
-class LiabilityCap(FactoidTrait):
+class LiabilityCap(FactTrait):
     """A limit on how much a party can owe."""
     threshold = 0.8
     examples = ["Orion's liability under the Vega supply agreement is capped at $1M."]
@@ -337,19 +337,19 @@ class LiabilityCap(FactoidTrait):
     def after_supersede(cls, fact, older):
         notify(fact.deal_team, f"Liability cap changed: {older.text} → {fact.text}")
 
-class ClosingRisk(FactoidTrait):
+class ClosingRisk(FactTrait):
     """Something that could delay or block the deal from closing."""
 
-class Allegation(FactoidKind):
+class Allegation(FactKind):
     """A claim one party makes against another that has not been proven."""
     expires = "estimated"
 
-class SourceFact(FactoidFact):
+class SourceFact(Fact):
     """What a contract, a client, or the other side says."""
     traits = [ChangeOfControl, ConsentRequired, Deadline, LiabilityCap]
-    kinds = FactoidFact.kinds + [Allegation]
+    kinds = Fact.kinds + [Allegation]
 
-class CounselFact(FactoidFact):
+class CounselFact(Fact):
     """What our own lawyers concluded."""
     traits = [ClosingRisk]
 ```
@@ -367,12 +367,12 @@ date is still a `rule`, not a `forecast`.
 
 ### Entities
 
-Each `FactoidEntity` subclass declares one kind of thing that facts are about. The docstring describes that kind in
+Each `Entity` subclass declares one kind of thing that facts are about. The docstring describes that kind in
 plain language, and discovery uses it to route extracted entities to the class. Optional `unique_keys` lists the
 identifiers that prove two records are the same entity; email, domain, and URL found in text count by default, and names
 are always a weak match checked by the decision model.
 
-Every entity, typed or untyped, carries a JSON `props` dictionary. A `FactoidEntity` subclass can declare typed
+Every entity, typed or untyped, carries a JSON `props` dictionary. A `Entity` subclass can declare typed
 properties as class annotations; they are validated on write, stored in `props`, and queried with `Class.where(...)`.
 Prose extraction writes facts only and never sets entity properties. Properties come from structured documents, source
 records, and edits through the CLI, the API, and MCP. An entity class can also tune its AI steps: discovery guidance and
@@ -380,20 +380,20 @@ examples, link and merge thresholds, model selection, and custom link or merge q
 
 ```python
 # entities.py
-from factoid import FactoidEntity
+from factoid import Entity
 
-class Company(FactoidEntity):
+class Company(Entity):
     """A company that is a party to a deal or a contract."""
     unique_keys = ["domain"]
     jurisdiction: str
 
-class Agreement(FactoidEntity):
+class Agreement(Entity):
     """One contract and its amendments, as a whole."""
     unique_keys = ["contract_id"]
     counterparty: str
     governing_law: str
 
-class Person(FactoidEntity):
+class Person(Entity):
     """A lawyer, a client contact, or someone at the other side."""
     unique_keys = ["email"]
     role: str
@@ -412,7 +412,7 @@ confidence score. Linking proceeds from sure to unsure and stops at the first st
 
 Entities enter the store from structured or record sources, or from per-document discovery. An entity does not need a
 declared class: every extracted entity is kept and linked once the link ladder finds no existing match. When an
-extracted entity matches no declared class, Factoid stores it as a plain `FactoidEntity` with a lowercase, singular
+extracted entity matches no declared class, Factoid stores it as a plain `Entity` with a lowercase, singular
 free-text `kind` written by discovery, such as `"court"`. Placeholder mentions such as `"the counterparty"` or
 `"someone"` are refused; a mention that matches no entity stays on the fact as an unlinked mention, and the fact is
 kept.
@@ -459,9 +459,9 @@ to review. This is the general pattern: steps ask the decision model several sma
 decides from the probabilities.
 
 ```python
-from factoid import Choice, FactoidProseDocument, Noul, judge
+from factoid import Choice, ProseDocument, Noul, judge
 
-class Contract(FactoidProseDocument):
+class Contract(ProseDocument):
     """A signed contract or an amendment to one."""
 
     @classmethod
@@ -507,20 +507,20 @@ custom fact eval without replacing the default chain:
 
 ```python
 # facts.py
-from factoid import FactoidFact
+from factoid import Fact
 from factoid.fact_evals import JevFloors, Nli
 from acme.fact_evals import CitesSourceEval
 
-class SourceFact(FactoidFact):
+class SourceFact(Fact):
     """What a contract, a client, or the other side says."""
     traits = [ChangeOfControl, ConsentRequired, Deadline, LiabilityCap]
-    kinds = FactoidFact.kinds + [Allegation]
+    kinds = Fact.kinds + [Allegation]
     fact_evals = [Nli, JevFloors(useful=0.8)]               # the default chain, with one floor raised
 
-class CounselFact(FactoidFact):
+class CounselFact(Fact):
     """What our own lawyers concluded."""
     traits = [ClosingRisk]
-    fact_evals = [*FactoidFact.fact_evals, CitesSourceEval]  # the chain, plus a check of our own
+    fact_evals = [*Fact.fact_evals, CitesSourceEval]  # the chain, plus a check of our own
 ```
 
 `CitesSourceEval` checks that the conclusion points to a source fact.
@@ -545,11 +545,11 @@ Define models once in `settings.py` with pinned versions. Keys come from `factoi
 
 ```python
 # settings.py
-from factoid import FactoidSettings, Model
+from factoid import Model, Settings
 from factoid.search import Turbopuffer
 from factoid.stores import Sqlite
 
-class Project(FactoidSettings):
+class Project(Settings):
     store = Sqlite(path=".factoid/acme.db")            # the system of record
     models = {
         "choose": Model("typesafe/jev-1.13.0"),        # classify, evaluate facts, assess, and resolve
@@ -630,16 +630,16 @@ validity, and open contradictions.
   application and pass classes to `Factoid(...)`:
 
 ```python
-from factoid import Factoid, FactoidEntity, FactoidProseDocument, FactoidSettings, Model
+from factoid import Entity, Factoid, Model, ProseDocument, Settings
 
-class Company(FactoidEntity):
+class Company(Entity):
     """A company that is a party to a deal or a contract."""
     unique_keys = ["domain"]
 
-class DealMemo(FactoidProseDocument):
+class DealMemo(ProseDocument):
     """A memo a lawyer wrote about a deal."""
 
-class ServiceSettings(FactoidSettings):
+class ServiceSettings(Settings):
     models = {"generate": Model("fireworks/glm-5p3-flash"), "choose": Model("typesafe/jev-1.13.0")}
 
 facts = Factoid(settings=ServiceSettings, documents=[DealMemo], entities=[Company])
