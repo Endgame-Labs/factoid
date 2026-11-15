@@ -921,11 +921,10 @@ diligence app (`factoid-legal`, a separate repo), scored on CUAD.
   local index makes tests and small projects work without it.
 - **`Nli`** is in the default chain but runs only when a project sets an `nli` model. With none set, it is skipped
   and the scorecard says so, so the working default chain is `JevFloors`.
-- **Starting floors** for `JevFloors` are fixed values until calibration is built. The first values rejected most
-  good facts. On 10 CUAD contracts (2026-11-15), lowering attribution to 0.3, self-contained to 0.4, and atomic to
-  0.25, and narrowing the grounded and attribution questions to the claim (not the words that name the document),
-  raised the share of gold clauses quoted by a kept fact from 0.61 to 0.85, and span recall from 0.58 to 0.73.
-  Clause-detection F1 went from 0.84 to 0.79, and AUPR from 0.94 to 0.97. With no fact evals, coverage is 0.95.
+- **Starting floors** for `JevFloors` are fixed values until calibration is built: grounded 0.45, attribution 0.3,
+  self-contained 0.4, atomic 0.25, useful 0.45, and distinct 0.2. They were set from CUAD runs (2026-11-15). The
+  first values (0.45 to 0.6) rejected most good facts; with these, and the grounded and attribution questions narrowed
+  to the claim, the share of gold clauses quoted by a kept fact went from 0.61 to 0.96 on 20 contracts.
 - **Not built yet:** `StructuredDocument` (waits for prosaic), `factoid struct`, sources (`imap`, `mcp`), MCP and
   HTTP serving, `factoid setup`, fact-class trust and visibility, entity `merge`, `split`, and `retype` commands,
   fingerprint-driven `rebuild`, and decision models other than Jev.
@@ -939,8 +938,13 @@ diligence app (`factoid-legal`, a separate repo), scored on CUAD.
   such as "Vega" for Vega Components Corp.), and linking matches on them. Without this, the same company became two
   entities across documents.
 - **As-of search** includes superseded and ended facts that were still valid on the `as_of` date.
-- **Known gap:** on the amendments suite, as-of search finds the clause in force on the first date but not after
-  the territory was amended twice, even with a reranker. The supersessions themselves are right; ranking is not.
+- **Repair can split.** A near miss that states several claims is split into one fact per claim, each evaluated
+  again, instead of only being reworded.
+- **Resolve thresholds.** Answers that drop or flag a fact need more confidence than others: a duplicate 0.8 and a
+  contradiction 0.75 (the distinct floor mirrors the duplicate bar). When the model is sure two facts state the same
+  claim but not whether the value changed, and the new one is later and from another document, it supersedes. A
+  fact's own document gets at most half of resolve's candidate slots.
+- **Search** reranks the best 50 candidates after freshness weighting.
 - **Not on PyPI yet:** `uv tool install factoid` does not work until a release is published. Install from the repo.
 - **Keys:** with no key set for a provider, the client calls that provider's exe.dev integration host, which injects
   credentials. With a key set, it calls the vendor.
