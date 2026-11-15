@@ -40,7 +40,7 @@ create index if not exists facts_document on facts(document_id);
 create index if not exists facts_status on facts(status);
 create table if not exists quotes (
     fact_id text not null, document_id text not null, passage_n integer not null, start integer not null,
-    "end" integer not null, text text not null, speaker text, said_at text
+    "end" integer not null, text text not null, speaker text, said_at text, section text
 );
 create index if not exists quotes_fact on quotes(fact_id);
 create table if not exists mentions (
@@ -88,6 +88,9 @@ class Store:
             self.db.execute("pragma journal_mode=wal")
         self.db.row_factory = sqlite3.Row
         self.db.executescript(SCHEMA)
+        columns = {row[1] for row in self.db.execute("pragma table_info(quotes)")}
+        if "section" not in columns:  # stores made before quotes carried sections
+            self.db.execute("alter table quotes add column section text")
         self.db.commit()
 
     @contextmanager
@@ -166,9 +169,9 @@ class Store:
             db.execute("delete from quotes where fact_id = ?", (row["id"],))
             db.execute("delete from mentions where fact_id = ?", (row["id"],))
             db.executemany(
-                "insert into quotes values (?,?,?,?,?,?,?,?)",
+                "insert into quotes values (?,?,?,?,?,?,?,?,?)",
                 [(row["id"], q["document_id"], q["passage_n"], q["start"], q["end"], q["text"], q.get("speaker"),
-                  q.get("said_at")) for q in quotes],
+                  q.get("said_at"), q.get("section")) for q in quotes],
             )
             db.executemany(
                 "insert into mentions values (?,?,?,?,?,?,?)",

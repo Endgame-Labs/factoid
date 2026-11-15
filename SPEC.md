@@ -603,6 +603,20 @@ it is unknown (for example, a folder of unmarked files).
 - Two `True` answers for one file is an error. Files no class claims go to an unclassified list for review.
 - `classify_view` controls what the classifier sees. `factoid classifiers show` lists the registry.
 
+### Sections and replaced sections
+
+**Proposed** (2026-11-15, from the legal app's amendment evals; for Kyle to confirm).
+
+- `segment` labels each passage with the numbered section it falls under ("3.2", "14.1"). A passage that starts
+  with a section number opens that section, and later passages inherit it. Quotes carry the label.
+- The extractor marks a fact that says numbered sections of another document are replaced, deleted, or amended to
+  read in their entirety (`replaces_sections`).
+- After a document's facts are saved, facts from earlier documents that share an entity with that fact and quote a
+  replaced section are retired: superseded by the most similar new fact from the same section of the new document,
+  or ended when the new document gives no text for it. Ordinary changed values still go through `resolve`.
+- Why: an amendment that rewrites a section wholesale often restructures it, so no single new fact reads as
+  replacing a single old one, and `resolve` judged them unrelated.
+
 ### Fact evals
 
 **Decided** (Kyle, 2026-11-14). The checks that decide whether a candidate fact is good enough to store are called
@@ -945,6 +959,9 @@ diligence app (`factoid-legal`, a separate repo), scored on CUAD.
   claim but not whether the value changed, and the new one is later and from another document, it supersedes. A
   fact's own document gets at most half of resolve's candidate slots.
 - **Search** reranks the best 50 candidates after freshness weighting.
+- **Sections:** passages carry section labels, and a replaced section retires the older facts quoting it (see
+  "Sections and replaced sections").
+- **Repair** also runs when a narrow "useful" failure comes with a repairable one, since a split often fixes both.
 - **Tried and reverted** (2026-11-15): a yes-or-no question in resolve asking whether two facts set the same term,
   with a later document's version superseding at 0.7, and giving the "useful" check the fact class's guidance. It
   aimed at a restructured payment clause in the held-out NEON chain. It did not catch that clause, raised false

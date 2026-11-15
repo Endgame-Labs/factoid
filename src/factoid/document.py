@@ -63,6 +63,7 @@ class Passage:
     text: str
     speaker: str | None = None
     said_at: str | None = None
+    section: str | None = None  # the numbered section the passage falls under, such as "3.2"
 
 
 @dataclass
@@ -271,8 +272,9 @@ class ProseDocument(Document):
                     cursor = stop
             else:
                 passages.append((start, end))
-        return [Passage(n=i + 1, start=s, end=e, text=" ".join(self.text[s:e].split()))
-                for i, (s, e) in enumerate(passages) if self.text[s:e].strip()]
+        out = [Passage(n=i + 1, start=s, end=e, text=" ".join(self.text[s:e].split()))
+               for i, (s, e) in enumerate(passages) if self.text[s:e].strip()]
+        return label_sections(out)
 
     def chunk(self, passages: list[Passage]) -> list[Chunk]:
         """Group passages into chunks of at most `chunk_size` characters, with overlap as context."""
@@ -366,7 +368,8 @@ class ProseDocument(Document):
             cited = [n for n in _ints(item.get("passages")) if n in owned]
             quotes = [Quote(document_id=self.id, passage_n=n, start=owned[n].start, end=owned[n].end,
                             text=owned[n].text, speaker=owned[n].speaker,
-                            said_at=owned[n].said_at or (format_datetime(dated) if dated else None))
+                            said_at=owned[n].said_at or (format_datetime(dated) if dated else None),
+                            section=owned[n].section)
                       for n in dict.fromkeys(cited)]
             mentions = []
             for m in item.get("mentions") or []:
@@ -377,9 +380,12 @@ class ProseDocument(Document):
                                and a.strip().lower() != m["name"].strip().lower()]
                     mentions.append(Mention(text=m["name"].strip(), kind=(kind or "").strip().lower() or None,
                                             role=role, aliases=aliases))
-            out.append(Fact(item["text"], quotes=quotes, mentions=mentions, document=self, chunk_id=chunk.id,
-                            source_datetime=dated, valid_from=_date_or_none(item.get("valid_from")),
-                            valid_until=_date_or_none(item.get("valid_until"))))
+            fact = Fact(item["text"], quotes=quotes, mentions=mentions, document=self, chunk_id=chunk.id,
+                        source_datetime=dated, valid_from=_date_or_none(item.get("valid_from")),
+                        valid_until=_date_or_none(item.get("valid_until")))
+            fact.replaces_sections = [_section_key(x) for x in item.get("replaces_sections") or []
+                                      if isinstance(x, (str, int, float)) and _section_key(x)]
+            out.append(fact)
         return out
 
     def ingest(self, app: Factoid) -> list[Fact]:
@@ -447,6 +453,28 @@ def classify_raw(raw: Raw, classes: list[type[Document]], ask: Callable[[Any, di
         if best[0] >= best[1].classify_threshold:
             return best[1], {k.__name__: _show(v) for k, v in answers.items()}
     return None, {k.__name__: _show(v) for k, v in answers.items()}
+
+
+_SECTION = re.compile(r"^(?:(?:section|sec\.|article|clause|§)\s*)?(\d+(?:\.\d+)*)(?:\.|\)|\s)", re.I)
+
+
+def _section_key(value: Any) -> str:
+    """"Section 3.2", "3.2.", and "§ 3.2" all become "3.2"."""
+    match = re.search(r"\d+(?:\.\d+)*", str(value))
+    return match.group(0).rstrip(".") if match else ""
+
+
+def label_sections(passages: list[Passage]) -> list[Passage]:
+    """Give each passage the number of the section it falls under. A passage that starts with a section number
+    (such as "Section 3.2 TERMS OF PAYMENT" or "3.2 Payment") opens that section; the passages after it inherit
+    it until the next one."""
+    current: str | None = None
+    for passage in passages:
+        match = _SECTION.match(passage.text)
+        if match and len(match.group(1)) <= 8:
+            current = match.group(1).rstrip(".")
+        passage.section = current
+    return passages
 
 
 def _show(value: Any) -> Any:

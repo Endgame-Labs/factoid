@@ -243,3 +243,40 @@ def test_same_claim_from_a_later_document_supersedes(make_app, fake):
     app.ingest_text("The territory is amended to be United States, [*].", document_type=Contract,
                     metadata={"signed_at": "1998-07-15T00:00:00Z"}, uri="j.txt")
     assert Fact.get(first.facts[0].id).status == "superseded"
+
+
+def test_sections_are_labeled():
+    from factoid.document import Passage, label_sections
+
+    passages = label_sections([Passage(1, 0, 1, "ARTICLE 3 FEES"), Passage(2, 0, 1, "Section 3.1 FEES. Pay 50%."),
+                               Passage(3, 0, 1, "The fee is due monthly."), Passage(4, 0, 1, "3.2 Payment terms.")])
+    assert [p.section for p in passages] == ["3", "3.1", "3.1", "3.2"]
+
+
+def test_a_replaced_section_retires_the_old_facts(make_app, fake):
+    app = build(make_app, fake)
+
+    def generator(prompt):
+        facts = []
+        for n, text in re.findall(r"^\[(\d+)\] (.+)$", prompt, re.M):
+            item = {"text": f"Under the supply agreement between Vega and Orion, {text}", "passages": [int(n)],
+                    "mentions": [{"name": "Vega", "kind": "company"}, {"name": "Orion", "kind": "company"}]}
+            if "in their entirety" in text:
+                item["replaces_sections"] = ["3.2"]
+            facts.append(item)
+        return json.dumps({"facts": facts})
+
+    fake.generator = generator
+    base = app.ingest_text(
+        "Section 3.1 FEES. Orion pays Vega a fee of 50% of revenues.\n\n"
+        "Section 3.2 PAYMENT. Orion pays each fee 120 days after the invoice.\n\n"
+        "Section 4 GOVERNING LAW. Delaware law governs the supply agreement.",
+        document_type=Contract, metadata={"signed_at": "1996-01-01T00:00:00Z"}, uri="base.txt")
+    app.ingest_text(
+        "1. Section 3.2 of the supply agreement is amended to read in their entirety as follows.\n\n"
+        "Section 3.2 PAYMENT. Orion pays each royalty 60 days after the invoice.",
+        document_type=Contract, metadata={"signed_at": "1999-01-01T00:00:00Z"}, uri="amend.txt")
+    statuses = {f.text.split(", ", 1)[1][:30]: Fact.get(f.id).status for f in base.facts}
+    assert statuses["Section 3.2 PAYMENT. Orion pay"] == "superseded"
+    assert statuses["Section 3.1 FEES. Orion pays V"] == "current"
+    assert statuses["Section 4 GOVERNING LAW. Delaw"] == "current"

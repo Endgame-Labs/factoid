@@ -227,7 +227,45 @@ class Factoid:
                 run_step(fact, step, other)
             run_step(fact, "save")
             saved.append(fact)
+        self._replace_sections(saved)
         return saved
+
+    def _replace_sections(self, facts: list[Fact]) -> None:
+        """A fact that says sections of an earlier document are replaced retires the facts quoting those sections.
+
+        Each retired fact is superseded by the most similar new fact from the same section of the new document, or
+        ended by the replacing fact when the new document gives no text for that section."""
+        for fact in facts:
+            if not fact.replaces_sections:
+                continue
+            entity_ids = sorted({m.entity_id for m in fact.mentions if m.entity_id})
+            if not entity_ids:
+                continue
+            mine = fact.valid_from or fact.source_datetime
+            marks = ",".join("?" * len(entity_ids))
+            rows = self.store.query(
+                f"select distinct f.id from facts f join mentions m on m.fact_id = f.id where m.entity_id in ({marks}) "
+                "and f.document_id != ? and f.status in ('current', 'contradicted')", (*entity_ids, fact.document_id))
+            for row in rows:
+                old = self.load_fact(row["id"])
+                if old is None:
+                    continue
+                theirs = old.valid_from or old.source_datetime
+                if mine is not None and theirs is not None and theirs >= mine:
+                    continue
+                sections = {q.section for q in old.quotes if q.section}
+                hit = next((s for s in fact.replaces_sections for q in sections
+                            if q == s or q.startswith(s + ".")), None)
+                if hit is None:
+                    continue
+                same = [f for f in facts if any(q.section and (q.section == hit or q.section.startswith(hit + "."))
+                                                for q in f.quotes)]
+                if same:
+                    vectors = self.client.embed([old.text] + [f.text for f in same])
+                    best = max(range(len(same)), key=lambda i: _cosine(vectors[0], vectors[i + 1]))
+                    run_step(same[best], "supersede", old)
+                else:
+                    run_step(fact, "end", old)
 
     def _classify_fact(self, fact: Fact, classes: list[type[Fact]]) -> Fact:
         if len(classes) == 1:
@@ -284,8 +322,9 @@ class Factoid:
         """A duplicate confirms a stored fact: its quotes are added, which restarts the clock."""
         with self.store.tx() as db:
             for q in new.quotes:
-                db.execute("insert into quotes values (?,?,?,?,?,?,?,?)",
-                           (existing.id, q.document_id, q.passage_n, q.start, q.end, q.text, q.speaker, q.said_at))
+                db.execute("insert into quotes values (?,?,?,?,?,?,?,?,?)",
+                           (existing.id, q.document_id, q.passage_n, q.start, q.end, q.text, q.speaker, q.said_at,
+                            q.section))
 
     # -- saving and loading ---------------------------------------------------------------------------------
 
@@ -334,7 +373,7 @@ class Factoid:
             source_datetime=_parse(row["source_datetime"]), extracted_at=_parse(row["extracted_at"]),
             scores=json.loads(row["scores"]),
             quotes=[Quote(r["document_id"], r["passage_n"], r["start"], r["end"], r["text"], r["speaker"],
-                          r["said_at"]) for r in self.store.quotes(fact_id)],
+                          r["said_at"], r["section"]) for r in self.store.quotes(fact_id)],
             mentions=[Mention(r["text"], r["kind"], r["role"], r["entity_id"], r["method"], r["confidence"])
                       for r in self.store.mentions(fact_id)],
         )
@@ -629,6 +668,12 @@ def _since(value: str) -> str:
     if value[:-1].isdigit() and value[-1] in units:
         return format_datetime(now() - timedelta(**{units[value[-1]]: int(value[:-1])}))
     return format_datetime(parse_datetime(value))
+
+
+def _cosine(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    norm = (sum(x * x for x in a) ** 0.5) * (sum(y * y for y in b) ** 0.5)
+    return dot / norm if norm else 0.0
 
 
 def _durable(fact: Fact) -> bool:

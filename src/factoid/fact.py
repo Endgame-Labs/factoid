@@ -51,6 +51,7 @@ class Quote:
     text: str
     speaker: str | None = None
     said_at: str | None = None
+    section: str | None = None
 
 
 @dataclass
@@ -166,6 +167,7 @@ class Fact(Registered, ModelCalls):
         self.extracted_at = extracted_at or now()
         self.scores: dict[str, Any] = dict(scores or {})
         self.similar: list[Fact] = []  # stored facts near this one, filled before evaluate and resolve
+        self.replaces_sections: list[str] = []  # sections of an earlier document this fact says are replaced
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} {self.id} {self.text!r}>"
@@ -292,6 +294,7 @@ class Fact(Registered, ModelCalls):
                            valid_until=self.valid_until, source_datetime=self.source_datetime,
                            extracted_at=self.extracted_at, document_id=self.document_id)
         clone.similar = self.similar
+        clone.replaces_sections = list(self.replaces_sections)
         return clone
 
     @classmethod
