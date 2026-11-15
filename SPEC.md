@@ -39,10 +39,8 @@ Audiences, which the design has to serve at once:
 | Project and repo | Factoid, `Endgame-Labs/factoid` (renamed from Factorial on 2026-11-13) |
 | Command | `factoid` |
 | Python package | `factoid` |
-| Base classes | `Document` (with `ProseDocument` and `StructuredDocument`), `Fact`, `FactTrait`, `FactKind`, `Entity`, and `Settings`, with no `Factoid` prefix (Kyle, 2026-11-15). Import them from `factoid`. |
+| Base classes | `Document` (with `ProseDocument` and `StructuredDocument`), `Fact`, `FactTrait`, `Entity`, and `Settings`, with no `Factoid` prefix (Kyle, 2026-11-15). Import them from `factoid`. |
 | Example company in docs | Acme Corp, project name `acme`. Acme's shared fact class is `AcmeBaseFact`. |
-
-**Open.** `FactKind` keeps its name until kind versus trait is settled (see "Kinds and expiration").
 
 Do not use the names "Rails" or "Django" in docs or file names.
 
@@ -101,8 +99,8 @@ attribute such as `chunk_size = 4000` (tested on Pydantic 2.14), and plain attri
 
 **Proposed.**
 
-- Traits (section 6) and the kind (see "Kinds and expiration") classify a fact. A fact's class, when a project has
-  several, says what kind of evidence it is (see "Fact classes").
+- Traits (section 6) classify a fact, and its time properties (see "Time on a fact") say how it ages. A fact's class,
+  when a project has several, says what kind of evidence it is (see "Fact classes").
 - A fact whose mentions match no entity is kept, with the mentions recorded as unlinked. (Kyle asked for facts to link
   to one or more entities, and separately asked that unclassified facts and entities be accounted for. Keeping unlinked
   facts is how the README squares the two.)
@@ -180,61 +178,57 @@ class CustomerFact(Fact):
 - "Use case" and "pain point" are traits, not fact subclasses.
 - Later: suggest new traits by clustering facts with none, and apply a new trait to stored facts without re-extracting.
 
-### Kinds and expiration
+### Time on a fact
 
-**Decided** (Kyle, 2026-11-14). When a fact's traits are judged, the decision model (Jev by default) also judges its
-kind and how long it is likely to stay valid, against rubrics Factoid provides. (Earlier drafts called the kind and
-lifetime "traits"; that word now means what labels did, section 6.)
+**Decided** (Kyle, 2026-11-15). There are no fact kinds. How a fact behaves over time is a set of properties on each
+fact instance, filled in automatically. The base `Fact` class holds the configuration and the default judgment
+questions that fill them, and a project can change those on its fact classes. This replaces `FactKind` and the seven
+kinds (fixed, state, event, decision, plan, forecast, and rule), and leaves traits as the only way a project
+classifies facts. Harvey's public material has no equivalent of kinds either: its review tables treat a date as a typed
+value, not a category of fact.
 
-**Proposed.**
+**Proposed.** The properties:
 
-- The kind and lifetime questions go in the same request as the trait questions, so they add no call.
-- **Kind of fact** (`choice`; Kyle, 2026-11-15). Kind says what the fact is about, not its tense. How fast a fact
-  changes is the lifetime range's job, not the kind's.
-  - fixed: can never change, such as a birth date, a founding year, or a closed quarter's revenue. A reading of
-    something that moves ("cash was $1.18B on Sept 30") is a state, not fixed.
-  - state: anything that can change, at any speed, such as a role, a status, a metric, or a relationship. A past state
-    ("Lincoln practiced law in Springfield") is still a state, with an end date.
-  - event: happened at a time, and stays true as history.
-  - decision: a choice someone made, such as "Northwind chose annual billing" (Kyle, 2026-11-14). Kept as its own kind
-    after the trait research, though both reviewers would fold it into event. What a decision sets up, such as an
-    obligation or a new state, is extracted as its own fact.
-  - plan: an action someone intends to take, with a target date. Overdue, not false, when the date passes without
-    confirmation.
-  - forecast: an outcome that is expected but that nobody committed to, such as "the bank is expected to cut rates."
-  - rule: a policy, obligation, definition, or "if X then Y", as in leases, laws, and runbooks.
-  - General world knowledge has no kind of its own. "Water boils at 100°C at sea level" is fixed. "Paris is the capital
-    of France" is a state with the longest lifetime range.
-- **Kinds are declared on `Fact`** (Decided, Kyle, 2026-11-15), so a project can override and extend them.
-  Proposed shape: a kind is a small `FactKind` class, like a trait. Its docstring is the rubric the model reads, and
-  three attributes set its behavior:
-  - `expires`: `"never"` (fixed, event, and decision: true for good, as history), `"estimated"` (state and rule: they
-    last until something changes them, so the model estimates how long that usually takes), or `"at_deadline"` (plan
-    and forecast: the fact carries a deadline).
-  - `on_disagree`: `"contradict"` (fixed, event, and decision) or `"supersede"` (state, rule, plan, and forecast).
-  - `after_deadline`: `"overdue"` (plan) or `"unsettled"` (forecast). Only for `expires="at_deadline"`.
-  - `Fact.kinds` lists the built-ins. A subclass adds to the list (`kinds = Fact.kinds + [Symptom]`),
-    replaces it, or overrides one built-in by subclassing it (`class State(kinds.State)`) with new wording or behavior.
-- **Expiration** (Kyle, 2026-11-15). Decided per fact, not per kind: the kind says whether a fact expires, but how soon
-  can't be known at dev time.
-  - **An exact time when the text gives one.** "Dana is speaking at the conference next Friday" expires at the end of
-    that Friday, resolved against the document's `source_datetime`. The extractor fills it in.
-  - **Otherwise a range**, chosen per fact by the extractor or the decision model (which one is an eval result): an
-    hour, a day, a week, a month, a quarter, a year, a few years, or longer. Factoid keeps the distribution over
-    ranges, not one cutoff, and computes the chance the fact is still true at a given time.
-  - The clock starts at the most recent time the fact was seen to be true, and each confirmation restarts it.
+| Property | What it holds | Where it comes from |
+| --- | --- | --- |
+| `valid_from` | When the fact became true or happened | The text, resolved against `source_datetime`; otherwise `source_datetime` |
+| `expires` | `"never"`, `"estimated"`, or `"at_deadline"` | A judgment in `assess` |
+| `valid_until` | The exact end or due time, when the text gives one | The extractor |
+| `lifetime` | A distribution over ranges, when `expires` is `"estimated"` | A judgment in `assess` |
+
+- `expires = "never"`: true for good, as history or as an invariant. "Orion signed Amendment 2 on October 3, 2026."
+- `expires = "estimated"`: true until something changes it, which nobody can date. "Orion may not assign the Vega
+  supply agreement without Vega's written consent." The lifetime ranges are an hour, a day, a week, a month, a quarter,
+  a year, a few years, or longer. Factoid keeps the distribution, not one cutoff, and computes the chance the fact is
+  still true at a given time.
+- `expires = "at_deadline"`: the fact carries a date by which it is settled. "Vega said it will answer the consent
+  request by November 20, 2026."
+- A future `valid_from` is allowed: "Amendment 2 raises the liability cap to $2M from January 1, 2027" is valid from
+  that date.
+- The clock for an estimated lifetime starts at the most recent time the fact was seen to be true, and each confirmation
+  restarts it.
+- Factoid already records when a fact was observed (each quote's `source_datetime`) and when it was extracted
+  (`extracted_at`). Neither is a fact's date.
+- The judgments go in the same `assess` request as the trait questions, so they add no call. The step is the
+  `expiration` method, with `before_expiration` and `after_expiration`.
+- Configuration on `Fact`, overridable on a fact class: the wording of the `expires` and `lifetime` questions
+  (level 3), the list of lifetime ranges and thresholds (level 2), and the `expiration` method itself (level 4).
+- Whether two disagreeing facts contradict or one supersedes the other is the resolve step's answer per pair, not a
+  property of either fact. The resolve question sees both facts' time properties.
+- **Open:** what a passed deadline means. A plan whose date passes without confirmation is overdue, not false, and an
+  expected outcome whose date passes is unsettled. Whether that needs a property, or is left to resolve and search, is
+  not settled.
 - **Open** (Kyle, 2026-11-15): stance, meaning how confidently a fact is stated. The draft had two optional questions,
   hedged and opinion-or-observed; the research suggests one question (direct, uncertain, or evaluative). Left out of v1
   until it can be judged on about 20 real facts from a test corpus, with Jev's answers and what each would change in
   search and contradictions.
 - Uses:
   - Search ranks facts past `valid_until` lower and flags them stale. `valid_at=` filters to facts likely still true.
-  - Resolve treats two disagreeing "state" facts far apart in time as a likely supersede, and two disagreeing "fixed"
-    facts as a contradiction.
   - An open contradiction goes stale when its facts' `valid_until` passes. See "Resolving".
   - `factoid stats` lists facts past `valid_until`, so a person or agent can re-check them.
   - Calibration eval: when a fact is superseded, its real lifetime is compared with the predicted validity.
-- Kinds follow the levels of customization: options and ranges at level 2, rubric wording at level 3.
+- The old kind rubrics (fixed, state, event, decision, plan, forecast, and rule) are useful wording for the default
+  `expires` question, and can be its examples.
 
 ## 7. Entities
 
@@ -281,8 +275,8 @@ unlinked facts, and reversible merges (`docs/prior-art.md`, and the research sum
 
 - **Co-mention.** For each pair of entities, Factoid keeps the number of facts linked to both, the most recent one, and
   the roles each entity plays in them. It is counting, with no model call.
-- **Relation facts.** A durable relation is a fact that links two or more entities, whose kind is fixed or state with
-  a lifetime of months or longer (see "Kinds and expiration"), and that is still valid. It is a view over stored facts,
+- **Relation facts.** A durable relation is a fact that links two or more entities, that never expires or has a
+  lifetime of months or longer (see "Time on a fact"), and that is still valid. It is a view over stored facts,
   with no extra extraction. `entity.related()` returns connected entities, each with its co-mention count and its
   current relation facts. Freshness weighting applies, so a relation that has ended ranks lower.
 - Direction is carried by the fact sentence.
@@ -398,7 +392,7 @@ callbacks (`on_added` and the rest are gone).
 | Class | Classmethods | Instance methods |
 | --- | --- | --- |
 | `Document` | `classify(raw, judgments)` | Prose: `segment`, `chunk`, `situate`, and `extract`. Structured: `read` and `row_facts`. Both: `discover`, `context`, the `source_datetime` property, and `ingest`, which runs the steps in order |
-| `Fact` | Reads, such as `search` | `validate`, `evaluate`, `repair`, `assess` (traits, kind, and lifetime, in one request), `expiration`, `link`, `resolve`, and `save`; outcomes `supersede`, `end`, `correct`, `contradict`, `retract`, and `restore` |
+| `Fact` | Reads, such as `search` | `validate`, `evaluate`, `repair`, `assess` (traits and time properties, in one request), `expiration`, `link`, `resolve`, and `save`; outcomes `supersede`, `end`, `correct`, `contradict`, `retract`, and `restore` |
 | `Entity` | `identify(mention)`, `create`, and reads `find` and `where` | `claim`, `merge`, `split`, `retype`, `related`, and `facts` |
 
 - Overriding an outcome (such as `supersede`) and calling `super()`, or defining `after_supersede`, is how a project
@@ -662,7 +656,7 @@ work and needs evals before any claim about its quality.
 
 **Proposed: freshness weighting in search.**
 
-- From a fact's validity distribution (see "Kinds and expiration"), Factoid computes the probability the fact is still
+- From a fact's validity distribution (see "Time on a fact"), Factoid computes the probability the fact is still
   valid at a date.
 - Search multiplies relevance by `floor + (1 - floor) * P(still valid at as_of)`. The floor keeps stale facts findable
   and ranks them lower. Events and stable facts score near 1.
@@ -1015,3 +1009,6 @@ All dates are 2026-11-13 unless noted.
     apartment-rental and CRM examples. (2026-11-15)
 64. Base classes drop the `Factoid` prefix: `Document`, `ProseDocument`, `StructuredDocument`, `Fact`, `FactTrait`,
     `FactKind`, `Entity`, and `Settings`. This matches the README intro. (2026-11-15)
+
+65. There are no fact kinds. `valid_from`, `expires`, `valid_until`, and `lifetime` are properties of each fact,
+    filled in by `assess` from defaults on `Fact`. `FactKind` is gone. (2026-11-15)

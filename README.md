@@ -115,8 +115,8 @@ factoid eval --vary fact_evals=none,nli,jev_floors  # compare fact eval chains o
 
 ## Documents, facts, and entities
 
-Each document type, entity type, fact class, trait, and fact kind is a Python class. A class holds its definition,
-prompt or question wording, model settings, and custom pipeline code. In the example below, a law firm advises its
+Each document type, entity type, fact class, and trait is a Python class. A class holds its definition, prompt or
+question wording, model settings, and custom pipeline code. In the example below, a law firm advises its
 client Acme on acquiring Orion and reviews Orion's contracts, including Orion's supply agreement with Vega:
 
 ```text
@@ -127,7 +127,7 @@ acme/
 │   ├── sources.py     # document sources
 │   ├── documents.py   # Contract, CounselEmail, and ContractRegister
 │   ├── entities.py    # Company, Agreement, and Person
-│   ├── facts.py       # SourceFact, CounselFact, traits, and fact kinds
+│   ├── facts.py       # SourceFact, CounselFact, and traits
 │   ├── fact_evals.py  # custom fact evals
 │   └── prompts/
 │       ├── counsel_email_extract.md.j2
@@ -141,7 +141,7 @@ rows. Every pipeline step is a classmethod or an instance method on the class th
 | Class | Classmethods | Instance methods |
 | --- | --- | --- |
 | `Document` | `classify(raw, judgments)` | Prose: `segment`, `chunk`, `situate`, and `extract`. Structured: `read` and `row_facts`. Both: `discover`, `context`, the `source_datetime` property, and `ingest`, which runs the steps in order. |
-| `Fact` | Reads, such as `search` | `validate`, `evaluate`, `repair`, `assess` (traits, kind, and lifetime, in one request), `expiration`, `link`, `resolve`, and `save`; outcomes `supersede`, `end`, `correct`, `contradict`, `retract`, and `restore`. |
+| `Fact` | Reads, such as `search` | `validate`, `evaluate`, `repair`, `assess` (traits and time properties, in one request), `expiration`, `link`, `resolve`, and `save`; outcomes `supersede`, `end`, `correct`, `contradict`, `retract`, and `restore`. |
 | `Entity` | `identify(mention)`, `create`, and reads `find` and `where` | `claim`, `merge`, `split`, `retype`, `related`, and `facts`. |
 
 Every step has `before_<step>` and `after_<step>` hooks, which do nothing by default and are always called.
@@ -153,7 +153,7 @@ Every class supports incremental levels of customization, and every level is opt
 
 - **No classes, or plain declarations**: run on the defaults with no code, or subclass a base class and write a
   docstring.
-- **Class settings**: set attributes for guidance, examples, traits, fact kinds, fact evals, thresholds, and models.
+- **Class settings**: set attributes for guidance, examples, traits, fact evals, thresholds, and models.
 - **Step wording**: set a Jinja string or `template("...")` on the class (such as `extract_prompt` or `link_question`)
   to replace the default prompt or decision question for a step.
 - **Step methods and hooks**: override a step method in Python (calling `super()` to keep the default), or define
@@ -282,10 +282,10 @@ factoid struct try contract_register.csv --rows 20                   # dry-run o
 factoid ingest contract_register.csv                                 # import facts and entity properties
 ```
 
-### Facts, traits, and kinds
+### Facts, traits, and time
 
 A fact is one self-contained sentence, exact source quotes (with who said each quote and when), links to one or more
-entities, a fact kind with an expiration, and zero or more traits. A fact has no typed fields; the sentence carries the
+entities, zero or more traits, and properties that say how it ages. A fact has no typed fields; the sentence carries the
 meaning.
 
 A trait is a `FactTrait` subclass whose docstring is the definition the model reads. With no `decide` method, the
@@ -293,16 +293,17 @@ trait is one yes-or-no question built from the docstring and compared against `t
 (such as `judgments.liability_cap`) plus any factor questions it declares with `@judge`. Traits can also define
 `after_` hooks for facts that carry them. A fact can carry several traits, and a fact that matches no trait is kept.
 
-In the same `assess` request, Factoid classifies each fact into a kind declared on `Fact.kinds` and estimates its
-lifetime. The built-in kinds are `fixed`, `state`, `event`, `decision`, `plan`, `forecast`, and `rule`. Each kind is a
-`FactKind` subclass whose docstring is the rubric the model reads and whose `expires` attribute sets how facts of
-that kind age: `"never"` (`fixed`, `event`, and `decision`), `"estimated"` (`state` and `rule`), or `"at_deadline"`
-(`plan` and `forecast`).
+In the same `assess` request, Factoid fills in each fact's time properties:
 
-Expiration timing is set per fact. When the text gives an exact cutoff, such as `"next Friday"` resolved against
-`source_datetime`, the extractor records that timestamp. Otherwise, a model chooses a lifetime range, from an hour to
-longer than a few years, and Factoid keeps the distribution over ranges to compute the chance the fact is still valid at
-a given time. Each confirmation restarts the clock.
+- `valid_from`: when the fact became true or happened, from the text resolved against `source_datetime`. A future date
+  is allowed.
+- `expires`: `"never"` (history, such as a signing), `"estimated"` (true until something changes it, such as a contract
+  clause), or `"at_deadline"` (settled by a date, such as a promised reply).
+- `valid_until`: the exact end or due time, when the text gives one.
+- `lifetime`: for an estimated fact, a distribution over ranges from an hour to longer than a few years. Factoid uses it
+  to compute the chance the fact is still true at a given time. Each confirmation restarts the clock.
+
+The base `Fact` class holds the default questions and ranges that fill these in, and a fact class can change them.
 
 Many projects need only one fact class, and running with one fact class and no subclass at all is fine. Here there are
 two because a lawyer's conclusion is a different kind of evidence from what a contract says: a `CounselFact` cannot
@@ -312,7 +313,7 @@ runs.
 
 ```python
 # facts.py
-from factoid import Fact, FactKind, FactTrait, Noul, judge
+from factoid import Fact, FactTrait, Noul, judge
 
 class ChangeOfControl(FactTrait):
     """A consequence triggered by a change in who owns or controls a party."""
@@ -340,30 +341,25 @@ class LiabilityCap(FactTrait):
 class ClosingRisk(FactTrait):
     """Something that could delay or block the deal from closing."""
 
-class Allegation(FactKind):
-    """A claim one party makes against another that has not been proven."""
-    expires = "estimated"
-
 class SourceFact(Fact):
     """What a contract, a client, or the other side says."""
     traits = [ChangeOfControl, ConsentRequired, Deadline, LiabilityCap]
-    kinds = Fact.kinds + [Allegation]
 
 class CounselFact(Fact):
     """What our own lawyers concluded."""
     traits = [ClosingRisk]
 ```
 
-| Fact sentence | Class | Kind | Traits |
+| Fact sentence | Class | Traits | Time |
 | --- | --- | --- | --- |
-| Orion's supply agreement with Vega lets Vega terminate if a competitor of Vega acquires Orion. | `SourceFact` | `rule` | `ChangeOfControl` |
-| Orion may not assign the Vega supply agreement without Vega's written consent. | `SourceFact` | `rule` | `ConsentRequired` |
-| Vega must answer a consent request within 15 business days. | `SourceFact` | `rule` | `ConsentRequired`, `Deadline` |
-| Amendment 2 raises the liability cap in the Vega supply agreement to $2M from January 1, 2027. | `SourceFact` | `rule` | `LiabilityCap` |
-| Acme's deal counsel concluded that Vega's consent is a closing risk. | `CounselFact` | `state` | `ClosingRisk` |
+| Orion's supply agreement with Vega lets Vega terminate if a competitor of Vega acquires Orion. | `SourceFact` | `ChangeOfControl` | estimated, years |
+| Orion may not assign the Vega supply agreement without Vega's written consent. | `SourceFact` | `ConsentRequired` | estimated, years |
+| Vega must answer a consent request within 15 business days. | `SourceFact` | `ConsentRequired`, `Deadline` | estimated, years |
+| Amendment 2 raises the liability cap in the Vega supply agreement to $2M from January 1, 2027. | `SourceFact` | `LiabilityCap` | valid from January 1, 2027; estimated, years |
+| Acme's deal counsel concluded that Vega's consent is a closing risk. | `CounselFact` | `ClosingRisk` | estimated, weeks |
 
-Amendment 2's fact supersedes the old liability cap fact only, not the whole agreement. A clause with a future effective
-date is still a `rule`, not a `forecast`.
+Amendment 2's fact supersedes the old liability cap fact from January 1, 2027, and leaves the rest of the agreement
+alone.
 
 ### Entities
 
@@ -428,9 +424,9 @@ entities that share only a weak name go to a yes-or-no question with a high floo
 events.
 
 Relations between entities require no schema or relation class. Factoid counts co-mentions across shared facts and
-identifies relation facts: current `fixed` or longer-lived `state` facts that link two or more entities. Calling
-`entity.related()` returns connected entities with their co-mention counts and current relation facts, weighted by
-freshness.
+identifies relation facts: current facts that never expire or last months or longer and link two or more entities.
+Calling `entity.related()` returns connected entities with their co-mention counts and current relation facts,
+weighted by freshness.
 
 ### Resolving facts
 
@@ -514,7 +510,6 @@ from acme.fact_evals import CitesSourceEval
 class SourceFact(Fact):
     """What a contract, a client, or the other side says."""
     traits = [ChangeOfControl, ConsentRequired, Deadline, LiabilityCap]
-    kinds = Fact.kinds + [Allegation]
     fact_evals = [Nli, JevFloors(useful=0.8)]               # the default chain, with one floor raised
 
 class CounselFact(Fact):
