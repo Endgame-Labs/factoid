@@ -206,8 +206,8 @@ unlinked facts, and reversible merges (`docs/prior-art.md`, and the research sum
 - **Co-mention.** For each pair of entities, Factoid keeps the number of facts linked to both, the most recent one, and
   the roles each entity plays in them. It is counting, with no model call.
 - **Relation facts.** A durable relation is a fact that links two or more entities, whose kind is fixed or
-  state with a lifetime of months or longer (see "Fact traits"), and that is still valid. It is a view over stored facts, with no extra extraction.
-  `entity.related()` returns connected entities, each with its co-mention count and its current relation facts.
+  state with a lifetime of months or longer (see "Fact traits"), and that is still valid. It is a view over stored
+  facts, with no extra extraction. `entity.related()` returns connected entities, each with its co-mention count and its current relation facts.
   Freshness weighting applies, so a relation that has ended ranks lower.
 - Direction is carried by the fact sentence.
 
