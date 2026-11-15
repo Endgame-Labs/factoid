@@ -299,8 +299,12 @@ class ProseDocument(Document):
         text = self.generate(type(self).situate_prompt, document=self, chunk=chunk)
         return " ".join(text.split())
 
-    def extract(self, chunk: Chunk) -> list[Fact]:
-        """Candidate facts from one chunk. The extractor cites passages; code attaches the quotes."""
+    def extract(self, chunk: Chunk, **context: Any) -> list[Fact]:
+        """Candidate facts from one chunk. The extractor cites passages; code attaches the quotes.
+
+        Keyword arguments are passed to the extract template, so an override can add context:
+        `return super().extract(chunk, thread=summary)`.
+        """
         dated = self.dated()
         prompt = render(
             type(self).extract_prompt,
@@ -311,6 +315,7 @@ class ProseDocument(Document):
             guidance=self.extraction_guidance(),
             passages=chunk.passages,
             context_passages=chunk.context_passages,
+            **context,
         )
         raw = self.generate(prompt, json_mode=True)
         return self.parse_candidates(raw, chunk)
