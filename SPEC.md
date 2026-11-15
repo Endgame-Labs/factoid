@@ -130,21 +130,29 @@ inherent content against rubrics Factoid provides: whether it depends on time, a
 **Proposed.**
 
 - Traits are extra questions in the same request as the label questions, so they add no call.
-- **Kind of fact** (`choice`): stable (true for years), slow-changing (a role, plan, or relationship), current state (a
-  status or number that moves within days or weeks), event (happened at a time, and stays true as history), plan
-  (an action someone intends to take, with a target date; overdue, not false, when the date passes without
-  confirmation), forecast (an outcome that is expected but that nobody committed to, such as "the bank is expected to
-  cut rates"; Kyle, 2026-11-15), or decision (a choice someone made, such as "Northwind
-  chose annual billing"; Kyle, 2026-11-14). Kept as its own kind after the trait research, though both reviewers would
-  fold it into event (Kyle, 2026-11-15). What a decision sets up, such as an obligation or a new state, is extracted as
-  its own fact.
+- **Kind of fact** (`choice`; Kyle, 2026-11-15). Kind says what the fact is about, not its tense. How fast a fact
+  changes is the lifetime range's job, not the kind's.
+  - fixed: can never change, such as a birth date, a founding year, or a closed quarter's revenue. A reading of
+    something that moves ("cash was $1.18B on Sept 30") is a state, not fixed.
+  - state: anything that can change, at any speed, such as a role, a status, a metric, or a relationship. A past state
+    ("Lincoln practiced law in Springfield") is still a state, with an end date.
+  - event: happened at a time, and stays true as history.
+  - decision: a choice someone made, such as "Northwind chose annual billing" (Kyle, 2026-11-14). Kept as its own kind
+    after the trait research, though both reviewers would fold it into event. What a decision sets up, such as an
+    obligation or a new state, is extracted as its own fact.
+  - plan: an action someone intends to take, with a target date. Overdue, not false, when the date passes without
+    confirmation.
+  - forecast: an outcome that is expected but that nobody committed to, such as "the bank is expected to cut rates."
+  - rule: a policy, obligation, definition, or "if X then Y", as in leases, laws, and runbooks.
+  - General world knowledge has no kind of its own. "Water boils at 100°C at sea level" is fixed. "Paris is the capital
+    of France" is a state with the longest lifetime range.
 - **Validity** (`choice` over ordered ranges): a day, a week, a month, a quarter, a year, several years, or permanent.
   Factoid keeps the distribution and stores `valid_until`: when the fact was stated, plus the median range.
 - Optional traits: hedged (`noul`), and opinion or observed (`choice`).
 - Uses:
   - Search ranks facts past `valid_until` lower and flags them stale. `valid_at=` filters to facts likely still true.
-  - Resolve treats two disagreeing "current state" facts far apart in time as a supersede, and two disagreeing
-    "stable" facts as a contradiction.
+  - Resolve treats two disagreeing "state" facts far apart in time as a likely supersede, and two disagreeing "fixed"
+    facts as a contradiction.
   - An open contradiction goes stale when its facts' `valid_until` passes. See "Resolving".
   - `factoid stats` lists facts past `valid_until`, so a person or agent can re-check them.
   - Calibration eval: when a fact is superseded, its real lifetime is compared with the predicted validity.
@@ -197,8 +205,8 @@ unlinked facts, and reversible merges (`docs/prior-art.md`, and the research sum
 
 - **Co-mention.** For each pair of entities, Factoid keeps the number of facts linked to both, the most recent one, and
   the roles each entity plays in them. It is counting, with no model call.
-- **Relation facts.** A durable relation is a fact that links two or more entities, whose kind is stable or
-  slow-changing (see "Fact traits"), and that is still valid. It is a view over stored facts, with no extra extraction.
+- **Relation facts.** A durable relation is a fact that links two or more entities, whose kind is fixed or
+  state with a lifetime of months or longer (see "Fact traits"), and that is still valid. It is a view over stored facts, with no extra extraction.
   `entity.related()` returns connected entities, each with its co-mention count and its current relation facts.
   Freshness weighting applies, so a relation that has ended ranks lower.
 - Direction is carried by the fact sentence.
@@ -803,3 +811,5 @@ All dates are 2026-11-13 unless noted.
 46. `decision` stays its own kind of fact, separate from `event`, after the trait research. (2026-11-15)
 47. Resolve gains two answers, ends and corrects, so endings and corrections need no per-fact trait. (2026-11-15)
 48. `plan` and `forecast` are separate kinds: an intended action versus an expected outcome. (2026-11-15)
+49. Kinds of fact are fixed, state, event, decision, plan, forecast, and rule. Stable, slow-changing, and current state
+    are dropped; lifetime ranges say how fast a state changes. World knowledge has no kind of its own. (2026-11-15)
