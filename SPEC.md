@@ -972,8 +972,11 @@ diligence app (`factoid-legal`, a separate repo), scored on CUAD.
   with a later document's version superseding at 0.7, and giving the "useful" check the fact class's guidance. It
   aimed at a restructured payment clause in the held-out NEON chain. It did not catch that clause, raised false
   supersessions (signature and date facts), and broke 4 of 12 checks on the sample deal.
-- **After replaced sections** (2026-11-15): the NEON chain finds 2 of 2 supersessions. Its last failing check is
-  one compound clause the repair does not split. CUAD contracts 1 to 60 are unchanged (F1 0.81 to 0.85).
+- **Repair splits on an atomic failure**: a fact that failed the atomic check states several claims, so repair must
+  split it rather than reword it.
+- **Final results** (2026-11-15): every amendment check passes on all four chains (supersessions 4 of 4, untouched
+  clauses 5 of 5, as-of search 5 of 5, dated windows 2 of 2), the sample deal passes 12 of 12, and CUAD clause F1
+  is 0.82, 0.84, and 0.81 on contracts 1 to 20, 21 to 40, and 41 to 60.
 - **Held-out check** (2026-11-15). The values above were tuned on CUAD contracts 1 to 20 and three amendment
   chains. On CUAD contracts 21 to 40, never looked at while tuning, clause F1 was 0.85 (0.82 on the tuning set),
   coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
