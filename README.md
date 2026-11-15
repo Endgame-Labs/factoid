@@ -65,5 +65,10 @@ boilerplate representation that was never kept as a fact.
 
 Cost on CUAD: about 700 model calls and 1M tokens per contract, 60 to 85 seconds per contract at the median.
 
-Open: clause-detection precision (0.70 and 0.75), restructured clauses in amendments, and the size of the amendment
+A third set, CUAD contracts 41 to 60, was scored once after the last change: clause F1 0.81, mean AUPR 0.95, gold
+clauses quoted by a kept fact 0.94, and with the right trait 0.80. Dates in the right year: agreement 17/18, effective
+7/7, expiration 1/2.
+
+Open: amendments that rewrite a section wholesale ("Sections 3.1 and 3.2 are amended to read in their entirety"),
+clause-detection precision (0.70 and 0.75), restructured clauses in amendments, and the size of the amendment
 suites (5 chains in all), which is too small to measure supersession precisely.
