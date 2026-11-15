@@ -910,9 +910,9 @@ Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
   `docs/potential/crm-starter.md` predate the entity redesign. `docs/config.md` and `docs/plugins.md` also describe
   the single-YAML design.
 - README.md was brought up to date with the decisions through 2026-11-15 (decision 55).
-- README.md does not yet cover decisions 56 to 58: steps as methods with `before_` and `after_` hooks, `@judge`, and
-  the classifier registry. Its Classification section should use the `TenantEmail` example from "Jev judges, code
-  decides".
+- README.md does not yet cover decisions 56 to 60: steps as methods with `before_` and `after_` hooks, `@judge`, the
+  classifier registry, fact classes, and `FactoidFactLabel` replacing `FactoidLabel`. Its Classification section should
+  use the `TenantEmail` example from "Jev judges, code decides".
 
 ## Decision log
 
