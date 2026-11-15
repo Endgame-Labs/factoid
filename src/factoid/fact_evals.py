@@ -85,7 +85,8 @@ QUESTIONS: dict[str, Noul] = {
     ),
     "self_contained": Noul(
         "Can a reader understand the fact on its own? It must name its subject and the people, companies, and "
-        "documents it refers to, with no unresolved pronouns and no references like 'this Agreement' or 'the Party'.",
+        "documents it refers to, with no unresolved pronouns and no references like 'this Agreement' or 'the Party'. "
+        "Text the source itself omits or redacts, such as [***], does not count against the fact.",
         true="The fact is understandable alone.",
         false="The fact needs context it does not give.",
     ),
