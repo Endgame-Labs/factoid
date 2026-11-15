@@ -238,38 +238,46 @@ class Factoid:
         the fact quoting the replacing passage when this document gives no text for that section."""
         mine = document.dated()
         retired = 0
+
+        def in_section(fact: Fact, section: str) -> bool:
+            return any(q.section and (q.section == section or q.section.startswith(section + "."))
+                       for q in fact.quotes)
+
         for passage, sections in replaced:
             instruction = [f for f in facts if any(q.passage_n == passage.n for q in f.quotes)]
-            entity_ids = sorted({m.entity_id for f in instruction for m in f.mentions if m.entity_id})
-            if not entity_ids:
-                continue
-            marks = ",".join("?" * len(entity_ids))
-            rows = self.store.query(
-                f"select distinct f.id from facts f join mentions m on m.fact_id = f.id where m.entity_id in ({marks}) "
-                "and f.document_id != ? and f.status in ('current', 'contradicted')", (*entity_ids, document.id))
-            for row in rows:
-                old = self.load_fact(row["id"])
-                if old is None:
+            for section in sections:
+                same = [f for f in facts if f.status == "current" and in_section(f, section) and f not in instruction]
+                # Scope to earlier documents about the same thing: entities of the facts quoting the instruction,
+                # or, when none was kept, of the new section's own facts.
+                scope = instruction or same
+                entity_ids = sorted({m.entity_id for f in scope for m in f.mentions if m.entity_id})
+                if not entity_ids:
                     continue
-                theirs = old.valid_from or old.source_datetime
-                if mine is not None and theirs is not None and theirs >= mine:
-                    continue
-                hit = next((s for s in sections for q in old.quotes
-                            if q.section and (q.section == s or q.section.startswith(s + "."))), None)
-                if hit is None:
-                    continue
-                same = [f for f in facts if f.status == "current" and any(
-                    q.section and (q.section == hit or q.section.startswith(hit + ".")) for q in f.quotes)
-                    and f not in instruction]
-                if same:
-                    vectors = self.client.embed([old.text] + [f.text for f in same])
-                    best = max(range(len(same)), key=lambda i: _cosine(vectors[0], vectors[i + 1]))
-                    run_step(same[best], "supersede", old)
-                elif instruction:
-                    run_step(instruction[0], "end", old)
-                else:
-                    continue
-                retired += 1
+                marks = ",".join("?" * len(entity_ids))
+                rows = self.store.query(
+                    f"select distinct f.id from facts f join mentions m on m.fact_id = f.id "
+                    f"where m.entity_id in ({marks}) and f.document_id != ? "
+                    "and f.status in ('current', 'contradicted')", (*entity_ids, document.id))
+                vectors_for: dict[str, list[float]] = {}
+                for row in rows:
+                    old = self.load_fact(row["id"])
+                    if old is None or not in_section(old, section):
+                        continue
+                    theirs = old.valid_from or old.source_datetime
+                    if mine is not None and theirs is not None and theirs >= mine:
+                        continue
+                    if same:
+                        if not vectors_for:
+                            for f, v in zip(same, self.client.embed([f.text for f in same])):
+                                vectors_for[f.id] = v
+                        old_vector = self.client.embed([old.text])[0]
+                        best = max(same, key=lambda f: _cosine(old_vector, vectors_for[f.id]))
+                        run_step(best, "supersede", old)
+                    elif instruction:
+                        run_step(instruction[0], "end", old)
+                    else:
+                        continue
+                    retired += 1
         return retired
 
     def _classify_fact(self, fact: Fact, classes: list[type[Fact]]) -> Fact:

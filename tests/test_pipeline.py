@@ -312,3 +312,24 @@ def test_a_section_replaced_in_its_entirety_retires_the_old_facts(make_app, fake
 def test_a_partial_amendment_does_not_retire_a_section():
     doc = Contract("1. Section 2.2 of the Development Agreement is hereby amended to allow Cargill to add staff.")
     assert doc.replacements(doc.segment()) == []
+
+
+def test_a_replaced_section_without_a_kept_instruction_fact(make_app, fake):
+    app = build(make_app, fake)
+
+    def generator(prompt):
+        facts = []
+        for n, text in re.findall(r"^\[(\d+)\] (.+)$", prompt, re.M):
+            if "entirety" in text:
+                continue  # the extractor kept no fact for the instruction itself
+            facts.append({"text": f"Under the supply agreement between Vega and Orion, {text}", "passages": [int(n)],
+                          "mentions": [{"name": "Vega", "kind": "company"}, {"name": "Orion", "kind": "company"}]})
+        return json.dumps({"facts": facts})
+
+    fake.generator = generator
+    base = app.ingest_text("Section 3.2 PAYMENT. Orion pays each fee 120 days after the invoice.",
+                           document_type=Contract, metadata={"signed_at": "1996-01-01T00:00:00Z"}, uri="b2.txt")
+    app.ingest_text("1. Section 3.2 is amended to read in its entirety as follows.\n\n"
+                    "Section 3.2 PAYMENT. Orion pays each royalty 60 days after the invoice.",
+                    document_type=Contract, metadata={"signed_at": "1999-01-01T00:00:00Z"}, uri="a2.txt")
+    assert Fact.get(base.facts[0].id).status == "superseded"
