@@ -273,7 +273,8 @@ class Fact(Registered, ModelCalls):
     def repair(self, result: EvalResult) -> list[str]:
         """One repair for a near miss: a rewording, or a split into several facts when it states several claims.
         Returns the new sentences, or an empty list."""
-        prompt = render(type(self).repair_prompt, fact=self, failed=result.failed,
+        split = any(name.endswith(".atomic") for name in result.failed)  # several claims: a rewording cannot fix it
+        prompt = render(type(self).repair_prompt, fact=self, failed=result.failed, split=split,
                         passages=[q.text for q in self.quotes])
         raw = self.generate(prompt, json_mode=True)
         try:

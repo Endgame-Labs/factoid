@@ -7,8 +7,13 @@ Cited passages:
 - {{ passage }}
 {% endfor %}
 
+{% if split %}
+The fact states several claims. Split it into one sentence per claim, each supported by the passages: at least two
+sentences.
+{% else %}
 Rewrite the fact as one self-contained sentence that states one claim, supported by the passages. If it states
-several claims, split it into one sentence per claim. Name the subject and the people, companies, and documents each
+several claims, split it into one sentence per claim.
+{% endif %} Name the subject and the people, companies, and documents each
 sentence refers to. Keep who said it, and keep conditions, hedges, and negations, in the sentence they limit.
 Keep redaction markers such as [*] as they appear.
 Answer with JSON only: {"facts": ["...", "..."]}
