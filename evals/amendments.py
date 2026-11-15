@@ -227,7 +227,7 @@ class Amendments(Suite):
                 total += 1
                 want = {f.id for f in self.quoting(app, self.locate(want_key, want_snip))}
                 stale = {f.id for f in self.quoting(app, self.locate(old_key, old_snip))}
-                hits_ = app.search_facts(query, as_of=as_of, top_k=5, include_retired=True)
+                hits_ = app.search_facts(query, as_of=as_of, top_k=5)
                 ranks = [h.fact.id for h in hits_]
                 first_want = next((i for i, fid in enumerate(ranks) if fid in want), None)
                 first_stale = next((i for i, fid in enumerate(ranks) if fid in stale), None)
