@@ -156,8 +156,14 @@ inherent content against rubrics Factoid provides: whether it depends on time, a
   - `after_deadline`: `"overdue"` (plan) or `"unsettled"` (forecast). Only for `expires="at_deadline"`.
   - `FactoidFact.kinds` lists the built-ins. A subclass adds to the list (`kinds = FactoidFact.kinds + [Symptom]`),
     replaces it, or overrides one built-in by subclassing it (`class State(kinds.State)`) with new wording or behavior.
-- **Validity** (`choice` over ordered ranges): a day, a week, a month, a quarter, a year, several years, or permanent.
-  Factoid keeps the distribution and stores `valid_until`: when the fact was stated, plus the median range.
+- **Expiration** (Kyle, 2026-11-15). Decided per fact, not per kind: the kind says whether a fact expires, but how soon
+  can't be known at dev time.
+  - **An exact time when the text gives one.** "Dana is speaking at the conference next Friday" expires at the end of
+    that Friday, resolved against the document's `source_datetime`. The extractor fills it in.
+  - **Otherwise a range**, chosen per fact by the extractor or the decision model (which one is an eval result): an
+    hour, a day, a week, a month, a quarter, a year, a few years, or longer. Factoid keeps the distribution over
+    ranges, not one cutoff, and computes the chance the fact is still true at a given time.
+  - The clock starts at the most recent time the fact was seen to be true, and each confirmation restarts it.
 - Optional traits: hedged (`noul`), and opinion or observed (`choice`).
 - Uses:
   - Search ranks facts past `valid_until` lower and flags them stale. `valid_at=` filters to facts likely still true.
@@ -847,3 +853,5 @@ All dates are 2026-11-13 unless noted.
 51. Every document has `source_datetime`, its own date from its metadata, the same for every document class. ISO
     strings need a timezone; epoch seconds, milliseconds, and microseconds are accepted. Facts get `extracted_at` for
     internal use. (2026-11-15)
+52. A fact's expiration is decided per fact: an exact time from the text when there is one, otherwise a range from
+    an hour to longer than a few years, chosen by a model. The clock restarts when the fact is confirmed. (2026-11-15)
