@@ -226,8 +226,8 @@ unlinked facts, and reversible merges (`docs/prior-art.md`, and the research sum
   the roles each entity plays in them. It is counting, with no model call.
 - **Relation facts.** A durable relation is a fact that links two or more entities, whose kind is fixed or
   state with a lifetime of months or longer (see "Fact traits"), and that is still valid. It is a view over stored
-  facts, with no extra extraction. `entity.related()` returns connected entities, each with its co-mention count and its current relation facts.
-  Freshness weighting applies, so a relation that has ended ranks lower.
+  facts, with no extra extraction. `entity.related()` returns connected entities, each with its co-mention count and
+  its current relation facts. Freshness weighting applies, so a relation that has ended ranks lower.
 - Direction is carried by the fact sentence.
 
 Pair summaries and relation types that emerge from the data are in `specs/roadmap/relations.md`.
@@ -775,14 +775,7 @@ Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
 - `docs/facts.md`, `docs/mental-model.md`, `docs/config.md`, `docs/plugins.md`, `docs/cli.md`, and
   `docs/potential/crm-starter.md` predate the entity redesign. `docs/config.md` and `docs/plugins.md` also describe
   the single-YAML design.
-- README.md, pending a Carbon pass for the decisions of 2026-11-14: it still says a mention never creates an entity and
-  that discovered entities need a strong identity or two documents (now untyped entities, decision 37). It does not
-  yet cover prose and structured documents, prosaic, fact traits, contradictions in search results, freshness
-  weighting, or relations. Its entity examples still use `identities = {...}` and lifecycle callbacks (now
-  `unique_keys`, with callbacks on the roadmap, decision 40). It says `factoid new` (now `factoid init`).
-- README.md, also pending for the decisions of 2026-11-15: kinds of fact declared on `FactoidFact` with `expires`
-  (decisions 46 to 50), per-fact expiration (52), `source_datetime` and `extracted_at` (51), resolve's ends and corrects
-  answers (47), and `factoid struct` (54).
+- README.md was brought up to date with the decisions through 2026-11-15 (decision 55).
 
 ## Decision log
 
@@ -866,3 +859,5 @@ All dates are 2026-11-13 unless noted.
 53. Stance (hedged, opinion) is Open and out of v1, to be judged on real examples. (2026-11-15)
 54. Structured-document commands: `factoid struct inspect`, `factoid struct parser`, and `factoid struct try`.
     (2026-11-15)
+55. README brought up to date by a Carbon pass: documents, `source_datetime`, structured documents, kinds and
+    expiration, untyped entities, resolve and contradictions, freshness, and relations. (2026-11-15)
