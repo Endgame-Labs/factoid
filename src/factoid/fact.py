@@ -72,8 +72,10 @@ RESOLVE_ANSWERS: dict[str, str] = {
     "supersedes": "The new fact replaces a value the stored fact gave, which was true until then.",
     "ends": "The new fact says the state in the stored fact stopped, without giving a new value.",
     "corrects": "The new fact shows the stored fact was wrong from the start.",
-    "contradicts": "The two facts cannot both be true, and neither replaces the other.",
-    "unrelated": "The facts are about different things, or both can be true at once.",
+    "contradicts": "The two facts cannot both be true at the same time and in the same case, and neither replaces "
+                   "the other.",
+    "unrelated": "The facts are about different things, or both can be true at once, such as a rule and an exception "
+                 "to it, or terms that apply in different cases.",
 }
 
 
@@ -98,9 +100,13 @@ class Fact(Registered, ModelCalls):
     #: Lifetime ranges the decision model chooses from.
     lifetime_ranges = LIFETIME_RANGES
     #: How many stored facts a new fact is compared against in `resolve`.
-    resolve_candidates: ClassVar[int] = 5
+    resolve_candidates: ClassVar[int] = 8
     #: The probability a resolve answer must reach; below it, the facts are treated as unrelated.
     resolve_threshold: ClassVar[float] = 0.6
+    #: Answers that drop or flag a fact need more: a duplicate is merged away, and a contradiction marks both facts.
+    #: Below these, the next best answer is used.
+    duplicate_threshold: ClassVar[float] = 0.8
+    contradiction_threshold: ClassVar[float] = 0.75
     #: Run one repair (a rewording) on a near miss.
     repair_enabled: ClassVar[bool] = True
     #: The longest fact sentence `validate` accepts, in characters.
@@ -334,11 +340,18 @@ class Fact(Registered, ModelCalls):
         questions = {key: Choice(type(self).resolve_question.format(key=key), RESOLVE_ANSWERS) for key in keys}
         judgments = app.client.ask(state, questions)
         out = []
+        klass = type(self)
+        bars = {"duplicate": klass.duplicate_threshold, "contradicts": klass.contradiction_threshold}
         for key, other in zip(keys, candidates):
             answer = judgments[key]
-            best = max(answer, key=answer.get)
-            if best != "unrelated" and answer[best] >= type(self).resolve_threshold:
-                out.append((best, other, answer[best]))
+            for choice in sorted(answer, key=answer.get, reverse=True):
+                if answer[choice] >= bars.get(choice, klass.resolve_threshold):
+                    if choice != "unrelated":
+                        out.append((choice, other, answer[choice]))
+                    break
+                if choice in bars:
+                    continue  # not confident enough to drop or flag: consider the next answer
+                break
         return out
 
     def save(self) -> None:

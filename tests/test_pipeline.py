@@ -184,3 +184,20 @@ def test_rerank_sees_the_best_weighted_candidates(make_app, fake):
                     document_type=Contract, metadata={"signed_at": "2026-10-03T00:00:00Z"}, uri="f.txt")
     hits = Fact.search("liability cap", as_of="2027-06-01T00:00:00Z")
     assert "$2M" in hits[0].fact.text and hits[0].score > hits[-1].score
+
+
+def test_an_unsure_duplicate_keeps_the_new_fact(make_app, fake):
+    app = build(make_app, fake)
+    inner = fake.choice
+
+    def choice(question, state, name):
+        if name.startswith("F"):
+            return {k: (0.7 if k == "duplicate" else 0.06) for k, _ in question.options}
+        return inner(question, state, name)
+
+    fake.choice = choice
+    app.ingest_text("Vega's liability to Orion is capped at $1M.", document_type=Contract,
+                    metadata={"signed_at": "2025-03-01T00:00:00Z"}, uri="g.txt")
+    second = app.ingest_text("Vega's liability to Orion is capped at $1M in total.", document_type=Contract,
+                             metadata={"signed_at": "2025-04-01T00:00:00Z"}, uri="h.txt")
+    assert len(second.facts) == 1 and second.duplicates == 0
