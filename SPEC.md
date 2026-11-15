@@ -408,9 +408,12 @@ situation in front of its text. When it is off, the chunk's text alone is indexe
   news articles carry dates and authors outside their text. A document class says where to find them, and Factoid
   gives them to the extractor ahead of the passages, so fact dates come from the text plus this structure. Proposed
   shape for prose documents:
-  - Every document has one universal date field for its own date (an email's sent time, an article's publish date, a
-    wiki page's last edit). Name not settled; `written_at` and `as_of` were rejected. Factoid separately sets
-    `ingested_at`, which is never used as a fact's date. (After Keen IO's `keen.timestamp` and `keen.created_at`.)
+  - Every document has one universal date field, `source_datetime` (Kyle, 2026-11-15), for its own date (an email's
+    sent time, an article's publish date, a wiki page's last edit). It comes from the document's metadata, through the
+    same interface for every document class.
+  - Factoid also stamps every fact with `extracted_at`, for internal use: the time extraction concluded, before the
+    first judging step. It is never used as a fact's date. (The split follows Keen IO's `keen.timestamp` and
+    `keen.created_at`.)
   - The date is validated by Pydantic and stored as an ISO-8601 UTC string with microseconds. Accepted inputs: ISO-8601
     strings, which must carry a timezone offset or `Z` (Kyle, 2026-11-15); epoch seconds, milliseconds, or microseconds,
     with the unit inferred from the size of the number; and timezone-aware `datetime` values. A re-ingested, edited
@@ -841,3 +844,6 @@ All dates are 2026-11-13 unless noted.
 50. Kinds of fact are declared on `FactoidFact` as `FactoidKind` classes, so projects can override and extend them.
     Documents declare their own dates and context for the extractor. Fact dates come from the text and that
     context, not from ingest time. (2026-11-15)
+51. Every document has `source_datetime`, its own date from its metadata, the same for every document class. ISO
+    strings need a timezone; epoch seconds, milliseconds, and microseconds are accepted. Facts get `extracted_at` for
+    internal use. (2026-11-15)
