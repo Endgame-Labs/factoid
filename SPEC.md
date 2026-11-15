@@ -780,6 +780,9 @@ Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
   yet cover prose and structured documents, prosaic, fact traits, contradictions in search results, freshness
   weighting, or relations. Its entity examples still use `identities = {...}` and lifecycle callbacks (now
   `unique_keys`, with callbacks on the roadmap, decision 40). It says `factoid new` (now `factoid init`).
+- README.md, also pending for the decisions of 2026-11-15: kinds of fact declared on `FactoidFact` with `expires`
+  (decisions 46 to 50), per-fact expiration (52), `source_datetime` and `extracted_at` (51), resolve's ends and corrects
+  answers (47), and `factoid struct` (54).
 
 ## Decision log
 
