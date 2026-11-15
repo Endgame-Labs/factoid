@@ -13,6 +13,7 @@ import statistics
 import sys
 import time
 from collections.abc import Iterable, Iterator
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -43,6 +44,8 @@ class Suite:
 
     name = "suite"
     description = ""
+    #: Documents ingested at once. Above 1, documents must be independent of each other.
+    parallel = 1
 
     def documents(self, limit: int | None = None) -> Iterable[Document]:
         raise NotImplementedError
@@ -68,6 +71,8 @@ class RunResult:
     facts: int
     rejected: int
     path: Path | None = None
+    rejected_by_reason: dict[str, int] = field(default_factory=dict)
+    samples: dict[str, list[str]] = field(default_factory=dict)
 
 
 FACT_EVAL_CHAINS: dict[str, Any] = {
@@ -94,6 +99,35 @@ def _value(raw: str) -> Any:
         return raw
 
 
+def _split_values(values: str) -> list[str]:
+    """Split on commas that are not inside parentheses."""
+    out, depth, current = [], 0, ""
+    for char in values:
+        if char == "," and depth == 0:
+            out.append(current)
+            current = ""
+            continue
+        depth += char == "("
+        depth -= char == ")"
+        current += char
+    out.append(current)
+    return [v.strip() for v in out if v.strip()]
+
+
+def fact_eval_chain(raw: str) -> list[Any]:
+    """`none`, `nli`, `jev_floors`, `default`, or `jev_floors(atomic=0.3;grounded=0.4)`."""
+    if raw in FACT_EVAL_CHAINS:
+        return FACT_EVAL_CHAINS[raw]
+    if raw.startswith("jev_floors(") and raw.endswith(")"):
+        floors = {}
+        for pair in raw[len("jev_floors("):-1].split(";"):
+            if pair.strip():
+                key, _, value = pair.partition("=")
+                floors[key.strip()] = float(value)
+        return [Nli(), JevFloors(**floors)]
+    raise ValueError(f"unknown fact eval chain {raw!r}")
+
+
 def parse_vary(specs: list[str]) -> list[Variant]:
     """`["situate=on,off"]` becomes one variant per value. Several `--vary` options multiply."""
     variants = [Variant("default")]
@@ -103,7 +137,7 @@ def parse_vary(specs: list[str]) -> list[Variant]:
             raise ValueError(f"--vary {spec!r}: want key=value1,value2")
         next_variants = []
         for variant in variants:
-            for raw in values.split(","):
+            for raw in _split_values(values):
                 name = f"{key}={raw}" if variant.name == "default" else f"{variant.name} {key}={raw}"
                 next_variants.append(Variant(name, {**variant.overrides, key: raw}))
         variants = next_variants
@@ -117,7 +151,7 @@ def applied(project: Project, overrides: dict[str, Any]) -> Iterator[None]:
     classes = [*project.documents, *project.facts, *project.entities, project.settings]
     try:
         for key, raw in overrides.items():
-            value = FACT_EVAL_CHAINS[raw] if key == "fact_evals" and raw in FACT_EVAL_CHAINS else _value(raw)
+            value = fact_eval_chain(raw) if key == "fact_evals" else _value(raw)
             touched = False
             for klass in classes:
                 if hasattr(klass, key):
@@ -145,17 +179,25 @@ def run_suite(project: Project, suite: Suite, variant: Variant, *, limit: int | 
         app = project.app(data_dir=folder, calls_path=data_dir / "calls.db", replay=replay,
                           in_memory=folder is None)
         use(app)
-        results = []
-        latencies = []
-        started = time.monotonic()
-        for document in suite.documents(limit=limit):
+        latencies: list[float] = []
+
+        def one(document: Document) -> IngestResult:
+            use(app)
             t0 = time.monotonic()
             result = app.ingest(document)
             latencies.append(time.monotonic() - t0)
-            results.append(result)
             if log:
                 log(f"  {variant.name}: {document.title or document.id}: {len(result.facts)} facts, "
                     f"{len(result.rejected)} rejected, {latencies[-1]:.1f}s")
+            return result
+
+        started = time.monotonic()
+        documents = list(suite.documents(limit=limit))
+        if suite.parallel > 1:
+            with ThreadPoolExecutor(max_workers=suite.parallel) as pool:
+                results = list(pool.map(one, documents))
+        else:
+            results = [one(d) for d in documents]
         wall = time.monotonic() - started
         metrics = suite.score(app, results)
         usage = {"by_workload": app.meter.rows, "total": app.meter.total(), "wall_seconds": round(wall, 2)}
@@ -165,8 +207,18 @@ def run_suite(project: Project, suite: Suite, variant: Variant, *, limit: int | 
         ordered = sorted(latencies)
         latency = {"p50_doc_s": round(statistics.median(ordered), 2),
                    "p95_doc_s": round(ordered[min(len(ordered) - 1, int(0.95 * len(ordered)))], 2)}
+    reasons: dict[str, int] = {}
+    samples: dict[str, list[str]] = {}
+    for r in results:
+        for rejected in r.rejected:
+            for reason in rejected.reasons or ["unknown"]:
+                reasons[reason] = reasons.get(reason, 0) + 1
+                samples.setdefault(reason, [])
+                if len(samples[reason]) < 5:
+                    samples[reason].append(rejected.text)
     out = RunResult(suite.name, variant, metrics, usage, latency, len(results),
-                    sum(len(r.facts) for r in results), sum(len(r.rejected) for r in results), folder)
+                    sum(len(r.facts) for r in results), sum(len(r.rejected) for r in results), folder,
+                    dict(sorted(reasons.items(), key=lambda kv: -kv[1])), samples)
     if folder is not None:
         folder.mkdir(parents=True, exist_ok=True)
         (folder / "scorecard.json").write_text(json.dumps(scorecard(out), indent=2, default=str))
@@ -181,9 +233,11 @@ def scorecard(result: RunResult) -> dict[str, Any]:
         "documents": result.documents,
         "facts": result.facts,
         "rejected": result.rejected,
+        "rejected_by_reason": result.rejected_by_reason,
         "metrics": result.metrics,
         "latency": result.latency,
         "usage": result.usage,
+        "rejected_samples": result.samples,
     }
 
 
