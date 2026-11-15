@@ -311,14 +311,76 @@ structured rows, source records, and edits, so they always have clear provenance
 | Class | Hooks |
 | --- | --- |
 | `FactoidDocument` | `classify`, `segment`, `chunk`, `situate`, `extract`, and `discover` (prose); `read`, `row_facts`, and `discover` (structured) |
-| `FactoidFact` | `evaluate`, `repair`, `label`, `link`, and `resolve` |
-| `FactoidEntity` | `identify`, `claim`, and `merge` |
+| `FactoidFact` | `validate`, `evaluate`, `repair`, `label`, `characterize`, `link`, and `resolve` |
+| `FactoidEntity` | `identify`, `claim`, `merge`, and `split` |
+
+The full list, with classmethods and instance methods, is in "Steps are methods".
 
 **Decided.** The framework is principally for organizing AI code and prompts. Hooks that customize model work
 (classifying, extracting, and evaluating facts) are the main case, and plain deterministic hooks are secondary.
 
 Every hook can be customized three ways: class attributes, a prompt file, or a method override that may call `super()`.
 A setting can be a computed property.
+
+### Steps are methods
+
+**Decided** (Kyle, 2026-11-15). Every core pipeline step is a classmethod or an instance method, so it can be inspected
+and overridden. Class attributes are inputs to the default method, not behavior of their own.
+
+**Decided** (Kyle, 2026-11-15): **before and after hooks, like Rails.** Every step has `before_<step>` and
+`after_<step>`. They do nothing in the base class, but they are always called. There are no separate lifecycle
+callbacks (`on_added` and the rest are gone).
+
+**Proposed.**
+
+- `before_<step>(...)` gets the step's inputs, and can raise `factoid.Skip` to skip the step for this item.
+- `after_<step>(..., result)` gets the inputs and the result, and can return a replacement, or `None` to keep it.
+- The rule for which is which: a step about one thing that exists is an instance method; a step that decides which class
+  or which record applies, before there is an instance, is a classmethod.
+
+| Class | Classmethods | Instance methods |
+| --- | --- | --- |
+| `FactoidDocument` | `classify(raw, judgments)` | Prose: `segment`, `chunk`, `situate`, and `extract`. Structured: `read` and `row_facts`. Both: `discover`, `context`, the `source_datetime` property, and `ingest`, which runs the steps in order |
+| `FactoidFact` | Reads, such as `search` | `validate`, `evaluate`, `repair`, `label`, `characterize` (kind and lifetime), `expiration`, `link`, `resolve`, and `save`; outcomes `supersede`, `end`, `correct`, `contradict`, `retract`, and `restore` |
+| `FactoidEntity` | `identify(mention)`, `create`, and reads `find` and `where` | `claim`, `merge`, `split`, `retype`, `related`, and `facts` |
+
+- Overriding an outcome (such as `supersede`) and calling `super()`, or defining `after_supersede`, is how a project
+  reacts to a change. An agent outside the project reads the event log instead.
+- `factoid steps show TenantEmail` lists each step, the class that defines it, and its hooks, so overrides are visible.
+
+### Jev judges, code decides
+
+**Decided** (Kyle, 2026-11-15). Following the Jev best practices in `tiffygk/jev-mode` (`shared/jev-rules.md`): where a
+step needs a judgment, it asks the decision model several atomic questions (Nouls, Scores, and Choices) about factors,
+and code decides from the probabilities with thresholds and ranges it controls. One broad question per step is the
+default, not the ideal.
+
+**Proposed.**
+
+- A step declares its questions with the `@judge(...)` decorator. The judgments arrive as an argument. All questions for
+  one item go in one request (jev-rules E1), and identical questions from different classes are asked once.
+- Thresholds live in code, with a middle band that goes to review instead of one cutoff (E2, E6), set from the
+  probabilities observed on real data (E7).
+- The example the docs use:
+
+```python
+from factoid import Choice, FactoidProseDocument, Noul, judge
+
+class TenantEmail(FactoidProseDocument):
+    """An email from a tenant to the leasing office."""
+
+    @classmethod
+    @judge(
+        is_email=Noul("Is this an email?"),
+        sender=Choice("Who sent it?", ["tenant", "vendor", "staff", "someone else"]),
+    )
+    def classify(cls, raw, judgments):
+        if judgments.is_email > 0.9 and judgments.sender["tenant"] > 0.7:
+            return True
+        if judgments.is_email < 0.3:
+            return False
+        return None   # the middle band goes to review
+```
 
 ### Levels of customization
 
@@ -474,8 +536,21 @@ An eval decides, so both are built.
 **Decided.** Classifiers are fast decision models (Jev-like) by default: a typed question answered in one pass, with a
 probability per option and no generated text.
 
-**Proposed.** A document is typed with one request whose options are the document classes and their docstrings.
-`classify_view` controls what the classifier sees, and `classify_threshold` is calibrated.
+**Decided** (Kyle, 2026-11-15). A document's class normally comes from its source, and classification runs only when
+it is unknown (for example, a folder of unmarked files).
+
+**Proposed.**
+
+- Every `FactoidDocument` subclass registers itself when it is defined (`__init_subclass__`), so the registry builds
+  itself. The central classifier loops over the registry.
+- Each class's `classify(raw, judgments)` classmethod returns `True`, `False`, or `None` (not sure), or a score. A class
+  can declare factor questions with `@judge` (see "Jev judges, code decides").
+- The default, for classes that declare nothing: one Choice whose options are the document classes and their
+  docstrings (jev-rules Q3), plus a Noul asking whether any of them applies (Q6). An optional `not_for` on a class
+  describes its boundary with close classes. Each default `classify` reads its own class's probability from that one
+  shared answer. For high stakes, the Choice is averaged over option orders (E4).
+- Two `True` answers for one file is an error. Files no class claims go to an unclassified list for review.
+- `classify_view` controls what the classifier sees. `factoid classifiers show` lists the registry.
 
 ### Fact evals
 
@@ -861,3 +936,10 @@ All dates are 2026-11-13 unless noted.
     (2026-11-15)
 55. README brought up to date by a Carbon pass: documents, `source_datetime`, structured documents, kinds and
     expiration, untyped entities, resolve and contradictions, freshness, and relations. (2026-11-15)
+56. Every pipeline step is a classmethod or instance method, with `before_` and `after_` hooks that are always called
+    and do nothing by default. They replace lifecycle callbacks. (2026-11-15)
+57. Jev judges, code decides: steps ask several atomic questions with `@judge` and decide in code with thresholds.
+    (2026-11-15)
+58. A document's class normally comes from its source. Classification is a registry of every document class, each
+    with a `classify` classmethod; the default is one Choice over the docstrings plus an "any of these?" Noul.
+    (2026-11-15)
