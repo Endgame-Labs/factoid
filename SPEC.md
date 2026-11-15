@@ -945,6 +945,10 @@ diligence app (`factoid-legal`, a separate repo), scored on CUAD.
   claim but not whether the value changed, and the new one is later and from another document, it supersedes. A
   fact's own document gets at most half of resolve's candidate slots.
 - **Search** reranks the best 50 candidates after freshness weighting.
+- **Held-out check** (2026-11-15). The values above were tuned on CUAD contracts 1 to 20 and three amendment
+  chains. On CUAD contracts 21 to 40, never looked at while tuning, clause F1 was 0.85 (0.82 on the tuning set),
+  coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
+  supersession 1 of 2. Details are in the legal app's README.
 - **Not on PyPI yet:** `uv tool install factoid` does not work until a release is published. Install from the repo.
 - **Keys:** with no key set for a provider, the client calls that provider's exe.dev integration host, which injects
   credentials. With a key set, it calls the vendor.
