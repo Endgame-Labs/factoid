@@ -115,6 +115,10 @@ class SourceFact(Fact):
 
     traits = [*CUAD_TRAITS, ConsentRequired, Deadline]
     max_length = 900  # contract clauses run long
+    guidance = (
+        "Every obligation, right, restriction, condition, payment term, date, and term of a contract counts, and so "
+        "do representations, warranties, and covenants, which a deal team checks clause by clause."
+    )
 
 
 class CounselFact(Fact):

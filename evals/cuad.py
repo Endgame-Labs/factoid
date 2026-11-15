@@ -184,3 +184,11 @@ class CuadHeldOut(Cuad):
     description = "CUAD test contracts 21 to 40, held out from tuning."
     offset = 20
 
+
+class CuadFresh(Cuad):
+    """Contracts 41 to 60: first scored after the last change to floors, thresholds, and prompts."""
+
+    name = "cuad_fresh"
+    description = "CUAD test contracts 41 to 60, never seen before the final run."
+    offset = 40
+
