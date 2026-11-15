@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import random
 import sqlite3
 import threading
 import time
@@ -231,6 +232,15 @@ class Meter:
         return {k: sum(r[k] for r in self.rows.values()) for k in keys}
 
 
+def _retry_after(response: httpx.Response) -> float | None:
+    """Seconds to wait from a Retry-After header, when the provider sends one."""
+    value = response.headers.get("retry-after")
+    try:
+        return min(120.0, max(0.0, float(value))) if value else None
+    except ValueError:
+        return None
+
+
 def _cost(model: Model, input_tokens: int, output_tokens: int) -> float | None:
     if model.price_in is None or model.price_out is None:
         return None
@@ -269,16 +279,17 @@ class ModelClient:
         url = provider.base_url() + url_path
         started = time.monotonic()
         response = None
-        for attempt in range(6):
+        attempts = 12  # rate limits during a big eval can last minutes; give up only after about ten
+        for attempt in range(attempts):
             try:
                 response = self._http.post(url, headers=provider.headers(), json=body)
             except httpx.TransportError as err:
-                if attempt == 5:
+                if attempt == attempts - 1:
                     raise ModelError(f"{model.name}: {err}") from err
-                time.sleep(2 ** attempt)
+                time.sleep(min(60, 2 ** attempt))
                 continue
-            if response.status_code in (429, 500, 502, 503, 504) and attempt < 5:
-                time.sleep(min(30, 2 ** attempt))
+            if response.status_code in (429, 500, 502, 503, 504) and attempt < attempts - 1:
+                time.sleep(_retry_after(response) or min(60, 2 ** attempt) * (0.5 + random.random()))
                 continue
             break
         assert response is not None
