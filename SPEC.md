@@ -969,7 +969,15 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     class with the most columns wins; a tie goes to the decision model.
   - A row's date must carry a timezone, like every date in Factoid; `row_datetime` is the step to override for
     other formats.
-- **Not built yet:** `factoid struct`, `factoid ingest --dry-run`, sources (`imap`, `mcp`), MCP and
+  - A templated fact mentions the row's entity as subject, and each other identity the sentence names: its own
+    column, or a column its `name=` template uses (a company identified by email and named by `{counterparty}`).
+  - `factoid struct inspect` and `try` call no model. `inspect` guesses each column's role by rules (email, URL, and
+    domain columns and unique ids are identities, long text is `Text()`, dates are `when`) and prints a starting
+    class. `try` links identities in a throwaway store and prints each templated sentence with its file, row, and
+    column; text cells are listed, since only extraction reads them. `parser` adds the model's class to the
+    package's `documents.py` (or `--out`), and `--prompt` prints the prompt instead. On a contract register, the
+    model's class used the legal app's `Agreement` and `Company` and a `name=` template without being told.
+- **Not built yet:** sources (`imap`, `mcp`), MCP and
   HTTP serving, `factoid setup`, fact-class trust and visibility, entity `merge`, `split`, and `retype` commands,
   fingerprint-driven `rebuild`, and decision models other than Jev.
 - **`situate`:** the setting `situate = True` runs the built-in step (`situate_chunk`); a method named `situate` on a

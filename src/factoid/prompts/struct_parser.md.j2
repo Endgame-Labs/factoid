@@ -1,0 +1,45 @@
+Write a Factoid parser class for this file: a Python subclass of `StructuredDocument` named {{ name }}.
+
+How a parser works. `columns` maps each column of the file to one role:
+- `Identity(EntityClass, "key_name")`: the value identifies an entity, such as an id, an email, or a domain. Factoid
+  links it exactly by that key. Add `name="{other_column}"` when another column holds the entity's name.
+- `Property(EntityClass, "property")`: the value is a property of the row's entity of that class. Use it for a value
+  the entity class declares as a typed property.
+- A sentence template string, such as `"Contract {contract_id} with {counterparty} is worth ${annual_value} a year."`:
+  each non-empty cell becomes one fact. Write a self-contained sentence that names what the row is about, using
+  `{column}` placeholders for other columns of the same row.
+- `Text()`: free text, such as notes or descriptions, which Factoid reads with its prose extractor.
+- `Ignore()`: internal references, row numbers, and columns with no meaning.
+Class settings: `row_entity` is the entity class one row is (it needs an `Identity` column of that class), `key` is the
+column that identifies a row across re-imports, and `when` is the column that dates the row. `key` and `when` do not
+need to be in `columns`. The docstring says in one sentence what one row of the file is.
+
+{% if entities %}
+Entity classes in this project:
+{% for entity in entities %}
+- {{ entity.name }}: {{ entity.doc }}{% if entity.props %} Properties: {{ entity.props }}.{% endif %}{% if entity.keys %} Unique keys: {{ entity.keys }}.{% endif %}
+
+{% endfor %}
+{% else %}
+The project has no entity classes. Use `Entity` and leave a comment saying which class to create.
+{% endif %}
+
+The file: {{ file }}, {{ rows }} rows.
+
+Columns:
+{% for column in columns %}
+- {{ column.column }}: {{ column.type }}, {{ column.filled }} of {{ column.rows }} filled, {{ column.distinct }} distinct, e.g. {{ column.samples | join(" | ") }}
+{% endfor %}
+
+First rows:
+{% for row in sample %}
+{{ row }}
+{% endfor %}
+
+A starting point, from plain rules. Fix the entity classes, the templates, and any wrong guess:
+```python
+{{ starter }}
+```
+
+Answer with Python only: the imports (`from factoid import ...` and the project's entity classes from
+`{{ package }}.entities`) and the class. No explanation.

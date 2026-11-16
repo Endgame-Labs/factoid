@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import sys
 from datetime import UTC, datetime
@@ -212,6 +213,163 @@ def entities_kinds() -> None:
         "group by e.kind order by facts desc")
     for row in rows:
         click.echo(f"{row['kind'] or '(none)':<24} {row['entities']:>6} entities {row['facts']:>7} facts")
+
+
+# -- structured documents ---------------------------------------------------------------------------------
+
+
+@cli.group()
+def struct() -> None:
+    """Structured files: inspect one, write its parser class, and dry-run the parser."""
+
+
+def _structured_classes(project: Any) -> list[Any]:
+    from .structured import StructuredDocument
+
+    return [k for k in project.documents if issubclass(k, StructuredDocument)]
+
+
+def _optional_project() -> Any:
+    try:
+        project = load()
+    except FileNotFoundError:
+        return None
+    load_keys(project.root)
+    return project
+
+
+@struct.command("inspect")
+@click.argument("file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--json", "as_json", is_flag=True)
+def struct_inspect(file: Path, as_json: bool) -> None:
+    """Columns, types, sample values, guessed roles, a starting parser class, and which class matches the file."""
+    from .structured import inspect_rows, read_rows, starter_class
+
+    rows = read_rows(file.read_text(errors="replace"))
+    columns = inspect_rows(rows)
+    project = _optional_project()
+    matches = []
+    if project is not None:
+        header = [c["column"] for c in columns]
+        for klass in _structured_classes(project):
+            missing = sorted(klass.required_columns() - set(header))
+            matches.append({"class": klass.__name__, "matches": not missing, "missing": missing})
+    if as_json:
+        _echo_json({"rows": len(rows), "columns": columns, "classes": matches})
+        return
+    click.echo(f"{file}: {len(rows)} rows, {len(columns)} columns")
+    for c in columns:
+        click.echo(f"  {c['column']:<24} {c['type']:<7} {c['filled']:>6}/{c['rows']:<6} {c['distinct']:>6} distinct  "
+                   f"{' | '.join(v[:30] for v in c['samples'])}")
+    for m in matches:
+        state = "matches the header" if m["matches"] else f"missing {', '.join(m['missing'])}"
+        click.echo(f"class {m['class']}: {state}")
+    click.echo("\nA starting parser class (guessed by rules; fix the entity classes and templates):\n")
+    click.echo(starter_class(_class_name(file), columns))
+
+
+def _class_name(file: Path) -> str:
+    return "".join(part.capitalize() for part in re.split(r"[^A-Za-z0-9]+", file.stem) if part) or "Rows"
+
+
+@struct.command("parser")
+@click.argument("file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--name", help="Class name (defaults to one made from the file name).")
+@click.option("--prompt", "prompt_only", is_flag=True, help="Print the prompt and inspection; call no model.")
+@click.option("--out", type=click.Path(dir_okay=False, path_type=Path),
+              help="File to add the class to (defaults to the package's documents.py).")
+def struct_parser(file: Path, name: str | None, prompt_only: bool, out: Path | None) -> None:
+    """Have a model write the parser class for a file, or print the prompt for your own coding agent."""
+    from .entity import Entity
+    from .structured import _cell, inspect_rows, read_rows, starter_class
+    from .templates import builtin, render
+
+    project = _optional_project()
+    rows = read_rows(file.read_text(errors="replace"))
+    columns = inspect_rows(rows)
+    name = name or _class_name(file)
+    entities = []
+    for klass in (project.entities if project else []):
+        props = ", ".join(f"{k}: {getattr(v, '__name__', v)}" for k, v in klass.typed_props().items())
+        entities.append({"name": klass.__name__, "doc": klass.description(), "props": props,
+                         "keys": ", ".join(klass.unique_keys)})
+    sample = [json.dumps({k: _cell(v)[:120] for k, v in r.values.items()}) for r in rows[:15]]
+    prompt = render(builtin("struct_parser.md.j2"), name=name, entities=entities, file=file.name, rows=len(rows),
+                    columns=columns, sample=sample, starter=starter_class(name, columns),
+                    package=project.package if project else "your_package")
+    if prompt_only:
+        click.echo(prompt)
+        return
+    if project is None:
+        raise click.ClickException("not inside a Factoid project; use --prompt to print the prompt")
+    app = project.app()
+    code = app.client.generate(prompt, step="parser", max_tokens=4000).strip()
+    if code.startswith("```"):
+        code = code.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+    target = out or _package_dir(project) / "documents.py"
+    existing = target.read_text() if target.exists() else ""
+    target.write_text(existing + ("\n\n" if existing.strip() else "") + code + "\n")
+    app.close()
+    click.echo(f"added {name} to {target}")
+    click.echo(f"Next: factoid struct try {file}")
+
+
+def _package_dir(project: Any) -> Path:
+    for base in (project.root / "src", project.root):
+        if (base / project.package).is_dir():
+            return base / project.package
+    return project.root / project.package
+
+
+@struct.command("try")
+@click.argument("file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--rows", "limit", default=20, show_default=True)
+@click.option("--as", "as_class", help="Structured class to use, instead of matching the header.")
+def struct_try(file: Path, limit: int, as_class: str | None) -> None:
+    """Dry-run a parser on the first rows: the sentences, their citations, and links. Writes nothing and calls no
+    model; text cells are listed, and extracted at ingest."""
+    from .structured import Text
+
+    project, app = _project(in_memory=True)
+    text = file.read_text(errors="replace")
+    classes = _structured_classes(project)
+    if as_class:
+        klass = next((k for k in classes if k.__name__ == as_class), None)
+        if klass is None:
+            raise click.ClickException(f"no structured class {as_class}; known: "
+                                       f"{', '.join(k.__name__ for k in classes) or 'none'}")
+    else:
+        from .structured import header_of
+
+        header = header_of(text) or []
+        matched = [k for k in classes if k.matches_header(header)]
+        if not matched:
+            raise click.ClickException("no structured class matches this file's header; write one with "
+                                       "`factoid struct parser`, or pass --as")
+        klass = max(matched, key=lambda k: len(k.columns))
+    document = klass(text, uri=str(file), title=file.stem)
+    rows = document.read()
+    header = {c for r in rows for c in r.values}
+    unmapped = sorted(header - klass.required_columns())
+    missing = sorted(klass.required_columns() - header)
+    click.echo(f"{file}: {klass.__name__}, {len(rows)} rows; showing {min(limit, len(rows))}")
+    if unmapped:
+        click.echo(f"warning: columns not in the map: {', '.join(unmapped)}")
+    if missing:
+        click.echo(f"warning: mapped columns not in the file: {', '.join(missing)}")
+    for row in rows[:limit]:
+        row.entities = document.identify(row)
+        click.echo(f"row {row.n} (key {document.row_key(row)}):")
+        for column, entity_id in row.entities.items():
+            entity = app.load_entity(entity_id)
+            click.echo(f"  {column} -> {type(entity).__name__} {entity.name!r}" if entity else f"  {column} -> ?")
+        for fact in document.row_facts(row):
+            q = fact.quotes[0]
+            click.echo(f"  + {fact.text}  [{file.name}, row {q.passage_n}, {q.section}]")
+        for column, role in klass.columns.items():
+            if isinstance(role, Text) and str(row.values.get(column) or "").strip():
+                click.echo(f"  ~ {column}: text, extracted at ingest ({len(str(row.values[column]))} characters)")
+    app.close()
 
 
 # -- introspection ------------------------------------------------------------------------------------------

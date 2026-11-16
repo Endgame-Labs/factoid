@@ -19,6 +19,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
 import string
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -34,7 +35,7 @@ if TYPE_CHECKING:
     from .app import Factoid
     from .entity import Entity
 
-__all__ = ["Identity", "Ignore", "Property", "Row", "StructuredDocument", "Text", "read_rows"]
+__all__ = ["Identity", "Ignore", "Property", "Row", "StructuredDocument", "Text", "inspect_rows", "read_rows"]
 
 
 @dataclass(frozen=True)
@@ -266,9 +267,14 @@ class StructuredDocument(Document):
             mentions = []
             if subject is not None:
                 mentions.append(self._mention(subject, "subject"))
-            for name in _fields(role):
-                entity_id = row.entities.get(name)
-                if entity_id is not None and entity_id != subject:
+            # An identity the sentence names: its own column, or a column its `name` template uses ("{counterparty}"
+            # names the company an email column identifies).
+            used = set(_fields(role))
+            for other, other_role in cls.columns.items():
+                entity_id = row.entities.get(other)
+                if entity_id is None or entity_id == subject or not isinstance(other_role, Identity):
+                    continue
+                if other in used or (other_role.name and used & set(_fields(other_role.name))):
                     mentions.append(self._mention(entity_id, "about"))
             fact = Fact(_format(role, row.values), quotes=[self.cell_quote(row, column, dated)], mentions=mentions,
                         document=self, chunk_id=self._chunk_id(row), source_datetime=dated, valid_from=dated)
@@ -384,3 +390,78 @@ def _format(template: str, values: dict[str, Any]) -> str:
 
 def _row_text(row: Row) -> str:
     return "; ".join(f"{k}: {_cell(v)}" for k, v in row.values.items() if _cell(v))
+
+
+# -- inspection ---------------------------------------------------------------------------------------------------
+
+_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+_URL = re.compile(r"https?://\S+")
+_DOMAIN = re.compile(r"(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}", re.I)
+_NUMBER = re.compile(r"[-+$]?\d[\d,]*(?:\.\d+)?%?")
+_DATE = re.compile(r"\d{4}-\d{2}-\d{2}(?:[T ][\d:.]+(?:Z|[+-]\d{2}:?\d{2})?)?")
+
+
+def inspect_rows(rows: list[Row], sample: int = 3) -> list[dict[str, Any]]:
+    """What each column looks like: its type, sample values, how many distinct values, and a guessed role. Plain
+    code, with no model call."""
+    names: dict[str, None] = {}
+    for row in rows:
+        names.update(dict.fromkeys(row.values))
+    out = []
+    for name in names:
+        values = [_cell(row.values.get(name)) for row in rows]
+        filled = [v for v in values if v]
+        kind = _kind(name, filled)
+        out.append({"column": name, "type": kind, "filled": len(filled), "rows": len(values),
+                    "distinct": len(set(filled)), "samples": list(dict.fromkeys(filled))[:sample],
+                    "role": _guess(kind, name, filled)})
+    return out
+
+
+def _kind(name: str, values: list[str]) -> str:
+    if not values:
+        return "empty"
+    for kind, pattern in (("email", _EMAIL), ("url", _URL), ("date", _DATE), ("number", _NUMBER),
+                          ("domain", _DOMAIN)):
+        if all(pattern.fullmatch(v) for v in values):
+            return kind
+    if sum(len(v) for v in values) / len(values) > 80:
+        return "text"
+    unique = len(set(values)) == len(values) and all(" " not in v and len(v) <= 40 for v in values)
+    if unique and (re.search(r"(?:^|_|\b)(?:id|key|code|number|no)$", name, re.I) or
+                   all(re.search(r"\d", v) for v in values)):
+        return "id"
+    return "string"
+
+
+def _guess(kind: str, name: str, values: list[str]) -> str:
+    if kind == "empty":
+        return "Ignore()"
+    if kind in ("email", "url", "domain"):
+        return f'Identity(Entity, "{kind}")'
+    if kind == "id":
+        return f'Identity(Entity, "{name}")'
+    if kind == "text":
+        return "Text()"
+    if kind == "date":
+        return "when"
+    return f'"... {{{name}}} ..."'
+
+
+def starter_class(name: str, columns: list[dict[str, Any]]) -> str:
+    """Python for a parser class that starts from the guessed roles. Entity classes and templates need a person."""
+    when = next((c["column"] for c in columns if c["role"] == "when"), None)
+    key = next((c["column"] for c in columns if c["role"].startswith("Identity")), None)
+    lines = [f"class {name}(StructuredDocument):", '    """Describe what one row of this file is."""', ""]
+    if key:
+        lines.append(f'    key = "{key}"')
+    if when:
+        lines.append(f'    when = "{when}"')
+    lines.append("    columns = {")
+    for column in columns:
+        if column["role"] == "when":
+            continue
+        lines.append(f'        "{column["column"]}": {column["role"]},  # {column["type"]}, e.g. '
+                     f'{(column["samples"] or [""])[0][:40]!r}')
+    lines.append("    }")
+    return "\n".join(lines)
