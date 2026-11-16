@@ -1,5 +1,6 @@
-from factoid import ProseDocument
+from factoid import Identity, Ignore, Property, ProseDocument, StructuredDocument, Text
 
+from .entities import Agreement, Company
 from .facts import SourceFact
 
 
@@ -45,3 +46,21 @@ class CounselEmail(ProseDocument):
 
     def context(self):
         return {k: self.metadata[k] for k in ("from", "to", "subject") if self.metadata.get(k)}
+
+
+class ContractRegister(StructuredDocument):
+    """The data room's list of the target's contracts, one contract per row."""
+
+    row_entity = Agreement
+    key = "contract_id"
+    when = "updated_at"
+    columns = {
+        "contract_id": Identity(Agreement, "contract_id", name="{title}"),
+        "title": Ignore(),
+        "counterparty": Identity(Company, "legal_name"),  # joins a company already found in a contract by name
+        "governing_law": Property(Agreement, "governing_law"),
+        "annual_value": "The data room register lists the {title} ({contract_id}) with {counterparty} at "
+                        "${annual_value} a year.",
+        "notes": Text(),
+        "internal_ref": Ignore(),
+    }

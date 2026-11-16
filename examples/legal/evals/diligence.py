@@ -14,7 +14,8 @@ from typing import Any
 from factoid.evals import Suite
 
 DOCS = Path(__file__).resolve().parent.parent / "sample_docs"
-ORDER = [("supply_agreement.txt", "Contract"), ("amendment_2.txt", "Contract"), ("counsel_email.txt", "CounselEmail")]
+ORDER = [("supply_agreement.txt", "Contract"), ("amendment_2.txt", "Contract"), ("counsel_email.txt", "CounselEmail"),
+         ("contract_register.csv", "ContractRegister")]
 
 
 class Diligence(Suite):
@@ -25,12 +26,13 @@ class Diligence(Suite):
         from legal import documents
 
         for name, class_name in ORDER[:limit]:
-            meta = json.loads((DOCS / f"{name}.meta.json").read_text())
+            sidecar = DOCS / f"{name}.meta.json"
+            meta = json.loads(sidecar.read_text()) if sidecar.exists() else {"title": "Data room contract register"}
             klass = getattr(documents, class_name)
             yield klass((DOCS / name).read_text(), metadata=meta, uri=f"sample_docs/{name}", title=meta["title"])
 
     def score(self, app, results) -> dict[str, Any]:
-        from legal.entities import Company
+        from legal.entities import Agreement, Company
         from legal.facts import (AssignmentRestriction, ChangeOfControl, ClosingRisk, CounselFact, LiabilityCap,
                                  SourceFact)
 
@@ -38,6 +40,7 @@ class Diligence(Suite):
         contract = by_doc.get("supply_agreement.txt", [])
         amendment = by_doc.get("amendment_2.txt", [])
         email = by_doc.get("counsel_email.txt", [])
+        register = by_doc.get("contract_register.csv", [])
         checks: dict[str, bool] = {}
 
         def has(facts, trait, cls=None, text=None):
@@ -71,7 +74,14 @@ class Diligence(Suite):
         docs_linked = set()
         if vega is not None:
             docs_linked = {f.document_id for f in vega.facts(include_retired=True)}
-        checks["entities: Vega links all three documents"] = len(docs_linked) == 3
+        checks["entities: Vega links all four documents"] = len(docs_linked) == 4
+        value = [f for f in register if "ORI-014" in f.text and "1800000" in f.text]
+        checks["register: a fact per value, linked to the contract's Vega"] = bool(value) and vega is not None and any(
+            m.entity_id == vega.id for m in value[0].mentions)
+        supply = Agreement.find("ORI-014")
+        checks["register: governing law set on the agreement"] = supply is not None and \
+            supply.governing_law == "Delaware"
+        checks["register: the notes cell becomes a fact"] = any("reprice" in f.text.lower() for f in register)
         passed = sum(checks.values())
         return {"passed": f"{passed}/{len(checks)}", "score": round(passed / len(checks), 3),
                 "checks": {k: "ok" if v else "FAIL" for k, v in checks.items()}}

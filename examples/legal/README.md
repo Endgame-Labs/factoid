@@ -9,7 +9,7 @@ framework needs.
 ```text
 legal/
 ├── settings.py    # models: Jev for decisions, GLM 5.3 Flash for extraction, Qwen3 for embeddings
-├── documents.py   # Contract and CounselEmail
+├── documents.py   # Contract, CounselEmail, and ContractRegister (the data room's CSV)
 ├── entities.py    # Company, Agreement, and Person
 └── facts.py       # legal traits, SourceFact, and CounselFact
 evals/
@@ -63,7 +63,8 @@ no longer a clean held-out set.
 | Dated windows | 2/2 | none labeled | 2/2 |
 | False changes to base facts | 3.1% | 5.1% | 2.5% |
 
-The sample deal (diligence suite) passes 12 of 12.
+The sample deal (diligence suite) passes 15 of 15, including the data room's contract register, a CSV read as a
+structured document.
 
 | SEC chains (Tyson, Furniture Brands, Life Sciences Research) | Result, scored once |
 | --- | --- |
