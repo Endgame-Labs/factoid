@@ -551,7 +551,8 @@ class Factoid:
             filters["class"] = [k.__qualname__ for k in self.fact_classes if issubclass(k, fact_class)] or \
                 [fact_class.__qualname__]
         vector = self.client.embed([query])[0]
-        fused = self.index.hybrid(self.ns("facts"), query, vector, max(50, top_k * 5), filters or None)
+        pool = max(self.settings.search_candidates, top_k)
+        fused = self.index.hybrid(self.ns("facts"), query, vector, pool, filters or None)
         moment = parse_datetime(as_of) if as_of is not None else now()
         hits: list[SearchHit] = []
         for fact_id, score in fused:
@@ -569,7 +570,7 @@ class Factoid:
             hits.append(SearchHit(fact, score * weight, p))
         hits.sort(key=lambda h: -h.score)
         if self.client.models.get("rerank") and hits:
-            head = hits[:50]
+            head = hits[:pool]
             scores = self.client.rerank(query, [h.fact.text for h in head])
             if scores:
                 for hit, s in zip(head, scores):

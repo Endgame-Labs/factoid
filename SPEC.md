@@ -971,7 +971,12 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   contradiction 0.75 (the distinct floor mirrors the duplicate bar). When the model is sure two facts state the same
   claim but not whether the value changed, and the new one is later and from another document, it supersedes. A
   fact's own document gets at most half of resolve's candidate slots.
-- **Search** reranks the best 50 candidates after freshness weighting.
+- **Search** weighs the best `search_candidates` hybrid matches (a `Settings` value, 150 by default) for freshness,
+  then reranks them. It was 50, fixed (2026-11-16). A fact that names its document only by a short name ("the
+  Financing Agreement as amended") ranked below a hundred sibling facts that name it in full, and never reached the
+  reranker, which scored it 0.99. On the 36 as-of questions, 150 against 50: as-of search 34 against 33, facts
+  answers 33 against 32 at 2k tokens and 32 against 33 at 8k, and outdated answers 2 against 3. That is within noise;
+  150 is kept for the reason above, and the setting lets a project trade it for fewer rerank calls.
 - **Sections:** passages and quotes carry section labels, and a section replaced in its entirety retires the older
   facts quoting it (see "Sections and replaced sections").
 - **First try at replaced sections, removed** (2026-11-15): the extractor flagged which facts replace sections. It
@@ -1159,4 +1164,6 @@ All dates are 2026-11-13 unless noted.
     pattern settings) and ships no wording; the legal app's `Contract` sets the contract wording ("in its
     entirety"). (2026-11-16)
 69. End dates inside a schedule are a known v1 limit, not fixed by splitting a clause into one fact per period.
+    (2026-11-16)
+70. Search reranks a pool of `search_candidates` hybrid matches, a `Settings` value, 150 by default (was a fixed 50).
     (2026-11-16)

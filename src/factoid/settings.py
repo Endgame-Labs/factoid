@@ -31,6 +31,10 @@ class Settings:
     store: ClassVar[Any] = None
     #: The search backend. `None` means the built-in local index in the project's SQLite store.
     search: ClassVar[Any] = None
+    #: How many hybrid matches search weighs for freshness and hands to the reranker. A fact that names a document
+    #: only by a short name ("the Financing Agreement as amended") can rank below many sibling facts that name it
+    #: in full, so the pool is wider than the results.
+    search_candidates: ClassVar[int] = 150
     #: How many model calls run at once.
     concurrency: ClassVar[int] = 8
     #: Reuse stored responses for identical model requests.
