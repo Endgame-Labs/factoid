@@ -999,6 +999,10 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   ScanSource inventory claim window is now kept and superseded), NEON 2 of 2, SEC 4 of 4, CUAD F1 0.80 on contracts 1
   to 20 (0.81 before, within noise), and the sample deal 12 of 12. The one fresh miss left is the ScanSource term
   extension, still near resolve's bar.
+- **Against plain RAG** (2026-11-16). The as-of questions of every chain, answered by one reader from facts and from
+  plain hybrid search over 2,000-character windows, graded by one judge: on the 12 held-out questions, facts 11 at
+  both 2k and 8k tokens of sources, chunks 7 and 10. Facts gave no outdated answer; chunks gave 2 of 17 at each
+  budget. Details in `examples/legal/README.md`.
 - **Repair** also runs when a narrow "useful" failure comes with a repairable one, since a split often fixes both.
 - **Tried and reverted** (2026-11-15): a yes-or-no question in resolve asking whether two facts set the same term,
   with a later document's version superseding at 0.7, and giving the "useful" check the fact class's guidance. It
