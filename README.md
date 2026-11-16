@@ -620,8 +620,10 @@ or `valid_at=` to filter to facts likely still valid. Source chunks live in thei
 `chunks.search(...)`; searching facts and chunks together runs hybrid search in each namespace and reranks the combined
 list.
 
-`factoid stats` reports facts with no trait, unlinked mentions, single-fact entities, facts past their expected
-validity, and open contradictions.
+`factoid stats` counts documents, facts, and entities by class and counts facts by status. It also reports facts with
+no trait, unlinked mentions, single-fact entities, facts past their expected validity, and open contradictions. Pass
+`--examples 3` to add three sample facts per fact class and the three entities with the most facts per entity class.
+Use `--data-dir` to point `factoid stats` at another store, such as an eval run's folder.
 
 ## Usage
 

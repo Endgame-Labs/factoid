@@ -175,14 +175,28 @@ def read(fact_id: str) -> None:
 
 @cli.command()
 @click.option("--json", "as_json", is_flag=True)
-def stats(as_json: bool) -> None:
-    """Facts by status, facts with no trait, unlinked mentions, stale facts, and open contradictions."""
-    _, app = _project()
-    data = app.stats()
+@click.option("--examples", default=0, show_default=True, help="Sample facts and top entities per class.")
+@click.option("--data-dir", type=click.Path(exists=True, file_okay=False, path_type=Path),
+              help="Another store, such as an eval run's folder (runs/<time>/<suite>/<variant>).")
+def stats(as_json: bool, examples: int, data_dir: Path | None) -> None:
+    """Documents, facts, and entities by class; facts by status; facts with no trait, unlinked mentions, stale
+    facts, and open contradictions. With --examples, sample facts and the most connected entities."""
+    _, app = _project(**({"data_dir": data_dir} if data_dir else {}))
+    data = app.stats(examples=examples)
     if as_json:
         return _echo_json(data)
+    sample = data.pop("examples", None)
     for key, value in data.items():
         click.echo(f"{key}: {value}")
+    if sample:
+        for klass, texts in sample["facts"].items():
+            click.echo(f"\n{klass} facts:")
+            for text in texts:
+                click.echo(f"  - {text}")
+        for klass, rows in sample["entities"].items():
+            click.echo(f"\n{'Untyped' if klass == 'Entity' else klass} entities:")
+            for row in rows:
+                click.echo(f"  - {row['name']} ({row['facts']} fact{'s' if row['facts'] != 1 else ''})")
 
 
 @cli.group()

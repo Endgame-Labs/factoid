@@ -732,7 +732,9 @@ class Factoid:
             params.append(status)
         return [f for f in (self.load_fact(r["id"]) for r in self.store.query(sql, params)) if f is not None]
 
-    def stats(self) -> dict[str, Any]:
+    def stats(self, examples: int = 0) -> dict[str, Any]:
+        """Counts for the store. With `examples`, also that many sample facts per fact class and the most connected
+        entities per entity class."""
         q = self.store.query
         by_status = {r["status"]: r["n"] for r in q("select status, count(*) n from facts group by status")}
         current_ids = [r["id"] for r in q("select id from facts where status in ('current', 'contradicted')")]
@@ -743,9 +745,16 @@ class Factoid:
         stale = sum(1 for i in current_ids if (f := self.load_fact(i)) is not None and f.valid_at() < 0.5)
         contradictions = q("select count(*) n from relations where relation = 'contradicts'")[0]["n"]
         entities = q("select count(*) n from entities where merged_into is null")[0]["n"]
-        return {
+        live = "status in ('current', 'contradicted', 'superseded', 'ended')"
+        out = {
             "documents": q("select count(*) n from documents")[0]["n"],
+            "documents_by_class": {r["class"]: r["n"] for r in q(
+                "select class, count(*) n from documents group by class order by n desc")},
             "facts": by_status,
+            "facts_by_class": {r["class"]: r["n"] for r in q(
+                f"select class, count(*) n from facts where {live} group by class order by n desc")},
+            "entities_by_class": {r["class"]: r["n"] for r in q(
+                "select class, count(*) n from entities where merged_into is null group by class order by n desc")},
             "facts_with_no_trait": no_trait["n"],
             "unlinked_mentions": unlinked,
             "entities": entities,
@@ -753,6 +762,29 @@ class Factoid:
             "facts_past_expected_validity": stale,
             "open_contradictions": contradictions,
         }
+        if examples:
+            out["examples"] = self._examples(examples)
+        return out
+
+    def _examples(self, n: int) -> dict[str, Any]:
+        """Sample facts per fact class (current, with a trait, from different documents, of readable length) and the
+        entities with the most facts per entity class."""
+        q = self.store.query
+        facts: dict[str, list[str]] = {}
+        for row in q("select class, text, document_id, traits from facts where status = 'current' "
+                     "and length(text) between 60 and 220 order by traits = '[]', document_id, id"):
+            picked = facts.setdefault(row["class"], [])
+            seen = facts.setdefault(f"_{row['class']}", [])
+            if len(picked) < n and row["document_id"] not in seen:
+                picked.append(row["text"])
+                seen.append(row["document_id"])
+        entities: dict[str, list[dict[str, Any]]] = {}
+        for row in q("select e.class, e.name, count(distinct m.fact_id) n from entities e join mentions m "
+                     "on m.entity_id = e.id where e.merged_into is null group by e.id order by n desc, e.name"):
+            picked_entities = entities.setdefault(row["class"], [])
+            if len(picked_entities) < n:
+                picked_entities.append({"name": row["name"], "facts": row["n"]})
+        return {"facts": {k: v for k, v in facts.items() if not k.startswith("_")}, "entities": entities}
 
 
 def _store(path: Path | None) -> Any:

@@ -166,3 +166,27 @@ def test_speaker_labels_become_passage_speakers():
         (None, "Stephen Curry"), ("Q", "What does it mean?"), ("STEPHEN CURRY", "It means a lot."),
         ("STEPHEN CURRY", "We got four."), ("Q", "And Klay?")]
     assert all(text[p.start:p.end] == p.text for p in passages)
+
+
+def test_a_superseded_fact_is_fully_valid_until_it_was_replaced():
+    from factoid import Fact
+    from factoid.dates import parse_datetime
+
+    fact = Fact("The Celtics lead the series 2-1.", status="superseded",
+                valid_from=parse_datetime("2022-06-09T01:00:00Z"), valid_until=parse_datetime("2022-06-11T01:00:00Z"),
+                expires="estimated", lifetime={"hour": 0.5, "day": 0.5})
+    assert fact.valid_at("2022-06-10T12:00:00Z") == 1.0
+    assert fact.valid_at("2022-06-12T00:00:00Z") == 0.0
+    assert fact.valid_at("2022-06-08T00:00:00Z") == 0.0
+
+
+def test_stats_counts_by_class_with_examples(make_app, fake):
+    from test_pipeline import Contract, build
+
+    app = build(make_app, fake)
+    app.ingest_text("Vega's liability to Orion is capped at $1M under the supply agreement.", document_type=Contract,
+                    metadata={"signed_at": "2025-03-01T00:00:00Z"}, uri="a.txt")
+    data = app.stats(examples=2)
+    assert data["facts_by_class"] == {"SourceFact": 1} and data["entities_by_class"]["Company"] == 2
+    assert data["examples"]["facts"]["SourceFact"][0].startswith("Vega's liability")
+    assert [e["name"] for e in data["examples"]["entities"]["Company"]] == ["Orion", "Vega"]
