@@ -436,3 +436,25 @@ def test_a_shared_short_alias_does_not_link_two_named_things(make_app, fake):
                     metadata={"signed_at": "2025-04-01T00:00:00Z"}, uri="n.txt")
     linked = {f.mentions[0].entity_id for f in Fact.all()}
     assert len(linked) == 2
+
+
+def test_a_claimed_fact_is_found_under_its_new_entity(make_app, fake):
+    app = build(make_app, fake)
+
+    def generator(prompt):
+        n = int(re.search(r"^\[(\d+)\]", prompt, re.M).group(1))
+        if "first" in prompt:
+            mentions = [{"name": "Orion", "kind": "company"}]
+        else:
+            mentions = [{"name": "Vega", "kind": "company"}]
+        return json.dumps({"facts": [{"text": "Orion buys servo motors from Vega.", "passages": [n],
+                                      "mentions": mentions}]})
+
+    fake.generator = generator
+    first = app.ingest_text("The first contract: Orion buys servo motors from Vega.", document_type=Contract,
+                            metadata={"signed_at": "2025-03-01T00:00:00Z"}, uri="p.txt")
+    app.ingest_text("Vega makes servo motors.", document_type=Contract,
+                    metadata={"signed_at": "2025-04-01T00:00:00Z"}, uri="q.txt")
+    vega = Company.find("Vega")
+    hits = app.search_facts("servo motors", about=vega, freshness=False, include_retired=True)
+    assert first.facts[0].id in {h.fact.id for h in hits}

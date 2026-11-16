@@ -384,6 +384,9 @@ class Factoid:
         quotes = [vars(q) for q in fact.quotes]
         mentions = [{k: v for k, v in vars(m).items() if k != "keys"} for m in fact.mentions]
         self.store.save_fact(row, quotes, mentions)
+        self._index_fact(fact)
+
+    def _index_fact(self, fact: Fact) -> None:
         vector = getattr(fact, "vector", None) or self.client.embed([fact.text])[0]
         self.index.upsert(self.ns("facts"), [{
             "id": fact.id, "text": fact.text, "vector": vector, "class": type(fact).__qualname__,
@@ -489,6 +492,12 @@ class Factoid:
                                 round(judgments[key], 4)))
                     self.store.event(db, "entity.linked", entity.id, fact=fact.id, method="claim")
                     claimed += 1
+                    fact.mentions.append(Mention(entity.name, kind=entity.kind, entity_id=entity.id, method="claim"))
+        # The index filters facts by entity, so a claimed fact must be indexed under its new entity too, or
+        # `related_facts` and `search_facts(about=...)` never find it there.
+        for key, fact in zip(keys, facts):
+            if judgments[key] >= entity.link_threshold:
+                self._index_fact(fact)
         return claimed
 
     # -- reads ----------------------------------------------------------------------------------------------
