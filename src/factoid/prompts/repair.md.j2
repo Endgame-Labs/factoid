@@ -1,6 +1,13 @@
 This candidate fact failed these checks: {{ failed | join(", ") }}.
 
 Fact: {{ fact.text }}
+{% if document %}
+
+The fact comes from this {{ document.type }}{% if document.title %}: {{ document.title }}{% endif %}.
+{% for key, value in document.context.items() %}
+- {{ key }}: {{ value }}
+{% endfor %}
+{% endif %}
 
 Cited passages:
 {% for passage in passages %}

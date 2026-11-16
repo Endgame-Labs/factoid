@@ -276,8 +276,14 @@ class Fact(Registered, ModelCalls):
         """One repair for a near miss: a rewording, or a split into several facts when it states several claims.
         Returns the new sentences, or an empty list."""
         split = any(name.endswith(".atomic") for name in result.failed)  # several claims: a rewording cannot fix it
+        # Repair sees the document's title and context, as the extractor did: a cited sentence such as "The
+        # expiration date is extended to March 26, 2006" does not name the parties, and the title does.
+        document = None
+        if self.document is not None:
+            document = {"type": self.document.type, "title": self.document.title,
+                        "context": self.document.context()}
         prompt = render(type(self).repair_prompt, fact=self, failed=result.failed, split=split,
-                        passages=[q.text for q in self.quotes])
+                        passages=[q.text for q in self.quotes], document=document)
         raw = self.generate(prompt, json_mode=True, step="repair")
         try:
             data = json.loads(raw)
