@@ -235,6 +235,11 @@ class ProseDocument(Document):
     extract_max_tokens: ClassVar[int] = 12000
     #: Extraction guidance shown to the extractor.
     guidance: ClassVar[str] = ""
+    #: A regular expression that matches a speaker label at the start of a paragraph. Groups named `speaker`, or
+    #: starting with `speaker`, give the name: r"(?:(?P<speaker>Q)\.|(?P<speaker_name>[A-Z][A-Z .'-]+):)\s" reads
+    #: "Q." and "STEPHEN CURRY:". The label moves to the passage's `speaker`, and the paragraphs after it keep that
+    #: speaker until the next label. None turns it off.
+    speaker_pattern: ClassVar[str | None] = None
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -270,6 +275,8 @@ class ProseDocument(Document):
             else:
                 spans.append((start, end))
         passages = []
+        speakers = self._speakers(spans)
+        spans = [(start + skip, end) for (start, end), (skip, _) in zip(spans, speakers)]
         for start, end in spans:
             if end - start > self.max_passage:  # one long sentence: cut at word boundaries
                 cursor = start
@@ -282,9 +289,28 @@ class ProseDocument(Document):
                     cursor = stop
             else:
                 passages.append((start, end))
-        out = [Passage(n=i + 1, start=s, end=e, text=" ".join(self.text[s:e].split()))
+        who = _speaker_at(spans, [name for _, name in speakers])
+        out = [Passage(n=i + 1, start=s, end=e, text=" ".join(self.text[s:e].split()), speaker=who(s))
                for i, (s, e) in enumerate(passages) if self.text[s:e].strip()]
         return label_sections(out)
+
+    def _speakers(self, spans: list[tuple[int, int]]) -> list[tuple[int, str | None]]:
+        """For each span: how many characters of speaker label to skip, and who is speaking."""
+        pattern = type(self).speaker_pattern
+        if not pattern:
+            return [(0, None)] * len(spans)
+        out, current_speaker = [], None
+        for start, end in spans:
+            match = re.match(pattern, self.text[start:end])
+            skip = 0
+            if match:
+                named = next((v for k, v in match.groupdict().items() if k.startswith("speaker") and v), None)
+                if named:
+                    current_speaker = " ".join(named.split())
+                    rest = self.text[start + match.end():end]
+                    skip = match.end() + len(rest) - len(rest.lstrip())
+            out.append((skip if skip < end - start else 0, current_speaker))
+        return out
 
     def chunk(self, passages: list[Passage]) -> list[Chunk]:
         """Group passages into chunks of at most `chunk_size` characters, with overlap as context."""
@@ -512,6 +538,16 @@ def label_sections(passages: list[Passage]) -> list[Passage]:
             current = match.group(1).rstrip(".")
         passage.section = current
     return passages
+
+
+def _speaker_at(spans: list[tuple[int, int]], names: list[str | None]) -> Callable[[int], str | None]:
+    """Who speaks at a character offset: the speaker of the span that holds it."""
+    def who(offset: int) -> str | None:
+        for (start, end), name in zip(spans, names):
+            if start <= offset < end:
+                return name
+        return None
+    return who
 
 
 def _show(value: Any) -> Any:

@@ -981,6 +981,10 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     column; text cells are listed, since only extraction reads them. `parser` adds the model's class to the
     package's `documents.py` (or `--out`), and `--prompt` prints the prompt instead. On a contract register, the
     model's class used the legal app's `Agreement` and `Company` and a `name=` template without being told.
+- **Speaker labels** (2026-11-16): `ProseDocument.speaker_pattern` is a regular expression for a speaker label at
+  the start of a paragraph ("Q.", "STEPHEN CURRY:"). The label moves out of the passage text into `speaker`, and the
+  paragraphs after it keep that speaker. It is how a transcript class fills in passage speakers without overriding
+  `segment`, toward the built-in transcript class the spec plans. Off by default.
 - **Not built yet:** sources (`imap`, `mcp`), MCP and
   HTTP serving, `factoid setup`, fact-class trust and visibility, entity `merge`, `split`, and `retype` commands,
   fingerprint-driven `rebuild`, and decision models other than Jev.

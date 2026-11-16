@@ -149,3 +149,20 @@ def test_generation_steps_pick_their_own_model():
     client.generate("x")
     assert seen == [("situate", "fireworks/kimi-k3", "generate"), ("extract", "fireworks/glm-5p3-flash", "generate"),
                     ("generate", "fireworks/glm-5p3-flash", "generate")]
+
+
+def test_speaker_labels_become_passage_speakers():
+    from factoid import ProseDocument
+
+    class Presser(ProseDocument):
+        """A press conference transcript."""
+
+        speaker_pattern = r"(?:(?P<speaker>Q)\.|(?P<speaker_name>[A-Z][A-Z .'-]+):)\s"
+
+    text = ("Stephen Curry\n\nQ. What does it mean?\n\nSTEPHEN CURRY: It means a lot.\n\nWe got four.\n\n"
+            "Q. And Klay?")
+    passages = Presser(text).segment()
+    assert [(p.speaker, p.text) for p in passages] == [
+        (None, "Stephen Curry"), ("Q", "What does it mean?"), ("STEPHEN CURRY", "It means a lot."),
+        ("STEPHEN CURRY", "We got four."), ("Q", "And Klay?")]
+    assert all(text[p.start:p.end] == p.text for p in passages)
