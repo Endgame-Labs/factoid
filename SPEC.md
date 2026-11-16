@@ -1008,6 +1008,12 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   plain hybrid search over 2,000-character windows, graded by one judge: on the 12 held-out questions, facts 11 at
   both 2k and 8k tokens of sources, chunks 7 and 10. Facts gave no outdated answer; chunks gave 2 of 17 at each
   budget. Details in `examples/legal/README.md`.
+- **Against plain RAG, 36 questions** (2026-11-16): 19 more questions, labeled before any run. All 36: facts 33 and
+  32 at 2k and 8k tokens, chunks 20 and 33; outdated answers 1 and 1 against 4 and 2. Facts win at small budgets;
+  at 8k, chunks match them on accuracy. The one outdated fact answer comes from a fact that names its document only
+  by a short name ("the Financing Agreement as amended"), so search matches the base clause it replaced. Indexing
+  each fact with its document title fixed that question in a trial, but resolve shares the facts index, so it was not
+  adopted without a full rerun. Open for the next round.
 - **Repair** also runs when a narrow "useful" failure comes with a repairable one, since a split often fixes both.
 - **Tried and reverted** (2026-11-15): a yes-or-no question in resolve asking whether two facts set the same term,
   with a later document's version superseding at 0.7, and giving the "useful" check the fact class's guidance. It
