@@ -2,7 +2,7 @@
 
 from .app import Factoid, IngestResult, SearchHit
 from .dates import DateError
-from .document import Chunk, Document, Passage, ProseDocument, Raw, StructuredDocument
+from .document import Chunk, Document, Passage, ProseDocument, Raw
 from .entity import Entity
 from .fact import Fact, Mention, Quote
 from .fact_evals import EvalResult, FactEval, JevFloors, Nli
@@ -10,6 +10,7 @@ from .judge import Choice, Judgments, Noul, Score, judge
 from .models import Model
 from .settings import Settings
 from .steps import Skip
+from .structured import Identity, Ignore, Property, StructuredDocument, Text
 from .templates import template
 from .trait import FactTrait
 
@@ -21,6 +22,8 @@ __all__ = [
     "Entity",
     "EvalResult",
     "Fact",
+    "Identity",
+    "Ignore",
     "FactEval",
     "FactTrait",
     "Factoid",
@@ -33,6 +36,7 @@ __all__ = [
     "Noul",
     "Passage",
     "ProseDocument",
+    "Property",
     "Quote",
     "Raw",
     "Score",
@@ -40,6 +44,7 @@ __all__ = [
     "Settings",
     "Skip",
     "StructuredDocument",
+    "Text",
     "judge",
     "template",
 ]

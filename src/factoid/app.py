@@ -26,6 +26,7 @@ from .runtime import use
 from .search import Index, LocalIndex
 from .settings import Settings
 from .steps import SKIPPED, run_step
+from .structured import StructuredDocument, header_of
 from .validity import LIFETIME_RANGES
 
 __all__ = ["Factoid", "IngestResult", "SearchHit", "Rejected"]
@@ -143,7 +144,18 @@ class Factoid:
     # -- ingest ---------------------------------------------------------------------------------------------
 
     def classify(self, raw: Raw) -> tuple[type[Document] | None, dict[str, Any]]:
-        classes = [k for k in self.document_classes if k not in (Document, ProseDocument)]
+        """A tabular file goes to the structured class whose columns its header has, with no model call. Otherwise,
+        or when several classes match equally, the decision model picks."""
+        classes = [k for k in self.document_classes if k not in (Document, ProseDocument, StructuredDocument)]
+        structured = [k for k in classes if issubclass(k, StructuredDocument)]
+        header = header_of(raw.text) if structured else None
+        if header:
+            matched = [k for k in structured if k.matches_header(header)]
+            if matched:
+                widest = max(len(k.columns) for k in matched)
+                best = [k for k in matched if len(k.columns) == widest]
+                if len(best) == 1:
+                    return best[0], {"header": best[0].__name__}
         return classify_raw(raw, classes, self.client.ask)
 
     def ingest(self, item: Document | Raw | str | Path, *, document_type: type[Document] | None = None,
@@ -229,6 +241,45 @@ class Factoid:
             run_step(fact, "save")
             saved.append(fact)
         return saved
+
+    def save_cell_facts(self, document: Document, facts: list[Fact]) -> list[Fact]:
+        """Save facts from structured cells. They come from the data, not a model, so they skip the fact evals and
+        resolve. A cell whose row key and column already have a current fact keeps that fact when the text is the
+        same, and supersedes it by rule when the value changed."""
+        if not facts:
+            return []
+        classes = list(getattr(document, "fact_classes", None) or self.fact_classes)
+        facts = [f for f in self.map(lambda f: self._classify_fact(f, classes), facts) if f is not SKIPPED]
+        kept = []
+        for fact in facts:
+            problems = run_step(fact, "validate")
+            if problems:
+                self.rejected.append(Rejected(fact.text, [f"validate: {p}" for p in problems],
+                                              document_id=document.id))
+                continue
+            kept.append(fact)
+        stored: dict[tuple[str, str], Fact] = {}
+        for old in self.list_facts(document_id=document.id):
+            cell = old.scores.get("cell")
+            if old.status == "current" and isinstance(cell, dict):
+                stored[(str(cell.get("key")), str(cell.get("column")))] = old
+        fresh, replaces = [], {}
+        for fact in kept:
+            cell = fact.scores["cell"]
+            old = stored.get((str(cell["key"]), str(cell["column"])))
+            if old is not None and old.text == fact.text:
+                self._duplicates += 1
+                continue
+            fresh.append(fact)
+            if old is not None:
+                replaces[fact.id] = old
+        self.map(lambda f: run_step(f, "assess"), fresh)
+        for fact in fresh:
+            run_step(fact, "link")
+            if fact.id in replaces:
+                run_step(fact, "supersede", replaces[fact.id])
+            run_step(fact, "save")
+        return fresh
 
     def replace_sections(self, document: Document, replaced: list[Replacement], facts: list[Fact]) -> int:
         """Retire the older facts that a section replaced as a whole made out of date.

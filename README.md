@@ -141,7 +141,7 @@ rows. Every pipeline step is a classmethod or an instance method on the class th
 
 | Class | Classmethods | Instance methods |
 | --- | --- | --- |
-| `Document` | `classify(raw, judgments)` | Prose: `segment`, `chunk`, `situate`, and `extract`. Structured: `read` and `row_facts`. Both: `discover`, `context`, the `source_datetime` property, and `ingest`, which runs the steps in order. |
+| `Document` | `classify(raw, judgments)` | Prose: `segment`, `chunk`, `situate`, and `extract`. Structured: `read`, `identify`, `row_facts`, and `text_facts`. Both: `discover`, `context`, the `source_datetime` property, and `ingest`, which runs the steps in order. |
 | `Fact` | Reads, such as `search` | `validate`, `evaluate`, `repair`, `assess` (traits and time properties, in one request), `expiration`, `link`, `resolve`, and `save`; outcomes `supersede`, `end`, `correct`, `contradict`, `retract`, and `restore`. |
 | `Entity` | `identify(mention)`, `create`, and reads `find` and `where` | `claim`, `merge`, `split`, `retype`, `related`, and `facts`. |
 
@@ -270,6 +270,13 @@ class ContractRegister(StructuredDocument):
         "internal_ref": Ignore(),
     }
 ```
+
+A templated cell comes from the data with no model call, so its fact skips fact evals and resolve. The fact still gets
+traits and time properties. A row's date comes from the `when` column, or from the document's `source_datetime` if that
+column is empty. `key` and `when` do not need to be in `columns`. `Identity` takes an optional `name` template for
+entities Factoid creates, such as `Identity(Company, "company_id", name="{company_name}")`. Without `name`, Factoid uses
+the cell's value as the entity's name. To turn records from an API or a database into a document, call
+`ContractRegister.from_records(records, uri="crm:contracts")`.
 
 Factoid matches a tabular file to a structured class by its header first, with the decision model as a fallback. The
 `factoid struct` commands inspect a file, generate a parser class (or print the prompt for a coding agent), and dry-run

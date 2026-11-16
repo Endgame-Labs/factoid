@@ -391,7 +391,7 @@ callbacks (`on_added` and the rest are gone).
 
 | Class | Classmethods | Instance methods |
 | --- | --- | --- |
-| `Document` | `classify(raw, judgments)` | Prose: `segment`, `chunk`, `situate`, and `extract`. Structured: `read` and `row_facts`. Both: `discover`, `context`, the `source_datetime` property, and `ingest`, which runs the steps in order |
+| `Document` | `classify(raw, judgments)` | Prose: `segment`, `chunk`, `situate`, and `extract`. Structured: `read`, `identify`, `row_facts`, and `text_facts`. Both: `discover`, `context`, the `source_datetime` property, and `ingest`, which runs the steps in order |
 | `Fact` | Reads, such as `search` | `validate`, `evaluate`, `repair`, `assess` (traits and time properties, in one request), `expiration`, `link`, `resolve`, and `save`; outcomes `supersede`, `end`, `correct`, `contradict`, `retract`, and `restore` |
 | `Entity` | `identify(mention)`, `create`, and reads `find` and `where` | `claim`, `merge`, `split`, `retype`, `related`, and `facts` |
 
@@ -952,7 +952,24 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   self-contained 0.4, atomic 0.25, useful 0.45, and distinct 0.2. They were set from CUAD runs (2026-11-15). The
   first values (0.45 to 0.6) rejected most good facts; with these, and the grounded and attribution questions narrowed
   to the claim, the share of gold clauses quoted by a kept fact went from 0.61 to 0.96 on 20 contracts.
-- **Not built yet:** `StructuredDocument`, `factoid struct`, sources (`imap`, `mcp`), MCP and
+- **Structured documents** (2026-11-16): `StructuredDocument` with `Identity`, `Property`, template strings, `Text`,
+  and `Ignore` columns; CSV, TSV, JSONL, JSON arrays, and `from_records`. Choices the spec left open:
+  - A templated cell's fact skips the fact evals and resolve, since no model wrote it. It still runs classify,
+    validate, and assess, so it gets traits and time properties. Its quote is the cell: the row number as the
+    passage, the column as the section, and the row's span in the file.
+  - The row key and column are kept in the fact's `scores["cell"]`, which is how a re-import finds the fact to
+    supersede. An unchanged cell counts as a duplicate. A row missing from a re-import leaves its facts as they are;
+    whether it should end them is Open.
+  - Without `key`, a re-import retracts the document's facts and starts over, as for prose.
+  - `Identity` creates a missing entity by its key, then runs `claim` as linking does. `name=` is a template for the
+    new entity's name.
+  - A `Text` cell is extracted alone, as its own chunk, with the row's identified entities in the extractor's
+    context, and its facts get the row's entity as subject. Those facts take the full prose path.
+  - A file matches a class when its header has every mapped column plus `key` and `when`. When several match, the
+    class with the most columns wins; a tie goes to the decision model.
+  - A row's date must carry a timezone, like every date in Factoid; `row_datetime` is the step to override for
+    other formats.
+- **Not built yet:** `factoid struct`, `factoid ingest --dry-run`, sources (`imap`, `mcp`), MCP and
   HTTP serving, `factoid setup`, fact-class trust and visibility, entity `merge`, `split`, and `retype` commands,
   fingerprint-driven `rebuild`, and decision models other than Jev.
 - **`situate`:** the setting `situate = True` runs the built-in step (`situate_chunk`); a method named `situate` on a
