@@ -84,4 +84,27 @@ Two choices made while looking at NEON were tested on the fresh chains and turne
 an amendment rewrites in its entirety (no gain, and more false changes) and a lower "useful" floor (no effect). See
 SPEC section 17 in the framework.
 
+## Against plain RAG (2026-11-16)
+
+The as-of questions in every chain ("When does the Cisco and ScanSource distributor agreement end?" on a date) are
+answered twice by the same reader (GLM 5.3 Flash) with the same prompt and budget, and graded by the same judge (Kimi
+K3.1 Pro): once from Factoid's facts (`search_facts` with `as_of`), and once from plain RAG. The plain RAG baseline
+is hybrid search (BM25 and embeddings) over 2,000-character windows of the documents signed by that date, each shown
+with its signing date. The code is `evals/qa.py`; it runs with every amendment suite.
+
+| Questions answered with the terms in force | Facts, 2k tokens | Facts, 8k tokens | Chunks, 2k tokens | Chunks, 8k tokens |
+| --- | --- | --- | --- | --- |
+| Held out: fresh, NEON, and SEC chains (12) | 11 | 11 | 7 | 10 |
+| Tuning and dev chains (5) | 5 | 5 | 3 | 5 |
+| All (17) | 16 | 16 | 10 | 15 |
+| Answered with the outdated terms | 0 | 0 | 2 | 2 |
+
+Facts hold up at the small budget, where chunks have room for about four windows and often miss the clause. At 8k
+tokens chunks catch up on accuracy, but they still answer with superseded terms; facts never did. Seventeen
+questions is a small sample, so treat the gaps as direction, not size.
+
+After the fixes of 2026-11-16 (linking, claim indexing, and repair context; see SPEC section 17), the fresh chains
+find 3 of 4 supersessions (was 2 of 4), and a new dev chain of term extensions (`extensions_dev`, Navistar) finds 4
+of 4.
+
 Cost on CUAD: about 700 model calls and 1M tokens per contract, 60 to 95 seconds per contract at the median.

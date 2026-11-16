@@ -24,6 +24,7 @@ from typing import Any
 from factoid.evals import Suite
 
 from .cuad import DATA, URL
+from .qa import qa_scores
 
 CHAINS: list[dict[str, Any]] = [
     {
@@ -367,6 +368,7 @@ class Amendments(Suite):
                 good += ok
                 details.append({"as_of": as_of, "ok": ok, "want_rank": first_want, "stale_rank": first_stale})
         out["as_of_accuracy"] = round(good / total, 3) if total else None
+        out.update(qa_scores(self, app))  # the same questions answered from facts and from plain chunks
 
         good = total = 0
         for chain in self.chains:
