@@ -65,6 +65,17 @@ no longer a clean held-out set.
 
 The sample deal (diligence suite) passes 12 of 12.
 
+| SEC chains (Tyson, Furniture Brands, Life Sciences Research) | Result, scored once |
+| --- | --- |
+| Supersessions found | 4/4 |
+| Untouched clauses kept | 2/2 |
+| As-of search | 6/6 |
+| Dated windows | 0/1 |
+| False changes to base facts | 1.4% |
+
+The SEC chains are credit agreements from public EDGAR exhibits (the MIT-licensed SEC_Exhibit_10 dataset), labeled
+from the text in commit cfd823f before any run, and kept out of every tuning step.
+
 The fresh chains were labeled from the contract text before any run (commit "Fresh amendment suite") and scored
 once. They are the honest measure for amendments. Their misses: a base clause never kept as a fact (ScanSource's
 inventory claim window), a section deleted and replaced with fully redacted text (PC Quote), and one as-of question.
