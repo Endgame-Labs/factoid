@@ -204,6 +204,11 @@ class Fact(Registered, ModelCalls):
             return 0.0
         if self.status in ("corrected", "retracted"):
             return 0.0
+        if self.status in ("superseded", "ended"):
+            # Replaced at `valid_until`, so it held until then: no decay inside the window. A standing that "lasts
+            # about a day" by its lifetime was still the standing the day after, if nothing replaced it sooner.
+            return validity(moment, valid_from=self.valid_from, expires="never", valid_until=self.valid_until,
+                            lifetime=None, seen_at=seen)
         return validity(moment, valid_from=self.valid_from, expires=self.expires, valid_until=self.valid_until,
                         lifetime=self.lifetime, seen_at=seen, ranges=type(self).lifetime_ranges)
 

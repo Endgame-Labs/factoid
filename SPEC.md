@@ -981,6 +981,10 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     column; text cells are listed, since only extraction reads them. `parser` adds the model's class to the
     package's `documents.py` (or `--out`), and `--prompt` prints the prompt instead. On a contract register, the
     model's class used the legal app's `Agreement` and `Company` and a `name=` template without being told.
+- **A replaced fact held until it was replaced** (2026-11-16). A superseded or ended fact is fully valid from
+  `valid_from` to `valid_until`, with no lifetime decay inside that window: the replacement is the evidence it held
+  that long. Before, a series standing with a lifetime of about a day scored 0.23 a day and a half in, though nothing
+  had replaced it yet, and as-of search ranked it below other facts.
 - **Speaker labels** (2026-11-16): `ProseDocument.speaker_pattern` is a regular expression for a speaker label at
   the start of a paragraph ("Q.", "STEPHEN CURRY:"). The label moves out of the passage text into `speaker`, and the
   paragraphs after it keep that speaker. It is how a transcript class fills in passage speakers without overriding
