@@ -605,15 +605,14 @@ it is unknown (for example, a folder of unmarked files).
 
 ### Sections and replaced sections
 
-**Proposed** (2026-11-15, for Kyle to confirm).
+**Decided** (2026-11-16; Kyle: "keep what you built").
 
 - `segment` labels each passage with the numbered section it falls under ("3.2", "14.1"), and quotes carry the label.
 - A prose document's `replacements` step finds passages that say numbered sections are replaced. It is plain code on
   the text, using three class settings, not a model: `replacement_pattern` (a section is replaced),
   `partial_replacement_pattern` (only part of it is), and `deletion_pattern` (it is deleted with no new text). It
   returns a `Replacement` for each such passage.
-- **Proposed split: the framework holds the mechanism; the app holds the wording** (built 2026-11-16, for Kyle
-  to confirm). The framework ships no patterns, so the step is off until a class sets `replacement_pattern`.
+- **The framework holds the mechanism; the app holds the wording.** The framework ships no patterns, so the step is off until a class sets `replacement_pattern`.
   "Amended to read in its entirety" is contract wording: the legal app's `Contract` sets all three, and another domain would use its own wording or
   override the step.
 - **Evidence.** It was designed while looking at the NEON chain. On three chains labeled before any run and scored
@@ -1008,8 +1007,8 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   reads as replacing the flat clause it amends. Dated windows inside a schedule remain a known miss.
 - **Known limits** (2026-11-16), for the next round of design, not fixed in v1:
   - **End dates inside a schedule.** A fact holds one `valid_from` and one `valid_until`, so a clause that sets
-    different values for different periods keeps one of its dates. Fixing this needs a spec decision on facts with
-    several periods.
+    different values for different periods keeps one of its dates. Accepted for v1 (decision 69): the one try at
+    splitting such clauses cost more than it fixed. Facts with several periods are a v2 design question.
   - **Restructured rewrites.** When an amendment rewrites a section and reorganizes it, `resolve` sees no single new
     fact replacing an old one. Replaced sections cover this only where the app sets the wording.
 - **Held-out check** (2026-11-15). The values above were tuned on CUAD contracts 1 to 20 and three amendment
@@ -1133,3 +1132,8 @@ All dates are 2026-11-13 unless noted.
     `generate`. (2026-11-15)
 67. Example apps live in this repo under `examples/` (`legal` and `iscrag`), each its own Factoid project using the
     framework from the repo root. (2026-11-15)
+68. Replaced sections are built and kept: the framework holds the mechanism (`replacements`, `Replacement`, and three
+    pattern settings) and ships no wording; the legal app's `Contract` sets the contract wording ("in its
+    entirety"). (2026-11-16)
+69. End dates inside a schedule are a known v1 limit, not fixed by splitting a clause into one fact per period.
+    (2026-11-16)
