@@ -612,9 +612,9 @@ it is unknown (for example, a folder of unmarked files).
   the text, using three class settings, not a model: `replacement_pattern` (a section is replaced),
   `partial_replacement_pattern` (only part of it is), and `deletion_pattern` (it is deleted with no new text). It
   returns a `Replacement` for each such passage.
-- **The framework holds the mechanism; the app holds the wording** (Kyle's call pending, 2026-11-16). The framework
-  ships no patterns, so the step is off until a class sets `replacement_pattern`. "Amended to read in its entirety"
-  is contract wording: the legal app's `Contract` sets all three, and another domain would use its own wording or
+- **Proposed split: the framework holds the mechanism; the app holds the wording** (built 2026-11-16, for Kyle
+  to confirm). The framework ships no patterns, so the step is off until a class sets `replacement_pattern`.
+  "Amended to read in its entirety" is contract wording: the legal app's `Contract` sets all three, and another domain would use its own wording or
   override the step.
 - **Evidence.** It was designed while looking at the NEON chain. On three chains labeled before any run and scored
   once (Glu and Fox, ScanSource and Cisco, PC Quote), it found no supersession that `resolve` missed, and raised
@@ -1133,5 +1133,3 @@ All dates are 2026-11-13 unless noted.
     `generate`. (2026-11-15)
 67. Example apps live in this repo under `examples/` (`legal` and `iscrag`), each its own Factoid project using the
     framework from the repo root. (2026-11-15)
-68. Replaced sections: the framework keeps the mechanism (`replacements`, `Replacement`, and three pattern settings)
-    and ships no wording. The legal app's `Contract` sets the contract wording ("in its entirety"). (2026-11-16)
