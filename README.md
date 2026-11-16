@@ -1,6 +1,7 @@
 # Factoid 📚
 
-> **Status: Design draft.** Nothing is built yet. These docs will settle the v1 design before we write code.
+> **Status: Early implementation.** The v1 framework is in `src/factoid` and runs end to end. SPEC section 17 lists what is
+> built and where the code differs from the spec.
 
 Factoid turns `Documents` into `Facts`.  A fact is a short, self-contained sentence, devoid of filler and explicit in its language (no pronouns, etc).
 Each fact is tied to an exact location in the source document.
