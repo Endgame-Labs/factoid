@@ -26,7 +26,9 @@ class SourceFact(Fact):
 class Contract(ProseDocument):
     """A signed contract or an amendment to one."""
 
-    replacement_pattern = ProseDocument.ENTIRETY
+    replacement_pattern = r"in\s+(?:its|their)\s+entirety"
+    partial_replacement_pattern = r"paragraph|subsection|clause|sentence|definition|proviso|\d\s*\([a-z0-9]+\)"
+    deletion_pattern = r"(?s)^(?!.*(?:replaced|as follows|to read)).*deleted\s+in\s+(?:its|their)\s+entirety"
 
     @property
     def source_datetime(self):
@@ -405,4 +407,4 @@ def test_a_rewrite_split_across_sentences_is_found():
     doc = Contract("x")
     passages = [Passage(1, 0, 1, "2. The text of Section 2."),
                 Passage(2, 0, 1, "A. and B. of the Agreement is hereby deleted in its entirety and replaced.")]
-    assert [s for _, s in doc.replacements(passages)] == [["2"]]
+    assert [r.sections for r in doc.replacements(passages)] == [["2"]]

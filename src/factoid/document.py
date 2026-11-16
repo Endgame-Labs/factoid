@@ -28,6 +28,7 @@ if TYPE_CHECKING:
 __all__ = [
     "Raw",
     "Passage",
+    "Replacement",
     "Chunk",
     "Document",
     "ProseDocument",
@@ -222,14 +223,15 @@ class ProseDocument(Document):
     situate: ClassVar[bool | Callable[..., Any]] = False
     situate_prompt: ClassVar[str | Template] = builtin("situate.md.j2")
     extract_prompt: ClassVar[str | Template] = builtin("extract.md.j2")
-    #: Wording that says sections are replaced as a whole, matched by code, not a model. Off (None) by default until
-    #: the design is decided (SPEC "Sections and replaced sections"); a class turns it on, for example with
-    #: `replacement_pattern = ProseDocument.ENTIRETY`.
+    #: Wording that says numbered sections of an earlier document are replaced, matched by code, not a model. The
+    #: wording belongs to the domain, so the framework ships none: a class that wants replaced sections sets it
+    #: (SPEC "Sections and replaced sections"). None turns the step off.
     replacement_pattern: ClassVar[str | None] = None
-    ENTIRETY: ClassVar[str] = (
-        r"(?:amended|restated)\s+(?:and\s+restated\s+)?(?:to\s+read\s+)?in\s+(?:its|their)\s+entirety"
-        r"|deleted\s+in\s+(?:its|their)\s+entirety|replaced\s+in\s+(?:its|their)\s+entirety"
-    )
+    #: Wording that says only part of a section is replaced ("the first paragraph of"), so each older fact is
+    #: checked before it is retired.
+    partial_replacement_pattern: ClassVar[str | None] = None
+    #: Wording that says a section is deleted with no new text, so its older facts end.
+    deletion_pattern: ClassVar[str | None] = None
     #: The longest extractor answer, in tokens. A cut-off answer is retried as two half chunks.
     extract_max_tokens: ClassVar[int] = 12000
     #: Extraction guidance shown to the extractor.
@@ -416,13 +418,13 @@ class ProseDocument(Document):
             app.replace_sections(self, replaced, facts)
         return facts
 
-    def replacements(self, passages: list[Passage]) -> list[tuple[Passage, list[str]]]:
-        """Passages that say numbered sections of an earlier document are replaced as a whole, with those numbers.
+    def replacements(self, passages: list[Passage]) -> list[Replacement]:
+        """Passages that say numbered sections of an earlier document are replaced, with those numbers.
 
-        Plain code on the text, using `replacement_pattern`: "Sections 3.1 and 3.2 ... are amended to read in their
-        entirety", or "Section 4 ... is deleted in its entirety and replaced". A change to part of a section does
-        not match."""
-        pattern = type(self).replacement_pattern
+        Plain code on the text, using the class's `replacement_pattern`, `partial_replacement_pattern`, and
+        `deletion_pattern`. A class can override this step for wording a regular expression can't catch."""
+        cls = type(self)
+        pattern = cls.replacement_pattern
         if not pattern:
             return []
         found = []
@@ -436,9 +438,26 @@ class ProseDocument(Document):
                 head = passages[i - 1].text[-200:] + " " + head
             numbers = re.findall(r"\d+(?:\.\d+)*", " ".join(re.findall(r"sections?\s+[\d.,\sand]+", head, re.I)))
             sections = list(dict.fromkeys(n.rstrip(".") for n in numbers if n.rstrip(".")))
-            if sections:
-                found.append((passage, sections))
+            if not sections:
+                continue
+            partial = bool(cls.partial_replacement_pattern
+                           and re.search(cls.partial_replacement_pattern, passage.text, re.I))
+            deleted = bool(cls.deletion_pattern and re.search(cls.deletion_pattern, passage.text, re.I))
+            found.append(Replacement(passage, sections, partial=partial, deleted=deleted))
         return found
+
+
+@dataclass
+class Replacement:
+    """A passage that says numbered sections of an earlier document are replaced.
+
+    `partial`: only part of each section is replaced, so an older fact is retired only when a new fact replaces it.
+    `deleted`: the sections are deleted with no new text, so their older facts end."""
+
+    passage: Passage
+    sections: list[str]
+    partial: bool = False
+    deleted: bool = False
 
 
 class StructuredDocument(Document):

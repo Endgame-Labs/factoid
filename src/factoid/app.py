@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -18,7 +17,7 @@ from pathlib import Path
 from typing import Any, TypeVar
 
 from .dates import format_datetime, now, parse_datetime
-from .document import Document, ProseDocument, Raw, classify_raw
+from .document import Document, ProseDocument, Raw, Replacement, classify_raw
 from .entity import Entity
 from .fact import Fact, Mention, Quote
 from .judge import Noul
@@ -231,7 +230,7 @@ class Factoid:
             saved.append(fact)
         return saved
 
-    def replace_sections(self, document: Document, replaced: list[Any], facts: list[Fact]) -> int:
+    def replace_sections(self, document: Document, replaced: list[Replacement], facts: list[Fact]) -> int:
         """Retire the older facts that a section replaced as a whole made out of date.
 
         Scope: earlier documents that share an entity with the facts quoting the replacing passage (or, when none was
@@ -246,15 +245,12 @@ class Factoid:
             return any(q.section and (q.section == section or q.section.startswith(section + "."))
                        for q in fact.quotes)
 
-        for passage, sections in replaced:
+        for replacement in replaced:
+            passage, sections = replacement.passage, replacement.sections
             instruction = [f for f in facts if any(q.passage_n == passage.n for q in f.quotes)]
-            deleted_only = re.search(r"deleted\s+in\s+(?:its|their)\s+entirety", passage.text, re.I) is not None \
-                and re.search(r"replaced|as follows|to read", passage.text, re.I) is None
-            # "Section 3.2 is amended to read in its entirety" replaces the whole section: every older clause in it
-            # is gone, however the new text is organized. "The first paragraph of Section 4", "Section 2.8(b)(ii)",
-            # or "the definition of ..." replaces a part, so each older fact is checked before it is retired.
-            partial = re.search(r"paragraph|subsection|clause|sentence|definition|proviso|\d\s*\([a-z0-9]+\)",
-                                passage.text, re.I) is not None
+            deleted_only, partial = replacement.deleted, replacement.partial
+            # A whole section replaced: every older clause in it is gone, however the new text is organized. A
+            # partial replacement: each older fact is checked before it is retired.
             for section in sections:
                 same = [f for f in facts if f.status == "current" and in_section(f, section) and f not in instruction]
                 candidates = same or instruction

@@ -608,15 +608,18 @@ it is unknown (for example, a folder of unmarked files).
 **Proposed** (2026-11-15, for Kyle to confirm).
 
 - `segment` labels each passage with the numbered section it falls under ("3.2", "14.1"), and quotes carry the label.
-- A prose document's `replacements` step finds passages that say numbered sections are replaced as a whole ("Sections
-  3.1 and 3.2 ... are amended to read in their entirety", "deleted in its entirety"). It is plain code on the text,
-  using the class setting `replacement_pattern`, not a model. A change to part of a section does not match.
-- **Off by default**, and the evidence is against turning it on as built. A class can turn it on with
-  `replacement_pattern = ProseDocument.ENTIRETY`. It was designed while looking at the NEON chain. On three chains
-  labeled before any run and scored once (Glu and Fox, ScanSource and Cisco, PC Quote), it found no supersession that
-  `resolve` missed, and raised false changes from 2.5% to 3.6%: an amendment replacing "the first paragraph of
-  Section 4" retired all of Section 4. Labeling sections by number is too coarse for that; a design would need
-  paragraph- or clause-level scope.
+- A prose document's `replacements` step finds passages that say numbered sections are replaced. It is plain code on
+  the text, using three class settings, not a model: `replacement_pattern` (a section is replaced),
+  `partial_replacement_pattern` (only part of it is), and `deletion_pattern` (it is deleted with no new text). It
+  returns a `Replacement` for each such passage.
+- **The framework holds the mechanism; the app holds the wording** (Kyle's call pending, 2026-11-16). The framework
+  ships no patterns, so the step is off until a class sets `replacement_pattern`. "Amended to read in its entirety"
+  is contract wording: the legal app's `Contract` sets all three, and another domain would use its own wording or
+  override the step.
+- **Evidence.** It was designed while looking at the NEON chain. On three chains labeled before any run and scored
+  once (Glu and Fox, ScanSource and Cisco, PC Quote), it found no supersession that `resolve` missed, and raised
+  false changes from 2.5% to 3.6%: an amendment replacing "the first paragraph of Section 4" retired all of Section
+  4. Partial replacements are now checked fact by fact, which fixed that case on the chains used while building it.
 - After the document's facts are saved, facts from earlier documents that share an entity with the facts quoting
   that passage, and that quote a replaced section, are retired: superseded by the most similar new fact from the
   same section of the new document, or ended when the new document gives no text for it.
@@ -1003,6 +1006,12 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   values for different periods. It fixed dated windows on a 2010 dev set (14 to 17 of 20) but cost contract dates on
   the CUAD tuning set and broke supersession on the SEC chains, where a stepped schedule split into periods no longer
   reads as replacing the flat clause it amends. Dated windows inside a schedule remain a known miss.
+- **Known limits** (2026-11-16), for the next round of design, not fixed in v1:
+  - **End dates inside a schedule.** A fact holds one `valid_from` and one `valid_until`, so a clause that sets
+    different values for different periods keeps one of its dates. Fixing this needs a spec decision on facts with
+    several periods.
+  - **Restructured rewrites.** When an amendment rewrites a section and reorganizes it, `resolve` sees no single new
+    fact replacing an old one. Replaced sections cover this only where the app sets the wording.
 - **Held-out check** (2026-11-15). The values above were tuned on CUAD contracts 1 to 20 and three amendment
   chains. On CUAD contracts 21 to 40, never looked at while tuning, clause F1 was 0.85 (0.82 on the tuning set),
   coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
@@ -1124,3 +1133,5 @@ All dates are 2026-11-13 unless noted.
     `generate`. (2026-11-15)
 67. Example apps live in this repo under `examples/` (`legal` and `iscrag`), each its own Factoid project using the
     framework from the repo root. (2026-11-15)
+68. Replaced sections: the framework keeps the mechanism (`replacements`, `Replacement`, and three pattern settings)
+    and ships no wording. The legal app's `Contract` sets the contract wording ("in its entirety"). (2026-11-16)
