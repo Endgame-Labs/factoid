@@ -92,16 +92,32 @@ K3.1 Pro): once from Factoid's facts (`search_facts` with `as_of`), and once fro
 is hybrid search (BM25 and embeddings) over 2,000-character windows of the documents signed by that date, each shown
 with its signing date. The code is `evals/qa.py`; it runs with every amendment suite.
 
+There are 36 questions. The first 17 were written with the chains; 19 more (commit e38c201) were labeled from the
+text before any run, including five paraphrases that avoid the contract's own words.
+
 | Questions answered with the terms in force | Facts, 2k tokens | Facts, 8k tokens | Chunks, 2k tokens | Chunks, 8k tokens |
 | --- | --- | --- | --- | --- |
-| Held out: fresh, NEON, and SEC chains (12) | 11 | 11 | 7 | 10 |
-| Tuning and dev chains (5) | 5 | 5 | 3 | 5 |
-| All (17) | 16 | 16 | 10 | 15 |
-| Answered with the outdated terms | 0 | 0 | 2 | 2 |
+| Held out: fresh, NEON, and SEC chains (28) | 25 | 25 | 16 | 26 |
+| Tuning and dev chains (8) | 8 | 7 | 4 | 7 |
+| All (36) | 33 | 32 | 20 | 33 |
+| Answered with the outdated terms | 1 | 1 | 4 | 2 |
 
-Facts hold up at the small budget, where chunks have room for about four windows and often miss the clause. At 8k
-tokens chunks catch up on accuracy, but they still answer with superseded terms; facts never did. Seventeen
-questions is a small sample, so treat the gaps as direction, not size.
+Facts win at the small budget, where chunks have room for about four windows and often miss the clause. At 8k tokens
+chunks catch up: on the larger set they match facts on accuracy, and still give outdated terms more often. The 17
+first questions overstated the 8k gap (16 against 15).
+
+What facts still miss:
+
+- A fact that names its document only by a short name: "the Borrowers have no right to prepay the Term Loan ... on
+  or prior to July 31, 2008" under "the Financing Agreement as amended" never says Life Sciences Research, so a
+  paraphrased question finds the base clause it replaced instead. This is the one outdated answer.
+- A detail dropped in extraction: the fact for Glu's notice address leaves out "Attention: Paul Zuzelo", and the
+  fact naming the Fox party says only "Fox".
+- Judge noise: "90 days" for NEON's payment terms in June 1997 is right (months 13 to 18 of the term) but was graded
+  "neither" once.
+
+The judge sees 800 characters around each labeled clause. At 300 it could not see that NEON's payment terms step from
+120 to 90 days in the next sentence, and graded right answers wrong.
 
 After the fixes of 2026-11-16 (linking, claim indexing, and repair context; see SPEC section 17), the fresh chains
 find 3 of 4 supersessions (was 2 of 4), and a new dev chain of term extensions (`extensions_dev`, Navistar) finds 4

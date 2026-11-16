@@ -54,7 +54,9 @@ def _pack(items: list[str], budget: int) -> str:
     return "\n\n".join(out)
 
 
-def _context(text: str, start: int, end: int, pad: int = 300) -> str:
+def _context(text: str, start: int, end: int, pad: int = 800) -> str:
+    # Wide enough for a schedule: NEON's payment terms step from 120 days to 90 days in the next sentence, and a
+    # 300-character excerpt hid that from the judge, so a right answer was graded wrong.
     return " ".join(text[max(0, start - pad):end + pad].split())
 
 
