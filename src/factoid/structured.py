@@ -157,6 +157,10 @@ class StructuredDocument(Document):
     guidance: ClassVar[str] = ""
     #: Rows per stored chunk, for chunk search.
     rows_per_chunk: ClassVar[int] = 20
+    #: Run resolve on templated facts, against stored facts that share an entity. Off by default: a cell is data, and
+    #: most columns hold one value per row. Turn it on when rows report a state that changes over time, such as a
+    #: series score after each game, so a later row supersedes an earlier one.
+    resolve_cells: ClassVar[bool] = False
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)

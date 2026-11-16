@@ -205,3 +205,35 @@ def test_a_new_key_joins_the_entity_with_that_exact_name(make_app, fake):
     linked = {m.entity_id for f in result.facts for m in f.mentions if m.role == "about"}
     assert vega.id in linked and Company.find("Vega Corp").id == vega.id
     assert app.store.entity_by_key("company_name", "Vega Corp") == vega.id
+
+
+def test_resolve_cells_lets_a_later_row_supersede_an_earlier_one(make_app, fake):
+    class Series(Entity):
+        """A playoff series."""
+
+    class Games(StructuredDocument):
+        """One game per row."""
+
+        key = "game"
+        when = "date"
+        resolve_cells = True
+        columns = {
+            "game": Ignore(),
+            "series": Identity(Series, "series"),
+            "status": "In the {series} series, {status}.",
+        }
+
+    def choice(question, state, name):
+        options = [k for k, _ in question.options]
+        if name.startswith("F"):
+            return {k: (0.9 if k == "supersedes" else 0.02) for k in options}
+        return fake._default_choice(question, state, name)
+
+    fake.choice = choice
+    app = make_app(documents=[Games], entities=[Series], facts=[Fact])
+    result = app.ingest(Raw("game,date,series,status\n"
+                            "G1,2022-06-03T01:00:00Z,Finals,the Celtics lead 1-0\n"
+                            "G2,2022-06-06T00:00:00Z,Finals,the series is tied 1-1\n", uri="games.csv"))
+    first, second = sorted(result.facts, key=lambda f: f.valid_from)
+    assert app.load_fact(first.id).status == "superseded"
+    assert app.load_fact(second.id).status == "current"

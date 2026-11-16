@@ -954,7 +954,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   to the claim, the share of gold clauses quoted by a kept fact went from 0.61 to 0.96 on 20 contracts.
 - **Structured documents** (2026-11-16): `StructuredDocument` with `Identity`, `Property`, template strings, `Text`,
   and `Ignore` columns; CSV, TSV, JSONL, JSON arrays, and `from_records`. Choices the spec left open:
-  - A templated cell's fact skips the fact evals and resolve, since no model wrote it. It still runs classify,
+  - A templated cell's fact skips the fact evals and resolve, since no model wrote it. A class that reports a
+    changing state row by row (a series score after each game) sets `resolve_cells = True`, and its cell facts then
+    go through resolve like extracted ones. It still runs classify,
     validate, and assess, so it gets traits and time properties. Its quote is the cell: the row number as the
     passage, the column as the section, and the row's span in the file.
   - The row key and column are kept in the fact's `scores["cell"]`, which is how a re-import finds the fact to

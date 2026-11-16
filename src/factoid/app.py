@@ -227,25 +227,30 @@ class Factoid:
         saved = []
         for fact in passed:
             run_step(fact, "link")
-            outcome = run_step(fact, "resolve")
-            outcome = [] if outcome is SKIPPED else outcome
-            duplicate = next((other for answer, other, _ in outcome if answer == "duplicate"), None)
-            if duplicate is not None:
-                self._confirm(duplicate, fact)
-                self._duplicates += 1
-                continue
-            for answer, other, _ in outcome:
-                step = {"supersedes": "supersede", "ends": "end", "corrects": "correct",
-                        "contradicts": "contradict"}[answer]
-                run_step(fact, step, other)
-            run_step(fact, "save")
-            saved.append(fact)
+            if self._resolve(fact):
+                run_step(fact, "save")
+                saved.append(fact)
         return saved
 
+    def _resolve(self, fact: Fact) -> bool:
+        """Run resolve and apply its answers. False when the fact is a duplicate, which confirms the stored one."""
+        outcome = run_step(fact, "resolve")
+        outcome = [] if outcome is SKIPPED else outcome
+        duplicate = next((other for answer, other, _ in outcome if answer == "duplicate"), None)
+        if duplicate is not None:
+            self._confirm(duplicate, fact)
+            self._duplicates += 1
+            return False
+        for answer, other, _ in outcome:
+            step = {"supersedes": "supersede", "ends": "end", "corrects": "correct",
+                    "contradicts": "contradict"}[answer]
+            run_step(fact, step, other)
+        return True
+
     def save_cell_facts(self, document: Document, facts: list[Fact]) -> list[Fact]:
-        """Save facts from structured cells. They come from the data, not a model, so they skip the fact evals and
-        resolve. A cell whose row key and column already have a current fact keeps that fact when the text is the
-        same, and supersedes it by rule when the value changed."""
+        """Save facts from structured cells. They come from the data, not a model, so they skip the fact evals, and
+        resolve unless the class sets `resolve_cells`. A cell whose row key and column already have a current fact
+        keeps that fact when the text is the same, and supersedes it by rule when the value changed."""
         if not facts:
             return []
         classes = list(getattr(document, "fact_classes", None) or self.fact_classes)
@@ -274,12 +279,17 @@ class Factoid:
             if old is not None:
                 replaces[fact.id] = old
         self.map(lambda f: run_step(f, "assess"), fresh)
+        resolving = bool(getattr(type(document), "resolve_cells", False))
+        saved = []
         for fact in fresh:
             run_step(fact, "link")
             if fact.id in replaces:
                 run_step(fact, "supersede", replaces[fact.id])
+            elif resolving and not self._resolve(fact):
+                continue
             run_step(fact, "save")
-        return fresh
+            saved.append(fact)
+        return saved
 
     def replace_sections(self, document: Document, replaced: list[Replacement], facts: list[Fact]) -> int:
         """Retire the older facts that a section replaced as a whole made out of date.
