@@ -6,3 +6,7 @@ and token budgets.
 
 Not built yet. Data stays out of git: MediaSum is research-use only and must not be redistributed, and the questions
 come from the ISC-RAG study database.
+
+## Facts and entities
+
+None yet: the app has not been run, so there are no counts or sample facts to show.
