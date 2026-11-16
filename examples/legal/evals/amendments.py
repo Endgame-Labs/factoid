@@ -483,6 +483,54 @@ SEC: list[dict[str, Any]] = [
 ]
 
 
+# Term extensions: one SEC chain where each amendment pushes a date further out (Navistar's certificate purchase
+# agreement, 2003 to 2007, from the same SEC_Exhibit_10 dataset). A dev set for tuning how a later extension
+# supersedes the earlier date, built 2026-11-16 so the held-out chains stay untouched. Texts in data/sec/.
+EXTENSIONS: list[dict[str, Any]] = [
+    {
+        "name": "navistar",
+        "documents": [
+            {"key": "navistar-a1", "file": "navistar-a1.txt", "signed_at": "2003-01-22T00:00:00Z",
+             "name": "First Amendment to the Navistar Certificate Purchase Agreement"},
+            {"key": "navistar-x1", "file": "navistar-x1.txt", "signed_at": "2004-02-20T00:00:00Z",
+             "name": "Extension to the Navistar Certificate Purchase Agreement"},
+            {"key": "navistar-x2", "file": "navistar-x2.txt", "signed_at": "2005-12-19T00:00:00Z",
+             "name": "Extension to the Navistar Amended and Restated Certificate Purchase Agreement"},
+            {"key": "navistar-x3", "file": "navistar-x3.txt", "signed_at": "2006-03-24T00:00:00Z",
+             "name": "March 2006 Amendment, Waiver and Extension to the Navistar Amended and Restated Certificate "
+                     "Purchase Agreement"},
+            {"key": "navistar-x4", "file": "navistar-x4.txt", "signed_at": "2006-05-26T00:00:00Z",
+             "name": "May 2006 Amendment, Waiver and Extension to the Navistar Amended and Restated Certificate "
+                     "Purchase Agreement"},
+            {"key": "navistar-x5", "file": "navistar-x5.txt", "signed_at": "2007-01-31T00:00:00Z",
+             "name": "January 2007 Amendment, Waiver and Extension to the Navistar Amended and Restated Certificate "
+                     "Purchase Agreement"},
+        ],
+        "supersedes": [
+            ("navistar-a1", "extension of the Purchase Expiration Date out to January 21, 2004",
+             "navistar-x1", "The Purchase Expiration Date is extended to February 17, 2005"),
+            ("navistar-x2", "The Purchase Expiration Date is extended to March 26, 2006",
+             "navistar-x3", "The Purchase Expiration Date is extended to May 26, 2006"),
+            ("navistar-x3", "The Purchase Expiration Date is extended to May 26, 2006",
+             "navistar-x4", "The Purchase Expiration Date is extended to May 24, 2007"),
+            ("navistar-x4", "The Purchase Expiration Date is extended to May 24, 2007",
+             "navistar-x5", "The Purchase Expiration Date is extended to January 30, 2008"),
+        ],
+        "unchanged": [],
+        "as_of": [
+            ("What is the Purchase Expiration Date under Navistar's certificate purchase agreement?",
+             "2006-04-15T00:00:00Z",
+             ("navistar-x3", "The Purchase Expiration Date is extended to May 26, 2006"),
+             ("navistar-x2", "The Purchase Expiration Date is extended to March 26, 2006")),
+            ("What is the Purchase Expiration Date under Navistar's certificate purchase agreement?",
+             "2007-06-01T00:00:00Z",
+             ("navistar-x5", "The Purchase Expiration Date is extended to January 30, 2008"),
+             ("navistar-x4", "The Purchase Expiration Date is extended to May 24, 2007")),
+        ],
+        "time": [],
+    },
+]
+
 class AmendmentsSec(Amendments):
     name = "amendments_sec"
     description = "Three SEC credit-agreement chains with covenants amended in their entirety, labeled before any run."
@@ -546,3 +594,21 @@ class WindowsDev(Suite):
         if match is None:
             raise ValueError(snippet)
         return match.start(), match.end()
+
+
+class ExtensionsDev(AmendmentsSec):
+    name = "extensions_dev"
+    description = "A dev chain of term extensions, for tuning supersession of an extended date."
+
+    def documents(self, limit: int | None = None):
+        from legal.documents import Contract
+
+        folder = DATA.parent / "sec"
+        self.texts = {}
+        self.chains = EXTENSIONS
+        for chain in self.chains:
+            for spec in chain["documents"]:
+                text = (folder / spec["file"]).read_text()
+                self.texts[spec["key"]] = text
+                yield Contract(text, id=f"amend_{spec['key'].replace('-', '_')}", uri=f"sec:{spec['file']}",
+                               title=spec["name"], metadata={"signed_at": spec["signed_at"]})
