@@ -1013,7 +1013,7 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   at 8k, chunks match them on accuracy. The one outdated fact answer comes from a fact that names its document only
   by a short name ("the Financing Agreement as amended"), so search matches the base clause it replaced. Indexing
   each fact with its document title fixed that question in a trial, but resolve shares the facts index, so it was not
-  adopted without a full rerun. Open for the next round.
+  adopted without a full rerun. Kept as is for v1 (Kyle, 2026-11-16; decision 71).
 - **Repair** also runs when a narrow "useful" failure comes with a repairable one, since a split often fixes both.
 - **Tried and reverted** (2026-11-15): a yes-or-no question in resolve asking whether two facts set the same term,
   with a later document's version superseding at 0.7, and giving the "useful" check the fact class's guidance. It
@@ -1173,3 +1173,5 @@ All dates are 2026-11-13 unless noted.
     (2026-11-16)
 70. Search reranks a pool of `search_candidates` hybrid matches, a `Settings` value, 150 by default (was a fixed 50).
     (2026-11-16)
+71. Facts that name their document only by a short name are a known v1 limit: no stricter self-contained check and
+    no title-aware index for now. (Kyle, 2026-11-16)
