@@ -961,8 +961,10 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     supersede. An unchanged cell counts as a duplicate. A row missing from a re-import leaves its facts as they are;
     whether it should end them is Open.
   - Without `key`, a re-import retracts the document's facts and starts over, as for prose.
-  - `Identity` creates a missing entity by its key, then runs `claim` as linking does. `name=` is a template for the
-    new entity's name.
+  - `Identity` looks the key up first. A new key joins the one entity of that class whose own name is exactly the
+    cell's name (a company already found in a contract's text), with no model call; otherwise it creates the entity
+    and runs `claim`, as linking does. `name=` is a template for that name. An alias match alone does not join, as
+    in linking.
   - A `Text` cell is extracted alone, as its own chunk, with the row's identified entities in the extractor's
     context, and its facts get the row's entity as subject. Those facts take the full prose path.
   - A file matches a class when its header has every mapped column plus `key` and `when`. When several match, the

@@ -196,3 +196,12 @@ def test_an_identity_named_through_its_name_template_is_mentioned(make_app, fake
     result = app.ingest(Raw("deal_id,counterparty,email,amount\nD-1,Vega Corp,ana@vega.com,5\n", uri="d.csv"))
     fact = result.facts[0]
     assert [(m.role, m.text) for m in fact.mentions] == [("subject", "D-1"), ("about", "Vega Corp")]
+
+
+def test_a_new_key_joins_the_entity_with_that_exact_name(make_app, fake):
+    app = build(make_app, fake)
+    vega = Company.create("Vega Corp")
+    result = app.ingest(Raw(REGISTER, uri="register.csv"))
+    linked = {m.entity_id for f in result.facts for m in f.mentions if m.role == "about"}
+    assert vega.id in linked and Company.find("Vega Corp").id == vega.id
+    assert app.store.entity_by_key("company_name", "Vega Corp") == vega.id

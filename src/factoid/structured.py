@@ -227,9 +227,17 @@ class StructuredDocument(Document):
             entity_id = app.store.entity_by_key(role.key, value)
             if entity_id is None:
                 name = _format(role.name, row.values) if role.name else value
-                entity = role.entity.create(name, keys={role.key: value})
-                entity_id = entity.id
-                app.claim(entity)
+                # A new key for an entity the store already has by exactly this name (say, a company found in a
+                # contract's text) joins that entity instead of making a second one. Still no model call.
+                same = [r for r in app.store.entities_named(name) if " ".join(r["name"].lower().split())
+                        == " ".join(name.lower().split()) and issubclass(app.entity_class(r["class"]), role.entity)]
+                if len(same) == 1:
+                    entity_id = same[0]["id"]
+                    app.store.save_entity_key(role.key, value, entity_id)
+                else:
+                    entity = role.entity.create(name, keys={role.key: value})
+                    entity_id = entity.id
+                    app.claim(entity)
             found[column] = entity_id
         for column, role in type(self).columns.items():
             if not isinstance(role, Property):
