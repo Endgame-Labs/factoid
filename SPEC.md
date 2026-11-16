@@ -994,6 +994,11 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   used while tuning (supersessions 4 of 4, untouched clauses 5 of 5, as-of search 5 of 5, dated windows 2 of 2),
   the sample deal passed 12 of 12, and CUAD clause F1 was 0.82, 0.84, and 0.81 on contracts 1 to 20, 21 to 40,
   and 41 to 60.
+- **SEC amendment chains** (2026-11-16): three credit agreements from public EDGAR exhibits, labeled before any run
+  and scored once. Supersessions 4 of 4, untouched clauses 2 of 2, as-of search 6 of 6, false changes 1.4%; the one
+  miss is a temporary window's end date. Replaced sections made no difference there (4 of 4 with it off, 1.1% false
+  changes), since those amendments changed values that `resolve` catches. They help with restructured rewrites,
+  measured only on chains used while building them (NEON 1 to 2 of 2, PC Quote).
 - **Held-out check** (2026-11-15). The values above were tuned on CUAD contracts 1 to 20 and three amendment
   chains. On CUAD contracts 21 to 40, never looked at while tuning, clause F1 was 0.85 (0.82 on the tuning set),
   coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
