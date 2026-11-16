@@ -980,6 +980,13 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
 - **Generic defined terms stay local.** An alias becomes an entity's alias only when the placeholder question says
   it is a specific name. Before, "Agreement" and "Amendment" from one contract became global aliases, and mentions
   in an unrelated contract linked to them, which led resolve to supersede facts across contracts.
+- **A short alias alone does not link** (2026-11-16). Store-wide, a mention links on its own name; when only one of
+  its aliases matches, the entity becomes a candidate for the yes-or-no question instead. "Amendment No. 3" passed
+  the specific-name check, so a ScanSource amendment's facts linked to the Glu contract's Amendment No. 3. This
+  follows "name and aliases (weak)" in the entity section. No suite moved (CUAD F1 0.81, every amendment suite
+  unchanged). The ScanSource term extension is still missed: resolve gives "supersedes" about 0.6 against the
+  two-year term, which says "unless extended", so the answer falls either side of the bar from run to run. Not
+  tuned, since that chain is held out.
 - **Repair** also runs when a narrow "useful" failure comes with a repairable one, since a split often fixes both.
 - **Tried and reverted** (2026-11-15): a yes-or-no question in resolve asking whether two facts set the same term,
   with a later document's version superseding at 0.7, and giving the "useful" check the fact class's guidance. It

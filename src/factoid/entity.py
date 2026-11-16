@@ -223,12 +223,16 @@ def link_mention(mention: Mention, fact: Fact) -> None:
         return None
     # 4: one entity in the store with that name or alias
     rows = store.entities_named(mention.text)
+    by_alias = False
     if not rows:
         for alias in mention.aliases:
             rows = store.entities_named(alias)
             if rows:
+                by_alias = True
                 break
-    if len(rows) == 1:
+    # A match on the mention's own name settles it. A match on only a short alias does not: "Amendment No. 3" of
+    # one contract is not "Amendment No. 3" of another, so an alias match goes to the question in step 5.
+    if len(rows) == 1 and not by_alias:
         _remember(doc_names, names, rows[0]["id"])
         for alias in mention.aliases:
             app.add_alias(rows[0]["id"], alias)

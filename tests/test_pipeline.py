@@ -408,3 +408,31 @@ def test_a_rewrite_split_across_sentences_is_found():
     passages = [Passage(1, 0, 1, "2. The text of Section 2."),
                 Passage(2, 0, 1, "A. and B. of the Agreement is hereby deleted in its entirety and replaced.")]
     assert [r.sections for r in doc.replacements(passages)] == [["2"]]
+
+
+def test_a_shared_short_alias_does_not_link_two_named_things(make_app, fake):
+    app = build(make_app, fake)
+
+    def generator(prompt):
+        name = "Amendment No. 3 to the Orion Supply Agreement" if "Orion" in prompt else \
+            "Amendment No. 3 to the Globex Services Agreement"
+        n = int(re.search(r"^\[(\d+)\]", prompt, re.M).group(1))
+        return json.dumps({"facts": [{"text": f"{name} extends the term to 2030.", "passages": [n],
+                                      "mentions": [{"name": name, "kind": "agreement",
+                                                    "aliases": ["Amendment No. 3"]}]}]})
+
+    inner = fake.noul
+
+    def noul(question, state):
+        if question.instructions.startswith("Is the mention") and " the same " in question.instructions:
+            names = re.findall(r'"([^"]+)"', question.instructions)
+            return 0.95 if len(names) == 2 and names[0] == names[1] else 0.05
+        return inner(question, state)
+
+    fake.generator, fake.noul = generator, noul
+    app.ingest_text("Amendment No. 3 to the Orion supply agreement extends the term.", document_type=Contract,
+                    metadata={"signed_at": "2025-03-01T00:00:00Z"}, uri="m.txt")
+    app.ingest_text("Amendment No. 3 to the Globex services agreement extends the term.", document_type=Contract,
+                    metadata={"signed_at": "2025-04-01T00:00:00Z"}, uri="n.txt")
+    linked = {f.mentions[0].entity_id for f in Fact.all()}
+    assert len(linked) == 2
