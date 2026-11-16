@@ -499,3 +499,50 @@ class AmendmentsSec(Amendments):
                 self.texts[spec["key"]] = text
                 yield Contract(text, id=f"amend_{spec['key'].replace('-', '_')}", uri=f"sec:{spec['file']}",
                                title=spec["name"], metadata={"signed_at": spec["signed_at"]})
+
+
+class WindowsDev(Suite):
+    """Development set for dated windows: 20 contracts from 2010 SEC filings with a term that runs "through and
+    including <date>". A fact quoting that clause should end in the right year. Used to tune date capture; never
+    the SEC amendment chains."""
+
+    name = "windows_dev"
+    description = "20 contracts with a dated window, for tuning end-date capture."
+    parallel = 4
+
+    def documents(self, limit: int | None = None):
+        from legal.documents import Contract
+
+        folder = DATA.parent / "windows"
+        self.gold = json.loads((folder / "gold.json").read_text())[:limit]
+        self.texts = {}
+        for row in self.gold:
+            text = (folder / row["file"]).read_text()
+            key = row["file"].removesuffix(".txt")
+            self.texts[key] = text
+            yield Contract(text, id=f"win_{key}", uri=f"sec:{row['source']}", title=row["source"])
+
+    def score(self, app, results) -> dict[str, Any]:
+        hit, missing, details = 0, 0, []
+        for row in self.gold:
+            key = row["file"].removesuffix(".txt")
+            try:
+                located = self.locate_in(key, row["snippet"])
+            except ValueError:
+                continue
+            facts = [f for f in app.list_facts(document_id=f"win_{key}")
+                     if any(q.start < located[1] and located[0] < q.end for q in f.quotes)]
+            if not facts:
+                missing += 1
+            ok = any(f.valid_until is not None and str(f.valid_until.year) == row["year"] for f in facts)
+            hit += ok
+            details.append({"file": row["file"], "ok": ok, "facts": len(facts),
+                            "values": [str(f.valid_until) for f in facts][:4]})
+        return {"captured": round(hit / len(details), 3) if details else None, "no_fact": missing,
+                "windows": len(details), "details": details}
+
+    def locate_in(self, key: str, snippet: str) -> tuple[int, int]:
+        match = _pattern(snippet).search(self.texts[key])
+        if match is None:
+            raise ValueError(snippet)
+        return match.start(), match.end()
