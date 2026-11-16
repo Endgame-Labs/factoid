@@ -36,9 +36,7 @@ For each fact, list the things it mentions by name, with a short lowercase kind 
 "about". Use each thing's full name, and list other names the document uses for it as aliases, such as a defined
 short name ("Vega" for Vega Components Corp.) or an abbreviation. When the text gives an exact date the fact takes effect, write it as valid_from. When it gives an exact date
 the fact ends or is due, write it as valid_until. When the text gives a start date and a length of time, such as
-"for six months from April 1, 1999", compute the end date. When a clause sets different values for different
-periods, such as a rate or a cap that steps down on stated dates, write one fact per period, each with its own
-valid_from and valid_until. Resolve relative dates against the document's date. Use
+"for six months from April 1, 1999", compute the end date. Resolve relative dates against the document's date. Use
 ISO-8601 with a timezone, such as 2027-01-01T00:00:00Z. Leave either out when no exact date follows from the text.
 
 Answer with JSON only:
