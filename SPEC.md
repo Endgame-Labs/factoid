@@ -1047,8 +1047,8 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   budget. Details in `examples/legal/README.md`.
 - **Against plain RAG, 36 questions** (2026-11-16): 19 more questions, labeled before any run. All 36: facts 33 and
   32 at 2k and 8k tokens, chunks 20 and 33; outdated answers 1 and 1 against 4 and 2. Facts win at small budgets;
-  at 8k, chunks match them on accuracy. The one outdated fact answer comes from a fact that names its document only
-  by a short name ("the Financing Agreement as amended"), so search matches the base clause it replaced. Indexing
+  at 8k, chunks match them on accuracy. After full validity for replaced facts (below), facts are 33 and 34. One
+  outdated fact answer comes from a fact that names its document only by a short name ("the Financing Agreement as amended"), so search matches the base clause it replaced. Indexing
   each fact with its document title fixed that question in a trial, but resolve shares the facts index, so it was not
   adopted without a full rerun. Kept as is for v1 (Kyle, 2026-11-16; decision 71).
 - **Repair** also runs when a narrow "useful" failure comes with a repairable one, since a split often fixes both.
