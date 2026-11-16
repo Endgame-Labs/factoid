@@ -1,0 +1,15 @@
+[project]
+name = "factoid-nba"
+version = "0.1.0"
+description = "The Golden State Warriors' 2022 playoff run on Factoid: box scores, interviews, and press coverage in, facts out."
+requires-python = ">=3.13"
+dependencies = ["factoid"]
+
+[tool.uv.sources]
+factoid = { path = "../..", editable = true }
+
+[tool.factoid]
+package = "nba"
+
+[dependency-groups]
+dev = ["pytest>=8"]
