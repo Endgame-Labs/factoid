@@ -461,13 +461,13 @@ class Replacement:
 
 
 class StructuredDocument(Document):
-    """Rows: CSV, JSONL, a JSON array, or records from a source. Built on prosaic (not yet available)."""
+    """Rows: CSV, JSONL, a JSON array, or records from a source. Not built yet."""
 
     STEPS: ClassVar[tuple[str, ...]] = ("classify", "read", "row_facts", "discover", "context", "source_datetime",
                                         "ingest")
 
     def ingest(self, app: Factoid) -> list[Fact]:
-        raise NotImplementedError("structured documents need prosaic, which is not built yet")
+        raise NotImplementedError("structured documents are not built yet")
 
 
 def classify_raw(raw: Raw, classes: list[type[Document]], ask: Callable[[Any, dict[str, Question]], Judgments],

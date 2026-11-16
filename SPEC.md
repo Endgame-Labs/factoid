@@ -56,14 +56,14 @@ Do not use the names "Rails" or "Django" in docs or file names.
   in git history before 2026-11-15. Kyle liked the object-oriented feel of the Python and Ruby versions: inherited
   defaults, method overrides, and computed properties.
 
-**Decided** (Kyle, 2026-11-14): **MIT license**, for Factoid and for prosaic. Copyright holder: Endgame Labs. Kyle
+**Decided** (Kyle, 2026-11-14): **MIT license** for Factoid. Copyright holder: Endgame Labs. Kyle
 considered Apache 2.0 for its patent grant and chose MIT. If Endgame ever wants a patent on anything here, it has to
 file before the repo is made public.
 
-**Decided** (Kyle, 2026-11-14): **prosaic is a separate repo and a dependency** (`Endgame-Labs/prosaic`). Endgame will
-use it too. prosaic turns rows into sentences with cell citations and knows nothing about Factoid. Factoid builds
-`StructuredDocument` on it and adds entities, linking, and supersede by row key. See "Prose and structured
-documents" in section 8.
+**Decided** (Kyle, 2026-11-16): **structured documents are part of Factoid**, not a separate library. Turning rows
+into sentences with cell citations, inspecting a file, the parser prompt, and the dry run all live in Factoid, next to
+entities, linking, and supersede by row key. This reverses the 2026-11-14 decision to build them in a separate repo,
+prosaic. See "Prose and structured documents" in section 8.
 
 **Proposed: Pydantic.** Use it underneath: model output schemas, stored records, and validating class settings when a
 subclass is defined. Do not make the classes users write into Pydantic models. A `BaseModel` subclass rejects a plain
@@ -558,17 +558,17 @@ situation in front of its text. When it is off, the chunk's text alone is indexe
   the same prompt and inspection without calling a model, to paste into any agent.
 - **A parser has a dry run.** It runs the parser on a few rows and prints the facts, links, and warnings (such as
   columns the map does not cover), and writes nothing. It is the loop a person or agent uses to test a parser.
-- Taken from prosaic (cerebro branch `kyle/frontend-bridge-integrations`, `src/briefs/briefs/prosaic/`): rows become
-  sentences, a file's layout is worked out once, and ID and email columns connect files. Left out: generating parser
-  code with an unattended agent run, one long narrative per row, and fuzzy file-to-file joins.
+- Ideas taken from prosaic, an earlier prototype (cerebro branch `kyle/frontend-bridge-integrations`,
+  `src/briefs/briefs/prosaic/`): rows become sentences, a file's layout is worked out once, and ID and email columns
+  connect files. Left out: generating parser code with an unattended agent run, one long narrative per row, and fuzzy
+  file-to-file joins.
 
-**Decided** (Kyle, 2026-11-14): the generic parts live in prosaic, a separate repo that Factoid depends on. prosaic
-reads files, inspects them, holds the column map and sentence templates, writes parser prompts, and has the dry run.
-Factoid adds column roles that are entity identities, linking, supersede by row key, and free-text columns through the
-prose pipeline.
+**Decided** (Kyle, 2026-11-16): it is all in Factoid. Factoid reads files, inspects them, holds the column map and
+sentence templates, writes parser prompts, and has the dry run, along with column roles that are entity identities,
+linking, supersede by row key, and free-text columns through the prose pipeline. (On 2026-11-14 the generic parts
+were to live in a separate library, prosaic; that is reversed.)
 
-**Decided** (Kyle, 2026-11-15): structured-document commands sit under `factoid struct`. prosaic has the same commands
-on its own (`prosaic inspect`, `prosaic parser new`, and `prosaic run --dry-run`), and Factoid's wrap them:
+**Decided** (Kyle, 2026-11-15): structured-document commands sit under `factoid struct`:
 
 - `factoid struct inspect <file>` shows the columns, types, sample values, guessed identities, the column map a parser
   would start from, and which structured class matches the file and why.
@@ -952,7 +952,7 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   self-contained 0.4, atomic 0.25, useful 0.45, and distinct 0.2. They were set from CUAD runs (2026-11-15). The
   first values (0.45 to 0.6) rejected most good facts; with these, and the grounded and attribution questions narrowed
   to the claim, the share of gold clauses quoted by a kept fact went from 0.61 to 0.96 on 20 contracts.
-- **Not built yet:** `StructuredDocument` (waits for prosaic), `factoid struct`, sources (`imap`, `mcp`), MCP and
+- **Not built yet:** `StructuredDocument`, `factoid struct`, sources (`imap`, `mcp`), MCP and
   HTTP serving, `factoid setup`, fact-class trust and visibility, entity `merge`, `split`, and `retype` commands,
   fingerprint-driven `rebuild`, and decision models other than Jev.
 - **`situate`:** the setting `situate = True` runs the built-in step (`situate_chunk`); a method named `situate` on a
@@ -1175,3 +1175,5 @@ All dates are 2026-11-13 unless noted.
     (2026-11-16)
 71. Facts that name their document only by a short name are a known v1 limit: no stricter self-contained check and
     no title-aware index for now. (Kyle, 2026-11-16)
+72. Structured documents are part of Factoid. There is no separate prosaic library; this reverses 30. (Kyle,
+    2026-11-16)

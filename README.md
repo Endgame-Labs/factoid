@@ -242,8 +242,7 @@ Name the people, organizations, and things it refers to. Answer with the situati
 
 ### Structured documents
 
-`StructuredDocument` ingests CSV, JSONL, JSON arrays, and records from structured sources. Structured documents
-are built on prosaic, a separate MIT library.
+`StructuredDocument` ingests CSV, JSONL, JSON arrays, and records from structured sources.
 
 A structured document subclass defines a column map once per file layout. Each column is an entity identity (an exact
 link, with no model call), an entity property, a value with a sentence template (one fact per cell, cited to the file,
