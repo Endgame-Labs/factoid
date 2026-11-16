@@ -987,6 +987,18 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   unchanged). The ScanSource term extension is still missed: resolve gives "supersedes" about 0.6 against the
   two-year term, which says "unless extended", so the answer falls either side of the bar from run to run. Not
   tuned, since that chain is held out.
+- **Claimed facts are indexed under the new entity** (2026-11-16). `claim` linked older facts to a new entity in
+  the store but not in the search index, so `related_facts` never offered them to resolve. An extension could not
+  supersede the date it extended when only the claim connected the two.
+- **Repair sees the document** (2026-11-16): its title and `context()`, as the extractor does. A cited sentence like
+  "The Purchase Expiration Date is extended to March 26, 2006" names no parties, so a fact failing self-contained
+  could not be repaired from the passage alone, and was dropped.
+- **Term extensions** (2026-11-16). Tuned on a new dev chain (`extensions_dev`: Navistar's certificate purchase
+  agreement, five extensions from 2003 to 2007), not on the held-out chains: supersessions went from 2 of 4 to 4 of
+  4, with no false changes. Then the held-out chains were scored once: fresh supersessions 3 of 4 (was 2 of 4; the
+  ScanSource inventory claim window is now kept and superseded), NEON 2 of 2, SEC 4 of 4, CUAD F1 0.80 on contracts 1
+  to 20 (0.81 before, within noise), and the sample deal 12 of 12. The one fresh miss left is the ScanSource term
+  extension, still near resolve's bar.
 - **Repair** also runs when a narrow "useful" failure comes with a repairable one, since a split often fixes both.
 - **Tried and reverted** (2026-11-15): a yes-or-no question in resolve asking whether two facts set the same term,
   with a later document's version superseding at 0.7, and giving the "useful" check the fact class's guidance. It
