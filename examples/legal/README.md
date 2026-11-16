@@ -98,24 +98,26 @@ text before any run, including five paraphrases that avoid the contract's own wo
 
 | Questions answered with the terms in force | Facts, 2k tokens | Facts, 8k tokens | Chunks, 2k tokens | Chunks, 8k tokens |
 | --- | --- | --- | --- | --- |
-| Held out: fresh, NEON, and SEC chains (28) | 25 | 25 | 16 | 26 |
-| Tuning and dev chains (8) | 8 | 7 | 4 | 7 |
-| All (36) | 33 | 32 | 20 | 33 |
+| Held out: fresh, NEON, and SEC chains (28) | 25 | 26 | 16 | 26 |
+| Tuning and dev chains (8) | 8 | 8 | 4 | 7 |
+| All (36) | 33 | 34 | 20 | 33 |
 | Answered with the outdated terms | 1 | 1 | 4 | 2 |
 
 Facts win at the small budget, where chunks have room for about four windows and often miss the clause. At 8k tokens
-chunks catch up: on the larger set they match facts on accuracy, and still give outdated terms more often. The 17
-first questions overstated the 8k gap (16 against 15).
+chunks catch up, 33 against 34, and still give outdated terms more often. The 17 first questions overstated the 8k gap
+(16 against 15). These numbers are after two search changes of 2026-11-16 (a wider rerank pool, and full validity for a
+replaced fact until it was replaced; see SPEC section 17).
 
-What facts still miss:
+The two outdated fact answers:
 
-- A fact that names its document only by a short name: "the Borrowers have no right to prepay the Term Loan ... on
-  or prior to July 31, 2008" under "the Financing Agreement as amended" never says Life Sciences Research, so a
-  paraphrased question finds the base clause it replaced instead. This is the one outdated answer.
-- A detail dropped in extraction: the fact for Glu's notice address leaves out "Attention: Paul Zuzelo", and the
-  fact naming the Fox party says only "Fox".
-- Judge noise: "90 days" for NEON's payment terms in June 1997 is right (months 13 to 18 of the term) but was graded
-  "neither" once.
+- A fact that names its document only by a short name: "the Borrowers have no right to prepay the Term Loan ... on or
+  prior to July 31, 2008" under "the Financing Agreement as amended" never says Life Sciences Research, so a
+  paraphrased question finds the base clause it replaced instead (SPEC decision 71).
+- A reader mistake: asked about NEON's payment terms in June 1997, the reader answered with the 1999 amendment's 60
+  days, though the fact it read says it is in force from 1999.
+
+Other misses: a detail dropped in extraction (Glu's notice fact leaves out "Attention: Paul Zuzelo", and the fact
+naming the Fox party says only "Fox"), and judge noise on terse answers.
 
 The judge sees 800 characters around each labeled clause. At 300 it could not see that NEON's payment terms step from
 120 to 90 days in the next sentence, and graded right answers wrong.
@@ -123,5 +125,40 @@ The judge sees 800 characters around each labeled clause. At 300 it could not se
 After the fixes of 2026-11-16 (linking, claim indexing, and repair context; see SPEC section 17), the fresh chains
 find 3 of 4 supersessions (was 2 of 4), and a new dev chain of term extensions (`extensions_dev`, Navistar) finds 4
 of 4.
+
+## Facts and entities
+
+Counts and samples come from `factoid stats --examples 3` on two eval runs.
+
+The sample deal (`factoid eval diligence`) has 4 documents: 2 `Contract`, 1 `CounselEmail`, and 1 `ContractRegister`.
+This run has 11 entities and 22 facts, with 21 current and 1 superseded (the old liability cap).
+
+| Entities | Count | Most facts |
+| --- | --- | --- |
+| Company | 5 | Vega Components Corp. (20), Orion Robotics, Inc. (15) |
+| Agreement | 3 | Supply Agreement between Orion and Vega (18), Amendment 2 to the Supply Agreement between Orion and Vega (2) |
+| Person | 2 | Dana Whitfield (6), Sam Ortiz (1) |
+| Untyped | 1 | State of Delaware (1) |
+
+- `SourceFact`: "Under the Supply Agreement between Orion and Vega, as amended by Amendment 2, from January 1, 2027, Vega Components Corp.'s total liability to Orion Robotics, Inc. under the Supply Agreement will not exceed $2,000,000."
+- `SourceFact`, from a text cell of the contract register: "Vega Components Corp. has asked to reprice servo motors from April 1, 2027 under the Supply Agreement between Orion and Vega."
+- `CounselFact`: "Dana Whitfield stated that Hallbrook Law's view is that Vega's consent is a closing risk for the Acme deal, because the Vega supply agreement covers most of Orion's motors."
+
+The run on CUAD contracts 1 to 20 (`factoid eval cuad --limit 20`) covers 20 contracts, 3,884 facts, and 480 entities.
+Of the facts, 3,859 are current, 23 are contradicted, 4 are corrected, and 2 are superseded.
+
+| Entities | Count | Most facts |
+| --- | --- | --- |
+| Untyped | 211 | Guidelines for Administration of Service Receivables ECP-UTE-G-008 (134), Roundup Products (91), Steering Committee (51) |
+| Company | 137 | Monsanto Company (584), Soupman, Inc. (439), Qualigen, Inc. (436) |
+| Agreement | 72 | Supply Agreement (383), Distribution and Development Agreement (352), Transportation Contract No. VIT-005-2012 (295) |
+| Person | 60 | Kathy Ireland (119), Brett Ogle (41), Brett Shockley (6) |
+
+- "Under the Endorsement Agreement, the license granted by Kathy Ireland, Inc. to Diplomat extends worldwide."
+- "Under the Web Site Hosting Agreement between Centrack International and i-on interactive, the Customer must pay the recurring monthly fees by the 5th day of each month beginning April 1, 1999."
+- "Under the Joint Venture Agreement, Pivotal Self Service Tech, Inc. must provision any additional Products deemed by the Joint Venturers to be salable through the channels established by CCGI."
+
+Agreements with only a short name, such as "Supply Agreement" (383 facts), are the known limit in SPEC decision 71.
+Facts from different contracts can share these agreements.
 
 Cost on CUAD: about 700 model calls and 1M tokens per contract, 60 to 95 seconds per contract at the median.
