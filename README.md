@@ -52,11 +52,13 @@ Factoid uses models for four kinds of work, and the fourth is optional:
 | Preset | `choose` | `generate` | `embed` | Keys you need |
 | --- | --- | --- | --- | --- |
 | `jev` (the default) | TypeSafe `jev-1.13.0` | Fireworks `glm-5p3-flash` | Fireworks `qwen3-embedding-8b` | TypeSafe and Fireworks |
-| `fireworks` | Fireworks `rune` | Fireworks `glm-5p3-flash` | Fireworks `qwen3-embedding-8b` | Fireworks |
+| `fireworks` (experimental) | Fireworks `rune` | Fireworks `glm-5p3-flash` | Fireworks `qwen3-embedding-8b` | Fireworks |
 | `openai` | OpenAI `gpt-6-luna` (Decisions API) | OpenAI `gpt-6-luna` | OpenAI `text-embedding-3-small` | OpenAI |
 
 Jev is the recommended decision model, but TypeSafe keys are not self-serve yet. If you do not have TypeSafe access,
-use `--models fireworks` or `--models openai`, which each need one key you can create yourself.
+use `--models openai`, which needs one key you can create yourself. The `fireworks` preset is experimental because the
+default fact eval floors were set on Jev, and Rune does not yet separate good facts from bad ones on the attribution
+question. Tuning Rune's questions and floors is in progress.
 
 You can mix providers by editing `settings.py`. Model names use `provider/model`, so Factoid knows which key a workload
 needs. Not every provider serves every workload:
@@ -79,7 +81,7 @@ with `factoid keys set turbopuffer` (keys at <https://turbopuffer.com/dashboard>
 
 ```sh
 mkdir acme && cd acme
-factoid init --models fireworks    # or jev, or openai
+factoid init --models openai       # or jev, or fireworks (experimental)
 factoid keys set                   # asks for each key settings.py needs, and says where to get it
 factoid doctor                     # one small call per workload
 ```
@@ -97,7 +99,7 @@ On exe.dev machines, you can skip keys: without one, Factoid calls the provider'
 supplies credentials. Anywhere else, a call without a key fails at once with an error that names the missing key and
 the `factoid keys set` command.
 
-Here is `factoid doctor` for a project made with `--models fireworks`, with its key set:
+Here is `factoid doctor` for a project made with `--models openai`, with its key set:
 
 ```text
 choose     ok

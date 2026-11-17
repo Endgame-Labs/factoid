@@ -119,6 +119,10 @@ def init(package: str | None, preset: str) -> None:
     for path in scaffold.write(root, name, preset):
         click.echo(f"  wrote {path.relative_to(root)}")
     providers = scaffold.PRESETS[preset][0]
+    if preset == "fireworks":
+        click.echo("\nThe fireworks preset is experimental: the fact evals' floors were set on Jev, and Rune does not "
+                   "yet\nseparate good facts from bad ones on the attribution question. --models openai is the "
+                   "one-key choice\nthat passes the sample eval today.")
     click.echo(f"\nThese models need a key for {' and '.join(providers)}. Next:")
     click.echo("  factoid keys set               asks for each key and says where to get it")
     click.echo("  factoid doctor                 one small call per workload")
@@ -557,8 +561,8 @@ def _about_key(provider: str) -> list[str]:
     if p.access:
         lines.append(f"  {p.access}.")
     if provider == "typesafe":
-        lines.append("  No TypeSafe access? Fireworks (fireworks/rune) and OpenAI (openai/gpt-6-luna) also serve "
-                     "choose; `factoid init --models fireworks` sets a project up with Fireworks alone.")
+        lines.append("  No TypeSafe access? OpenAI (openai/gpt-6-luna) also serves choose; `factoid init --models "
+                     "openai` sets a project up with OpenAI alone. Fireworks' Rune is experimental.")
     return lines
 
 

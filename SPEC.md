@@ -776,8 +776,8 @@ work and needs evals before any claim about its quality.
   project is created. After that, a person changes a model by editing the file.
 - A provider can be keyless: a local runtime, or a gateway that injects credentials.
 
-**Decided** (Kyle, 2026-11-17). A project can run on Fireworks alone or OpenAI alone. Fireworks has Rune and Qwen
-embeddings; OpenAI has its Decisions API and embeddings. `factoid init --models jev|fireworks|openai` writes one of
+**Decided** (Kyle, 2026-11-17). A project can run on OpenAI alone, or on Fireworks alone (experimental, decision
+80). Fireworks has Rune and Qwen embeddings; OpenAI has its Decisions API and embeddings. `factoid init --models jev|fireworks|openai` writes one of
 three presets, and Jev stays the default and the recommendation.
 
 **Decided** (checked against the providers' docs, 2026-11-17). Request shapes for the decision models:
@@ -1064,11 +1064,15 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     new project.
   - `factoid keys set` with no provider asks for each key the project's models need and links to the page that
     creates it; `factoid keys list` shows every provider's key, its source, and its use; TypeSafe's waitlist is named.
-  - "One provider key is enough to start" (section 9) is true: `--models fireworks` and `--models openai`.
+  - "One provider key is enough to start" (section 9) is true with `--models openai`. `--models fireworks` is
+    experimental: Rune keeps no facts on the sample contract, because it scores correct facts low on the attribution
+    question (0.09 and 0.56 against Jev's 0.71 and 0.72) and cannot tell them from wrong ones. Tuning is Open.
   - OpenAI generation sends `max_completion_tokens` and no `temperature`, which its reasoning models require.
   - The README marks `serve`, `mcp`, `rebuild`, and `contradictions` as planned.
-  - Not checked against the live APIs: Rune, the Decisions API, and the `openai` preset's model ids. The tests cover
-    the request and response shapes from the providers' docs.
+  - Checked live on 2026-11-17: Rune answers under both `models/rune` and `routers/rune`; the Decisions API answers
+    noul, choice, and score questions; `gpt-6-luna` generates with `max_completion_tokens`; and
+    `text-embedding-3-small` returns 1,536 dimensions. `doctor` passes on both one-provider presets, and the sample
+    eval scores 1.0 with `--models openai`.
 - **Not built yet:** sources (`imap`, `mcp`), MCP and
   HTTP serving, `factoid setup`, fact-class trust and visibility, entity `merge`, `split`, and `retype` commands,
   fingerprint-driven `rebuild`, and decision models other than Jev.
@@ -1310,3 +1314,6 @@ All dates are 2026-11-13 unless noted.
 79. A project can run on one provider: `factoid init --models jev|fireworks|openai`. Fireworks' Rune and OpenAI's
     Decisions API serve `choose` beside Jev, which stays the default. Providers list the workloads they serve, and
     `factoid keys set` with no provider walks the keys a project needs. (2026-11-17)
+80. The `fireworks` preset is experimental until Rune has its own fact eval questions or floors: with the floors set on
+    Jev, Rune rejects every fact on the sample contract. `--models openai` is the one-key path, and the README's
+    examples use it. (2026-11-17)
