@@ -208,3 +208,50 @@ def test_a_git_install_pins_github_at_its_commit(monkeypatch):
 
     monkeypatch.setattr(version.metadata, "distribution", lambda name: Dist())
     assert version.source() == '{ git = "https://github.com/Endgame-Labs/factoid", rev = "abc1234def" }'
+
+
+def test_project_keys_live_in_the_home_folder_under_the_project_id(tmp_path, monkeypatch):
+    import os
+
+    from factoid import models
+    from factoid.project_id import project_id
+
+    home = tmp_path / "home"
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("FACTOID_HOME", str(home))
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    assert CliRunner().invoke(cli, ["init", "--package", "acme", "--models", "openai"]).exit_code == 0
+    pid = project_id(tmp_path)
+    assert pid and pid.startswith("acme-")
+
+    # A key an older Factoid stored inside the project is moved out on the next `keys set --project`.
+    (tmp_path / ".factoid").mkdir(exist_ok=True)
+    (tmp_path / ".factoid" / ".env").write_text("OPENROUTER_API_KEY=sk-or-old\n")
+    result = CliRunner().invoke(cli, ["keys", "set", "openai", "--project"], input="sk-project1\n")
+    assert result.exit_code == 0, result.output
+    stored = home / "projects" / pid / ".env"
+    assert "OPENAI_API_KEY=sk-project1" in stored.read_text() and "OPENROUTER_API_KEY=sk-or-old" in stored.read_text()
+    assert not (tmp_path / ".factoid" / ".env").exists()
+    assert oct(stored.stat().st_mode & 0o777) == "0o600"
+
+    # The project's keys beat the home file.
+    (home / ".env").write_text("OPENAI_API_KEY=sk-home\n")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.setattr(models, "_keys_loaded", False)
+    monkeypatch.setattr(models, "KEY_SOURCES", {})
+    try:
+        models.load_keys(tmp_path)
+        assert os.environ["OPENAI_API_KEY"] == "sk-project1"
+    finally:
+        os.environ.pop("OPENAI_API_KEY", None)
+        os.environ.pop("OPENROUTER_API_KEY", None)
+
+
+def test_a_project_without_an_id_gets_one_when_it_first_stores_a_key(tmp_path):
+    from factoid.project_id import project_id
+
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = "x"\n\n[tool.factoid]\npackage = "legal"\n')
+    assert project_id(tmp_path) is None
+    made = project_id(tmp_path, create=True)
+    assert made.startswith("legal-") and project_id(tmp_path) == made

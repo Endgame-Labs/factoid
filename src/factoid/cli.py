@@ -25,6 +25,7 @@ from .models import (
     ModelError,
     check_models,
     keys_file,
+    legacy_keys_file,
     load_keys,
 )
 from .project import find_root, load, package_name
@@ -720,13 +721,34 @@ def _about_key(provider: str) -> list[str]:
     return lines
 
 
+def _move_legacy_keys(root: Path) -> None:
+    """Move keys that an older Factoid stored inside the project (.factoid/.env) to the project's keys file."""
+    legacy = legacy_keys_file(root)
+    if not legacy.is_file():
+        return
+    path = keys_file(root, create_id=True)
+    assert path is not None
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.parent.chmod(0o700)
+    current = path.read_text().splitlines() if path.exists() else []
+    names = {line.partition("=")[0].strip() for line in current}
+    moved = [line for line in legacy.read_text().splitlines()
+             if "=" in line and not line.lstrip().startswith("#") and line.partition("=")[0].strip() not in names]
+    path.write_text("\n".join([*current, *moved]) + "\n")
+    path.chmod(0o600)
+    legacy.unlink()
+    click.echo(f"moved {len(moved)} key(s) from {legacy} to {path}")
+
+
 def _store_key(provider: str, value: str, root: Path | None) -> None:
     problem = check_key(provider, value)
     if problem and not click.confirm(f"{problem}. Store it anyway?", default=False):
         raise click.ClickException("key not stored")
     env = _key_env(provider)
-    path = keys_file(root)
+    path = keys_file(root, create_id=True)
+    assert path is not None
     path.parent.mkdir(parents=True, exist_ok=True)
+    path.parent.chmod(0o700)
     lines = [ln for ln in (path.read_text().splitlines() if path.exists() else []) if not ln.startswith(f"{env}=")]
     lines.append(f"{env}={value}")
     path.write_text("\n".join(lines) + "\n")
@@ -743,9 +765,11 @@ def keys() -> None:
 
 @keys.command("set")
 @click.argument("provider", required=False, type=click.Choice(KEY_CHOICES))
-@click.option("--project", "for_project", is_flag=True, help="Store the key for the current project only.")
+@click.option("--project", "for_project", is_flag=True,
+              help="Store the key for the current project only, in ~/.factoid/projects/<id>/.env.")
 def keys_set(provider: str | None, for_project: bool) -> None:
-    """Store a provider key in ~/.factoid/.env (or the project's .factoid/.env).
+    """Store a provider key in ~/.factoid/.env, or with --project in ~/.factoid/projects/<id>/.env, where <id> is
+    the project's id in pyproject.toml. Keys never go in the project folder.
 
     With no PROVIDER, it asks for each key the project's models need (or the default models, outside a project)
     and says where to get each one. Press Enter to skip a key.
@@ -753,6 +777,8 @@ def keys_set(provider: str | None, for_project: bool) -> None:
     root = find_root() if for_project else None
     if for_project and root is None:
         raise click.ClickException("not inside a Factoid project")
+    if root is not None:
+        _move_legacy_keys(root)
     if provider:
         for line in _about_key(provider):
             click.echo(line)
@@ -793,6 +819,10 @@ def keys_list() -> None:
         url = TURBOPUFFER["url"] if name == "turbopuffer" else PROVIDERS[name].key_url
         used = ", ".join(needed.get(name, [])) or "-"
         click.echo(f"{name:<12} {_key_env(name):<22} {_key_status(name):<42} {used:<24} {url}")
+    root = find_root()
+    if root is not None and legacy_keys_file(root).is_file():
+        click.echo(f"\nKeys are stored inside this project at {legacy_keys_file(root)}, where an older Factoid put "
+                   f"them. `factoid keys set --project <provider>` moves them to ~/.factoid/projects/.")
 
 
 @cli.command()

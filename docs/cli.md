@@ -16,7 +16,8 @@ factoid doctor                                                 # test each workl
 
 - `init` writes `settings.py`, sample classes, a sample contract, and an eval. `jev` (default) uses TypeSafe and
   Fireworks, `fireworks` uses Fireworks alone (experimental), and `openai` uses OpenAI alone.
-- `keys set` stores a key in `~/.factoid/.env`, or in the project's `.factoid/.env` with `--project`. With no provider,
+- `keys set` stores a key in `~/.factoid/.env`, or with `--project` in `~/.factoid/projects/<id>/.env`, named by the
+  `id` that `init` writes into `pyproject.toml` (a project without one gets one). With no provider,
   it asks for each key the project needs and says where to get it; Enter skips. Providers: `fireworks`, `openai`,
   `openrouter`, `turbopuffer`, and `typesafe`.
 - `keys list` prints each provider, whether its key is set, where it comes from, what uses it, and where to get one.

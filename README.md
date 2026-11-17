@@ -92,8 +92,9 @@ sets a single key. `factoid keys list` shows every provider, whether its key is 
 the project uses it, and where to get one.
 
 Keys are checked for spaces, control characters, and terminal escape codes, and against the provider's prefix
-(Fireworks keys start with `fw_`). They are stored in `~/.factoid/.env`, or in the project's `.factoid/.env` with
-`--project`. An environment variable with the standard name, such as `FIREWORKS_API_KEY`, takes precedence.
+(Fireworks keys start with `fw_`). They are stored in `~/.factoid/.env`. With `--project`, a key is for one project
+only, and is stored at `~/.factoid/projects/<id>/.env`, where `<id>` is the project's `id` in `pyproject.toml`; keys
+never go in the project folder. A project's keys beat `~/.factoid/.env`. An environment variable with the standard name, such as `FIREWORKS_API_KEY`, takes precedence.
 
 Each provider has a base URL variable, like `FIREWORKS_BASE_URL`. Base URLs can go in the same `.env` files as keys.
 Setting one sends that provider's calls to another address, like a gateway or proxy that adds credentials itself. With a

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .project_id import new_project_id
+
 __all__ = ["PRESETS", "write"]
 
 PYPROJECT = """[project]
@@ -18,6 +20,7 @@ factoid = {source}
 
 [tool.factoid]
 package = "{package}"
+id = "{project_id}"  # names this project's keys in ~/.factoid/projects/; keep it committed
 """
 
 #: Model presets for `factoid init --models`. Each names the providers whose keys it needs.
@@ -152,7 +155,7 @@ def _source() -> str:
 def write(root: Path, package: str, preset: str = "jev") -> list[Path]:
     files = {
         root / "pyproject.toml": PYPROJECT.format(name=package.replace("_", "-"), package=package,
-                                                  source=_source()),
+                                                  source=_source(), project_id=new_project_id(package)),
         root / package / "__init__.py": "",
         root / package / "settings.py": SETTINGS.format(models=PRESETS[preset][1]),
         root / package / "documents.py": DOCUMENTS,

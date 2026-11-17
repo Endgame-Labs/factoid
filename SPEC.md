@@ -1129,9 +1129,11 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     three presets ingest the sample and score 1.0 on `factoid eval --fresh`.
   - Expected failures (`ModelError`, `DateError`, `ClassificationError`, `ExtractionError`, and `UnclaimedDocument`)
     print one line; `FACTOID_DEBUG=1` shows the traceback. An unclaimed file in a folder is skipped and listed.
-  - A project's `.factoid/.env` now wins over `~/.factoid/.env`, as this section's precedence says. Per-project keys
-    are still stored in the project's git-ignored `.factoid/.env`, not at `~/.factoid/projects/<id>/.env` as decided
-    above: not built yet.
+  - Per-project keys are built as decided (decision 85): `factoid init` writes `id = "<package>-<8 hex>"` under
+    `[tool.factoid]`, and `keys set --project` stores keys at `~/.factoid/projects/<id>/.env` (folder 0700, file
+    0600), giving a project without an id one. Precedence: a real environment variable, the project's keys, an old
+    in-project `.factoid/.env` (still read; the next `keys set --project` moves it out and deletes it, and `keys list`
+    points at it), and then `~/.factoid/.env`.
   - `--vary` refuses a string that would replace a method (`--vary classify=decision` replaced `classify` with a
     string). The README's strategy example is replaced by `@module:NAME` values.
   - `Chunk.search(query, about=...)` exists, as the README showed. Searching facts and chunks in one list is planned.
@@ -1403,3 +1405,6 @@ All dates are 2026-11-13 unless noted.
     `docs/cli.md`, and the example apps. Fixes from a cold-start onboarding review: the sample classifies on every
     preset, expected errors print one line, project keys beat home keys, `--vary` cannot replace a method with a
     string, `Chunk.search` exists, and `factoid init` installs Factoid from where it came from. (2026-11-17)
+85. Per-project keys are stored as decided in section 12: at `~/.factoid/projects/<id>/.env`, named by an `id` in the
+    project's `pyproject.toml` that `factoid init` writes and the project commits. Keys stored inside a project by
+    0.1.1 and earlier are still read, and the next `keys set --project` moves them out. (Kyle, 2026-11-17)

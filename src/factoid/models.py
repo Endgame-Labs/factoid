@@ -152,10 +152,24 @@ def check_models(models: dict[str, Model]) -> list[str]:
     return problems
 
 
-def keys_file(project: Path | None = None) -> Path:
-    if project is not None:
-        return project / ".factoid" / ".env"
-    return Path(os.environ.get("FACTOID_HOME", Path.home() / ".factoid")) / ".env"
+def factoid_home() -> Path:
+    return Path(os.environ.get("FACTOID_HOME", Path.home() / ".factoid"))
+
+
+def keys_file(project: Path | None = None, *, create_id: bool = False) -> Path | None:
+    """`~/.factoid/.env`, or a project's own keys at `~/.factoid/projects/<id>/.env` (None when the project has no id
+    yet; `create_id` gives it one)."""
+    if project is None:
+        return factoid_home() / ".env"
+    from .project_id import project_id
+
+    pid = project_id(project, create=create_id)
+    return factoid_home() / "projects" / pid / ".env" if pid else None
+
+
+def legacy_keys_file(project: Path) -> Path:
+    """Where `keys set --project` stored keys before 0.1.1: inside the project. Still read, below the project's keys."""
+    return project / ".factoid" / ".env"
 
 
 _keys_loaded = False
@@ -164,13 +178,15 @@ KEY_SOURCES: dict[str, Path] = {}
 
 
 def load_keys(project: Path | None = None) -> None:
-    """Load keys from `~/.factoid/.env` and the project's `.factoid/.env`. A real environment variable wins, then
-    the project's file, then the home file."""
+    """Load keys from `~/.factoid/.env` and the project's keys. A real environment variable wins, then the project's
+    keys (`~/.factoid/projects/<id>/.env`), then a project's old in-tree `.factoid/.env`, then the home file."""
     global _keys_loaded
     if _keys_loaded and project is None:
         return
-    home = keys_file()
-    for path in (home, keys_file(project) if project else None):
+    files = [keys_file()]  # lowest first
+    if project is not None:
+        files += [legacy_keys_file(project), keys_file(project)]
+    for rank, path in enumerate(files):
         if path is None or not path.is_file():
             continue
         for line in path.read_text().splitlines():
@@ -179,8 +195,10 @@ def load_keys(project: Path | None = None) -> None:
                 continue
             name, _, value = line.partition("=")
             name = name.strip()
-            # A value loaded from the home file gives way to the project's; one from the real environment never does.
-            if name not in os.environ or (KEY_SOURCES.get(name) == home and path != home):
+            # A value from a lower file gives way to a higher one; one from the real environment never does.
+            source = KEY_SOURCES.get(name)
+            lower = source is not None and source in files[:rank]
+            if name not in os.environ or lower:
                 os.environ[name] = value.strip().strip("'\"")
                 KEY_SOURCES[name] = path
     _keys_loaded = True
