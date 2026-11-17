@@ -200,6 +200,7 @@ class Factoid:
         self._duplicates.pop(item.id, None)
         facts = run_step(item, "ingest", self)
         facts = [] if facts is SKIPPED else facts
+        self.store.finish_document(item.id, item.content_hash)
         rejected = [r for r in self.rejected[before:] if r.document_id == item.id]
         return IngestResult(item, facts, rejected, self._duplicates.pop(item.id, 0))
 

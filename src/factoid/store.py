@@ -127,6 +127,12 @@ class Store:
             return False
         return metadata is None or json.loads(row["metadata"] or "{}") == json.loads(json.dumps(metadata, default=str))
 
+    def finish_document(self, document_id: str, content_hash: str) -> None:
+        """Record that a document's ingest finished, so an unchanged re-ingest can skip it. A run that fails halfway
+        leaves no hash, and the next run ingests the document again."""
+        with self.tx() as db:
+            db.execute("update documents set content_hash = ? where id = ?", (content_hash, document_id))
+
     def save_document(self, doc: dict[str, Any], passages: list[dict[str, Any]], chunks: list[dict[str, Any]]) -> None:
         with self.tx() as db:
             db.execute("delete from passages where document_id = ?", (doc["id"],))

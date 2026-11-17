@@ -1097,7 +1097,8 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
 - **From a first-run walkthrough (2026-11-17, version 0.1.1).** A new user ran the Quickstart twice, before and after
   the first-install fixes. What changed from it:
   - Re-ingesting an unchanged document (same text, class, and metadata) skips it; `--again` ingests it anyway. Before,
-    every fact was retracted and re-added under a new id.
+    every fact was retracted and re-added under a new id. The document's hash is saved only when its ingest finishes,
+    so a run that fails halfway (a missing key, a timeout, or Ctrl+C) is ingested again next time.
   - Re-ingesting a changed document still retracts its facts, and a new fact that says the same thing takes the old
     id (event `fact.restored`): the same sentence, or the same traits, a shared quote, and embeddings at least 0.85
     alike (`Factoid.reuse_similarity`). Extraction rewords a sentence from run to run, so the same-sentence rule alone

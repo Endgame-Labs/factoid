@@ -207,7 +207,7 @@ class Document(Registered, ModelCalls):
         dated = self.dated()
         doc = {"id": self.id, "class": type(self).__qualname__, "uri": self.uri, "title": self.title,
                "source_datetime": format_datetime(dated) if dated else None, "metadata": self.metadata,
-               "text": self.text, "content_hash": self.content_hash}
+               "text": self.text, "content_hash": None}  # set when the ingest finishes (Store.finish_document)
         rows = [{"n": p.n, "start": p.start, "end": p.end, "speaker": p.speaker, "said_at": p.said_at}
                 for p in passages]
         chunk_rows = [{"id": c.id, "n": c.n, "first_passage": c.passages[0].n, "last_passage": c.passages[-1].n,

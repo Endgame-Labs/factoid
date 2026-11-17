@@ -563,3 +563,22 @@ def test_reingesting_skips_an_unchanged_document_and_keeps_unchanged_fact_ids(ma
             assert fact.id == ids[fact.text] and Fact.get(fact.id).status == "current"
     events = [r["type"] for r in app.store.events_for(ids[first.facts[0].text])]
     assert events[-1] == "fact.restored"
+
+
+def test_a_document_whose_ingest_failed_is_ingested_again(make_app, fake):
+    import pytest
+
+    app = build(make_app, fake)
+    meta = {"signed_at": "2025-03-01T00:00:00Z"}
+    text = "Vega's liability to Orion is capped at $1M under the supply agreement."
+    good = fake.generator
+
+    def broken(prompt):
+        raise RuntimeError("the model is down")
+
+    fake.generator = broken
+    with pytest.raises(RuntimeError):
+        app.ingest_text(text, document_type=Contract, metadata=meta, uri="supply.txt")
+    fake.generator = good
+    again = app.ingest_text(text, document_type=Contract, metadata=meta, uri="supply.txt")
+    assert not again.unchanged and len(again.facts) == 1
