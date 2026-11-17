@@ -25,7 +25,7 @@ class Transcript(ProseDocument):
 
     #: Give the extractor a roster that maps each short speaker tag ("VAUSE") to the speaker's full label from the
     #: same transcript ("JOHN VAUSE, CNN ANCHOR"). Plain code, no model call.
-    speaker_roster = False
+    speaker_roster = True  # surname-only facts: 19% without it, 7% with it, on the first 15 dev transcripts
 
     def context(self):
         out = {k: self.metadata[k] for k in ("program", "title", "date") if self.metadata.get(k)}

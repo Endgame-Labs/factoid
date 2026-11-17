@@ -1,0 +1,45 @@
+"""Fact eval variants for `--vary fact_evals=@evals.variants:NAME`: wordings of the self-contained question."""
+
+from factoid import JevFloors, Nli, Noul
+
+OLD = Noul(
+    "Can a reader understand the fact on its own? It must name its subject and the people, companies, and "
+    "documents it refers to, with no unresolved pronouns and no references like 'this Agreement' or 'the Party'. "
+    "Text the source itself omits or redacts, such as [***], does not count against the fact.",
+    true="The fact is understandable alone.",
+    false="The fact needs context it does not give.",
+)
+MID = Noul(
+    "Can a reader who has not seen the source understand the fact on its own? It must name its subject and the "
+    "people, organizations, and documents it refers to. It fails if it has a pronoun that does not refer to something "
+    "named in the fact, a reference like 'this Agreement' or 'the Party', or a time relative to an unstated date "
+    "('yesterday', 'last week'). A description that the rest of the sentence makes clear is fine. Text the source "
+    "itself omits or redacts, such as [***], does not count against the fact.",
+    true="The fact is understandable alone.",
+    false="The fact needs context it does not give.",
+)
+
+OLD_40 = [Nli(), JevFloors(questions={"self_contained": OLD}, self_contained=0.4)]
+MID_40 = [Nli(), JevFloors(questions={"self_contained": MID}, self_contained=0.4)]
+MID_50 = [Nli(), JevFloors(questions={"self_contained": MID}, self_contained=0.5)]
+STRICT_40 = [Nli(), JevFloors(self_contained=0.4)]
+
+STRICT = Noul(
+    "Can a reader who has not seen the source understand the fact on its own? The fact must name or describe, well "
+    "enough to identify, every person, organization, place, document, and event it refers to. It fails if it has a "
+    "pronoun or a description ('he', 'the company', 'the president', 'this Agreement', 'the case') whose referent the "
+    "fact itself does not give, or a time relative to an unstated date ('yesterday', 'last week'). Text the source "
+    "itself omits or redacts, such as [***], does not count against the fact.",
+    true="Every reference is resolved.",
+    false="Some reference is left unresolved.",
+)
+# The mid question rejects; the strict one only asks for a repair, and the fact keeps its wording if the repair misses.
+MID_40_EXPLICIT_50 = [Nli(), JevFloors(questions={"self_contained": MID, "explicit": STRICT}, self_contained=0.4,
+                                       explicit=0.0, targets={"explicit": 0.5})]
+STRICT_10_T50 = [Nli(), JevFloors(self_contained=0.1, targets={"self_contained": 0.5})]
+
+from factoid import Model  # noqa: E402
+
+from iscrag.settings import Project  # noqa: E402
+
+REPAIR_MEDIUM = {**Project.models, "repair": Model("fireworks/glm-5p3-flash", reasoning_effort="medium")}

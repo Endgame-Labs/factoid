@@ -126,6 +126,44 @@ After the fixes of 2026-11-16 (linking, claim indexing, and repair context; see 
 find 3 of 4 supersessions (was 2 of 4), and a new dev chain of term extensions (`extensions_dev`, Navistar) finds 4
 of 4.
 
+## After the fact eval tuning (2026-11-17)
+
+On 2026-11-17, framework fact evals and prompts changed (SPEC decisions 73 to 76). They were tuned on news transcripts
+(the iscrag app), and this app was re-run to check that contracts did not get worse. Nothing here changed. Fact evals
+and repair now see the 1,200 characters before each quote. The self-contained question is strict about pronouns, unclear
+descriptions, and relative dates. Facts below target get one repair and keep their wording if it does not help. The
+extract prompt asks the extractor to resolve references and relative dates.
+
+During tuning, an extract prompt line against repeating the document's date stopped facts like "The Sponsorship
+Agreement is dated July 16, 2012." CUAD agreement dates fell to 13 of 18. Rewording it brought them back to 16 of 18.
+
+| Suite | Before (2026-11-16) | After (2026-11-17) |
+| --- | --- | --- |
+| Sample deal checks | 15/15 | 15/15 |
+| CUAD 1 to 20: clause detection (F1, mean AUPR) | 0.80, 0.97 | 0.80, 0.96 |
+| CUAD 1 to 20: gold clauses quoted by a kept fact | 0.97 | 0.96 |
+| CUAD 1 to 20: gold clauses quoted by a fact with the right trait | 0.83 | 0.84 |
+| CUAD 1 to 20: dates (agreement, effective, expiration) | 16/18, 12/14, 8/9 | 16/18, 13/14, 8/9 |
+| Amendment supersessions found (all chains) | 15/16 | 12/16 |
+| Amendment as-of search (all chains) | 35/36 | 32/36 |
+| False changes to base facts (tuning, NEON, fresh, SEC) | 3.3%, 6.8%, 3.4%, 1.4% | 2.1%, 5.9%, 3.5%, 1.2% |
+
+Amendment numbers move by one or two between runs of the same code. Treat a difference of one as noise. This run missed
+two supersessions that passed in the run before it: the ScanSource term extension (both facts were kept, and resolve did
+not connect them) and a Tyson leverage ratio replaced by a schedule of ratios (SPEC decision 69).
+
+| Questions answered with the terms in force (36) | Facts, 2k tokens | Facts, 8k tokens | Chunks, 2k tokens | Chunks, 8k tokens |
+| --- | --- | --- | --- | --- |
+| Before (2026-11-16) | 33 | 34 | 20 | 33 |
+| After (2026-11-17) | 34 | 33 | 20 | 35 |
+| Answered with the outdated terms, after | 0 | 2 | 4 | 0 |
+
+The two outdated fact answers at 8k are reader mistakes. With more facts in view, the reader picked a later amendment's
+terms for an earlier date (Glu's Fox party in 2005 and ScanSource's returns in 2008).
+
+After tuning, CUAD 1 to 20 (20 contracts) produced 4,200 facts and 450 entities. It took 19 minutes, 17,715 model calls,
+and 29.8 million tokens.
+
 ## Facts and entities
 
 Counts and samples come from `factoid stats --examples 3` on two eval runs.

@@ -57,9 +57,9 @@ factoid stats --examples 3 --data-dir runs/<time>/playoffs/default
   (what happened).
 - `Recap` and `Article` produce `Reported` facts dated by their publish or revision time.
 
-## Results (2026-11-16)
+## Results (2026-11-17)
 
-One run across all 73 documents took 36 minutes, 15,366 model calls, and 20.4 million tokens. The run passes 11 of 11
+One run across all 73 documents took 42 minutes, 16,125 model calls, and 22.9 million tokens. The run passes 11 of 11
 checks:
 
 | Check | Result |
@@ -86,33 +86,33 @@ From the run above (`factoid stats --examples 3`):
 
 | Documents | Count | Facts |
 | --- | --- | --- |
-| Interview | 45 | 1,033 |
-| Recap | 22 | 938 |
-| Article | 3 | 658 |
+| Interview | 45 | 1,119 |
+| Recap | 22 | 1,003 |
+| Article | 3 | 718 |
 | BoxScore | 1 (491 rows) | 982 |
 | GameLog | 1 (22 rows) | 44 |
 | PlayerTotals | 1 (14 rows) | 28 |
-| All | 73 | 3,683 |
+| All | 73 | 3,894 |
 
-Facts by status: 3,483 current, 145 superseded, 53 contradicted, and 2 ended. Facts by class: 2,654 `Reported` and
-1,029 `Remark`.
+Facts by status: 3,696 current, 148 superseded, 48 contradicted, and 2 ended. Facts by class: 2,775 `Reported` and
+1,119 `Remark`.
 
 | Entities | Count | Most facts |
 | --- | --- | --- |
-| Player | 146 | Stephen Curry (638), Draymond Green (425), Klay Thompson (326) |
-| Person | 54 | Steve Kerr (376), Gary Payton (47), Michael Malone (23) |
-| Untyped | 51 | 2022 NBA playoffs (98), NBA (55), Chase Center (19) |
-| Team | 29 | Golden State Warriors (1,310), Boston Celtics (550), Dallas Mavericks (218) |
-| Game | 28 | Game 5 of the 2022 NBA Finals (135), Game 1 of the 2022 NBA Finals (98), Game 2 of the 2022 Western Conference First Round (91) |
-| Series | 13 | 2022 NBA Finals (541), 2022 Eastern Conference Finals (26), 2022 Western Conference Finals (19) |
-| All | 321 | |
+| Player | 141 | Stephen Curry (693), Draymond Green (470), Klay Thompson (374) |
+| Person | 54 | Steve Kerr (405), Gary Payton (61), Taylor Jenkins (23) |
+| Untyped | 48 | 2022 NBA playoffs (236), NBA (52), ESPN (21) |
+| Team | 31 | Golden State Warriors (1,384), Boston Celtics (519), Memphis Grizzlies (248) |
+| Game | 27 | Game 3 of the 2022 NBA Finals (158), Game 2 of the 2022 NBA Finals (135), Game 1 of the 2022 NBA Finals (129) |
+| Series | 9 | 2022 NBA Finals (592), 2022 NBA Eastern Conference finals (31), 2022 Western Conference Finals (21) |
+| All | 310 | |
 
 Sample facts:
 
 - `Remark`: "Steve Kerr said the 2022 NBA Finals championship is Stephen Curry's crowning achievement in what has
   already been an incredible career."
-- `Remark`: "Steve Kerr said that Stephen Curry went through everything at the Golden State Warriors' shootaround on the
-  morning of Game 4 of the 2022 NBA Finals and told Kerr he felt good."
+- `Remark`: "Stephen Curry said that Jordan Poole's first NBA Finals game involved a lot of adrenaline and a lot of
+  nerves."
 - `Reported`: "Stephen Curry became the first player in NBA history to surpass 500 three-pointers in the playoffs,
   finishing with 561."
 - `Reported`: "In the 2022 NBA Finals, the Celtics lead the series 2-1." (from `games.csv`, row 19; superseded on
@@ -122,15 +122,17 @@ Sample facts:
 
 ## What it gets wrong
 
-- Recaps and transcripts often use bare game names like "Game 4", and the extractor sometimes keeps them as-is. "Game 1"
-  to "Game 4" became four extra Game entities (10 to 48 facts each) instead of linking to the right game. The same
-  happens with series names: "NBA Finals", "Denver series", and "2022 NBA playoffs first round" stay separate from the
-  series in the game log. Of the 28 Game and 13 Series entities, 22 games and 4 series are from the Warriors' run. Some
-  of the others are real events outside that run, such as the 2019 Finals and the 2022 Eastern Conference Finals.
+- Recaps and transcripts often use bare game names like "Game 4", and the extractor sometimes keeps them as-is. "Game
+  1", "Game 2", "Game 4", and "Game 5" became four extra Game entities (6 to 35 facts each) instead of linking to the
+  right game. The same happens with series names: "NBA Finals" and "Memphis series" stay separate from the series in
+  the game log. Of the 27 Game and 9 Series entities, 22 games and 4 series are from the Warriors' run. Some of the
+  others are real events outside that run, such as the 2022 All-Star Game and the 2019 Finals. (Before the fact eval
+  tuning of 2026-11-17, there were 28 Game and 13 Series entities.)
 - ASAP's transcript headers list Gary Payton II as "Gary Payton", which is also his father's name. He became a Person
   rather than a Player.
-- Some facts are not self-contained. For example, this fact does not say which series: "Andrew Wiggins hit a
-  second-chance 3-pointer to put the Golden State Warriors ahead for good at 112-111 in Game 3."
+- Some facts are not self-contained. An independent model (Kimi K3.1 Pro) flagged 3.0% of 300 random facts for a
+  reference a reader cannot resolve (6.7% before the tuning), such as "In that game, the Suns outscored the Mavericks
+  61-34."
 
 Fixing these issues requires app-level changes, such as guidance that always names the series or passing a game's
 context to the extractor. Those changes have not been tried yet.
