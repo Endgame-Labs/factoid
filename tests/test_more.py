@@ -208,22 +208,39 @@ def test_keys_set_catches_a_bad_paste():
     assert check_key("typesafe", "anything-printable") is None
 
 
-def test_an_unreachable_integration_host_says_to_set_a_key(monkeypatch, tmp_path):
-    import dataclasses
-
+def test_a_provider_with_no_key_and_no_base_url_says_to_set_a_key(monkeypatch, tmp_path):
+    import httpx
     import pytest
 
-    from factoid.models import PROVIDERS, CallLog, Model, ModelClient, ModelError
+    from factoid.models import CallLog, Model, ModelClient, ModelError
 
     monkeypatch.setenv("FACTOID_HOME", str(tmp_path))
     monkeypatch.delenv("FIREWORKS_API_KEY", raising=False)
     monkeypatch.delenv("FIREWORKS_BASE_URL", raising=False)
-    dead = dataclasses.replace(PROVIDERS["fireworks"], integration_url="http://127.0.0.1:9")
-    monkeypatch.setitem(PROVIDERS, "fireworks", dead)
-    client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, CallLog(None))
-    client.replay = False
-    with pytest.raises(ModelError, match="factoid keys set fireworks"):
+    client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, CallLog(None), replay=False)
+    client._http = httpx.Client(transport=httpx.MockTransport(lambda r: pytest.fail("no call should be made")))
+    with pytest.raises(ModelError, match="factoid keys set fireworks.*FIREWORKS_BASE_URL"):
         client.generate("hi")
+
+
+def test_a_base_url_alone_is_enough_and_sends_no_key(monkeypatch, tmp_path):
+    import httpx
+
+    from factoid.models import CallLog, Model, ModelClient
+
+    monkeypatch.setenv("FACTOID_HOME", str(tmp_path))
+    monkeypatch.delenv("FIREWORKS_API_KEY", raising=False)
+    monkeypatch.setenv("FIREWORKS_BASE_URL", "http://gateway.test/v1")
+    seen = []
+
+    def handler(request):
+        seen.append((str(request.url), request.headers.get("authorization")))
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}]})
+
+    client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, CallLog(None), replay=False)
+    client._http = httpx.Client(transport=httpx.MockTransport(handler))
+    assert client.generate("hi") == "ok"
+    assert seen[0][0].startswith("http://gateway.test/v1/") and seen[0][1] is None
 
 
 def test_a_connect_error_from_a_host_that_has_answered_is_retried(monkeypatch, tmp_path):
@@ -233,8 +250,7 @@ def test_a_connect_error_from_a_host_that_has_answered_is_retried(monkeypatch, t
     from factoid.models import CallLog, Model, ModelClient
 
     monkeypatch.setenv("FACTOID_HOME", str(tmp_path))
-    monkeypatch.delenv("FIREWORKS_API_KEY", raising=False)
-    monkeypatch.delenv("FIREWORKS_BASE_URL", raising=False)
+    monkeypatch.setenv("FIREWORKS_API_KEY", "fw_test")
     monkeypatch.setattr(models.time, "sleep", lambda s: None)
     client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, CallLog(None), replay=False)
     client._reachable.add("fireworks")

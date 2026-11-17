@@ -4,9 +4,9 @@ Every model name is `provider/model`, so Factoid knows which key a workload need
 which logs them, counts tokens and time, and replays identical requests from a cache. The cache key is the exact
 request, so changing a prompt, a question, or a model is a miss.
 
-Base URLs: a provider's `<PROVIDER>_BASE_URL` environment variable wins. Otherwise, with a key set, Factoid calls the
-vendor's API. With no key, it tries the exe.dev integration host for that provider, which injects credentials; off
-exe.dev that host does not answer, and the error says to set a key.
+Base URLs: a provider's `<PROVIDER>_BASE_URL` environment variable wins; otherwise Factoid calls the vendor's API. A
+call needs the provider's key, or a base URL (such as a gateway that adds credentials itself). The key is sent when it
+is set.
 """
 
 from __future__ import annotations
@@ -49,37 +49,37 @@ class ModelError(RuntimeError):
 class Provider:
     name: str
     vendor_url: str
-    integration_url: str
     key_env: str
     kinds: tuple[str, ...]  # which workloads it can serve
     key_url: str = ""  # where a person gets a key
     access: str = ""  # how to get access, when a key is not self-serve
 
+    @property
+    def base_url_env(self) -> str:
+        return f"{self.name.upper()}_BASE_URL"
+
     def base_url(self) -> str:
-        override = os.environ.get(f"{self.name.upper()}_BASE_URL")
-        if override:
-            return override.rstrip("/")
-        if self.api_key():
-            return self.vendor_url
-        return self.integration_url
+        override = os.environ.get(self.base_url_env, "").strip()
+        return override.rstrip("/") if override else self.vendor_url
 
     def api_key(self) -> str | None:
         load_keys()
         value = os.environ.get(self.key_env, "").strip()
         return value or None
 
-    def uses_integration(self) -> bool:
-        """No key and no base URL override: calls go to the exe.dev integration host."""
-        return not os.environ.get(f"{self.name.upper()}_BASE_URL") and not self.api_key()
+    def ready(self) -> bool:
+        """A key is set, or a base URL is, for a gateway that adds credentials itself."""
+        load_keys()
+        return bool(self.api_key() or os.environ.get(self.base_url_env, "").strip())
 
     def missing_key(self) -> str:
-        return (f"no {self.key_env} is set, so Factoid tried the exe.dev integration host ({self.integration_url}), "
-                f"which only answers on exe.dev. Set a key with `factoid keys set {self.name}`.")
+        return (f"no {self.key_env} is set. Set one with `factoid keys set {self.name}`, or set {self.base_url_env} "
+                f"to a gateway that adds credentials itself.")
 
     def headers(self) -> dict[str, str]:
         headers = {"content-type": "application/json"}
         key = self.api_key()
-        if key and not os.environ.get(f"{self.name.upper()}_BASE_URL"):
+        if key:
             headers["authorization"] = f"Bearer {key}"
         return headers
 
@@ -88,7 +88,6 @@ PROVIDERS: dict[str, Provider] = {
     "typesafe": Provider(
         "typesafe",
         "https://api.typesafe.ai",
-        "https://typesafe.int.exe.xyz",
         "TYPESAFE_API_KEY",
         ("choose",),
         key_url="https://console.typesafe.ai/",
@@ -97,7 +96,6 @@ PROVIDERS: dict[str, Provider] = {
     "fireworks": Provider(
         "fireworks",
         "https://api.fireworks.ai/inference/v1",
-        "https://fireworks.int.exe.xyz/inference/v1",
         "FIREWORKS_API_KEY",
         ("choose", "generate", "embed", "rerank"),
         key_url="https://app.fireworks.ai/settings/users/api-keys",
@@ -105,7 +103,6 @@ PROVIDERS: dict[str, Provider] = {
     "openai": Provider(
         "openai",
         "https://api.openai.com/v1",
-        "https://openai.int.exe.xyz/v1",
         "OPENAI_API_KEY",
         ("choose", "generate", "embed"),
         key_url="https://platform.openai.com/api-keys",
@@ -113,7 +110,6 @@ PROVIDERS: dict[str, Provider] = {
     "openrouter": Provider(
         "openrouter",
         "https://openrouter.ai/api/v1",
-        "https://openrouter.int.exe.xyz/api/v1",
         "OPENROUTER_API_KEY",
         ("generate",),
         key_url="https://openrouter.ai/settings/keys",
@@ -336,9 +332,8 @@ class ModelClient:
         self.log = log
         self.meter = meter or Meter()
         self.replay = replay
-        # A short connect timeout: an exe.dev integration host off exe.dev, or a dead host, fails in seconds.
+        # A short connect timeout, so a wrong base URL fails in seconds.
         self._http = httpx.Client(timeout=httpx.Timeout(timeout, connect=10.0))
-        self._unreachable: set[str] = set()  # integration hosts that did not answer, so later calls fail at once
         self._reachable: set[str] = set()  # providers that have answered, whose connect errors are retried
 
     # -- plumbing ---------------------------------------------------------------------------------------------
@@ -364,7 +359,7 @@ class ModelClient:
                                older=saved_by != self.log.factoid)
                 return cached, True
         provider = model.provider
-        if provider.uses_integration() and provider.name in self._unreachable:
+        if not provider.ready():
             raise ModelError(f"{model.name}: {provider.missing_key()}")
         url = provider.base_url() + url_path
         started = time.monotonic()
@@ -374,12 +369,11 @@ class ModelClient:
             try:
                 response = self._http.post(url, headers=provider.headers(), json=body)
             except httpx.TransportError as err:
-                # Off exe.dev, an integration host either refuses the connection or never answers it. A host that
-                # has answered before is reachable, so its connect errors are transient and are retried.
-                if (provider.uses_integration() and provider.name not in self._reachable
-                        and isinstance(err, (httpx.ConnectError, httpx.ConnectTimeout))):
-                    self._unreachable.add(provider.name)
-                    raise ModelError(f"{model.name}: {provider.missing_key()}") from err
+                # A host that has never answered is probably a wrong base URL: say so at once. A connect error
+                # from a host that has answered before is a blip, and is retried.
+                if provider.name not in self._reachable and isinstance(err, (httpx.ConnectError,
+                                                                             httpx.ConnectTimeout)):
+                    raise ModelError(f"{model.name}: could not connect to {provider.base_url()} ({err})") from err
                 if attempt == attempts - 1:
                     raise ModelError(f"{model.name}: {err}") from err
                 time.sleep(min(60, 2 ** attempt))
@@ -392,8 +386,8 @@ class ModelClient:
         self._reachable.add(provider.name)
         if response.status_code >= 400:
             hint = ""
-            if provider.uses_integration() and response.status_code in (401, 403, 404):
-                hint = f" ({provider.missing_key()})"
+            if response.status_code in (401, 403) and not provider.api_key():
+                hint = f" ({provider.base_url_env} is set and no key is; {provider.missing_key()})"
             elif response.status_code in (400, 401, 403) and provider.api_key():
                 hint = f" (check the key in {provider.key_env}: `factoid keys set {provider.name}` replaces it)"
             raise ModelError(f"{model.name}: HTTP {response.status_code}: {response.text[:500]}{hint}")

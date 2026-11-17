@@ -653,7 +653,8 @@ def _key_status(provider: str) -> str:
     """Whether a provider's key is set, and where it comes from."""
     env = _key_env(provider)
     if not os.environ.get(env, "").strip():
-        return "not set"
+        base = f"{provider.upper()}_BASE_URL"
+        return f"not needed ({base} is set)" if os.environ.get(base, "").strip() else "not set"
     source = KEY_SOURCES.get(env)
     value = os.environ[env].strip()
     stored = {}
@@ -743,8 +744,7 @@ def keys_set(provider: str | None, for_project: bool) -> None:
     if not missing:
         click.echo("All set. `factoid keys set <provider>` replaces one; `factoid doctor` checks them.")
         return
-    click.echo("For each missing key, paste it, or press Enter to skip. On exe.dev, a provider's integration answers "
-               "without a key.")
+    click.echo("For each missing key, paste it, or press Enter to skip.")
     for name in missing:
         click.echo("")
         for line in _about_key(name):
@@ -762,11 +762,11 @@ def keys_list() -> None:
     """Every provider: whether its key is set, where it comes from, what uses it, and where to get one."""
     app = _project_or_defaults()
     needed = _needed_keys(app)
-    click.echo(f"{'provider':<12} {'variable':<22} {'status':<34} {'used by':<24} get a key")
+    click.echo(f"{'provider':<12} {'variable':<22} {'status':<42} {'used by':<24} get a key")
     for name in KEY_CHOICES:
         url = TURBOPUFFER["url"] if name == "turbopuffer" else PROVIDERS[name].key_url
         used = ", ".join(needed.get(name, [])) or "-"
-        click.echo(f"{name:<12} {_key_env(name):<22} {_key_status(name):<34} {used:<24} {url}")
+        click.echo(f"{name:<12} {_key_env(name):<22} {_key_status(name):<42} {used:<24} {url}")
 
 
 @cli.command()
@@ -785,11 +785,10 @@ def models() -> None:
             status = f"unknown provider {model.provider_name!r}"
         elif provider.api_key():
             status = _key_status(provider.name)
-        elif provider.uses_integration():
-            status = (f"not set: uses the exe.dev integration, which answers only on exe.dev "
-                      f"(`factoid keys set {provider.name}`)")
+        elif provider.ready():
+            status = f"no key; calls {provider.base_url()} ({provider.base_url_env})"
         else:
-            status = f"not set (using {provider.base_url()})"
+            status = f"not set (`factoid keys set {provider.name}`)"
         click.echo(f"{workload:<10} {model.name:<34} {status}")
     for problem in check_models(app.client.models):
         click.echo(f"problem: {problem}")

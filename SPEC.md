@@ -895,8 +895,8 @@ local runtime such as Ollama), but local runtimes are not promised or tested.
     `.env.local` in the project is the alternative, and is simpler but puts the secret in the tree.)
   - Precedence, highest first: a real environment variable, the project's keys, `~/.factoid/.env`, and then the
     defaults in `settings.py`.
-  - A provider can set a base URL and run with no key, for gateways that inject credentials (such as exe.dev
-    integrations).
+  - A provider can set a base URL (`<PROVIDER>_BASE_URL`) and run with no key, for gateways that add credentials
+    themselves. The framework knows no gateway by name (decision 83).
 - The `factoid` command:
   - It is a real executable on the user's `PATH`, installed once per user. `uv tool install` builds a private
     environment under `~/.local/share/uv/tools/factoid/` and puts a launcher in `~/.local/bin/`. It is not a shell
@@ -1212,8 +1212,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
   supersession 1 of 2. Details are in `examples/legal/README.md`.
 - **Not on PyPI yet:** `uv tool install factoid` does not work until a release is published. Install from the repo.
-- **Keys:** with no key set for a provider, the client calls that provider's exe.dev integration host, which injects
-  credentials. With a key set, it calls the vendor.
+- **Keys:** a call needs the provider's key or its base URL (`<PROVIDER>_BASE_URL`, for a gateway that adds
+  credentials). With neither, it fails at once and names both. The key is sent whenever it is set. The code names no
+  hosting platform or gateway (decision 83): a machine behind one sets the base URLs in `~/.factoid/.env`.
 
 ## Decision log
 
@@ -1366,3 +1367,8 @@ All dates are 2026-11-13 unless noted.
     re-ingested document's facts keep their ids when a new fact says the same thing. Replayed model calls are named
     as replays in the output, with `--fresh` beside them, and the cache records which Factoid saved each answer.
     (2026-11-17)
+83. The framework code knows nothing about exe.dev or any other hosting platform (Kyle, 2026-11-17). Providers default
+    to the vendor's API. A gateway that adds credentials is configured with `<PROVIDER>_BASE_URL` (and
+    `TURBOPUFFER_BASE_URL`), in the environment or a `.env` file, and then no key is needed. A call with neither a key
+    nor a base URL fails before any request. A host that never answers fails at once with its address; one that has
+    answered before is retried. Replaces the integration-host defaults of decision 78. (2026-11-17)

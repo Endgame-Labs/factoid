@@ -175,9 +175,7 @@ class Turbopuffer(Index):
 
     @staticmethod
     def _default_url() -> str:
-        if os.environ.get("TURBOPUFFER_API_KEY"):
-            return "https://gcp-us-central1.turbopuffer.com"
-        return "https://turbopuffer.int.exe.xyz"
+        return "https://gcp-us-central1.turbopuffer.com"
 
     def _headers(self) -> dict[str, str]:
         headers = {"content-type": "application/json"}

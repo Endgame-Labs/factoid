@@ -1,4 +1,4 @@
-"""First-run fixes: the last paragraph, dead integration hosts, model presets, keys, and the three decision models."""
+"""First-run fixes: the last paragraph, dead hosts, model presets, keys, and the three decision models."""
 
 from __future__ import annotations
 
@@ -26,25 +26,22 @@ def test_segment_keeps_the_last_paragraph_before_a_trailing_newline():
     assert len(Memo(text + "\n  \n").segment()) == 3
 
 
-def test_a_silent_integration_host_fails_fast_and_once(monkeypatch, tmp_path):
+def test_a_host_that_never_answers_fails_fast_and_says_where(monkeypatch, tmp_path):
     monkeypatch.setenv("FACTOID_HOME", str(tmp_path))
     monkeypatch.delenv("FIREWORKS_API_KEY", raising=False)
-    monkeypatch.delenv("FIREWORKS_BASE_URL", raising=False)
+    monkeypatch.setenv("FIREWORKS_BASE_URL", "http://wrong.test/v1")
     calls = []
 
     def handler(request):
         calls.append(request.url)
         raise httpx.ConnectTimeout("timed out", request=request)
 
-    client = ModelClient({"generate": Model("fireworks/glm-5p3-flash"), "embed": Model("fireworks/qwen3-embedding-8b")},
-                         CallLog(None))
+    client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, CallLog(None))
     client.replay = False
     client._http = httpx.Client(transport=httpx.MockTransport(handler))
-    with pytest.raises(ModelError, match="factoid keys set fireworks"):
+    with pytest.raises(ModelError, match="could not connect to http://wrong.test/v1"):
         client.generate("hi")
-    with pytest.raises(ModelError, match="factoid keys set fireworks"):
-        client.embed(["hi"])
-    assert len(calls) == 1  # no retries, and the second call does not try the host again
+    assert len(calls) == 1  # no retries
 
 
 def test_check_models_names_providers_that_cannot_serve_a_workload():

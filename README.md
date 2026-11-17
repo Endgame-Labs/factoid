@@ -95,9 +95,10 @@ Keys are checked for spaces, control characters, and terminal escape codes, and 
 (Fireworks keys start with `fw_`). They are stored in `~/.factoid/.env`, or in the project's `.factoid/.env` with
 `--project`. An environment variable with the standard name, such as `FIREWORKS_API_KEY`, takes precedence.
 
-On exe.dev machines, you can skip keys: without one, Factoid calls the provider's exe.dev integration host, which
-supplies credentials. Anywhere else, a call without a key fails at once with an error that names the missing key and
-the `factoid keys set` command.
+Each provider has a base URL variable, like `FIREWORKS_BASE_URL`. Base URLs can go in the same `.env` files as keys.
+Setting one sends that provider's calls to another address, like a gateway or proxy that adds credentials itself. With a
+base URL set, a key is optional; if set, it is still sent. Calls without a key or base URL fail at once with an error
+naming the missing key and `factoid keys set`.
 
 Here is `factoid doctor` for a project made with `--models openai`, with its key set:
 
