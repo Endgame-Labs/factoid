@@ -9,3 +9,6 @@ __pycache__/
 
 # Factoid project data
 .factoid/
+
+# Model call caches written outside a project folder
+calls.db

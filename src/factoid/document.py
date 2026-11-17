@@ -460,7 +460,7 @@ class ProseDocument(Document):
             situations = app.map(lambda c: run_step(self, step, c), chunks)
             for chunk_, situation in zip(chunks, situations):
                 chunk_.situation = situation if situation is not SKIPPED else None
-        app.store.retire_document_facts(self.id)
+        app.retire_document_facts(self)
         app.store.save_document(*self.record(passages, chunks))
         app.index_chunks(self, chunks)
         batches = app.map(lambda c: run_step(self, "extract", c), chunks)

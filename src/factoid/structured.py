@@ -333,7 +333,7 @@ class StructuredDocument(Document):
                   for i in range(0, len(passages), size)]
         keyed = type(self).key is not None
         if not keyed:
-            app.store.retire_document_facts(self.id)
+            app.retire_document_facts(self)
         app.store.save_document(*self.record(passages, chunks))
         app.index_chunks(self, chunks)
         cells = []

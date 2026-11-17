@@ -117,9 +117,15 @@ class Store:
 
     # -- documents ------------------------------------------------------------------------------------------
 
-    def has_document(self, document_id: str, content_hash: str) -> bool:
-        row = self.one("select content_hash from documents where id = ?", (document_id,))
-        return row is not None and row["content_hash"] == content_hash
+    def has_document(self, document_id: str, content_hash: str, class_name: str | None = None,
+                     metadata: dict[str, Any] | None = None) -> bool:
+        """True when this document is stored with the same text (and, if given, the same class and metadata)."""
+        row = self.one("select class, metadata, content_hash from documents where id = ?", (document_id,))
+        if row is None or row["content_hash"] != content_hash:
+            return False
+        if class_name is not None and row["class"] != class_name:
+            return False
+        return metadata is None or json.loads(row["metadata"] or "{}") == json.loads(json.dumps(metadata, default=str))
 
     def save_document(self, doc: dict[str, Any], passages: list[dict[str, Any]], chunks: list[dict[str, Any]]) -> None:
         with self.tx() as db:
@@ -140,15 +146,16 @@ class Store:
                  for c in chunks],
             )
 
-    def retire_document_facts(self, document_id: str) -> int:
-        """When a document is re-ingested, its old facts are retracted."""
+    def retire_document_facts(self, document_id: str) -> dict[str, str]:
+        """When a document is re-ingested, its old facts are retracted. Returns their ids by text, so a fact that
+        comes back with the same sentence keeps its id."""
         with self.tx() as db:
-            rows = db.execute("select id from facts where document_id = ? and status != 'retracted'",
+            rows = db.execute("select id, text from facts where document_id = ? and status != 'retracted'",
                               (document_id,)).fetchall()
             for row in rows:
                 db.execute("update facts set status = 'retracted', updated_at = ? where id = ?", (_now(), row["id"]))
                 self.event(db, "fact.retracted", row["id"], reason="document re-ingested")
-            return len(rows)
+            return {row["text"]: row["id"] for row in rows}
 
     # -- facts ----------------------------------------------------------------------------------------------
 
@@ -178,7 +185,9 @@ class Store:
                 [(row["id"], m["text"], m.get("kind"), m.get("role", "about"), m.get("entity_id"), m.get("method"),
                   m.get("confidence")) for m in mentions],
             )
-            self.event(db, "fact.added", row["id"], text=row["text"], document=row["document_id"])
+            restored = row.get("restored")
+            self.event(db, "fact.restored" if restored else "fact.added", row["id"], text=row["text"],
+                       document=row["document_id"], **({"reason": restored} if restored else {}))
             for m in mentions:
                 if m.get("entity_id"):
                     self.event(db, "entity.linked", m["entity_id"], fact=row["id"], method=m.get("method"))

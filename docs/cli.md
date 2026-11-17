@@ -1,57 +1,93 @@
 # Command line
 
-One program, `factoid`. It is the CLI, the daemon, the HTTP API, and the MCP server. Every command reads
-`factoid.yml` from the current directory or its parents, and `--json` makes any command print JSON.
+Factoid is one program, `factoid`. Inside a project folder, it finds the project (the folder with `pyproject.toml` and
+the package) and runs in the project's environment, so you never type `uv run`. `factoid --version` prints the version
+and the git commit it was installed from. `README.md` has the walkthrough; `SPEC.md` section 17 says what is built.
 
-## Everyday
-
-```sh
-factoid new <dir>                    # scaffold a project
-factoid ingest <path|file.jsonl|->   # documents in; prints facts added, superseded, disputed, and rejected
-factoid sync [source]                # pull new and changed documents from sources
-factoid search "<words>" [--status current,disputed] [--subject Acme] [--since 30d] [--budget 2000]
-factoid read <fact id|doc id>        # a fact with quotes and history, or a document with its facts
-factoid history <fact id>            # every event that touched it
-factoid tell "<sentence>"            # add a fact yourself; you are the source
-factoid retract <fact id> --reason "<why>"
-factoid restore <event seq>          # undo any event
-factoid serve                        # HTTP API, MCP, and the daemon that syncs and rebuilds
-```
-
-## Inspecting the pipeline
+## Set up
 
 ```sh
-factoid explain <doc id>             # each stage's output for one document: type, passages, candidates, verdicts
-factoid try <file> [--set judge=nli] # run the pipeline on one document without writing anything
-factoid rejected [--stage judge] [--reason grounded]
-factoid prompts list | copy <name> | diff <name>
-factoid pipeline                     # the effective config, with fingerprints
+factoid init [--models jev|fireworks|openai] [--package NAME]  # create a project in the current folder
+factoid keys set [PROVIDER] [--project]                        # store API keys
+factoid keys list                                              # show provider keys and sources
+factoid models                                                 # show workloads, models, and key status
+factoid doctor                                                 # test each workload and show the search index
 ```
 
-`explain` and `try` are the most important commands for building intuition: they show exactly what each stage saw and
-decided.
+- `init` writes `settings.py`, sample classes, a sample contract, and an eval. `jev` (default) uses TypeSafe and
+  Fireworks, `fireworks` uses Fireworks alone (experimental), and `openai` uses OpenAI alone.
+- `keys set` stores a key in `~/.factoid/.env`, or in the project's `.factoid/.env` with `--project`. With no provider,
+  it asks for each key the project needs and says where to get it; Enter skips. Providers: `fireworks`, `openai`,
+  `openrouter`, `turbopuffer`, and `typesafe`.
+- `keys list` prints each provider, whether its key is set, where it comes from, what uses it, and where to get one.
+- `models` prints each workload (`choose`, `generate`, `embed`, and `rerank`), its model, and whether its key is set.
+- `doctor` runs one small call per workload and prints the search index in use.
+
+## Ingest and read
+
+```sh
+factoid ingest PATHS... [--as CLASS] [--dry-run] [--again] [--fresh]  # ingest files or folders
+factoid facts list [--document NAME] [--trait NAME] [--status STATUS] [--limit 50] [--json]  # facts, in order added
+factoid search QUERY [--about ENTITY] [--as-of DATE] [--top-k 10] [--chunks] [--json]  # search facts or source chunks
+factoid read FACT_ID                                                  # show full details for one fact
+factoid stats [--examples N] [--json]                                 # show counts and store health
+factoid entities list [--class NAME]                                  # list entities and aliases
+factoid entities kinds                                                # count untyped entity kinds
+```
+
+- `ingest` classifies each document unless `--as` names the class. `--dry-run` runs everything, writes nothing, and
+  prints the facts and the rejected candidates with reasons. A stored document with unchanged text, class, and metadata
+  is skipped; `--again` ingests it anyway. Re-ingesting a changed document retracts its old facts, and a new fact saying
+  the same thing as an old one takes the old fact's id. `--fresh` calls the models even when an identical request is
+  cached. Output ends with model calls, tokens, calls replayed from `.factoid/calls.db`, and whether any saved answers
+  came from a different version of Factoid.
+- `facts list` prints facts in the order added, with ids and traits (`--limit 0` lists all). `--status` is `current`
+  (the default), `superseded`, `ended`, `corrected`, `contradicted`, `retracted`, or `all`.
+- `search` returns facts, or source chunks with `--chunks`. The score orders results: keyword and vector ranks fused
+  with reciprocal rank fusion, times how likely the fact is still valid now or at `--as-of`. It is not a similarity;
+  values near 0.03 are normal. No reranker runs unless `settings.py` sets a `rerank` model.
+- `read` prints the sentence, traits, `valid_from`, `expires`, `valid_until`, lifetime estimate, "still valid now" and
+  how it was worked out, quotes with passages, entity mentions and how each was linked, related facts, and events, in
+  local time.
+- `stats` counts documents, facts, and entities by class; facts by status; and facts with no trait, unlinked mentions,
+  stale facts, and open contradictions. `--examples N` adds up to `N` sample facts per fact class (at most one per
+  document) and the `N` entities with the most facts per entity class.
+- `entities list` shows id, class, untyped kind, name, and other names (aliases). `entities kinds` ranks untyped kinds
+  by entity and fact count.
+- `facts list`, `search`, `read`, `stats`, and `entities list` take `--data-dir` to read another store, such as
+  `runs/<time>/<suite>/<variant>`.
 
 ## Evals
 
 ```sh
-factoid eval [suite...]                       # run the current pipeline; print a scorecard
-factoid eval --vary judge=none,nli,decision-floors # one run per value, same documents, then compare
-factoid eval --set extract.window_bytes=10000 # one-off change
-factoid eval compare <run> <run> [...]        # side by side, with significance and per-item diffs
-factoid eval show <run> --misses              # the items a run got wrong, to read by eye
-factoid eval label <suite>                    # label rejected and accepted candidates in the terminal
+factoid eval [SUITE...] [--vary SETTING=A,B] [--limit N] [--fresh] [--quiet]  # run eval suites and write scorecards
 ```
 
-See [evals.md](evals.md).
+- Runs each suite in `evals/` on a fresh store per variant and prints a scorecard. Scorecards, stores, and
+  `rejected.jsonl` (every rejected fact, its scores, and repair attempts) go in `runs/<local time>/`.
+- `--vary` runs each value of a setting on the same documents, such as `fact_evals=none,nli,decision_floors` or
+  `models=@evals.variants:NAME` for a value defined in Python.
+- Cached calls replay by default, so a rerun costs nothing, is repeatable, and measures a code change alone. `--fresh`
+  calls the models again and shows how much results vary between draws.
 
-## Keeping current
+## Inspect
 
 ```sh
-factoid status                        # documents, facts by status, stale facts, queue, spend today
-factoid rebuild --estimate            # what re-deriving stale facts would cost
-factoid rebuild [--stage judge]       # re-derive; replays archived model calls where it can
-factoid reindex [index]               # rebuild a search index from the log
-factoid compact                       # snapshot the log; required for hard deletes
+factoid steps show CLASS                                     # show steps for a document or fact class
+factoid classifiers show                                     # show the document classifier registry
+factoid prompts show TARGET                                  # print a prompt or question as sent
+factoid struct inspect FILE [--json]                         # inspect columns and suggest a parser
+factoid struct parser FILE [--name] [--prompt] [--out FILE]  # generate a parser class or agent prompt
+factoid struct try FILE [--rows 20] [--as CLASS]             # dry-run a parser on initial rows
 ```
 
-Every command ends with one line that says it is done, done with warnings, or failed, and the one thing to do next.
+- `steps show` lists the steps a document or fact class runs and where each comes from.
+- `struct inspect` prints columns, types, sample values, guessed roles, a starting parser class, and which class
+  matches.
+- `struct parser` has a model write the parser class, or prints the prompt for your own coding agent with `--prompt`.
+- `struct try` dry-runs a parser on the first rows, writes nothing, and calls no model.
+
+## Planned
+
+Planned and not built: `setup` (a guided terminal UI), `serve` (HTTP API and daemon), `mcp`, `rebuild`, and
+`contradictions`.

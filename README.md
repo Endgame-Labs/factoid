@@ -115,23 +115,35 @@ project can compute them. `factoid models` shows each workload, its model, and w
 
 ### Use
 
-`factoid init` wrote sample classes, a sample contract, and an eval.
+`factoid init` wrote sample classes, a sample contract, and an eval. Run these commands to ingest the sample contract,
+inspect what came out, and score the project:
 
 ```sh
 factoid ingest ./sample_docs                     # documents in, facts and entities out
+factoid facts list                               # every fact, with its id
 factoid search "Vega consent"
-factoid read fact_01j9x8k2m                      # one fact, its quotes, its entities, and its history
+factoid read <fact id>                           # one fact, its quotes, its entities, and its history
 factoid entities list
-factoid eval                                     # score the run against labeled data
+factoid eval                                     # score the project against labeled data
 factoid eval --vary fact_evals=none,nli,decision_floors  # compare fact eval chains on the same documents
 ```
 
-The sample contract has three facts, and the sample eval expects the `consent_required` and `liability_cap` traits.
+The sample contract has three facts, and the sample eval expects the `consent_required` and `liability_cap` traits. Get
+`<fact id>` from `factoid facts list` or `factoid search`. Pass `--data-dir runs/<time>/<suite>/<variant>` to
+`facts list`, `search`, `read`, `stats`, or `entities list` to read an eval run's store.
+
+Ingesting a file that has not changed skips it. Pass `--again` to ingest it anyway. When a changed file is ingested
+again, facts that say the same thing keep their ids.
+
+Model calls are cached in `.factoid/calls.db`. A request identical to one made before replays the saved answer, costs
+nothing, and gives the same result. Both `ingest` and `eval` print how many calls were replayed. Right after `ingest`,
+`eval` replays almost everything, so its first score is a rescoring of saved answers. Pass `--fresh` on either command
+to call the models again.
 
 ### Commands
 
-Built today: `init`, `keys set`, `keys list`, `models`, `doctor`, `ingest`, `search`, `read`, `stats`,
-`entities list`, `entities kinds`, `eval`, `steps show`, `classifiers show`, `prompts show`, and `struct`.
+Built today: `init`, `keys set`, `keys list`, `models`, `doctor`, `ingest`, `facts list`, `search`, `read`,
+`stats`, `entities list`, `entities kinds`, `eval`, `steps show`, `classifiers show`, `prompts show`, and `struct`.
 
 The rest of this README also describes commands that are planned and not built yet: `serve`, `mcp`, `rebuild`, and
 `contradictions`. Each is marked "(planned)" where it appears. A guided terminal UI, `factoid setup`, is planned too.

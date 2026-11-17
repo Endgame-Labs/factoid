@@ -1094,6 +1094,26 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     noul, choice, and score questions; `gpt-6-luna` generates with `max_completion_tokens`; and
     `text-embedding-3-small` returns 1,536 dimensions. `doctor` passes on both one-provider presets, and the sample
     eval scores 1.0 with `--models openai`.
+- **From a first-run walkthrough (2026-11-17, version 0.1.1).** A new user ran the Quickstart twice, before and after
+  the first-install fixes. What changed from it:
+  - Re-ingesting an unchanged document (same text, class, and metadata) skips it; `--again` ingests it anyway. Before,
+    every fact was retracted and re-added under a new id.
+  - Re-ingesting a changed document still retracts its facts, and a new fact that says the same thing takes the old
+    id (event `fact.restored`): the same sentence, or the same traits, a shared quote, and embeddings at least 0.85
+    alike (`Factoid.reuse_similarity`). Extraction rewords a sentence from run to run, so the same-sentence rule alone
+    kept 2 of 6 ids on the sample after an edit; with embeddings it kept all 6. This is what `docs/documents.md`
+    already promised; resolve against the old revision is still the longer-term plan.
+  - `ingest` and `eval` say in words how many calls were replayed from `.factoid/calls.db`, and that `--fresh` calls
+    the models again. `ingest` has `--fresh` too. The cache records which Factoid (version and commit) saved each
+    answer, and the output says when replayed answers came from a different one.
+  - `factoid --version` prints the commit (`0.1.1 (commit cb9aeb5)`), from the install record or the checkout.
+  - New `factoid facts list` (by document, trait, and status). `facts list`, `search`, `read`, and `entities list`
+    take `--data-dir`, so an eval run's store can be read.
+  - `read` says how "still valid now" was worked out and prints event times in local time; `entities list` shows
+    aliases; `search` says its score is a fused rank times validity; `stats --examples` says it picks one fact per
+    document. Eval run folders are named in local time.
+  - `docs/cli.md` describes the built commands, and the Quickstart says where fact ids come from and how the cache
+    works.
 - **Not built yet:** sources (`imap`, `mcp`), MCP and
   HTTP serving, `factoid setup`, fact-class trust and visibility, entity `merge`, `split`, and `retype` commands,
   fingerprint-driven `rebuild`, and decision models other than Jev.
@@ -1342,3 +1362,7 @@ All dates are 2026-11-13 unless noted.
     Floors and targets can be set per decision model (`MODEL_FLOORS`, `MODEL_TARGETS`), and a project's own floors
     win. Rune has its own floors, and the attribution question is reworded so that a fact needs no speaker when its
     passage has none. The `fireworks` preset stays experimental until the legal suites pass on Rune. (2026-11-17)
+82. Ingest skips a document that is stored with the same text, class, and metadata (`--again` overrides), and a
+    re-ingested document's facts keep their ids when a new fact says the same thing. Replayed model calls are named
+    as replays in the output, with `--fresh` beside them, and the cache records which Factoid saved each answer.
+    (2026-11-17)

@@ -53,6 +53,7 @@ class IngestResult:
     facts: list[Fact]
     rejected: list[Rejected]
     duplicates: int = 0
+    unchanged: bool = False  # the document was stored already with the same text, class, and metadata; skipped
 
 
 @dataclass
@@ -109,6 +110,7 @@ class Factoid:
         self._name_checks: dict[str, bool] = {}
         self.rejected: list[Rejected] = []
         self._duplicates: Counter[str] = Counter()
+        self._previous_ids: dict[str, dict[str, str]] = {}  # by document: retracted fact ids by text, for reuse
         self._pool = ThreadPoolExecutor(max_workers=max(1, settings.concurrency))
         use(self)
 
@@ -164,8 +166,10 @@ class Factoid:
         return classify_raw(raw, classes, self.client.ask)
 
     def ingest(self, item: Document | Raw | str | Path, *, document_type: type[Document] | None = None,
-               metadata: dict[str, Any] | None = None) -> IngestResult:
-        """Ingest a document instance, a raw document, or a file path."""
+               metadata: dict[str, Any] | None = None, again: bool = False) -> IngestResult:
+        """Ingest a document instance, a raw document, or a file path.
+
+        A document stored already with the same text, class, and metadata is skipped, unless `again` is true."""
         if isinstance(item, (str, Path)) and Path(item).exists():
             path = Path(item)
             meta = dict(metadata or {})
@@ -185,6 +189,12 @@ class Factoid:
             item = klass(item.text, metadata=item.metadata, uri=item.uri, title=item.title)
         if not isinstance(item, Document):
             raise TypeError(f"cannot ingest {item!r}")
+        if not again and self.store.has_document(item.id, item.content_hash, type(item).__qualname__,
+                                                 item.metadata):
+            current = self.store.query("select id from facts where document_id = ? and status = 'current'",
+                                       (item.id,))
+            facts = [f for f in (self.load_fact(r["id"]) for r in current) if f is not None]
+            return IngestResult(item, facts, [], 0, unchanged=True)
         # Documents can ingest in parallel threads, so rejects and duplicates are kept by document.
         before = len(self.rejected)
         self._duplicates.pop(item.id, None)
@@ -232,6 +242,7 @@ class Factoid:
         passed = [f for group in evaluated for f in group]
         self.map(lambda f: run_step(f, "assess"), passed)
         saved = []
+        self._reuse_ids(document, passed)
         for fact in passed:
             run_step(fact, "link")
             if self._resolve(fact):
@@ -467,10 +478,62 @@ class Factoid:
             "source_datetime": _fmt(fact.source_datetime), "extracted_at": _fmt(fact.extracted_at),
             "scores": fact.scores, "fingerprint": self.fingerprint(fact),
         }
+        if getattr(fact, "restored", False):
+            row["restored"] = "document re-ingested; the same fact"
         quotes = [vars(q) for q in fact.quotes]
         mentions = [{k: v for k, v in vars(m).items() if k != "keys"} for m in fact.mentions]
         self.store.save_fact(row, quotes, mentions)
         self._index_fact(fact)
+
+    #: How alike (cosine) a re-extracted fact and a retracted one must be for the new one to take the old id.
+    reuse_similarity = 0.85  # same facts reworded scored 0.87 to 0.92 with qwen3-embedding-8b; others below 0.7
+
+    def _reuse_ids(self, document: Document, facts: list[Fact]) -> None:
+        """When a document is re-ingested, a fact that says what one of its retracted facts said takes the old id,
+        so ids saved elsewhere keep working. Same sentence, or the same traits, a shared quote, and a close embedding.
+        Extraction rewords sentences from run to run, so matching on the sentence alone keeps few ids."""
+        previous = self._previous_ids.pop(document.id, {})
+        if not previous or not facts:
+            return
+        old = {row["id"]: row for row in self.store.query(
+            f"select id, text, traits from facts where id in ({','.join('?' * len(previous))})",
+            list(previous.values()))}
+        quotes: dict[str, set[str]] = {}
+        for row in self.store.query(f"select fact_id, text from quotes where fact_id in "
+                                    f"({','.join('?' * len(old))})", list(old)):
+            quotes.setdefault(row["fact_id"], set()).add(row["text"])
+        free = dict(old)
+        for fact in facts:
+            if fact.text in previous and previous[fact.text] in free:
+                fact.id, fact.restored = previous[fact.text], True
+                free.pop(fact.id)
+        rest = [f for f in facts if not getattr(f, "restored", False) and getattr(f, "vector", None)]
+        if not free or not rest:
+            return
+        ids = list(free)
+        vectors = dict(zip(ids, self.client.embed([free[i]["text"] for i in ids])))
+        pairs = []
+        for fact in rest:
+            mine = {q.text for q in fact.quotes}
+            for old_id in ids:
+                if sorted(json.loads(free[old_id]["traits"] or "[]")) != sorted(fact.trait_names):
+                    continue
+                if not mine & quotes.get(old_id, set()):
+                    continue
+                score = _cosine(fact.vector, vectors[old_id])
+                if score >= self.reuse_similarity:
+                    pairs.append((score, id(fact), fact, old_id))
+        taken: set[int] = set()
+        for _, key, fact, old_id in sorted(pairs, key=lambda p: -p[0]):
+            if key in taken or old_id not in free:
+                continue
+            fact.id, fact.restored = old_id, True
+            free.pop(old_id)
+            taken.add(key)
+
+    def retire_document_facts(self, document: Document) -> None:
+        """Retract a re-ingested document's facts, and remember their ids so unchanged sentences keep them."""
+        self._previous_ids[document.id] = self.store.retire_document_facts(document.id)
 
     def _index_fact(self, fact: Fact) -> None:
         vector = getattr(fact, "vector", None) or self.client.embed([fact.text])[0]
@@ -860,4 +923,7 @@ def _durable(fact: Fact) -> bool:
     return False
 
 
-
+def _cosine(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    norm = (sum(x * x for x in a) ** 0.5) * (sum(y * y for y in b) ** 0.5)
+    return dot / norm if norm else 0.0

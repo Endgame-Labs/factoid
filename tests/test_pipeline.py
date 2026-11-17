@@ -542,3 +542,24 @@ def test_decision_floors_use_a_decision_models_own_floors_unless_the_project_set
         floors = {**DEFAULT_FLOORS, "atomic": 0.4}
 
     assert Strict().floors_for("fireworks/rune")[0]["atomic"] == 0.4
+
+
+def test_reingesting_skips_an_unchanged_document_and_keeps_unchanged_fact_ids(make_app, fake):
+    app = build(make_app, fake)
+    meta = {"signed_at": "2025-03-01T00:00:00Z"}
+    text = ("Vega's liability to Orion is capped at $1M under the supply agreement.\n\n"
+            "Orion may not assign the supply agreement to anyone without Vega's written consent.")
+    first = app.ingest_text(text, document_type=Contract, metadata=meta, uri="supply.txt")
+    ids = {f.text: f.id for f in first.facts}
+
+    again = app.ingest_text(text, document_type=Contract, metadata=meta, uri="supply.txt")
+    assert again.unchanged and {f.id for f in again.facts} == set(ids.values())
+
+    edited = app.ingest_text(text + "\n\nVega will deliver monthly to Orion.", document_type=Contract,
+                             metadata=meta, uri="supply.txt")
+    assert not edited.unchanged and len(edited.facts) == 3
+    for fact in edited.facts:
+        if fact.text in ids:
+            assert fact.id == ids[fact.text] and Fact.get(fact.id).status == "current"
+    events = [r["type"] for r in app.store.events_for(ids[first.facts[0].text])]
+    assert events[-1] == "fact.restored"

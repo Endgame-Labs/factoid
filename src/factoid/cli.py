@@ -10,7 +10,7 @@ import os
 import re
 import shutil
 import sys
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -96,8 +96,57 @@ def _echo_json(value: Any) -> None:
     click.echo(json.dumps(value, indent=2, default=str))
 
 
+def _echo_calls(total: dict[str, float], cache: Path | None) -> None:
+    """The model call line, which says plainly when answers came from the cache instead of the models."""
+    calls, replayed, older = int(total["calls"]), int(total["cache_hits"]), int(total.get("older_hits", 0))
+    click.echo(f"model calls: {calls}, {int(total['input_tokens']):,} input tokens, "
+               f"{int(total['output_tokens']):,} output tokens")
+    if replayed:
+        where = f" from {_rel(cache)}" if cache else ""
+        click.echo(f"  {replayed} of the {calls} calls were replayed{where}: identical requests reuse saved answers "
+                   f"and cost nothing.")
+        if older:
+            click.echo(f"  {older} of those answers were saved by a different version of Factoid.")
+        click.echo("  --fresh calls the models again.")
+
+
+def _rel(path: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(Path.cwd().resolve()))
+    except ValueError:
+        return str(path)
+
+
+def _local(stamp: str | None) -> str:
+    """A stored UTC time shown in the local time zone, with its offset."""
+    if not stamp:
+        return str(stamp)
+    try:
+        moment = datetime.fromisoformat(stamp)
+    except ValueError:
+        return stamp
+    if moment.tzinfo is None:
+        return stamp
+    return moment.astimezone().isoformat(timespec="seconds")
+
+
+def _data_dir_option(func: Any) -> Any:
+    return click.option("--data-dir", type=click.Path(exists=True, file_okay=False, path_type=Path),
+                        help="Another store, such as an eval run's folder (runs/<time>/<suite>/<variant>).")(func)
+
+
+def _app_for(data_dir: Path | None) -> Any:
+    return _project(**({"data_dir": data_dir} if data_dir else {}))[1]
+
+
+def _version_message() -> str:
+    from .version import describe
+
+    return f"factoid {describe()}"
+
+
 @click.group()
-@click.version_option(package_name="factoid")
+@click.version_option(message=_version_message())
 def cli() -> None:
     """Factoid turns documents into facts and entities."""
 
@@ -135,9 +184,11 @@ def init(package: str | None, preset: str) -> None:
 @click.argument("paths", nargs=-1, required=True, type=click.Path(exists=True, path_type=Path))
 @click.option("--as", "as_class", help="Document class to use, instead of classifying.")
 @click.option("--dry-run", is_flag=True, help="Run the whole pipeline and write nothing.")
-def ingest(paths: tuple[Path, ...], as_class: str | None, dry_run: bool) -> None:
-    """Ingest documents: files or folders."""
-    project, app = _project(in_memory=dry_run)
+@click.option("--again", is_flag=True, help="Ingest documents that are stored already and have not changed.")
+@click.option("--fresh", is_flag=True, help="Call the models even for requests whose answers are cached.")
+def ingest(paths: tuple[Path, ...], as_class: str | None, dry_run: bool, again: bool, fresh: bool) -> None:
+    """Ingest documents: files or folders. A document that is stored already and has not changed is skipped."""
+    project, app = _project(in_memory=dry_run, **({"replay": False} if fresh else {}))
     if dry_run:
         app.calls = type(app.calls)(project.settings.data_path(project.root) / "calls.db")
         app.client.log = app.calls
@@ -145,7 +196,11 @@ def ingest(paths: tuple[Path, ...], as_class: str | None, dry_run: bool) -> None
     files = [p for path in paths for p in (sorted(path.rglob("*")) if path.is_dir() else [path])
              if p.is_file() and not p.name.endswith(".meta.json") and not p.name.startswith(".")]
     for path in files:
-        result = app.ingest(path, document_type=klass)
+        result = app.ingest(path, document_type=klass, again=again)
+        if result.unchanged:
+            click.echo(f"{path}: unchanged since it was ingested, so skipped ({len(result.facts)} current facts; "
+                       f"--again ingests it anyway)")
+            continue
         click.echo(f"{path}: {type(result.document).__name__}, {len(result.facts)} facts, "
                    f"{len(result.rejected)} rejected, {result.duplicates} duplicates")
         if dry_run:
@@ -154,9 +209,7 @@ def ingest(paths: tuple[Path, ...], as_class: str | None, dry_run: bool) -> None
                 click.echo(f"  + {fact.text}{traits}")
             for rejected in result.rejected:
                 click.echo(f"  - {rejected.text}  ({', '.join(rejected.reasons)})")
-    total = app.meter.total()
-    click.echo(f"model calls: {int(total['calls'])} ({int(total['cache_hits'])} replayed), "
-               f"{int(total['input_tokens'])} input tokens, {int(total['output_tokens'])} output tokens")
+    _echo_calls(app.meter.total(), getattr(app.calls, "path", None))
     app.close()
 
 
@@ -167,11 +220,14 @@ def ingest(paths: tuple[Path, ...], as_class: str | None, dry_run: bool) -> None
 @click.option("--top-k", default=10, show_default=True)
 @click.option("--chunks", is_flag=True, help="Search source chunks instead of facts.")
 @click.option("--json", "as_json", is_flag=True)
-def search(query: str, about: str | None, as_of: str | None, top_k: int, chunks: bool, as_json: bool) -> None:
-    """Search facts (or chunks)."""
+@_data_dir_option
+def search(query: str, about: str | None, as_of: str | None, top_k: int, chunks: bool, as_json: bool,
+           data_dir: Path | None) -> None:
+    """Search facts (or chunks). The score ranks results: keyword and vector ranks fused (reciprocal rank fusion),
+    times how likely the fact is still valid. It is not a similarity, and values near 0.03 are normal."""
     from .entity import Entity
 
-    _, app = _project()
+    app = _app_for(data_dir)
     entity = None
     if about:
         entity = Entity.find(about)
@@ -193,13 +249,16 @@ def search(query: str, about: str | None, as_of: str | None, top_k: int, chunks:
         click.echo(f"{hit.score:.4f}  {hit.fact.id}  {hit.fact.text}{traits}")
         for other in hit.contradictions:
             click.echo(f"         contradicted by {other.id}: {other.text}")
+    if hits:
+        click.echo("(score: fused keyword and vector rank, times validity; it orders results and is not a similarity)")
 
 
 @cli.command()
 @click.argument("fact_id")
-def read(fact_id: str) -> None:
-    """One fact, its quotes, its entities, and its history."""
-    _, app = _project()
+@_data_dir_option
+def read(fact_id: str, data_dir: Path | None) -> None:
+    """One fact, its quotes, its entities, and its history. Fact ids come from `search` and `facts list`."""
+    app = _app_for(data_dir)
     fact = app.load_fact(fact_id)
     if fact is None:
         raise click.ClickException(f"no fact {fact_id}")
@@ -209,7 +268,7 @@ def read(fact_id: str) -> None:
     click.echo(f"  valid_from: {fact.valid_from}  expires: {fact.expires}  valid_until: {fact.valid_until}")
     if fact.lifetime:
         click.echo(f"  lifetime: {fact.lifetime}")
-    click.echo(f"  still valid now: {fact.valid_at():.2f}")
+    click.echo(f"  still valid now: {fact.valid_at():.2f}  ({_validity_note(fact)})")
     for q in fact.quotes:
         click.echo(f"  quote [{q.document_id} #{q.passage_n}]: {q.text[:300]}")
     for m in fact.mentions:
@@ -217,12 +276,31 @@ def read(fact_id: str) -> None:
     for row in app.store.relations(fact.id):
         click.echo(f"  relation: {row['fact_id']} {row['relation']} {row['other_id']}")
     for row in app.store.events_for(fact.id):
-        click.echo(f"  event {row['seq']}: {row['at']} {row['type']} {row['data']}")
+        click.echo(f"  event {row['seq']}: {_local(row['at'])} {row['type']} {row['data']}")
+
+
+def _validity_note(fact: Any) -> str:
+    """How `still valid now` was worked out, in a few words."""
+    if fact.status in ("corrected", "retracted"):
+        return f"the fact is {fact.status}"
+    if fact.status in ("superseded", "ended"):
+        return "it held until valid_until" if fact.valid_until else f"the fact is {fact.status}"
+    if fact.expires in (None, "never"):
+        return "it does not expire"
+    if fact.expires == "at_deadline":
+        return "it holds until valid_until"
+    if not fact.lifetime:
+        return "no lifetime estimate, so it is taken as still true"
+    total = sum(fact.lifetime.values()) or 1.0
+    spread = ", ".join(f"{name} {weight / total:.0%}" for name, weight in fact.lifetime.items())
+    return f"the chance it still holds: it decays from valid_from by its estimated lifetime ({spread})"
 
 
 @cli.command()
 @click.option("--json", "as_json", is_flag=True)
-@click.option("--examples", default=0, show_default=True, help="Sample facts and top entities per class.")
+@click.option("--examples", default=0, show_default=True,
+              help="Up to N sample facts per fact class, at most one per document, and the N entities with the most "
+                   "facts per entity class.")
 @click.option("--data-dir", type=click.Path(exists=True, file_okay=False, path_type=Path),
               help="Another store, such as an eval run's folder (runs/<time>/<suite>/<variant>).")
 def stats(as_json: bool, examples: int, data_dir: Path | None) -> None:
@@ -253,15 +331,65 @@ def entities() -> None:
 
 @entities.command("list")
 @click.option("--class", "class_name")
-def entities_list(class_name: str | None) -> None:
-    _, app = _project()
-    sql = "select id, class, kind, name from entities where merged_into is null"
+@_data_dir_option
+def entities_list(class_name: str | None, data_dir: Path | None) -> None:
+    """Entities by name, with their class, untyped kind, and other names."""
+    app = _app_for(data_dir)
+    sql = "select id, class, kind, name, aliases from entities where merged_into is null"
     params: list[Any] = []
     if class_name:
         sql += " and class = ?"
         params.append(class_name)
     for row in app.store.query(sql + " order by name", params):
-        click.echo(f"{row['id']}  {row['class']:<12} {row['kind'] or '':<14} {row['name']}")
+        aliases = json.loads(row["aliases"] or "[]")
+        also = f"  (also: {'; '.join(aliases)})" if aliases else ""
+        click.echo(f"{row['id']}  {row['class']:<12} {row['kind'] or '':<14} {row['name']}{also}")
+
+
+@cli.group()
+def facts() -> None:
+    """Facts: list them."""
+
+
+@facts.command("list")
+@click.option("--document", help="Only facts from this document (its id, title, or file name).")
+@click.option("--trait", help="Only facts with this trait (its name, such as liability_cap).")
+@click.option("--status", default="current", show_default=True,
+              help="current, superseded, ended, corrected, contradicted, retracted, or all.")
+@click.option("--limit", default=50, show_default=True, help="0 lists every fact.")
+@click.option("--json", "as_json", is_flag=True)
+@_data_dir_option
+def facts_list(document: str | None, trait: str | None, status: str, limit: int, as_json: bool,
+               data_dir: Path | None) -> None:
+    """Facts in the order they were added, with their ids, traits, and documents."""
+    app = _app_for(data_dir)
+    sql = ("select f.id, f.text, f.status, f.traits, d.title, d.uri from facts f "
+           "left join documents d on d.id = f.document_id where 1 = 1")
+    params: list[Any] = []
+    if status != "all":
+        sql += " and f.status = ?"
+        params.append(status)
+    if document:
+        sql += " and (d.id = ? or d.title = ? or d.uri = ? or d.uri like ?)"
+        params += [document, document, document, f"%/{document}"]
+    if trait:
+        sql += " and exists (select 1 from json_each(f.traits) t where t.value = ?)"
+        params.append(trait)
+    sql += " order by f.created_at, f.rowid"
+    if limit:
+        sql += f" limit {int(limit)}"
+    rows = app.store.query(sql, params)
+    if as_json:
+        return _echo_json([{"id": r["id"], "text": r["text"], "status": r["status"],
+                            "traits": json.loads(r["traits"] or "[]"), "document": r["title"] or r["uri"]}
+                           for r in rows])
+    for row in rows:
+        traits = json.loads(row["traits"] or "[]")
+        tag = f" [{', '.join(traits)}]" if traits else ""
+        state = "" if status == "current" else f" ({row['status']})"
+        click.echo(f"{row['id']}  {row['text']}{tag}{state}")
+    if not rows:
+        click.echo("no facts match")
 
 
 @entities.command("kinds")
@@ -723,7 +851,7 @@ def eval_(suites: tuple[str, ...], vary: tuple[str, ...], limit: int | None, fre
     unknown = [s for s in chosen if s not in found]
     if unknown:
         raise click.ClickException(f"unknown suites {unknown}; known: {sorted(found)}")
-    stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")  # local time, so a run's folder sorts and reads as its day
     run_dir = project.root / "runs" / stamp
     results = []
     for name in chosen:
@@ -739,8 +867,15 @@ def eval_(suites: tuple[str, ...], vary: tuple[str, ...], limit: int | None, fre
                    f"{result.rejected} rejected, {int(total['calls'])} calls ({int(total['cache_hits'])} replayed), "
                    f"{int(total['input_tokens'] + total['output_tokens'])} tokens, "
                    f"p50 {result.latency.get('p50_doc_s', 0)}s/doc")
+        older = int(total.get("older_hits", 0))
+        if older:
+            click.echo(f"    ({older} replayed answers were saved by a different version of Factoid)")
         for key, value in _flatten(result.metrics).items():
             click.echo(f"    {key:<44} {value}")
+    replayed = sum(int(r.usage["total"]["cache_hits"]) for r in results)
+    if replayed and not fresh:
+        click.echo(f"\n{replayed} calls were replayed from .factoid/calls.db: identical requests reuse saved answers, "
+                   f"which makes a rerun free and repeatable. --fresh calls the models again.")
     click.echo(f"\nscorecards: {run_dir}")
 
 
