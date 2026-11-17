@@ -226,6 +226,31 @@ def test_an_unreachable_integration_host_says_to_set_a_key(monkeypatch, tmp_path
         client.generate("hi")
 
 
+def test_a_connect_error_from_a_host_that_has_answered_is_retried(monkeypatch, tmp_path):
+    import httpx
+
+    from factoid import models
+    from factoid.models import CallLog, Model, ModelClient
+
+    monkeypatch.setenv("FACTOID_HOME", str(tmp_path))
+    monkeypatch.delenv("FIREWORKS_API_KEY", raising=False)
+    monkeypatch.delenv("FIREWORKS_BASE_URL", raising=False)
+    monkeypatch.setattr(models.time, "sleep", lambda s: None)
+    client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, CallLog(None), replay=False)
+    client._reachable.add("fireworks")
+    calls = []
+
+    def post(url, **kwargs):
+        calls.append(url)
+        if len(calls) == 1:
+            raise httpx.ConnectError("blip")
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}]}, request=httpx.Request("POST", url))
+
+    monkeypatch.setattr(client._http, "post", post)
+    assert client.generate("hi") == "ok"
+    assert len(calls) == 2
+
+
 def test_models_works_outside_a_project(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("FACTOID_HOME", str(tmp_path))

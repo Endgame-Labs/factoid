@@ -1076,7 +1076,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     non-space character. The sample contract's liability cap was never extracted, so the sample eval failed.
   - An exe.dev integration host off exe.dev resolves to an address that never answers, so the connection timed out
     instead of failing, and each call was retried 12 times at 180 seconds. A connect timeout now counts as an
-    unreachable host, the connect timeout is 10 seconds, and later calls to that host fail at once.
+    unreachable host, the connect timeout is 10 seconds, and later calls to that host fail at once. Only a host that
+    has not answered yet counts: a connect error from one that has answered is a blip and is retried. Before that
+    fix, one blip 50 minutes into a legal eval on exe.dev stopped the run with "no FIREWORKS_API_KEY is set".
   - `factoid init` writes a `[tool.uv.sources]` entry for the GitHub repository, so `uv sync` and `uv run` work in a
     new project.
   - `factoid keys set` with no provider asks for each key the project's models need and links to the page that

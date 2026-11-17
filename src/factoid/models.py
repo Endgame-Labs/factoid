@@ -325,6 +325,7 @@ class ModelClient:
         # A short connect timeout: an exe.dev integration host off exe.dev, or a dead host, fails in seconds.
         self._http = httpx.Client(timeout=httpx.Timeout(timeout, connect=10.0))
         self._unreachable: set[str] = set()  # integration hosts that did not answer, so later calls fail at once
+        self._reachable: set[str] = set()  # providers that have answered, whose connect errors are retried
 
     # -- plumbing ---------------------------------------------------------------------------------------------
 
@@ -359,8 +360,10 @@ class ModelClient:
             try:
                 response = self._http.post(url, headers=provider.headers(), json=body)
             except httpx.TransportError as err:
-                # Off exe.dev, an integration host either refuses the connection or never answers it.
-                if provider.uses_integration() and isinstance(err, (httpx.ConnectError, httpx.ConnectTimeout)):
+                # Off exe.dev, an integration host either refuses the connection or never answers it. A host that
+                # has answered before is reachable, so its connect errors are transient and are retried.
+                if (provider.uses_integration() and provider.name not in self._reachable
+                        and isinstance(err, (httpx.ConnectError, httpx.ConnectTimeout))):
                     self._unreachable.add(provider.name)
                     raise ModelError(f"{model.name}: {provider.missing_key()}") from err
                 if attempt == attempts - 1:
@@ -372,6 +375,7 @@ class ModelClient:
                 continue
             break
         assert response is not None
+        self._reachable.add(provider.name)
         if response.status_code >= 400:
             hint = ""
             if provider.uses_integration() and response.status_code in (401, 403, 404):
