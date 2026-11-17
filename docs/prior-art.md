@@ -9,7 +9,7 @@ Surveyed on November 13, 2026.
 | --- | --- | --- | --- | --- |
 | Fact | sentence | sentence, plus claim facts for fields | triple plus prose | atomic claim plus quote, or a typed slot row |
 | Quotes | model cites passage ids, code attaches | same | model writes, fuzzy-matched at 0.7 | exact-quote gate, never repaired |
-| Acceptance | six JEV floors, one rewording repair | same (lifted) | none: quote found and speaker resolved | quote gate only |
+| Acceptance | six decision-model floors, one rewording repair | same (lifted) | none: quote found and speaker resolved | quote gate only |
 | Dedup across sources | none | none | offline batch, cosine ≥ 0.96, with merge guards | content hash |
 | Supersede and retract | none | tombstone lines in the log | `superseded_by`, resurrection | lifecycle state, `superseded_by` |
 | Search | BM25 in SQL, LLM thesaurus, JEV rerank | lexical prefix match | turbopuffer hybrid with RRF | pgvector, turbopuffer |

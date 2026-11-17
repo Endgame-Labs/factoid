@@ -1,6 +1,6 @@
 """Fact eval variants for `--vary fact_evals=@evals.variants:NAME`: wordings of the self-contained question."""
 
-from factoid import JevFloors, Nli, Noul
+from factoid import DecisionFloors, Nli, Noul
 
 OLD = Noul(
     "Can a reader understand the fact on its own? It must name its subject and the people, companies, and "
@@ -19,10 +19,10 @@ MID = Noul(
     false="The fact needs context it does not give.",
 )
 
-OLD_40 = [Nli(), JevFloors(questions={"self_contained": OLD}, self_contained=0.4)]
-MID_40 = [Nli(), JevFloors(questions={"self_contained": MID}, self_contained=0.4)]
-MID_50 = [Nli(), JevFloors(questions={"self_contained": MID}, self_contained=0.5)]
-STRICT_40 = [Nli(), JevFloors(self_contained=0.4)]
+OLD_40 = [Nli(), DecisionFloors(questions={"self_contained": OLD}, self_contained=0.4)]
+MID_40 = [Nli(), DecisionFloors(questions={"self_contained": MID}, self_contained=0.4)]
+MID_50 = [Nli(), DecisionFloors(questions={"self_contained": MID}, self_contained=0.5)]
+STRICT_40 = [Nli(), DecisionFloors(self_contained=0.4)]
 
 STRICT = Noul(
     "Can a reader who has not seen the source understand the fact on its own? The fact must name or describe, well "
@@ -34,12 +34,19 @@ STRICT = Noul(
     false="Some reference is left unresolved.",
 )
 # The mid question rejects; the strict one only asks for a repair, and the fact keeps its wording if the repair misses.
-MID_40_EXPLICIT_50 = [Nli(), JevFloors(questions={"self_contained": MID, "explicit": STRICT}, self_contained=0.4,
+MID_40_EXPLICIT_50 = [Nli(), DecisionFloors(questions={"self_contained": MID, "explicit": STRICT}, self_contained=0.4,
                                        explicit=0.0, targets={"explicit": 0.5})]
-STRICT_10_T50 = [Nli(), JevFloors(self_contained=0.1, targets={"self_contained": 0.5})]
+STRICT_10_T50 = [Nli(), DecisionFloors(self_contained=0.1, targets={"self_contained": 0.5})]
 
 from factoid import Model  # noqa: E402
 
 from iscrag.settings import Project  # noqa: E402
 
 REPAIR_MEDIUM = {**Project.models, "repair": Model("fireworks/glm-5p3-flash", reasoning_effort="medium")}
+
+
+# Decision models for `--vary models=@evals.variants:RUNE`: the project's models with Rune for `choose`.
+from factoid import Model  # noqa: E402
+from iscrag.settings import Project  # noqa: E402
+
+RUNE = {**Project.models, "choose": Model("fireworks/rune")}

@@ -35,7 +35,7 @@ decided.
 
 ```sh
 factoid eval [suite...]                       # run the current pipeline; print a scorecard
-factoid eval --vary judge=none,nli,jev-floors # one run per value, same documents, then compare
+factoid eval --vary judge=none,nli,decision-floors # one run per value, same documents, then compare
 factoid eval --set extract.window_bytes=10000 # one-off change
 factoid eval compare <run> <run> [...]        # side by side, with significance and per-item diffs
 factoid eval show <run> --misses              # the items a run got wrong, to read by eye

@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from .fact_evals import JevFloors, Nli
+from .fact_evals import DecisionFloors, Nli
 
 if TYPE_CHECKING:
     from .app import Factoid, IngestResult
@@ -78,8 +78,8 @@ class RunResult:
 FACT_EVAL_CHAINS: dict[str, Any] = {
     "none": [],
     "nli": [Nli()],
-    "jev_floors": [JevFloors()],
-    "default": [Nli(), JevFloors()],
+    "decision_floors": [DecisionFloors()],
+    "default": [Nli(), DecisionFloors()],
 }
 
 
@@ -128,18 +128,18 @@ def _split_values(values: str) -> list[str]:
 
 
 def fact_eval_chain(raw: str) -> list[Any]:
-    """`none`, `nli`, `jev_floors`, `default`, `jev_floors(atomic=0.3;grounded=0.4)`, or `@module:name`."""
+    """`none`, `nli`, `decision_floors`, `default`, `decision_floors(atomic=0.3;grounded=0.4)`, or `@module:name`."""
     if raw.startswith("@"):
         return list(_import(raw[1:]))
     if raw in FACT_EVAL_CHAINS:
         return FACT_EVAL_CHAINS[raw]
-    if raw.startswith("jev_floors(") and raw.endswith(")"):
+    if raw.startswith("decision_floors(") and raw.endswith(")"):
         floors = {}
-        for pair in raw[len("jev_floors("):-1].split(";"):
+        for pair in raw[len("decision_floors("):-1].split(";"):
             if pair.strip():
                 key, _, value = pair.partition("=")
                 floors[key.strip()] = float(value)
-        return [Nli(), JevFloors(**floors)]
+        return [Nli(), DecisionFloors(**floors)]
     raise ValueError(f"unknown fact eval chain {raw!r}")
 
 

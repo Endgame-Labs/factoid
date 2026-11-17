@@ -52,7 +52,7 @@ Note what extract returns: `cites` are passage numbers, never quote text. Factoi
 | classify | `declared`, `rules`, `systemone`, `llm` |
 | segment | `auto`, `turns`, `email`, `paragraphs`, `rows` |
 | extract | `passages`, `staged` |
-| judge | `nli`, `jev-floors`, `llm` |
+| judge | `nli`, `decision-floors`, `llm` |
 | resolve | `hash`, `slot`, `vector-judge` |
 | store | local folder, S3-compatible bucket |
 | index | `sqlite-fts`, `pgvectorscale`, `turbopuffer` |

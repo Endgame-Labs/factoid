@@ -36,7 +36,7 @@ pipeline:
   extract:  {use: passages, model: flash, window_bytes: 3500, max_per_window: 16}
   judge:
     - {use: nli, min_entail: 0.6}
-    - {use: jev-floors, model: judge, floors: {grounded: 0.75, attribution: 0.7, self_contained: 0.65, atomic: 0.4, useful: 0.7}}
+    - {use: decision-floors, model: judge, floors: {grounded: 0.75, attribution: 0.7, self_contained: 0.65, atomic: 0.4, useful: 0.7}}
   repair:   {use: reword-once}
   resolve:  {use: [hash, slot, vector-judge], model: judge, neighbors: 20}
   tag:      {use: none}

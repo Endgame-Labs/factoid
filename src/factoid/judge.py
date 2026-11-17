@@ -1,4 +1,4 @@
-"""Jev judges, code decides.
+"""The decision model judges, code decides.
 
 A step declares atomic questions with `@judge(...)`. Factoid asks every question for one item in one request to the
 decision model, and passes the answers to the step as `judgments`. Code then decides with thresholds it controls.

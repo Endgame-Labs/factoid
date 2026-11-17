@@ -56,9 +56,9 @@ Factoid uses models for four kinds of work, and the fourth is optional:
 | `openai` | OpenAI `gpt-6-luna` (Decisions API) | OpenAI `gpt-6-luna` | OpenAI `text-embedding-3-small` | OpenAI |
 
 Jev is the recommended decision model, but TypeSafe keys are not self-serve yet. If you do not have TypeSafe access,
-use `--models openai`, which needs one key you can create yourself. The `fireworks` preset is experimental because the
-default fact eval floors were set on Jev, and Rune does not yet separate good facts from bad ones on the attribution
-question. Tuning Rune's questions and floors is in progress.
+use `--models openai`, which needs one key you can create yourself. Rune now has its own fact eval floors. On a
+news-transcript eval, it answers about as many questions as Jev. The `fireworks` preset stays experimental until the
+contract evals have been run on Rune.
 
 You can mix providers by editing `settings.py`. Model names use `provider/model`, so Factoid knows which key a workload
 needs. Not every provider serves every workload:
@@ -123,7 +123,7 @@ factoid search "Vega consent"
 factoid read fact_01j9x8k2m                      # one fact, its quotes, its entities, and its history
 factoid entities list
 factoid eval                                     # score the run against labeled data
-factoid eval --vary fact_evals=none,nli,jev_floors  # compare fact eval chains on the same documents
+factoid eval --vary fact_evals=none,nli,decision_floors  # compare fact eval chains on the same documents
 ```
 
 The sample contract has three facts, and the sample eval expects the `consent_required` and `liability_cap` traits.
@@ -517,9 +517,9 @@ first failure, so the cheap fact eval goes first.
 | Fact eval | Responsibility |
 | --- | --- |
 | `nli` | Small entailment model. Checks that the cited passage entails the sentence. Cheap, so `nli` runs first. |
-| `jev_floors` | Six yes-or-no questions in one decision-model call. Each probability has a floor; all six must pass. |
+| `decision_floors` | Six yes-or-no questions in one decision-model call. Each probability has a floor; all six must pass. |
 
-Each `jev_floors` answer is a probability that must clear the floor for that question:
+Each `decision_floors` answer is a probability that must clear the floor for that question:
 
 - `grounded`: The cited passages support the sentence.
 - `attribution`: Who said the sentence, and whether the sentence was certain or negated, match the source.
@@ -540,13 +540,13 @@ custom fact eval without replacing the default chain:
 ```python
 # facts.py
 from factoid import Fact
-from factoid.fact_evals import JevFloors, Nli
+from factoid.fact_evals import DecisionFloors, Nli
 from acme.fact_evals import CitesSourceEval
 
 class SourceFact(Fact):
     """What a contract, a client, or the other side says."""
     traits = [ChangeOfControl, ConsentRequired, Deadline, LiabilityCap]
-    fact_evals = [Nli(), JevFloors(useful=0.8)]             # the default chain, with one floor raised
+    fact_evals = [Nli(), DecisionFloors(useful=0.8)]             # the default chain, with one floor raised
 
 class CounselFact(Fact):
     """What our own lawyers concluded."""
@@ -559,16 +559,16 @@ class CounselFact(Fact):
 Both prose and structured document classes can set their own `fact_evals` chain, because how strict to be depends on
 the source: a transcript sentence leans on earlier turns more than a contract clause does. `fact_evals` on a document
 class wins over the fact class's chain for facts from that document, and `None` (the default) means the fact class's
-chain. `JevFloors` questions can also be reworded, added, or dropped, as well as given a floor. Every question needs a
-floor:
+chain. `DecisionFloors` questions can also be reworded, added, or dropped, as well as given a floor. Every question
+needs a floor:
 
 ```python
 # documents.py
-from factoid import JevFloors, Nli, Noul, ProseDocument
+from factoid import DecisionFloors, Nli, Noul, ProseDocument
 
 class Transcript(ProseDocument):
     """A broadcast interview or news segment transcript."""
-    fact_evals = [Nli(), JevFloors(
+    fact_evals = [Nli(), DecisionFloors(
         useful=0.5,
         questions={
             "useful": Noul("Would a reporter look this claim up later? Greetings and program promos are not useful."),
@@ -578,7 +578,7 @@ class Transcript(ProseDocument):
     )]
 ```
 
-`factoid eval --vary fact_evals=none,nli,jev_floors` compares chains on the same documents. A value written
+`factoid eval --vary fact_evals=none,nli,decision_floors` compares chains on the same documents. A value written
 `@module:name` uses a chain the project defines, such as `--vary fact_evals=@evals.variants:STRICT`.
 
 ### Model calls

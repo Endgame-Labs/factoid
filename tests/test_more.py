@@ -106,9 +106,9 @@ def test_fact_classes_are_chosen_per_fact(make_app, fake):
 
 
 def test_vary_and_metrics():
-    variants = parse_vary(["fact_evals=none,jev_floors(atomic=0.2;grounded=0.4)", "situate=on,off"])
+    variants = parse_vary(["fact_evals=none,decision_floors(atomic=0.2;grounded=0.4)", "situate=on,off"])
     assert len(variants) == 4
-    chain = fact_eval_chain("jev_floors(atomic=0.2;grounded=0.4)")
+    chain = fact_eval_chain("decision_floors(atomic=0.2;grounded=0.4)")
     assert chain[1].floors["atomic"] == 0.2
     assert prf(8, 2, 2)["f1"] == 0.8
     assert aupr([0.9, 0.8, 0.1], [True, True, False]) == 1.0
@@ -196,7 +196,7 @@ def test_vary_can_name_a_project_object():
     from factoid.evals import _value, fact_eval_chain
 
     assert _value("@factoid.fact_evals:DEFAULT_FLOORS")["grounded"] == 0.45
-    assert [type(f).__name__ for f in fact_eval_chain("@factoid.fact:Fact.fact_evals")] == ["Nli", "JevFloors"]
+    assert [type(f).__name__ for f in fact_eval_chain("@factoid.fact:Fact.fact_evals")] == ["Nli", "DecisionFloors"]
 
 
 def test_keys_set_catches_a_bad_paste():

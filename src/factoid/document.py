@@ -115,7 +115,8 @@ class Document(Registered, ModelCalls):
     extract_prompt: ClassVar[str | Template] = builtin("extract.md.j2")
     #: The repair prompt for near misses from this document. None uses the fact class's.
     repair_prompt: ClassVar[str | Template | None] = None
-    #: The fact eval chain for facts from this document, such as `[Nli(), JevFloors(grounded=0.3)]` for transcripts.
+    #: The fact eval chain for facts from this document, such as `[Nli(), DecisionFloors(grounded=0.3)]` for
+    #: transcripts.
     #: None uses the fact class's chain.
     fact_evals: ClassVar[list[FactEval] | None] = None
     #: Characters of the document just before a fact's first cited passage, shown to the fact evals and to repair.

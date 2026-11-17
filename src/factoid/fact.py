@@ -15,7 +15,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from .dates import format_datetime, now, parse_datetime
-from .fact_evals import EvalResult, FactEval, JevFloors, Nli
+from .fact_evals import EvalResult, FactEval, DecisionFloors, Nli
 from .judge import Choice, Judgments, Question
 from .runtime import ModelCalls, Registered, current
 from .steps import run_step
@@ -95,7 +95,7 @@ class Fact(Registered, ModelCalls):
     #: The traits facts of this class are asked about.
     traits: ClassVar[list[type[FactTrait]]] = []
     #: The fact eval chain.
-    fact_evals: ClassVar[list[FactEval]] = [Nli(), JevFloors()]
+    fact_evals: ClassVar[list[FactEval]] = [Nli(), DecisionFloors()]
     #: Extraction guidance: what counts as a fact for this class.
     guidance: ClassVar[str] = ""
     #: Lifetime ranges the decision model chooses from.

@@ -14,7 +14,7 @@ happened to them, and an **eval loop** that measures the pipeline. Keep these th
 | **Fact** | An accepted, self-contained sentence with quotes, a speaker, and a date. Optionally a typed **slot**. |
 | **Event** | One thing that happened: a document ingested, a fact added, superseded, contradicted, retracted, or restored. |
 | **Stage** | A step of the pipeline (classify, segment, extract, judge, resolve, index). |
-| **Strategy** | One way to do a stage (`jev-floors` and `nli` are judge strategies). Built in or a plugin. |
+| **Strategy** | One way to do a stage (`decision-floors` and `nli` are judge strategies). Built in or a plugin. |
 | **Pipeline** | The strategy chosen for every stage, plus their settings. Has a fingerprint. |
 | **Suite** | A corpus plus gold labels, for evals. |
 | **Run** | One pipeline over one suite, with its scores, cost, and latency. |
@@ -33,7 +33,7 @@ happened to them, and an **eval loop** that measures the pipeline. Keep these th
 | `segment` | What are its citable passages? | `auto` (by type), `turns`, `email` (drops quoted replies and signatures), `paragraphs` |
 | `extract` | What facts does it state? | `passages` (the model cites passage ids; code attaches quotes), `staged` (cheap model, then a tagger) |
 | `gate` | Is the candidate well formed? Always runs, never calls a model. | shape and length, cited passages exist, near-duplicate within the document, caps |
-| `judge` | Is it true to the source, atomic, self-contained, and useful? A chain. | `none`, `nli`, `jev-floors`, `llm` |
+| `judge` | Is it true to the source, atomic, self-contained, and useful? A chain. | `none`, `nli`, `decision-floors`, `llm` |
 | `repair` | Can a near miss be reworded once? Optional. The quote is never changed. | `none`, `reword-once` |
 | `resolve` | How does it relate to facts we already have? | `hash`, `slot` (same entity and field, newer wins), `vector-judge` |
 | `index` | Where can it be found? Not a stage of truth, a view. | `sqlite-fts`, `pgvectorscale`, `turbopuffer` |

@@ -127,7 +127,7 @@ def test_failed_floors_reject(make_app, fake):
     fake.noul = lambda q, s: 0.05 if "worth keeping" in q.instructions else inner(q, s)
     result = app.ingest_text("Vega's liability is capped at $1M.", document_type=Contract,
                              metadata={"signed_at": "2025-03-01T00:00:00Z"})
-    assert result.facts == [] and result.rejected[0].reasons == ["jev_floors.useful"]
+    assert result.facts == [] and result.rejected[0].reasons == ["decision_floors.useful"]
 
 
 def test_aliases_link_short_names_across_documents(make_app, fake):
@@ -461,12 +461,12 @@ def test_a_claimed_fact_is_found_under_its_new_entity(make_app, fake):
 
 
 def test_a_document_class_sets_its_own_fact_evals_and_questions(make_app, fake):
-    from factoid import JevFloors, Noul
+    from factoid import DecisionFloors, Noul
 
     class Transcript(ProseDocument):
         """A broadcast transcript."""
 
-        fact_evals = [JevFloors(useful=0.01, questions={
+        fact_evals = [DecisionFloors(useful=0.01, questions={
             "atomic": None, "on_topic": Noul("Is the fact about the segment's topic?")}, on_topic=0.5)]
 
     app = build(make_app, fake)
@@ -483,29 +483,29 @@ def test_a_document_class_sets_its_own_fact_evals_and_questions(make_app, fake):
     assert second["text_before_passages"].endswith("The plane landed safely.")
     result = app.ingest_text("Vega's liability is capped at $1M.", document_type=Contract,
                              metadata={"signed_at": "2025-03-01T00:00:00Z"})
-    assert result.rejected[0].reasons == ["jev_floors.useful"]  # a contract keeps the fact class's chain
+    assert result.rejected[0].reasons == ["decision_floors.useful"]  # a contract keeps the fact class's chain
 
 
-def test_jev_floors_check_their_settings():
+def test_decision_floors_check_their_settings():
     import pytest
 
-    from factoid import JevFloors, Noul
+    from factoid import DecisionFloors, Noul
 
     with pytest.raises(ValueError, match="no floor"):
-        JevFloors(questions={"on_topic": Noul("On topic?")})
+        DecisionFloors(questions={"on_topic": Noul("On topic?")})
     with pytest.raises(ValueError, match="not asked"):
-        JevFloors(questions={"atomic": None}, atomic=0.3)
-    assert repr(JevFloors()) == "jev_floors"
-    assert "grounded=0.3" in repr(JevFloors(grounded=0.3))
+        DecisionFloors(questions={"atomic": None}, atomic=0.3)
+    assert repr(DecisionFloors()) == "decision_floors"
+    assert "grounded=0.3" in repr(DecisionFloors(grounded=0.3))
 
 
 def test_a_fact_below_its_target_is_repaired_or_kept_as_it_was(make_app, fake):
-    from factoid import JevFloors, Noul
+    from factoid import DecisionFloors, Noul
 
     class Explicit(SourceFact):
         """What a contract says."""
 
-        fact_evals = [JevFloors(questions={"explicit": Noul("Every reference resolved?")}, explicit=0.0,
+        fact_evals = [DecisionFloors(questions={"explicit": Noul("Every reference resolved?")}, explicit=0.0,
                                 targets={"explicit": 0.5})]
 
     app = build(make_app, fake)
@@ -523,4 +523,22 @@ def test_a_fact_below_its_target_is_repaired_or_kept_as_it_was(make_app, fake):
     result = app.ingest_text("Its liability is capped at $2M.", document_type=Contract,
                              metadata={"signed_at": "2025-04-01T00:00:00Z"})
     assert [f.text for f in result.facts] == ["Its liability is capped at $2M."]  # the repair missed: kept as was
-    assert result.facts[0].scores["repair_missed"][0]["failed"] == ["short: jev_floors.explicit"]
+    assert result.facts[0].scores["repair_missed"][0]["failed"] == ["short: decision_floors.explicit"]
+
+
+def test_decision_floors_use_a_decision_models_own_floors_unless_the_project_set_one():
+    from factoid.fact_evals import DEFAULT_FLOORS, DEFAULT_TARGETS, MODEL_FLOORS, MODEL_TARGETS, DecisionFloors
+
+    floors, targets = DecisionFloors().floors_for("typesafe/jev-1.13.0")
+    assert floors == DEFAULT_FLOORS and targets == DEFAULT_TARGETS
+    floors, targets = DecisionFloors().floors_for("fireworks/rune")
+    assert floors["atomic"] == MODEL_FLOORS["fireworks/rune"]["atomic"]
+    assert targets["self_contained"] == MODEL_TARGETS["fireworks/rune"]["self_contained"]
+    floors, targets = DecisionFloors(atomic=0.3, targets={"self_contained": 0.6}).floors_for("fireworks/rune")
+    assert floors["atomic"] == 0.3 and targets["self_contained"] == 0.6
+    assert floors["useful"] == MODEL_FLOORS["fireworks/rune"]["useful"]
+
+    class Strict(DecisionFloors):
+        floors = {**DEFAULT_FLOORS, "atomic": 0.4}
+
+    assert Strict().floors_for("fireworks/rune")[0]["atomic"] == 0.4

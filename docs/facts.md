@@ -24,7 +24,7 @@
   "status": "current",
   "related": {"corroborated_by": ["f_77qa0"], "supersedes": ["f_a1"], "disputes": []},
   "tags": {"commercial": 0.94},
-  "made_by": {"pipeline": "p_3fa9", "extract": "glm-5p3-flash", "judges": {"jev-floors": {"grounded": 0.91, "atomic": 0.88}}}
+  "made_by": {"pipeline": "p_3fa9", "extract": "glm-5p3-flash", "judges": {"decision-floors": {"grounded": 0.91, "atomic": 0.88}}}
 }
 ```
 

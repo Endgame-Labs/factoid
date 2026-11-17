@@ -1,6 +1,6 @@
 """Fact evals: each decides one thing, whether a candidate fact is good enough to keep.
 
-The default chain is `[Nli, JevFloors]`. It runs in order and rejects a candidate at the first failure. Custom fact
+The default chain is `[Nli, DecisionFloors]`. It runs in order and rejects a candidate at the first failure. Custom fact
 evals run on top of the default chain:
 
     fact_evals = [*Fact.fact_evals, CitesSourceEval]
@@ -18,7 +18,10 @@ from .runtime import current
 if TYPE_CHECKING:
     from .fact import Fact
 
-__all__ = ["EvalResult", "FactEval", "Nli", "JevFloors", "DEFAULT_FLOORS", "DEFAULT_TARGETS", "QUESTIONS"]
+__all__ = [
+    "EvalResult", "FactEval", "Nli", "DecisionFloors", "DEFAULT_FLOORS", "DEFAULT_TARGETS", "MODEL_FLOORS",
+    "MODEL_TARGETS", "QUESTIONS",
+]
 
 
 @dataclass
@@ -74,6 +77,17 @@ DEFAULT_FLOORS: dict[str, float] = {
 #: Starting targets: a passing fact below its target gets one repair, and keeps its old wording if the repair misses.
 DEFAULT_TARGETS: dict[str, float] = {"self_contained": 0.5}
 
+#: Floors and targets for decision models whose probabilities run on a different scale from Jev's, which the defaults
+#: were set on. Each entry replaces the defaults for that model, except where a project sets its own value. Rune's
+#: were matched to Jev's pass rates on the same 1,450 fact eval requests from the example apps (2026-11-17): Rune
+#: ranks facts much like Jev, but scores "atomic" lower and "self_contained" higher.
+MODEL_FLOORS: dict[str, dict[str, float]] = {
+    "fireworks/rune": {"grounded": 0.25, "self_contained": 0.05, "atomic": 0.08, "useful": 0.25, "distinct": 0.05},
+}
+MODEL_TARGETS: dict[str, dict[str, float]] = {
+    "fireworks/rune": {"self_contained": 0.95},
+}
+
 QUESTIONS: dict[str, Noul] = {
     "grounded": Noul(
         "Do the cited passages support the claim the fact makes? Judge the claim only. Names and dates that resolve "
@@ -84,11 +98,14 @@ QUESTIONS: dict[str, Noul] = {
         false="The fact claims something the passages do not say, or changes what they say.",
     ),
     "attribution": Noul(
-        "Does the fact keep who said the claim, who it applies to, and whether the passages state it as certain, "
-        "conditional, hedged, or negated? Ignore words that only name the document or its parties.",
-        true="Who said it, who it applies to, and its certainty match the passages.",
-        false="The fact turns a condition, hedge, or negation into a plain claim, or changes who said it or who it "
-              "applies to.",
+        "Does the fact report the passages' claim with the same speaker, about the same subject, and with the same "
+        "certainty? If a passage shows who said it, the fact must not credit the words to anyone else. If the "
+        "passages have no speaker, as in narration, a report, or a contract clause, the fact need not name one. A "
+        "condition, hedge, plan, belief, or negation in the passages must stay in the fact. Context the fact adds, "
+        "such as the document's name, the parties, the event, or the date, is fine.",
+        true="The speaker (or no speaker), the subject, and the certainty all match the passages.",
+        false="The fact credits the claim to the wrong person, changes who or what it is about, or turns a "
+              "condition, hedge, or negation into a plain claim.",
     ),
     "self_contained": Noul(
         "Can a reader who has not seen the source understand the fact on its own? The fact must name or describe, "
@@ -120,29 +137,35 @@ QUESTIONS: dict[str, Noul] = {
 }
 
 
-class JevFloors(FactEval):
+class DecisionFloors(FactEval):
     """Yes-or-no questions in one decision-model call. Each probability has a floor, and all must pass.
 
     Change a floor, reword a question, add one, or drop one, per fact class or per document class:
 
-        JevFloors(grounded=0.3)
-        JevFloors(questions={"useful": Noul("Would a researcher look this up?"), "atomic": None})
-        JevFloors(questions={"on_topic": Noul("Is the fact about the program's topic?")}, on_topic=0.5)
+        DecisionFloors(grounded=0.3)
+        DecisionFloors(questions={"useful": Noul("Would a researcher look this up?"), "atomic": None})
+        DecisionFloors(questions={"on_topic": Noul("Is the fact about the program's topic?")}, on_topic=0.5)
 
-    A target sits above a floor. A fact that passes the floor but scores below the target gets one repair. The repair replaces it only when every repaired sentence reaches the target; otherwise
-    the fact is kept as it was. So a strict question can push for explicit facts without throwing useful ones away:
+    A target sits above a floor. A fact that passes the floor but scores below the target gets one repair. The repair
+    replaces it only when every repaired sentence passes and scores higher on each question it fell short on;
+    otherwise the fact is kept as it was. So a strict question can push for explicit facts without throwing useful ones away:
 
-        JevFloors(self_contained=0.2, targets={"self_contained": 0.5})
+        DecisionFloors(self_contained=0.2, targets={"self_contained": 0.5})
 
     A question with a floor of 0 never rejects; with a target, it only asks for repairs.
 
     A subclass can set `questions`, `floors`, and `targets` as class attributes instead.
+
+    The defaults were set on Jev. For another decision model, `model_floors` and `model_targets` hold its own values,
+    keyed by model name; they apply to every floor and target the project has not set itself.
     """
 
-    name = "jev_floors"
+    name = "decision_floors"
     questions: ClassVar[dict[str, Noul]] = QUESTIONS
     floors: dict[str, float] = DEFAULT_FLOORS
     targets: dict[str, float] = DEFAULT_TARGETS
+    model_floors: ClassVar[dict[str, dict[str, float]]] = MODEL_FLOORS
+    model_targets: ClassVar[dict[str, dict[str, float]]] = MODEL_TARGETS
     #: Failures a rewording or a split can fix. A fact that fails only these gets one repair, however low the score:
     #: the repair sees the text before the quote, so it can name what "he" or "this aircraft" refers to.
     repairable = ("self_contained", "atomic", "attribution")
@@ -162,22 +185,36 @@ class JevFloors(FactEval):
         if missing:
             raise ValueError(f"questions with no floor: {sorted(missing)}")
         self._changed = {k: q for k, q in merged.items() if QUESTIONS.get(k) is not q}
+        self._own_floors = set(floors) | (set(type(self).floors) if type(self).floors is not DEFAULT_FLOORS else set())
+        self._own_targets = set(targets or {}) | (
+            set(type(self).targets) if type(self).targets is not DEFAULT_TARGETS else set())
         self.targets = {k: v for k, v in {**type(self).targets, **(targets or {})}.items() if k in self.questions}
         for name, target in self.targets.items():
             if target < self.floors[name]:
                 raise ValueError(f"target for {name!r} ({target}) is below its floor ({self.floors[name]})")
+
+    def floors_for(self, model: str | None) -> tuple[dict[str, float], dict[str, float]]:
+        """The floors and targets for a decision model: its own values where it has them and the project has not
+        set one."""
+        floors = {**self.floors, **{k: v for k, v in self.model_floors.get(model or "", {}).items()
+                                    if k in self.floors and k not in self._own_floors}}
+        targets = {**self.targets, **{k: v for k, v in self.model_targets.get(model or "", {}).items()
+                                      if k in self.targets and k not in self._own_targets}}
+        return floors, {k: max(v, floors[k]) for k, v in targets.items()}
 
     def check(self, fact: Fact) -> EvalResult:
         app = current()
         state: dict[str, Any] = fact.eval_state()
         judgments = app.client.ask(state, dict(self.questions))
         scores = {name: float(judgments[name]) for name in self.questions}
-        failed = [name for name, floor in self.floors.items() if scores[name] < floor]
+        model = app.client.models.get("choose")
+        floors, targets = self.floors_for(getattr(model, "name", model))
+        failed = [name for name, floor in floors.items() if scores[name] < floor]
         near = bool(failed) and any(name in self.repairable for name in failed) and all(
-            name in self.repairable or (name == "useful" and scores[name] >= self.floors[name] - self.repair_margin)
+            name in self.repairable or (name == "useful" and scores[name] >= floors[name] - self.repair_margin)
             for name in failed
         )
-        short = [name for name, target in self.targets.items() if self.floors[name] <= scores[name] < target]
+        short = [name for name, target in targets.items() if floors[name] <= scores[name] < target]
         return EvalResult(passed=not failed, scores=scores, failed=failed, short=[] if failed else short,
                           near_miss=near)
 

@@ -640,9 +640,9 @@ things: a fact eval gates one fact at ingest, and `factoid eval` measures the pi
 
 **Proposed.**
 
-- Every candidate fact passes a default chain before it is stored: `nli` (a small entailment model), then `jev_floors`.
-  The chain rejects at the first failure.
-- `jev_floors` asks six yes-or-no questions in one call: grounded, attribution, self-contained, atomic, useful, and
+- Every candidate fact passes a default chain before it is stored: `nli` (a small entailment model), then
+  `decision_floors`. The chain rejects at the first failure.
+- `decision_floors` asks six yes-or-no questions in one call: grounded, attribution, self-contained, atomic, useful, and
   distinct. Each has its own floor, and all six must pass. Scores are never averaged.
 - Starting floors, from OpenEndgame: grounded 0.75, attribution 0.7, self-contained 0.65, atomic 0.4, useful 0.7, and
   distinct 0.6. Floors are calibrated on labeled data.
@@ -656,8 +656,8 @@ things: a fact eval gates one fact at ingest, and `factoid eval` measures the pi
   `extract_prompt`. `repair_prompt` and `fact_evals` default to None, which means the fact class's.
 - Why on the document: how strict to be depends on the kind of source. A transcript sentence leans on earlier turns
   far more than a contract clause does, and fact classes are not tied to document types.
-- `JevFloors` questions can be reworded, added, or dropped as well as floored:
-  `JevFloors(questions={"useful": Noul(...), "atomic": None}, grounded=0.3)`. Every question needs a floor. Changed
+- `DecisionFloors` questions can be reworded, added, or dropped as well as floored:
+  `DecisionFloors(questions={"useful": Noul(...), "atomic": None}, grounded=0.3)`. Every question needs a floor. Changed
   questions are part of the fact's fingerprint.
 - The fact evals and repair see `text_before_passages`: the `evidence_context` characters (1,200 by default) of the
   document just before the fact's first cited passage. The extractor resolves "he" and "this aircraft" from earlier
@@ -665,7 +665,7 @@ things: a fact eval gates one fact at ingest, and `factoid eval` measures the pi
   for structured documents, whose earlier rows are not context.
 - A fact that fails only questions a rewording or a split can fix (self-contained, atomic, and attribution) always
   gets one repair, however low its score. A "useful" failure rides along only within `repair_margin`.
-- **Targets.** A question can have a target above its floor: `JevFloors(targets={"explicit": 0.5})`. A fact that
+- **Targets.** A question can have a target above its floor: `DecisionFloors(targets={"explicit": 0.5})`. A fact that
   passes the floor but scores below the target gets one repair, and the repair replaces it only when every repaired
   sentence reaches the target; otherwise the fact keeps its wording, and `scores["repair_missed"]` says what was
   tried. A floor of 0 makes a question that never rejects and only asks for repairs. Why: a strict question rejected
@@ -673,6 +673,23 @@ things: a fact eval gates one fact at ingest, and `factoid eval` measures the pi
   lenient one kept "the death toll" and "yesterday". A target gets the strict wording's repairs without the
   rejections.
 - Every eval run writes `rejected.jsonl`: each rejected fact with its scores, quotes, and repair attempts.
+
+**Decided** (Kyle, 2026-11-17): the default chain's second eval is `DecisionFloors` (`decision_floors`), named for
+what it uses, a decision (System One) model, and not for one vendor's model. It was `JevFloors`.
+
+- **Floors per decision model.** Two models give different scores for the same answer, so `MODEL_FLOORS` and
+  `MODEL_TARGETS` hold floors and targets per model, keyed by the model's name (`fireworks/rune`). They fill in only
+  the floors and targets a project did not set: a project's own `DecisionFloors(grounded=0.5)`, or a subclass's own
+  `floors`, always wins. A target is never below its floor.
+- Rune's floors were matched to Jev's pass rates on the same 1,450 requests from the iscrag dev run: grounded 0.25,
+  self-contained 0.05 (target 0.95), atomic 0.08, useful 0.25, and distinct 0.05. On that run Rune answers 0.915,
+  0.955, and 0.955 of the QA questions from facts at 512, 2,048, and 8,192 tokens, against Jev's 0.925, 0.965, and
+  0.955.
+- **The attribution question was reworded.** It asks whether the fact keeps the passages' speaker (or lack of one),
+  subject, and certainty, and says that a passage with no speaker (narration, a report, a contract clause) needs none
+  in the fact. Rune read the old wording as "does the fact name who said it" and scored correct contract facts near
+  0. Jev scores the same with the new wording: 0.92, 0.955, and 0.95 on the same QA, within one or two questions of
+  before.
 
 ### Resolving
 
@@ -991,8 +1008,8 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   exact vector search. `Turbopuffer` is built and used when set. The spec says a project needs turbopuffer; the
   local index makes tests and small projects work without it.
 - **`Nli`** is in the default chain but runs only when a project sets an `nli` model. With none set, it is skipped
-  and the scorecard says so, so the working default chain is `JevFloors`.
-- **Starting floors** for `JevFloors` are fixed values until calibration is built: grounded 0.45, attribution 0.3,
+  and the scorecard says so, so the working default chain is `DecisionFloors`.
+- **Starting floors** for `DecisionFloors` are fixed values until calibration is built: grounded 0.45, attribution 0.3,
   self-contained 0.4, atomic 0.25, useful 0.45, and distinct 0.2. They were set from CUAD runs (2026-11-15). The
   first values (0.45 to 0.6) rejected most good facts; with these, and the grounded and attribution questions narrowed
   to the claim, the share of gold clauses quoted by a kept fact went from 0.61 to 0.96 on 20 contracts.
@@ -1066,7 +1083,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     creates it; `factoid keys list` shows every provider's key, its source, and its use; TypeSafe's waitlist is named.
   - "One provider key is enough to start" (section 9) is true with `--models openai`. `--models fireworks` is
     experimental: Rune keeps no facts on the sample contract, because it scores correct facts low on the attribution
-    question (0.09 and 0.56 against Jev's 0.71 and 0.72) and cannot tell them from wrong ones. Tuning is Open.
+    question (0.09 and 0.56 against Jev's 0.71 and 0.72) and cannot tell them from wrong ones. Fixed the same day
+    (decision 81): with its own floors and the reworded attribution question, Rune keeps all three sample facts and
+    the sample eval scores 1.0. The legal suites on Rune are still to run.
   - OpenAI generation sends `max_completion_tokens` and no `temperature`, which its reasoning models require.
   - The README marks `serve`, `mcp`, `rebuild`, and `contradictions` as planned.
   - Checked live on 2026-11-17: Rune answers under both `models/rune` and `routers/rune`; the Decisions API answers
@@ -1301,7 +1320,7 @@ All dates are 2026-11-13 unless noted.
 73. How facts are written and checked is set per document class too: `guidance`, `extract_prompt`,
     `repair_prompt`, `fact_evals`, and `evidence_context` live on `Document`, so prose and structured documents share
     them. A document class's `fact_evals` wins over the fact class's. (2026-11-17)
-74. `JevFloors` questions can be reworded, added, or dropped (`questions={...}`), and can have targets above their
+74. `DecisionFloors` questions can be reworded, added, or dropped (`questions={...}`), and can have targets above their
     floors: below a target a fact gets one repair, kept only if it scores higher. (2026-11-17)
 75. The fact evals and repair see the 1,200 characters before a fact's first cited passage. A fact that fails only
     repairable questions always gets one repair. (2026-11-17)
@@ -1317,3 +1336,7 @@ All dates are 2026-11-13 unless noted.
 80. The `fireworks` preset is experimental until Rune has its own fact eval questions or floors: with the floors set on
     Jev, Rune rejects every fact on the sample contract. `--models openai` is the one-key path, and the README's
     examples use it. (2026-11-17)
+81. `JevFloors` is renamed `DecisionFloors` (`decision_floors`): code names the kind of model, not a vendor's model.
+    Floors and targets can be set per decision model (`MODEL_FLOORS`, `MODEL_TARGETS`), and a project's own floors
+    win. Rune has its own floors, and the attribution question is reworded so that a fact needs no speaker when its
+    passage has none. The `fireworks` preset stays experimental until the legal suites pass on Rune. (2026-11-17)

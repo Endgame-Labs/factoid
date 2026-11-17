@@ -120,9 +120,8 @@ def init(package: str | None, preset: str) -> None:
         click.echo(f"  wrote {path.relative_to(root)}")
     providers = scaffold.PRESETS[preset][0]
     if preset == "fireworks":
-        click.echo("\nThe fireworks preset is experimental: the fact evals' floors were set on Jev, and Rune does not "
-                   "yet\nseparate good facts from bad ones on the attribution question. --models openai is the "
-                   "one-key choice\nthat passes the sample eval today.")
+        click.echo("\nThe fireworks preset is experimental: Rune's fact eval floors come from one news eval, and the "
+                   "contract\nevals have not been run on it yet. --models openai is the fully checked one-key choice.")
     click.echo(f"\nThese models need a key for {' and '.join(providers)}. Next:")
     click.echo("  factoid keys set               asks for each key and says where to get it")
     click.echo("  factoid doctor                 one small call per workload")
@@ -708,7 +707,7 @@ def doctor() -> None:
 
 @cli.command("eval")
 @click.argument("suites", nargs=-1)
-@click.option("--vary", multiple=True, help="Run each value of a setting, such as fact_evals=none,jev_floors.")
+@click.option("--vary", multiple=True, help="Run each value of a setting, such as fact_evals=none,decision_floors.")
 @click.option("--limit", type=int, help="Use only the first N documents of each suite.")
 @click.option("--fresh", is_flag=True, help="Do not replay cached model calls.")
 @click.option("--quiet", is_flag=True)
