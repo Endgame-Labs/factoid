@@ -7,6 +7,11 @@ The fact comes from this {{ document.type }}{% if document.title %}: {{ document
 {% for key, value in document.context.items() %}
 - {{ key }}: {{ value }}
 {% endfor %}
+{% if document.text_before %}
+
+Text just before the cited passages, for resolving names and references:
+{{ document.text_before }}
+{% endif %}
 {% endif %}
 
 Cited passages:
@@ -20,7 +25,9 @@ sentences.
 {% else %}
 Rewrite the fact as one self-contained sentence that states one claim, supported by the passages. If it states
 several claims, split it into one sentence per claim.
-{% endif %} Name the subject and the people, companies, and documents each
-sentence refers to. Keep who said it, and keep conditions, hedges, and negations, in the sentence they limit.
-Keep redaction markers such as [*] as they appear.
+{% endif %} Name the subject and the people, organizations, places, documents, and
+events each sentence refers to: replace a pronoun or a description ("he", "this aircraft", "the president") with what
+it refers to, and a relative time ("yesterday", "this week") with a date in words, using the text before the passages
+and the document's details. Each fact already records when and where the document was written or said, so do not add that otherwise. Keep who said it, and keep conditions, hedges, and negations, in the sentence they limit. Keep
+redaction markers such as [*] as they appear. If the text does not say what a reference means, answer with no facts.
 Answer with JSON only: {"facts": ["...", "..."]}

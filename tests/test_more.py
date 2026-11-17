@@ -190,3 +190,10 @@ def test_stats_counts_by_class_with_examples(make_app, fake):
     assert data["facts_by_class"] == {"SourceFact": 1} and data["entities_by_class"]["Company"] == 2
     assert data["examples"]["facts"]["SourceFact"][0].startswith("Vega's liability")
     assert [e["name"] for e in data["examples"]["entities"]["Company"]] == ["Orion", "Vega"]
+
+
+def test_vary_can_name_a_project_object():
+    from factoid.evals import _value, fact_eval_chain
+
+    assert _value("@factoid.fact_evals:DEFAULT_FLOORS")["grounded"] == 0.45
+    assert [type(f).__name__ for f in fact_eval_chain("@factoid.fact:Fact.fact_evals")] == ["Nli", "JevFloors"]

@@ -12,10 +12,19 @@ Where this part sits in the document: {{ situation }}
 {% endif %}
 {% block guidance %}{% if guidance %}{{ guidance }}
 {% endif %}{% endblock %}
-A fact is one self-contained sentence that states one claim. Write each fact so a reader understands it alone: name
-the people, companies, and documents it is about instead of "this Agreement", "the Company", "he", or "they". Keep
-who said it, and keep conditions, hedges, and negations. Keep redaction markers such as [*] or [***] exactly as
-they appear; do not describe or replace what was redacted. Skip headings, boilerplate, and filler.
+A fact is one self-contained sentence that states one claim. A reader sees each fact alone, with no access to this
+{{ document.type }}, so resolve every reference from the text:
+- A pronoun or a description that stands for something named elsewhere ("he", "they", "it", "the company", "the
+  president", "this Agreement") becomes that name, such as "President Donald Trump" instead of "the president".
+- A time relative to the document ("yesterday", "last week", "next year") becomes a date, computed from the
+  document's date and written in words, such as "on March 3, 2019". Each fact already records when the document was
+  written or said, so do not open a fact with that date; a date the text states, such as the date an agreement is
+  dated or signed, belongs in the fact.
+- A person known here by surname or title alone gets their full name when the text gives it.
+- When the text does not say what a reference means, describe it as precisely as the text allows; if that is not
+  enough to identify it, skip the fact.
+Keep who said it, and keep conditions, hedges, and negations. Keep redaction markers such as [*] or [***] exactly as
+they appear; do not describe or replace what was redacted. Skip headings, boilerplate, greetings, and filler.
 
 {% if context_passages %}
 Earlier text, for context only. Do not cite it:

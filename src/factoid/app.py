@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections import Counter
 from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -20,6 +21,7 @@ from .dates import format_datetime, now, parse_datetime
 from .document import Document, ProseDocument, Raw, Replacement, classify_raw
 from .entity import Entity
 from .fact import Fact, Mention, Quote
+from .fact_evals import EvalResult
 from .judge import Noul
 from .models import CallLog, Meter, ModelClient
 from .runtime import use
@@ -41,6 +43,8 @@ class Rejected:
     reasons: list[str]
     scores: dict[str, Any] = field(default_factory=dict)
     document_id: str | None = None
+    quotes: list[str] = field(default_factory=list)
+    repairs: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -104,6 +108,7 @@ class Factoid:
         self.placeholders: set[str] = set()
         self._name_checks: dict[str, bool] = {}
         self.rejected: list[Rejected] = []
+        self._duplicates: Counter[str] = Counter()
         self._pool = ThreadPoolExecutor(max_workers=max(1, settings.concurrency))
         use(self)
 
@@ -180,11 +185,13 @@ class Factoid:
             item = klass(item.text, metadata=item.metadata, uri=item.uri, title=item.title)
         if not isinstance(item, Document):
             raise TypeError(f"cannot ingest {item!r}")
+        # Documents can ingest in parallel threads, so rejects and duplicates are kept by document.
         before = len(self.rejected)
-        self._duplicates = 0
+        self._duplicates.pop(item.id, None)
         facts = run_step(item, "ingest", self)
         facts = [] if facts is SKIPPED else facts
-        return IngestResult(item, facts, self.rejected[before:], self._duplicates)
+        rejected = [r for r in self.rejected[before:] if r.document_id == item.id]
+        return IngestResult(item, facts, rejected, self._duplicates.pop(item.id, 0))
 
     def ingest_text(self, text: str, *, document_type: type[Document] | None = None,
                     metadata: dict[str, Any] | None = None, uri: str | None = None,
@@ -239,7 +246,7 @@ class Factoid:
         duplicate = next((other for answer, other, _ in outcome if answer == "duplicate"), None)
         if duplicate is not None:
             self._confirm(duplicate, fact)
-            self._duplicates += 1
+            self._duplicates[fact.document_id] += 1
             return False
         for answer, other, _ in outcome:
             step = {"supersedes": "supersede", "ends": "end", "corrects": "correct",
@@ -273,7 +280,7 @@ class Factoid:
             cell = fact.scores["cell"]
             old = stored.get((str(cell["key"]), str(cell["column"])))
             if old is not None and old.text == fact.text:
-                self._duplicates += 1
+                self._duplicates[fact.document_id] += 1
                 continue
             fresh.append(fact)
             if old is not None:
@@ -378,32 +385,49 @@ class Factoid:
         return _recast(fact, chosen)
 
     def _evaluate(self, fact: Fact) -> list[Fact]:
-        """The facts to keep from one candidate: itself, its repair (a rewording or a split), or none."""
+        """The facts to keep from one candidate: itself, its repair (a rewording or a split), or none.
+
+        A failed candidate that a rewording can fix gets one repair, and is dropped if the repair fails. A passing
+        candidate below a target gets one repair too, and keeps its own wording if the repair misses the target.
+        """
         result = run_step(fact, "evaluate")
         if result is SKIPPED:
             return [fact]
-        if result.passed:
-            self._record(fact, result)
-            return [fact]
-        if result.near_miss and type(fact).repair_enabled:
-            texts = run_step(fact, "repair", result)
-            if texts and texts is not SKIPPED:
-                kept = []
-                for text in texts:
-                    candidate = fact.copy(" ".join(text.split()))
-                    second = run_step(candidate, "evaluate")
-                    if second is SKIPPED or second.passed:
-                        candidate.scores["repaired_from"] = fact.text
-                        if second is not SKIPPED:
-                            self._record(candidate, second)
-                        kept.append(candidate)
-                if kept:
-                    vectors = self.client.embed([c.text for c in kept])
-                    for candidate, vector in zip(kept, vectors):
-                        candidate.vector = vector
-                    return kept
+        attempts: list[dict[str, Any]] = []
+        polish = result.passed and bool(result.short)
+        if (polish or (not result.passed and result.near_miss)) and type(fact).repair_enabled:
+            asked = EvalResult(passed=False, scores=result.scores, failed=result.short) if polish else result
+            texts = run_step(fact, "repair", asked)
+            repaired = []
+            for text in ([] if texts is SKIPPED else texts or []):
+                candidate = fact.copy(" ".join(text.split()))
+                second = run_step(candidate, "evaluate")
+                # Below a target, a repair counts when it passes and scores higher on each question it fell short on.
+                ok = second is SKIPPED or (second.passed and not (polish and any(
+                    second.scores.get(n, 0.0) <= result.scores.get(n, 0.0)
+                    for n in result.short)))
+                attempts.append({"text": candidate.text, "failed": [] if second is SKIPPED else
+                                 second.failed or [f"short: {n}" for n in second.short]})
+                if second is not SKIPPED:
+                    self._record(candidate, second)
+                candidate.scores["repaired_from"] = fact.text
+                repaired.append((candidate, ok))
+            # A failed fact keeps the repaired sentences that pass. A passing fact takes its repair only when every
+            # sentence improves on it, so a split never drops part of a fact that was good enough.
+            kept = [c for c, ok in repaired if ok] if not polish else (
+                [c for c, _ in repaired] if repaired and all(ok for _, ok in repaired) else [])
+            if kept:
+                vectors = self.client.embed([c.text for c in kept])
+                for candidate, vector in zip(kept, vectors):
+                    candidate.vector = vector
+                return kept
         self._record(fact, result)
-        self.rejected.append(Rejected(fact.text, result.failed, result.scores, fact.document_id))
+        if result.passed:
+            if attempts:
+                fact.scores["repair_missed"] = attempts
+            return [fact]
+        self.rejected.append(Rejected(fact.text, result.failed, result.scores, fact.document_id,
+                                      [q.text for q in fact.quotes], attempts))
         return []
 
     def _record(self, fact: Fact, result: Any) -> None:
@@ -426,10 +450,11 @@ class Factoid:
         doc_class = type(fact.document) if fact.document is not None else None
         parts = [
             json.dumps({k: v.wire() for k, v in klass.assess_questions().items()}, sort_keys=True),
-            repr(klass.fact_evals),
+            repr(fact.fact_eval_chain()),
             str(getattr(getattr(doc_class, "extract_prompt", None), "source", getattr(doc_class, "extract_prompt",
                                                                                       ""))),
             str(getattr(doc_class, "guidance", "")) + klass.guidance,
+            str(getattr(doc_class, "evidence_context", "")),
         ]
         return hashlib.sha256("\n".join(parts).encode()).hexdigest()[:16]
 

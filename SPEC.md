@@ -648,6 +648,31 @@ things: a fact eval gates one fact at ingest, and `factoid eval` measures the pi
 - A near miss gets one repair (a rewording), then is evaluated again.
 - A project changes one floor or adds a fact eval without replacing the chain.
 
+**Decided** (2026-11-17): how facts are written and checked is set per document class as well as per fact class.
+
+- `Document` (so both `ProseDocument` and `StructuredDocument`) has `guidance`, `extract_prompt`, `repair_prompt`,
+  `fact_evals`, and `evidence_context`. A structured document's `Text()` cells use its `guidance` and
+  `extract_prompt`. `repair_prompt` and `fact_evals` default to None, which means the fact class's.
+- Why on the document: how strict to be depends on the kind of source. A transcript sentence leans on earlier turns
+  far more than a contract clause does, and fact classes are not tied to document types.
+- `JevFloors` questions can be reworded, added, or dropped as well as floored:
+  `JevFloors(questions={"useful": Noul(...), "atomic": None}, grounded=0.3)`. Every question needs a floor. Changed
+  questions are part of the fact's fingerprint.
+- The fact evals and repair see `text_before_passages`: the `evidence_context` characters (1,200 by default) of the
+  document just before the fact's first cited passage. The extractor resolves "he" and "this aircraft" from earlier
+  text, and without that text the grounded check rejected the resolved name as unsupported. 0 turns it off; it is 0
+  for structured documents, whose earlier rows are not context.
+- A fact that fails only questions a rewording or a split can fix (self-contained, atomic, and attribution) always
+  gets one repair, however low its score. A "useful" failure rides along only within `repair_margin`.
+- **Targets.** A question can have a target above its floor: `JevFloors(targets={"explicit": 0.5})`. A fact that
+  passes the floor but scores below the target gets one repair, and the repair replaces it only when every repaired
+  sentence reaches the target; otherwise the fact keeps its wording, and `scores["repair_missed"]` says what was
+  tried. A floor of 0 makes a question that never rejects and only asks for repairs. Why: a strict question rejected
+  useful facts whose repair did not work ("Tom Boeder said the case makes it difficult for Microsoft..."), and a
+  lenient one kept "the death toll" and "yesterday". A target gets the strict wording's repairs without the
+  rejections.
+- Every eval run writes `rejected.jsonl`: each rejected fact with its scores, quotes, and repair attempts.
+
 ### Resolving
 
 **Proposed.** For each new fact, Factoid gathers the stored facts that share its entities, and asks the decision model
@@ -695,8 +720,9 @@ work and needs evals before any claim about its quality.
 - Hooks call models through `choose`, `decide`, and `score` (decision model) and `generate` (generative model). Calls
   made this way are logged, priced, budgeted, replayed, and fingerprinted.
 - Models are named once in settings and pinned to exact versions.
-- Prompts are Jinja templates. A file at `prompts/<class_name>/<hook>.md.j2` replaces a built-in prompt for one class,
-  and a project template can extend a built-in one and change a block.
+- Prompts are Jinja templates, set on a class as a string or with `template(path)`, and a project template can
+  extend a built-in one and change a block. Prompts that write facts live on the document class: `extract_prompt`
+  and `repair_prompt` (see "Fact evals").
 
 **Open.**
 
@@ -989,6 +1015,19 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   the start of a paragraph ("Q.", "STEPHEN CURRY:"). The label moves out of the passage text into `speaker`, and the
   paragraphs after it keep that speaker. It is how a transcript class fills in passage speakers without overriding
   `segment`, toward the built-in transcript class the spec plans. Off by default.
+- **Fact eval tuning** (2026-11-17, decisions 73 to 77). Tuned on the first 30 ISC-RAG dev transcripts, checked on
+  all 100 and on the legal and NBA apps. On the 100 transcripts, facts answered 0.94, 0.955, and 0.965 of 200
+  questions at 512, 2,048, and 8,192 tokens (0.885, 0.915, and 0.92 before), and an independent model (Kimi K3.1
+  Pro) flagged 13% of sampled facts for an unresolved reference (25% before). NBA: 11 of 11 checks, 3.0% unresolved
+  (6.7%). CUAD 1 to 20 held (F1 0.80, dates 16/18, 13/14, and 8/9). What was tried and dropped: a strict
+  self-contained floor of 0.4 or 0.5 (it threw away useful facts whose repair failed: 47 of 60 against 56), 2,400
+  characters of context (no gain), and more reasoning for repair (no gain). An extract prompt line telling the
+  extractor not to repeat the document's date also stopped "The agreement is dated ..." facts (CUAD agreement dates
+  13/18) until it was reworded. Cost rose: about half the kept transcript facts are repairs, and a dev run used 40
+  million tokens (21 million before).
+- **Amendment supersession varies between runs** by one or two per suite with the same code, through extraction
+  wording that resolve then does or does not connect (ScanSource's term extension). Open: a resolve that is stable
+  to wording.
 - **Not built yet:** sources (`imap`, `mcp`), MCP and
   HTTP serving, `factoid setup`, fact-class trust and visibility, entity `merge`, `split`, and `retype` commands,
   fingerprint-driven `rebuild`, and decision models other than Jev.
@@ -1214,3 +1253,14 @@ All dates are 2026-11-13 unless noted.
     no title-aware index for now. (Kyle, 2026-11-16)
 72. Structured documents are part of Factoid. There is no separate prosaic library; this reverses 30. (Kyle,
     2026-11-16)
+73. How facts are written and checked is set per document class too: `guidance`, `extract_prompt`,
+    `repair_prompt`, `fact_evals`, and `evidence_context` live on `Document`, so prose and structured documents share
+    them. A document class's `fact_evals` wins over the fact class's. (2026-11-17)
+74. `JevFloors` questions can be reworded, added, or dropped (`questions={...}`), and can have targets above their
+    floors: below a target a fact gets one repair, kept only if it scores higher. (2026-11-17)
+75. The fact evals and repair see the 1,200 characters before a fact's first cited passage. A fact that fails only
+    repairable questions always gets one repair. (2026-11-17)
+76. Default `self_contained`: a strict question (pronouns, unclear descriptions, and relative dates) with floor 0.1
+    and target 0.5, replacing a lenient question with floor 0.4. Chosen on 30 ISC-RAG dev transcripts against five
+    other wordings and floors. (2026-11-17)
+77. `--vary` values can name a project object, `@module:name`. (2026-11-17)

@@ -153,8 +153,8 @@ class StructuredDocument(Document):
     when: ClassVar[str | None] = None
     #: "csv", "jsonl", or "json". None detects it from the text.
     format: ClassVar[str | None] = None
-    #: Guidance for the extractor on `Text()` columns.
-    guidance: ClassVar[str] = ""
+    #: Earlier rows are not context for a text cell; the row's identified entities are.
+    evidence_context: ClassVar[int] = 0
     #: Rows per stored chunk, for chunk search.
     rows_per_chunk: ClassVar[int] = 20
     #: Run resolve on templated facts, against stored facts that share an entity. Off by default: a cell is data, and
@@ -371,7 +371,7 @@ class StructuredDocument(Document):
             # Defined in the factoid package, so it is not registered as a document class of the project.
             reader_class = type(f"{cls.__name__}Text", (ProseDocument,), {
                 "__module__": __name__, "__doc__": cls.__doc__, "guidance": cls.guidance,
-                "fact_classes": cls.fact_classes})
+                "extract_prompt": cls.extract_prompt, "fact_classes": cls.fact_classes})
             _READERS[cls] = reader_class
         context = {**self.context(), **{f"{column} (already identified)": name for column, name in known.items()}}
         reader = reader_class(self.text, metadata=dict(self.metadata), uri=self.uri, id=self.id,

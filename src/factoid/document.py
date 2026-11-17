@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from .dates import DateError, format_datetime, parse_datetime
 from .fact import Fact, Mention, Quote
+from .fact_evals import FactEval
 from .judge import Choice, Judgments, Noul, Question, questions_of
 from .runtime import ModelCalls, Registered, current
 from .steps import SKIPPED, run_step
@@ -105,6 +106,22 @@ class Document(Registered, ModelCalls):
     #: Narrows which fact classes facts from this document can be. None means every fact class.
     fact_classes: ClassVar[list[type[Fact]] | None] = None
 
+    # How facts from this document are written and checked. Prose and structured documents share these: a
+    # structured document's `Text()` cells go through the same extractor, evals, and repair.
+
+    #: Extraction guidance shown to the extractor, before each fact class's own guidance.
+    guidance: ClassVar[str] = ""
+    #: The extractor's prompt.
+    extract_prompt: ClassVar[str | Template] = builtin("extract.md.j2")
+    #: The repair prompt for near misses from this document. None uses the fact class's.
+    repair_prompt: ClassVar[str | Template | None] = None
+    #: The fact eval chain for facts from this document, such as `[Nli(), JevFloors(grounded=0.3)]` for transcripts.
+    #: None uses the fact class's chain.
+    fact_evals: ClassVar[list[FactEval] | None] = None
+    #: Characters of the document just before a fact's first cited passage, shown to the fact evals and to repair.
+    #: The extractor resolves "he" and "the plane" from earlier text, so the checks need that text too. 0 shows none.
+    evidence_context: ClassVar[int] = 1200
+
     def __init__(self, text: str, *, metadata: dict[str, Any] | None = None, uri: str | None = None,
                  id: str | None = None, title: str | None = None):
         self.text = text
@@ -142,6 +159,19 @@ class Document(Registered, ModelCalls):
 
     def state(self) -> dict[str, Any]:
         return {"document_type": self.type, "title": self.title, "text": self.text[:4000]}
+
+    def text_before(self, fact: Fact) -> str:
+        """The text just before the fact's first cited passage, `evidence_context` characters, cut at a word."""
+        size = type(self).evidence_context
+        starts = [q.start for q in fact.quotes if q.document_id == self.id and q.start is not None]
+        if size <= 0 or not starts:
+            return ""
+        end = min(starts)
+        start = max(0, end - size)
+        if start > 0:
+            space = self.text.find(" ", start, end)
+            start = space + 1 if space >= 0 else start
+        return self.text[start:end].strip()
 
     # -- classification -------------------------------------------------------------------------------------
 
@@ -221,7 +251,6 @@ class ProseDocument(Document):
     #: Write a situation for each chunk (contextual retrieval). Whether it is on by default is an eval result.
     situate: ClassVar[bool | Callable[..., Any]] = False
     situate_prompt: ClassVar[str | Template] = builtin("situate.md.j2")
-    extract_prompt: ClassVar[str | Template] = builtin("extract.md.j2")
     #: Wording that says numbered sections of an earlier document are replaced, matched by code, not a model. The
     #: wording belongs to the domain, so the framework ships none: a class that wants replaced sections sets it
     #: (SPEC "Sections and replaced sections"). None turns the step off.
@@ -233,8 +262,6 @@ class ProseDocument(Document):
     deletion_pattern: ClassVar[str | None] = None
     #: The longest extractor answer, in tokens. A cut-off answer is retried as two half chunks.
     extract_max_tokens: ClassVar[int] = 12000
-    #: Extraction guidance shown to the extractor.
-    guidance: ClassVar[str] = ""
     #: A regular expression that matches a speaker label at the start of a paragraph. Groups named `speaker`, or
     #: starting with `speaker`, give the name: r"(?:(?P<speaker>Q)\.|(?P<speaker_name>[A-Z][A-Z .'-]+):)\s" reads
     #: "Q." and "STEPHEN CURRY:". The label moves to the passage's `speaker`, and the paragraphs after it keep that

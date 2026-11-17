@@ -84,6 +84,9 @@ FACT_EVAL_CHAINS: dict[str, Any] = {
 
 
 def _value(raw: str) -> Any:
+    """A `--vary` value: on/off, a number, `@module:name` for an object the project defines, or a string."""
+    if raw.startswith("@"):
+        return _import(raw[1:])
     lowered = raw.lower()
     if lowered in ("true", "on", "yes"):
         return True
@@ -97,6 +100,16 @@ def _value(raw: str) -> Any:
         return float(raw)
     except ValueError:
         return raw
+
+
+def _import(spec: str) -> Any:
+    module, _, name = spec.partition(":")
+    if not module or not name:
+        raise ValueError(f"--vary @{spec}: want @module:name")
+    value: Any = importlib.import_module(module)
+    for part in name.split("."):
+        value = getattr(value, part)
+    return value
 
 
 def _split_values(values: str) -> list[str]:
@@ -115,7 +128,9 @@ def _split_values(values: str) -> list[str]:
 
 
 def fact_eval_chain(raw: str) -> list[Any]:
-    """`none`, `nli`, `jev_floors`, `default`, or `jev_floors(atomic=0.3;grounded=0.4)`."""
+    """`none`, `nli`, `jev_floors`, `default`, `jev_floors(atomic=0.3;grounded=0.4)`, or `@module:name`."""
+    if raw.startswith("@"):
+        return list(_import(raw[1:]))
     if raw in FACT_EVAL_CHAINS:
         return FACT_EVAL_CHAINS[raw]
     if raw.startswith("jev_floors(") and raw.endswith(")"):
@@ -222,6 +237,14 @@ def run_suite(project: Project, suite: Suite, variant: Variant, *, limit: int | 
     if folder is not None:
         folder.mkdir(parents=True, exist_ok=True)
         (folder / "scorecard.json").write_text(json.dumps(scorecard(out), indent=2, default=str))
+        # Every rejected fact with its scores and quotes, for reviewing what the fact evals turned away.
+        with open(folder / "rejected.jsonl", "w") as f:
+            for r in results:
+                for rejected in r.rejected:
+                    f.write(json.dumps({"document": r.document.title or r.document.id, "text": rejected.text,
+                                        "reasons": rejected.reasons, "scores": rejected.scores,
+                                        "quotes": rejected.quotes, "repairs": rejected.repairs},
+                                       default=str) + "\n")
     return out
 
 

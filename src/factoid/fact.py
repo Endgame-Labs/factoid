@@ -229,6 +229,9 @@ class Fact(Registered, ModelCalls):
         if self.document is not None:
             state["document"] = {"type": self.document.type, "title": self.document.title,
                                  **self.document.context()}
+            before = self.document.text_before(self)
+            if before:
+                state["text_before_passages"] = before
         app = current()
         state["similar_stored_facts"] = [
             {"text": f.text, "source": app.document_title(f.document_id), "date": _fmt(f.valid_from or f.source_datetime)}
@@ -261,10 +264,15 @@ class Fact(Registered, ModelCalls):
             problems.append("cites no passage")
         return problems
 
+    def fact_eval_chain(self) -> list[FactEval]:
+        """The fact evals this fact must pass: its document class's chain when set, otherwise its class's."""
+        chain = getattr(type(self.document), "fact_evals", None) if self.document is not None else None
+        return list(type(self).fact_evals if chain is None else chain)
+
     def evaluate(self) -> EvalResult:
         """Run the fact eval chain. The chain stops at the first failure."""
         combined = EvalResult(passed=True)
-        for check in type(self).fact_evals:
+        for check in self.fact_eval_chain():
             result = check.check(self)
             combined.scores.update({f"{check.name}.{k}": v for k, v in result.scores.items()})
             if result.skipped:
@@ -273,8 +281,10 @@ class Fact(Registered, ModelCalls):
             if not result.passed:
                 combined.passed = False
                 combined.failed = [f"{check.name}.{name}" for name in result.failed]
+                combined.short = []
                 combined.near_miss = result.near_miss
                 break
+            combined.short += [f"{check.name}.{name}" for name in result.short]
         return combined
 
     def repair(self, result: EvalResult) -> list[str]:
@@ -283,11 +293,12 @@ class Fact(Registered, ModelCalls):
         split = any(name.endswith(".atomic") for name in result.failed)  # several claims: a rewording cannot fix it
         # Repair sees the document's title and context, as the extractor did: a cited sentence such as "The
         # expiration date is extended to March 26, 2006" does not name the parties, and the title does.
-        document = None
+        document, wording = None, type(self).repair_prompt
         if self.document is not None:
             document = {"type": self.document.type, "title": self.document.title,
-                        "context": self.document.context()}
-        prompt = render(type(self).repair_prompt, fact=self, failed=result.failed, split=split,
+                        "context": self.document.context(), "text_before": self.document.text_before(self)}
+            wording = getattr(type(self.document), "repair_prompt", None) or wording
+        prompt = render(wording, fact=self, failed=result.failed, split=split,
                         passages=[q.text for q in self.quotes], document=document)
         raw = self.generate(prompt, json_mode=True, step="repair")
         try:

@@ -499,13 +499,18 @@ Each `jev_floors` answer is a probability that must clear the floor for that que
 
 - `grounded`: The cited passages support the sentence.
 - `attribution`: Who said the sentence, and whether the sentence was certain or negated, match the source.
-- `self_contained`: The sentence names its subject, with no unresolved pronouns.
+- `self_contained`: The sentence names its subject and what it refers to, with no unresolved pronouns or relative
+  dates.
 - `atomic`: The sentence states one claim.
 - `useful`: The fact is worth keeping.
 - `distinct`: No stored fact already states the same claim.
 
-Factoid calibrates these floors on labeled data; no floor uses a fixed `0.5`. A candidate that narrowly fails gets
-one repair (a rewording), and Factoid evaluates the repaired candidate again. A project can change one floor or add a
+The floors are starting values set from eval runs, and calibration from labeled data is planned. A candidate that
+fails only checks a rewording or a split can fix (`self_contained`, `atomic`, and `attribution`) gets one repair, and
+Factoid evaluates the repaired sentences again. The repair names what pronouns and relative dates refer to, or splits
+a compound fact. The fact evals and repair see the document text just before the fact's first cited passage
+(`evidence_context`, 1,200 characters by default; 0 for structured documents). The extractor resolves "he" or "this
+aircraft" from earlier text, so the checks need that text to confirm the name. A project can change one floor or add a
 custom fact eval without replacing the default chain:
 
 ```python
@@ -517,7 +522,7 @@ from acme.fact_evals import CitesSourceEval
 class SourceFact(Fact):
     """What a contract, a client, or the other side says."""
     traits = [ChangeOfControl, ConsentRequired, Deadline, LiabilityCap]
-    fact_evals = [Nli, JevFloors(useful=0.8)]               # the default chain, with one floor raised
+    fact_evals = [Nli(), JevFloors(useful=0.8)]             # the default chain, with one floor raised
 
 class CounselFact(Fact):
     """What our own lawyers concluded."""
@@ -527,7 +532,30 @@ class CounselFact(Fact):
 
 `CitesSourceEval` checks that the conclusion points to a source fact.
 
-`factoid eval --vary fact_evals=none,nli,jev_floors` compares chains on the same documents.
+Both prose and structured document classes can set their own `fact_evals` chain, because how strict to be depends on
+the source: a transcript sentence leans on earlier turns more than a contract clause does. `fact_evals` on a document
+class wins over the fact class's chain for facts from that document, and `None` (the default) means the fact class's
+chain. `JevFloors` questions can also be reworded, added, or dropped, as well as given a floor. Every question needs a
+floor:
+
+```python
+# documents.py
+from factoid import JevFloors, Nli, Noul, ProseDocument
+
+class Transcript(ProseDocument):
+    """A broadcast interview or news segment transcript."""
+    fact_evals = [Nli(), JevFloors(
+        useful=0.5,
+        questions={
+            "useful": Noul("Would a reporter look this claim up later? Greetings and program promos are not useful."),
+            "on_topic": Noul("Is the fact about the segment's story?"),
+        },
+        on_topic=0.4,
+    )]
+```
+
+`factoid eval --vary fact_evals=none,nli,jev_floors` compares chains on the same documents. A value written
+`@module:name` uses a chain the project defines, such as `--vary fact_evals=@evals.variants:STRICT`.
 
 ### Model calls
 

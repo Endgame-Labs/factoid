@@ -458,3 +458,69 @@ def test_a_claimed_fact_is_found_under_its_new_entity(make_app, fake):
     vega = Company.find("Vega")
     hits = app.search_facts("servo motors", about=vega, freshness=False, include_retired=True)
     assert first.facts[0].id in {h.fact.id for h in hits}
+
+
+def test_a_document_class_sets_its_own_fact_evals_and_questions(make_app, fake):
+    from factoid import JevFloors, Noul
+
+    class Transcript(ProseDocument):
+        """A broadcast transcript."""
+
+        fact_evals = [JevFloors(useful=0.01, questions={
+            "atomic": None, "on_topic": Noul("Is the fact about the segment's topic?")}, on_topic=0.5)]
+
+    app = build(make_app, fake)
+    app.document_classes.append(Transcript)
+    inner = fake.noul
+    fake.noul = lambda q, s: 0.05 if "worth keeping" in q.instructions else inner(q, s)
+    text = "VAUSE: The plane landed safely.\n\nVAUSE: It was carrying 200 passengers to Seattle."
+    result = app.ingest_text(text, document_type=Transcript)
+    assert result.facts and not result.rejected  # the transcript's own useful floor
+    state, questions = fake.asked[-1] if "on_topic" in fake.asked[-1][1] else next(
+        a for a in fake.asked if "on_topic" in a[1])
+    assert "atomic" not in questions and "grounded" in questions
+    second = next(s for s, q in fake.asked if "on_topic" in q and "200" in s["fact"])
+    assert second["text_before_passages"].endswith("The plane landed safely.")
+    result = app.ingest_text("Vega's liability is capped at $1M.", document_type=Contract,
+                             metadata={"signed_at": "2025-03-01T00:00:00Z"})
+    assert result.rejected[0].reasons == ["jev_floors.useful"]  # a contract keeps the fact class's chain
+
+
+def test_jev_floors_check_their_settings():
+    import pytest
+
+    from factoid import JevFloors, Noul
+
+    with pytest.raises(ValueError, match="no floor"):
+        JevFloors(questions={"on_topic": Noul("On topic?")})
+    with pytest.raises(ValueError, match="not asked"):
+        JevFloors(questions={"atomic": None}, atomic=0.3)
+    assert repr(JevFloors()) == "jev_floors"
+    assert "grounded=0.3" in repr(JevFloors(grounded=0.3))
+
+
+def test_a_fact_below_its_target_is_repaired_or_kept_as_it_was(make_app, fake):
+    from factoid import JevFloors, Noul
+
+    class Explicit(SourceFact):
+        """What a contract says."""
+
+        fact_evals = [JevFloors(questions={"explicit": Noul("Every reference resolved?")}, explicit=0.0,
+                                targets={"explicit": 0.5})]
+
+    app = build(make_app, fake)
+    app.fact_classes = [Explicit]
+    inner = fake.noul
+    fake.noul = lambda q, s: (0.9 if "Vega Components" in s["fact"] else 0.2) if "resolved" in q.instructions \
+        else inner(q, s)
+    fake.generator = lambda p: (json.dumps({"facts": ["Vega Components Corp.'s liability is capped at $1M."]})
+                                if "failed these checks" in p else extractor(p))
+    result = app.ingest_text("Its liability is capped at $1M.", document_type=Contract,
+                             metadata={"signed_at": "2025-03-01T00:00:00Z"})
+    assert [f.text for f in result.facts] == ["Vega Components Corp.'s liability is capped at $1M."]
+    fake.generator = lambda p: json.dumps({"facts": ["Its cap is $1M."]}) if "failed these checks" in p \
+        else extractor(p)
+    result = app.ingest_text("Its liability is capped at $2M.", document_type=Contract,
+                             metadata={"signed_at": "2025-04-01T00:00:00Z"})
+    assert [f.text for f in result.facts] == ["Its liability is capped at $2M."]  # the repair missed: kept as was
+    assert result.facts[0].scores["repair_missed"][0]["failed"] == ["short: jev_floors.explicit"]
