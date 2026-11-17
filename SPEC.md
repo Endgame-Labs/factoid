@@ -1017,15 +1017,18 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   paragraphs after it keep that speaker. It is how a transcript class fills in passage speakers without overriding
   `segment`, toward the built-in transcript class the spec plans. Off by default.
 - **Fact eval tuning** (2026-11-17, decisions 73 to 77). Tuned on the first 30 ISC-RAG dev transcripts, checked on
-  all 100 and on the legal and NBA apps. On the 100 transcripts, facts answered 0.94, 0.955, and 0.965 of 200
+  all 100 and on the legal and NBA apps. On the 100 transcripts, facts answered 0.925, 0.965, and 0.955 of 200
   questions at 512, 2,048, and 8,192 tokens (0.885, 0.915, and 0.92 before), and an independent model (Kimi K3.1
-  Pro) flagged 13% of sampled facts for an unresolved reference (25% before). NBA: 11 of 11 checks, 3.0% unresolved
-  (6.7%). CUAD 1 to 20 held (F1 0.80, dates 16/18, 13/14, and 8/9). What was tried and dropped: a strict
-  self-contained floor of 0.4 or 0.5 (it threw away useful facts whose repair failed: 47 of 60 against 56), 2,400
-  characters of context (no gain), and more reasoning for repair (no gain). An extract prompt line telling the
-  extractor not to repeat the document's date also stopped "The agreement is dated ..." facts (CUAD agreement dates
-  13/18) until it was reworded. Cost rose: about half the kept transcript facts are repairs, and a dev run used 40
-  million tokens (21 million before).
+  Pro) flagged 14% of 450 sampled facts for an unresolved reference (25% before). Of those, about a third are as
+  specific as the source allows ("Anna", "an unidentified man"), and about a third a better repair could resolve. NBA:
+  11 of 11 checks, 4.7% unresolved (6.7%). CUAD 1 to 20: F1 0.81, dates 16/18, 13/14, and 8/9. Amendments: 15 of 16
+  supersessions and 34 of 36 as-of answers. What was tried and dropped: a strict self-contained floor of 0.4 or 0.5
+  (it threw away useful facts whose repair failed: 47 of 60 against 56), 2,400 characters of context (no gain), and
+  more reasoning for repair (no gain). An extract prompt line telling the extractor not to repeat the document's date
+  also stopped "The agreement is dated ..." facts (CUAD agreement dates 13/18) until it was reworded. Repair first
+  lists each unclear reference and what the text says it means, then rewrites (11.6% against 15.3% unresolved on the
+  30 tuning transcripts; even on all 100). Cost rose: about half the kept transcript facts are repairs, and a dev run
+  with nothing replayed uses about 40 million tokens (21 million before).
 - **Amendment supersession varies between runs** by one or two per suite with the same code, through extraction
   wording that resolve then does or does not connect (ScanSource's term extension). Open: a resolve that is stable
   to wording.
