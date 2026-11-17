@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import tomllib
+from pathlib import Path
 
 import httpx
 import pytest
@@ -39,7 +40,7 @@ def test_a_host_that_never_answers_fails_fast_and_says_where(monkeypatch, tmp_pa
     client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, CallLog(None))
     client.replay = False
     client._http = httpx.Client(transport=httpx.MockTransport(handler))
-    with pytest.raises(ModelError, match="could not connect to http://wrong.test/v1"):
+    with pytest.raises(ModelError, match=r"could not connect to http://wrong\.test/v1"):
         client.generate("hi")
     assert len(calls) == 1  # no retries
 
@@ -163,10 +164,12 @@ def test_init_presets_write_settings_that_check_clean(tmp_path, monkeypatch, pre
     settings = (tmp_path / "acme" / "settings.py").read_text()
     assert choose in settings
     namespace: dict = {}
-    exec(settings, namespace)  # noqa: S102 - the settings file init just wrote
+    exec(settings, namespace)
     assert check_models(namespace["Project"].models) == []
     pyproject = tomllib.loads((tmp_path / "pyproject.toml").read_text())
-    assert pyproject["tool"]["uv"]["sources"]["factoid"]["git"].startswith("https://github.com/")
+    source = pyproject["tool"]["uv"]["sources"]["factoid"]
+    # This test runs from a checkout, so the new project uses it; an install from git would pin GitHub.
+    assert source.get("editable") is True and (Path(source["path"]) / "src" / "factoid").is_dir()
 
 
 def test_keys_set_with_no_provider_walks_the_needed_keys(tmp_path, monkeypatch):
@@ -191,3 +194,17 @@ def test_keys_list_shows_status_use_and_where_to_get_each_key(tmp_path, monkeypa
     rows = {line.split()[0]: line for line in result.output.splitlines()}
     assert "set (environment variable)" in rows["fireworks"] and "generate, embed" in rows["fireworks"]
     assert "not set" in rows["typesafe"] and "console.typesafe.ai" in rows["typesafe"]
+
+
+def test_a_git_install_pins_github_at_its_commit(monkeypatch):
+    import json
+
+    from factoid import version
+
+    class Dist:
+        def read_text(self, name):
+            return json.dumps({"url": "https://github.com/Endgame-Labs/factoid",
+                               "vcs_info": {"vcs": "git", "commit_id": "abc1234def"}})
+
+    monkeypatch.setattr(version.metadata, "distribution", lambda name: Dist())
+    assert version.source() == '{ git = "https://github.com/Endgame-Labs/factoid", rev = "abc1234def" }'

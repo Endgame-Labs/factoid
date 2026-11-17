@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-__all__ = ["DateError", "parse_datetime", "format_datetime", "now"]
+__all__ = ["DateError", "format_datetime", "now", "parse_datetime"]
 
 
 class DateError(ValueError):

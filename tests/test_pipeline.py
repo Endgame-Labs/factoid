@@ -112,7 +112,8 @@ def test_ingest_link_resolve_and_search(make_app, fake):
 def test_placeholders_are_refused(make_app, fake):
     app = build(make_app, fake)
     inner = fake.noul
-    fake.noul = lambda q, s: 0.1 if "specific named thing" in q.instructions and s["mention"] == "Orion" else inner(q, s)
+    fake.noul = lambda q, s: (0.1 if "specific named thing" in q.instructions and s["mention"] == "Orion"
+                              else inner(q, s))
     result = app.ingest_text("Vega's liability is capped at $1M.", document_type=Contract,
                              metadata={"signed_at": "2025-03-01T00:00:00Z"})
     fact = result.facts[0]
@@ -476,7 +477,7 @@ def test_a_document_class_sets_its_own_fact_evals_and_questions(make_app, fake):
     text = "VAUSE: The plane landed safely.\n\nVAUSE: It was carrying 200 passengers to Seattle."
     result = app.ingest_text(text, document_type=Transcript)
     assert result.facts and not result.rejected  # the transcript's own useful floor
-    state, questions = fake.asked[-1] if "on_topic" in fake.asked[-1][1] else next(
+    _, questions = fake.asked[-1] if "on_topic" in fake.asked[-1][1] else next(
         a for a in fake.asked if "on_topic" in a[1])
     assert "atomic" not in questions and "grounded" in questions
     second = next(s for s, q in fake.asked if "on_topic" in q and "200" in s["fact"])
@@ -582,3 +583,14 @@ def test_a_document_whose_ingest_failed_is_ingested_again(make_app, fake):
     fake.generator = good
     again = app.ingest_text(text, document_type=Contract, metadata=meta, uri="supply.txt")
     assert not again.unchanged and len(again.facts) == 1
+
+
+def test_chunk_search_finds_source_text(make_app, fake):
+    from factoid import Chunk
+
+    app = build(make_app, fake)
+    app.ingest_text("Vega's liability to Orion is capped at $1M under the supply agreement.",
+                    document_type=Contract, metadata={"signed_at": "2025-03-01T00:00:00Z"}, uri="supply.txt")
+    rows = Chunk.search("liability capped")
+    assert rows and "capped" in rows[0]["text"]
+    assert Chunk.search("liability capped", about=Company.find("Vega"))

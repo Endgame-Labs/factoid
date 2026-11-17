@@ -24,7 +24,7 @@ from .templates import render
 if TYPE_CHECKING:
     from .fact import Fact
 
-__all__ = ["Entity", "link_mention", "PLACEHOLDER_QUESTION"]
+__all__ = ["PLACEHOLDER_QUESTION", "Entity", "link_mention"]
 
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 URL = re.compile(r"https?://[^\s/]+[^\s]*")
@@ -148,8 +148,9 @@ class Entity(Registered, ModelCalls):
     def where(cls, **props: Any) -> list[Entity]:
         """Entities of this class whose properties equal the given values."""
         app = current()
-        rows = app.store.query("select id, props from entities where merged_into is null and class in (%s)" %
-                               ",".join("?" * len(_class_names(cls))), _class_names(cls))
+        marks = ",".join("?" * len(_class_names(cls)))
+        rows = app.store.query(f"select id, props from entities where merged_into is null and class in ({marks})",
+                               _class_names(cls))
         out = []
         for row in rows:
             data = json.loads(row["props"])

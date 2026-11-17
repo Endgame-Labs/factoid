@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 from typing import Any
 
-__all__ = ["Skip", "SKIPPED", "run_step", "describe_steps"]
+__all__ = ["SKIPPED", "Skip", "describe_steps", "run_step"]
 
 
 class Skip(Exception):

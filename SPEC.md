@@ -474,7 +474,8 @@ class CallTranscript(ProseDocument):
 **Proposed.**
 
 - Both forms are Jinja templates. `template(path)` resolves the path relative to the file that defines the class.
-- A missing file or an undefined field fails when the class is defined, not at the first model call.
+- A missing file or a template syntax error fails when the class is defined, not at the first model call. An
+  undefined field still fails only when the template is first rendered (not built: checking fields at definition).
 - `factoid prompts show CallTranscript.extract` prints the wording in effect and where it came from (a string on the
   class, a file, or the default).
 
@@ -601,7 +602,8 @@ it is unknown (for example, a folder of unmarked files).
   docstrings (jev-rules Q3), plus a Noul asking whether any of them applies (Q6). An optional `not_for` on a class
   describes its boundary with close classes. Each default `classify` reads its own class's probability from that one
   shared answer. For high stakes, the Choice is averaged over option orders (E4).
-- Two `True` answers for one file is an error. Files no class claims go to an unclassified list for review.
+- Two `True` answers for one file is an error. A file no class claims raises `UnclaimedDocument`; `factoid ingest`
+  skips it, lists it at the end, and suggests `--as <Class>`. (An unclassified list kept for review is not built.)
 - `classify_view` controls what the classifier sees. `factoid classifiers show` lists the registry.
 
 ### Sections and replaced sections
@@ -860,7 +862,9 @@ assignment a provider cannot serve, before any call: TypeSafe serves `choose`; F
 **Decided** (Kyle, 2026-11-14): writing to SQLite.
 
 - SQLite allows one writer at a time. In v1, model calls run in parallel, and every save goes through a single writer in
-  the process. Each document's results are saved in one short transaction.
+  the process. A document's rows (document, passages, and chunks) are saved in one transaction, and each fact and
+  entity in its own short one. A document is marked ingested (its hash saved) only when its ingest finishes, so a
+  failed run is ingested again next time.
 - WAL mode is on, so reads and searches are not blocked by ingest.
 - A second process writing to the same project waits its turn through SQLite's busy timeout.
 - Many processes writing at once, or a hosted deployment, is the case for a Postgres backend. It is not built in v1.
@@ -949,7 +953,7 @@ local runtime such as Ollama), but local runtimes are not promised or tested.
 **Decided** (Kyle, 2026-11-14). Factoid is a self-contained fact service. It creates, changes, ranks, and serves facts
 and entities, and that is where it stops. It can be used in many ways, and those uses are built on it rather than in
 it: briefs and articles about an entity, digests of what changed, choosing which entities to track, publishing, and so
-on (`docs/potential/crm-starter.md` sketches one).
+on (`docs/archive/potential/crm-starter.md` sketches one).
 
 One use the docs call out: personal agents can use Factoid over MCP as a more rigorous memory, with facts that carry
 sources, dates, validity, and contradictions instead of loose notes.
@@ -982,13 +986,13 @@ Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
 
 ## 16. Docs that lag the design
 
-- `docs/facts.md`, `docs/mental-model.md`, `docs/config.md`, `docs/plugins.md`, `docs/cli.md`, and
-  `docs/potential/crm-starter.md` predate the entity redesign. `docs/config.md` and `docs/plugins.md` also describe
-  the single-YAML design.
-- README.md is up to date with the decisions through 62, and uses the legal example (Acme buying Orion, and
-  Orion's supply agreement with Vega).
-- The `TenantEmail` example in "Jev judges, code decides" is from the old rental example. The README uses
-  `Contract.classify` instead.
+**Decided** (Kyle, 2026-11-17). The docs from the single-YAML design (`mental-model.md`, `documents.md`, `facts.md`,
+`config.md`, `plugins.md`, `evals.md`, `api.md`, `open-questions.md`, and `potential/`) moved to `docs/archive/`,
+with a note that the code no longer follows them. `docs/` keeps `cli.md` (current), `prior-art.md`, and `research/`.
+The README's "Further reading" points at SPEC.md, `docs/cli.md`, and the example apps.
+
+- README.md uses the legal example (Acme buying Orion, and Orion's supply agreement with Vega), and is checked against
+  the code by a cold-start onboarding review (the last one on 2026-11-17).
 
 ## 17. Implementation status
 
@@ -1007,8 +1011,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
 - **Search backend:** with no `search` setting, a project uses `LocalIndex`, a SQLite file with FTS5 for BM25 and
   exact vector search. `Turbopuffer` is built and used when set. The spec says a project needs turbopuffer; the
   local index makes tests and small projects work without it.
-- **`Nli`** is in the default chain but runs only when a project sets an `nli` model. With none set, it is skipped
-  and the scorecard says so, so the working default chain is `DecisionFloors`.
+- **`Nli`** is in the default chain but no NLI model is wired up yet. With none set, it is skipped: `factoid eval`
+  prints how many facts it skipped and `scorecard.json` has `skipped_fact_evals`. So the working default chain is
+  `DecisionFloors`. The README marks it planned, and its Quickstart compares `none` and `decision_floors`.
 - **Starting floors** for `DecisionFloors` are fixed values until calibration is built: grounded 0.45, attribution 0.3,
   self-contained 0.4, atomic 0.25, useful 0.45, and distinct 0.2. They were set from CUAD runs (2026-11-15). The
   first values (0.45 to 0.6) rejected most good facts; with these, and the grounded and attribution questions narrowed
@@ -1102,8 +1107,8 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   - Re-ingesting a changed document still retracts its facts, and a new fact that says the same thing takes the old
     id (event `fact.restored`): the same sentence, or the same traits, a shared quote, and embeddings at least 0.85
     alike (`Factoid.reuse_similarity`). Extraction rewords a sentence from run to run, so the same-sentence rule alone
-    kept 2 of 6 ids on the sample after an edit; with embeddings it kept all 6. This is what `docs/documents.md`
-    already promised; resolve against the old revision is still the longer-term plan.
+    kept 2 of 6 ids on the sample after an edit; with embeddings it kept all 6. This is what `docs/archive/documents.md`
+    promised; resolve against the old revision is still the longer-term plan.
   - `ingest` and `eval` say in words how many calls were replayed from `.factoid/calls.db`, and that `--fresh` calls
     the models again. `ingest` has `--fresh` too. The cache records which Factoid (version and commit) saved each
     answer, and the output says when replayed answers came from a different one.
@@ -1115,9 +1120,30 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     document. Eval run folders are named in local time.
   - `docs/cli.md` describes the built commands, and the Quickstart says where fact ids come from and how the cache
     works.
+- **From a cold-start onboarding review (2026-11-17).** Carbon, given only the repository, followed the Quickstart as a
+  new user and toured the code as a new agent. What changed from it:
+  - `--models openai` failed its first ingest: the sample `Contract` said "a signed contract", the sample has no
+    signature block, and the classifier did not see the `.meta.json` metadata, so `gpt-6-luna` answered 0.01 to "is
+    this one of these kinds". The sample says "a contract, an agreement, or an amendment", the classifier sees the
+    metadata, and the sample eval yields a `Raw` document so it classifies the way `ingest` does. Checked live: all
+    three presets ingest the sample and score 1.0 on `factoid eval --fresh`.
+  - Expected failures (`ModelError`, `DateError`, `ClassificationError`, `ExtractionError`, and `UnclaimedDocument`)
+    print one line; `FACTOID_DEBUG=1` shows the traceback. An unclaimed file in a folder is skipped and listed.
+  - A project's `.factoid/.env` now wins over `~/.factoid/.env`, as this section's precedence says. Per-project keys
+    are still stored in the project's git-ignored `.factoid/.env`, not at `~/.factoid/projects/<id>/.env` as decided
+    above: not built yet.
+  - `--vary` refuses a string that would replace a method (`--vary classify=decision` replaced `classify` with a
+    string). The README's strategy example is replaced by `@module:NAME` values.
+  - `Chunk.search(query, about=...)` exists, as the README showed. Searching facts and chunks in one list is planned.
+  - The README documents `.meta.json` sidecars, eval suites (`Suite`, `prf`, and `aupr`), and marks `nli`, entity
+    editing, and `entities retype` as planned. Its examples read metadata with `.get`.
+  - `factoid init` installs Factoid from where `factoid` came from: the local checkout for an editable install, or
+    GitHub pinned at the installed commit. Before, a project made from a checkout installed GitHub's main.
+  - `pyproject.toml` has ruff settings, and `src`, `tests`, and `examples` pass. `AGENTS.md` has a Develop section:
+    the commands, a module map, and a warning that example evals cost money.
 - **Not built yet:** sources (`imap`, `mcp`), MCP and
   HTTP serving, `factoid setup`, fact-class trust and visibility, entity `merge`, `split`, and `retype` commands,
-  fingerprint-driven `rebuild`, and decision models other than Jev.
+  and fingerprint-driven `rebuild`.
 - **`situate`:** the setting `situate = True` runs the built-in step (`situate_chunk`); a method named `situate` on a
   class replaces it.
 - **A duplicate** adds its quotes to the stored fact, which restarts its clock, and writes no event.
@@ -1373,3 +1399,7 @@ All dates are 2026-11-13 unless noted.
     `TURBOPUFFER_BASE_URL`), in the environment or a `.env` file, and then no key is needed. A call with neither a key
     nor a base URL fails before any request. A host that never answers fails at once with its address; one that has
     answered before is retried. Replaces the integration-host defaults of decision 78. (2026-11-17)
+84. The design docs from the single-YAML design move to `docs/archive/`, and the README points at SPEC.md,
+    `docs/cli.md`, and the example apps. Fixes from a cold-start onboarding review: the sample classifies on every
+    preset, expected errors print one line, project keys beat home keys, `--vary` cannot replace a method with a
+    string, `Chunk.search` exists, and `factoid init` installs Factoid from where it came from. (2026-11-17)

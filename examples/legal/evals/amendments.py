@@ -307,7 +307,7 @@ def load_full() -> dict[str, str]:
         import zipfile
 
         DATA.mkdir(parents=True, exist_ok=True)
-        with urllib.request.urlopen(URL) as response:  # noqa: S310 - fixed https URL
+        with urllib.request.urlopen(URL) as response:
             zipfile.ZipFile(io.BytesIO(response.read())).extract("CUADv1.json", DATA)
     return {x["title"]: x["paragraphs"][0]["context"] for x in json.loads(target.read_text())["data"]}
 

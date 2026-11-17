@@ -31,3 +31,17 @@ packages = ["src/factoid"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+extend-exclude = ["examples/*/data", "examples/*/runs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+# RUF012: classes declare settings as plain class attributes (`traits = [...]`, `columns = {...}`); that is the API.
+ignore = ["RUF012", "B905"]  # B905: zip over lists built together, where a length check adds nothing
+
+[tool.ruff.lint.per-file-ignores]
+# Example suites hold long expected answers and real quotes (en dashes included) as data.
+"examples/**" = ["E501", "RUF001", "SIM115"]

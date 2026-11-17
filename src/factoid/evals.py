@@ -27,15 +27,15 @@ if TYPE_CHECKING:
     from .project import Project
 
 __all__ = [
+    "RunResult",
     "Suite",
     "Variant",
-    "RunResult",
-    "run_suite",
-    "parse_vary",
-    "load_suites",
-    "prf",
     "aupr",
+    "load_suites",
+    "parse_vary",
     "precision_at_recall",
+    "prf",
+    "run_suite",
 ]
 
 
@@ -73,6 +73,7 @@ class RunResult:
     path: Path | None = None
     rejected_by_reason: dict[str, int] = field(default_factory=dict)
     samples: dict[str, list[str]] = field(default_factory=dict)
+    skipped_evals: dict[str, int] = field(default_factory=dict)  # fact evals that did not run, and on how many facts
 
 
 FACT_EVAL_CHAINS: dict[str, Any] = {
@@ -170,6 +171,11 @@ def applied(project: Project, overrides: dict[str, Any]) -> Iterator[None]:
             touched = False
             for klass in classes:
                 if hasattr(klass, key):
+                    current_value = getattr(klass, key)
+                    if callable(current_value) and not isinstance(current_value, type) and isinstance(value, str):
+                        raise ValueError(f"--vary {key}: {klass.__name__}.{key} is a method, and {raw!r} would "
+                                         f"replace it; --vary sets settings, and a strategy is a value defined in "
+                                         f"Python (--vary {key}=@module:NAME)")
                     saved.append((klass, key, klass.__dict__.get(key), key in klass.__dict__))
                     setattr(klass, key, value)
                     touched = True
@@ -202,8 +208,9 @@ def run_suite(project: Project, suite: Suite, variant: Variant, *, limit: int | 
             result = app.ingest(document)
             latencies.append(time.monotonic() - t0)
             if log:
-                log(f"  {variant.name}: {document.title or document.id}: {len(result.facts)} facts, "
-                    f"{len(result.rejected)} rejected, {latencies[-1]:.1f}s")
+                label = getattr(document, "title", None) or getattr(document, "uri", None) or document.id
+                log(f"  {variant.name}: {label}: {len(result.facts)} facts, {len(result.rejected)} rejected, "
+                    f"{latencies[-1]:.1f}s")
             return result
 
         started = time.monotonic()
@@ -215,6 +222,7 @@ def run_suite(project: Project, suite: Suite, variant: Variant, *, limit: int | 
             results = [one(d) for d in documents]
         wall = time.monotonic() - started
         metrics = suite.score(app, results)
+        skipped_evals = dict(app.skipped_evals)
         usage = {"by_workload": app.meter.rows, "total": app.meter.total(), "wall_seconds": round(wall, 2)}
         app.close()
     latency = {}
@@ -233,7 +241,7 @@ def run_suite(project: Project, suite: Suite, variant: Variant, *, limit: int | 
                     samples[reason].append(rejected.text)
     out = RunResult(suite.name, variant, metrics, usage, latency, len(results),
                     sum(len(r.facts) for r in results), sum(len(r.rejected) for r in results), folder,
-                    dict(sorted(reasons.items(), key=lambda kv: -kv[1])), samples)
+                    dict(sorted(reasons.items(), key=lambda kv: -kv[1])), samples, skipped_evals)
     if folder is not None:
         folder.mkdir(parents=True, exist_ok=True)
         (folder / "scorecard.json").write_text(json.dumps(scorecard(out), indent=2, default=str))
@@ -261,6 +269,7 @@ def scorecard(result: RunResult) -> dict[str, Any]:
         "latency": result.latency,
         "usage": result.usage,
         "rejected_samples": result.samples,
+        "skipped_fact_evals": result.skipped_evals,
     }
 
 

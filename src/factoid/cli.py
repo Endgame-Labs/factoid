@@ -17,6 +17,7 @@ from typing import Any
 import click
 
 from . import scaffold
+from .document import UnclaimedDocument
 from .models import (
     GENERATION_STEPS,
     KEY_SOURCES,
@@ -145,7 +146,23 @@ def _version_message() -> str:
     return f"factoid {describe()}"
 
 
-@click.group()
+class _Group(click.Group):
+    """Expected failures (a model error, a bad date, an unclear classification) print one line, not a traceback.
+    FACTOID_DEBUG=1 shows the traceback."""
+
+    def invoke(self, ctx: click.Context) -> Any:
+        from .dates import DateError
+        from .document import ClassificationError, ExtractionError
+
+        try:
+            return super().invoke(ctx)
+        except (ModelError, DateError, ClassificationError, ExtractionError, UnclaimedDocument) as err:
+            if os.environ.get("FACTOID_DEBUG"):
+                raise
+            raise click.ClickException(f"{err} (FACTOID_DEBUG=1 shows the traceback)") from err
+
+
+@click.group(cls=_Group)
 @click.version_option(message=_version_message())
 def cli() -> None:
     """Factoid turns documents into facts and entities."""
@@ -195,8 +212,14 @@ def ingest(paths: tuple[Path, ...], as_class: str | None, dry_run: bool, again: 
     klass = app.document_class(as_class) if as_class else None
     files = [p for path in paths for p in (sorted(path.rglob("*")) if path.is_dir() else [path])
              if p.is_file() and not p.name.endswith(".meta.json") and not p.name.startswith(".")]
+    unclaimed = []
     for path in files:
-        result = app.ingest(path, document_type=klass, again=again)
+        try:
+            result = app.ingest(path, document_type=klass, again=again)
+        except UnclaimedDocument:
+            unclaimed.append(path)
+            click.echo(f"{path}: skipped, no document class claims it")
+            continue
         if result.unchanged:
             click.echo(f"{path}: unchanged since it was ingested, so skipped ({len(result.facts)} current facts; "
                        f"--again ingests it anyway)")
@@ -210,6 +233,10 @@ def ingest(paths: tuple[Path, ...], as_class: str | None, dry_run: bool, again: 
             for rejected in result.rejected:
                 click.echo(f"  - {rejected.text}  ({', '.join(rejected.reasons)})")
     _echo_calls(app.meter.total(), getattr(app.calls, "path", None))
+    if unclaimed:
+        names = ", ".join(k.__name__ for k in app.document_classes) or "none"
+        click.echo(f"{len(unclaimed)} file(s) skipped because no document class claims them. Pass --as <Class> to "
+                   f"set one (classes: {names}), or describe the kind of document in a class's docstring.")
     app.close()
 
 
@@ -469,7 +496,6 @@ def _class_name(file: Path) -> str:
               help="File to add the class to (defaults to the package's documents.py).")
 def struct_parser(file: Path, name: str | None, prompt_only: bool, out: Path | None) -> None:
     """Have a model write the parser class for a file, or print the prompt for your own coding agent."""
-    from .entity import Entity
     from .structured import _cell, inspect_rows, read_rows, starter_class
     from .templates import builtin, render
 
@@ -816,13 +842,13 @@ def doctor() -> None:
         try:
             check()
             click.echo(f"{workload:<10} ok")
-        except (ModelError, Exception) as err:  # noqa: BLE001 - report every failure
+        except (ModelError, Exception) as err:
             failed = True
             click.echo(f"{workload:<10} FAILED: {err}")
     try:
         app.index.bm25(app.ns("facts"), "doctor", 1)
         click.echo(f"{'search':<10} ok ({type(app.index).__name__})")
-    except Exception as err:  # noqa: BLE001
+    except Exception as err:
         failed = True
         click.echo(f"{'search':<10} FAILED: {err}")
     if failed:
@@ -866,6 +892,8 @@ def eval_(suites: tuple[str, ...], vary: tuple[str, ...], limit: int | None, fre
                    f"{result.rejected} rejected, {int(total['calls'])} calls ({int(total['cache_hits'])} replayed), "
                    f"{int(total['input_tokens'] + total['output_tokens'])} tokens, "
                    f"p50 {result.latency.get('p50_doc_s', 0)}s/doc")
+        for note, count in result.skipped_evals.items():
+            click.echo(f"    (fact eval skipped on {count} facts: {note})")
         older = int(total.get("older_hits", 0))
         if older:
             click.echo(f"    ({older} replayed answers were saved by a different version of Factoid)")

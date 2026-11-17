@@ -27,13 +27,14 @@ if TYPE_CHECKING:
     from .app import Factoid
 
 __all__ = [
-    "Raw",
-    "Passage",
-    "Replacement",
     "Chunk",
-    "Document",
-    "ProseDocument",
     "ClassificationError",
+    "Document",
+    "Passage",
+    "ProseDocument",
+    "Raw",
+    "Replacement",
+    "UnclaimedDocument",
     "classify_raw",
 ]
 
@@ -80,6 +81,18 @@ class Chunk:
     @property
     def text(self) -> str:
         return "\n\n".join(p.text for p in self.passages)
+
+    @staticmethod
+    def search(query: str, *, about: Any = None, top_k: int = 10) -> list[dict[str, Any]]:
+        """Search source chunks (indexed with their situations). `about` keeps chunks from documents whose facts
+        mention that entity. Each row has `id`, `document_id`, `text`, and `score`."""
+        from .runtime import current
+
+        return current().search_chunks(query, about=about, top_k=top_k)
+
+
+class UnclaimedDocument(ValueError):
+    """No document class claims a document. `--as <Class>` (or `document_type=`) sets the class."""
 
 
 class ClassificationError(RuntimeError):
@@ -278,7 +291,7 @@ class ProseDocument(Document):
     @classmethod
     def overlap_chars(cls) -> int:
         overlap = cls.chunk_overlap
-        if isinstance(overlap, bool) or isinstance(overlap, float):
+        if isinstance(overlap, (bool, float)):
             raise TypeError(f"{cls.__name__}.chunk_overlap must be an int or a percent string, not {overlap!r}")
         if isinstance(overlap, str):
             if not overlap.endswith("%"):
@@ -536,6 +549,9 @@ def classify_raw(raw: Raw, classes: list[type[Document]], ask: Callable[[Any, di
         questions.update(questions_of(klass.classify))
     views = {klass.classify_view(raw) for klass in classes}
     state = {"document": views.pop() if len(views) == 1 else raw.text[:3000], "title": raw.title}
+    if raw.metadata:
+        # The sidecar says what the text may not: a signing date, a sender, or the document's title.
+        state["metadata"] = {k: v for k, v in raw.metadata.items() if isinstance(v, (str, int, float, bool))}
     judgments = ask(state, questions)
     answers = {klass: run_step(klass, "classify", raw, judgments) for klass in classes}
     claimed = [klass for klass, answer in answers.items() if answer is True]

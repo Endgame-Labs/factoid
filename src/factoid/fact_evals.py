@@ -19,8 +19,15 @@ if TYPE_CHECKING:
     from .fact import Fact
 
 __all__ = [
-    "EvalResult", "FactEval", "Nli", "DecisionFloors", "DEFAULT_FLOORS", "DEFAULT_TARGETS", "MODEL_FLOORS",
-    "MODEL_TARGETS", "QUESTIONS",
+    "DEFAULT_FLOORS",
+    "DEFAULT_TARGETS",
+    "MODEL_FLOORS",
+    "MODEL_TARGETS",
+    "QUESTIONS",
+    "DecisionFloors",
+    "EvalResult",
+    "FactEval",
+    "Nli",
 ]
 
 
@@ -148,7 +155,8 @@ class DecisionFloors(FactEval):
 
     A target sits above a floor. A fact that passes the floor but scores below the target gets one repair. The repair
     replaces it only when every repaired sentence passes and scores higher on each question it fell short on;
-    otherwise the fact is kept as it was. So a strict question can push for explicit facts without throwing useful ones away:
+    otherwise the fact is kept as it was. So a strict question can push for explicit facts without throwing useful
+    ones away:
 
         DecisionFloors(self_contained=0.2, targets={"self_contained": 0.5})
 

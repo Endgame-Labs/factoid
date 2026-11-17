@@ -27,17 +27,17 @@ import httpx
 from .judge import Choice, Judgments, Noul, Question, Score, ScoreAnswer
 
 __all__ = [
-    "Model",
-    "Provider",
     "PROVIDERS",
     "WORKLOADS",
-    "check_models",
-    "ModelError",
     "CallLog",
     "Meter",
+    "Model",
     "ModelClient",
-    "load_keys",
+    "ModelError",
+    "Provider",
+    "check_models",
     "keys_file",
+    "load_keys",
 ]
 
 
@@ -164,11 +164,13 @@ KEY_SOURCES: dict[str, Path] = {}
 
 
 def load_keys(project: Path | None = None) -> None:
-    """Load keys from `~/.factoid/.env` and the project's `.factoid/.env`. Real environment variables win."""
+    """Load keys from `~/.factoid/.env` and the project's `.factoid/.env`. A real environment variable wins, then
+    the project's file, then the home file."""
     global _keys_loaded
     if _keys_loaded and project is None:
         return
-    for path in (keys_file(), keys_file(project) if project else None):
+    home = keys_file()
+    for path in (home, keys_file(project) if project else None):
         if path is None or not path.is_file():
             continue
         for line in path.read_text().splitlines():
@@ -177,7 +179,8 @@ def load_keys(project: Path | None = None) -> None:
                 continue
             name, _, value = line.partition("=")
             name = name.strip()
-            if name not in os.environ:
+            # A value loaded from the home file gives way to the project's; one from the real environment never does.
+            if name not in os.environ or (KEY_SOURCES.get(name) == home and path != home):
                 os.environ[name] = value.strip().strip("'\"")
                 KEY_SOURCES[name] = path
     _keys_loaded = True

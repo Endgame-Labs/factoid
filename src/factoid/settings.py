@@ -10,7 +10,7 @@ from typing import Any, ClassVar
 
 from .models import Model
 
-__all__ = ["Settings", "DEFAULT_MODELS"]
+__all__ = ["DEFAULT_MODELS", "Settings"]
 
 DEFAULT_MODELS: dict[str, Model] = {
     "choose": Model("typesafe/jev-1.13.0"),

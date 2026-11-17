@@ -6,7 +6,6 @@ needs that CUAD does not label.
 
 from factoid import Fact, FactTrait, Noul, judge
 
-
 # -- traits CUAD labels ---------------------------------------------------------------------------------------
 
 class ChangeOfControl(FactTrait):

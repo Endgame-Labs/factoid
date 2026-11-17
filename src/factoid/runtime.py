@@ -14,7 +14,7 @@ from .judge import Choice, Judgments, Noul, Question, Score
 if TYPE_CHECKING:
     from .app import Factoid
 
-__all__ = ["current", "use", "Registered", "ModelCalls", "NoApp"]
+__all__ = ["ModelCalls", "NoApp", "Registered", "current", "use"]
 
 _current: contextvars.ContextVar[Factoid | None] = contextvars.ContextVar("factoid_app", default=None)
 _global: list[Factoid] = []

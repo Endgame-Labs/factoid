@@ -15,7 +15,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from .dates import format_datetime, now, parse_datetime
-from .fact_evals import EvalResult, FactEval, DecisionFloors, Nli
+from .fact_evals import DecisionFloors, EvalResult, FactEval, Nli
 from .judge import Choice, Judgments, Question
 from .runtime import ModelCalls, Registered, current
 from .steps import run_step
@@ -26,7 +26,7 @@ from .validity import EXPIRES, LIFETIME_RANGES, validity
 if TYPE_CHECKING:
     from .entity import Entity
 
-__all__ = ["Fact", "Quote", "Mention", "RESOLVE_ANSWERS", "new_id"]
+__all__ = ["RESOLVE_ANSWERS", "Fact", "Mention", "Quote", "new_id"]
 
 
 def new_id(prefix: str) -> str:
@@ -234,7 +234,8 @@ class Fact(Registered, ModelCalls):
                 state["text_before_passages"] = before
         app = current()
         state["similar_stored_facts"] = [
-            {"text": f.text, "source": app.document_title(f.document_id), "date": _fmt(f.valid_from or f.source_datetime)}
+            {"text": f.text, "source": app.document_title(f.document_id),
+             "date": _fmt(f.valid_from or f.source_datetime)}
             for f in self.similar
         ]
         return state
@@ -277,6 +278,7 @@ class Fact(Registered, ModelCalls):
             combined.scores.update({f"{check.name}.{k}": v for k, v in result.scores.items()})
             if result.skipped:
                 combined.note = (combined.note + f" {check.name}: {result.note}").strip()
+                current().skipped_evals[f"{check.name}: {result.note}"] += 1
                 continue
             if not result.passed:
                 combined.passed = False

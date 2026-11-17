@@ -12,9 +12,9 @@ version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = ["factoid"]
 
-# Factoid is not on PyPI yet, so uv installs it from GitHub.
+# Factoid is not on PyPI yet: uv installs it from where this `factoid` came from.
 [tool.uv.sources]
-factoid = {{ git = "https://github.com/Endgame-Labs/factoid" }}
+factoid = {source}
 
 [tool.factoid]
 package = "{package}"
@@ -57,7 +57,7 @@ DOCUMENTS = '''from factoid import ProseDocument
 
 
 class Contract(ProseDocument):
-    """A signed contract or an amendment to one."""
+    """A contract, an agreement, or an amendment to one."""
 
     @property
     def source_datetime(self):
@@ -128,11 +128,13 @@ class Sample(Suite):
     name = "sample"
 
     def documents(self, limit=None):
-        from {package}.documents import Contract
+        # A Raw document is classified first, the way `factoid ingest` does it.
         import json
 
+        from factoid import Raw
+
         meta = json.loads((HERE / "supply.txt.meta.json").read_text())
-        yield Contract((HERE / "supply.txt").read_text(), metadata=meta, uri="sample_docs/supply.txt")
+        yield Raw((HERE / "supply.txt").read_text(), meta, uri="sample_docs/supply.txt", title=meta["title"])
 
     def score(self, app, results):
         expected = {{"consent_required", "liability_cap"}}
@@ -141,9 +143,16 @@ class Sample(Suite):
 '''
 
 
+def _source() -> str:
+    from .version import source
+
+    return source()
+
+
 def write(root: Path, package: str, preset: str = "jev") -> list[Path]:
     files = {
-        root / "pyproject.toml": PYPROJECT.format(name=package.replace("_", "-"), package=package),
+        root / "pyproject.toml": PYPROJECT.format(name=package.replace("_", "-"), package=package,
+                                                  source=_source()),
         root / package / "__init__.py": "",
         root / package / "settings.py": SETTINGS.format(models=PRESETS[preset][1]),
         root / package / "documents.py": DOCUMENTS,

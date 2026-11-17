@@ -41,7 +41,7 @@ def fetch() -> Path:
     target = DATA / "test.json"
     if not target.exists():
         DATA.mkdir(parents=True, exist_ok=True)
-        with urllib.request.urlopen(URL) as response:  # noqa: S310 - fixed https URL
+        with urllib.request.urlopen(URL) as response:
             archive = zipfile.ZipFile(io.BytesIO(response.read()))
         target.write_bytes(archive.read("test.json"))
     return target

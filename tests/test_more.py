@@ -219,7 +219,7 @@ def test_a_provider_with_no_key_and_no_base_url_says_to_set_a_key(monkeypatch, t
     monkeypatch.delenv("FIREWORKS_BASE_URL", raising=False)
     client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, CallLog(None), replay=False)
     client._http = httpx.Client(transport=httpx.MockTransport(lambda r: pytest.fail("no call should be made")))
-    with pytest.raises(ModelError, match="factoid keys set fireworks.*FIREWORKS_BASE_URL"):
+    with pytest.raises(ModelError, match=r"factoid keys set fireworks.*FIREWORKS_BASE_URL"):
         client.generate("hi")
 
 
@@ -260,7 +260,8 @@ def test_a_connect_error_from_a_host_that_has_answered_is_retried(monkeypatch, t
         calls.append(url)
         if len(calls) == 1:
             raise httpx.ConnectError("blip")
-        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}]}, request=httpx.Request("POST", url))
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}]},
+                              request=httpx.Request("POST", url))
 
     monkeypatch.setattr(client._http, "post", post)
     assert client.generate("hi") == "ok"
@@ -273,3 +274,45 @@ def test_models_works_outside_a_project(tmp_path, monkeypatch):
     result = CliRunner().invoke(cli, ["models"])
     assert result.exit_code == 0, result.output
     assert "not in a Factoid project" in result.output and "choose" in result.output
+
+
+def test_a_project_key_beats_the_home_key_and_the_environment_beats_both(monkeypatch, tmp_path):
+    import os
+
+    from factoid import models
+
+    home, project = tmp_path / "home", tmp_path / "proj"
+    (home).mkdir()
+    (project / ".factoid").mkdir(parents=True)
+    (home / ".env").write_text("OPENAI_API_KEY=sk-home\nOPENROUTER_API_KEY=sk-or-home\nFIREWORKS_API_KEY=fw_home\n")
+    (project / ".factoid" / ".env").write_text("OPENAI_API_KEY=sk-project\nFIREWORKS_API_KEY=fw_project\n")
+    monkeypatch.setenv("FACTOID_HOME", str(home))
+    for name in ("OPENAI_API_KEY", "OPENROUTER_API_KEY"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("FIREWORKS_API_KEY", "fw_real")
+    monkeypatch.setattr(models, "_keys_loaded", False)
+    monkeypatch.setattr(models, "KEY_SOURCES", {})
+    models.load_keys()  # the home file first, as a command outside a project would
+    models.load_keys(project)
+    try:
+        assert os.environ["OPENAI_API_KEY"] == "sk-project"
+        assert os.environ["OPENROUTER_API_KEY"] == "sk-or-home"
+        assert os.environ["FIREWORKS_API_KEY"] == "fw_real"
+    finally:
+        for name in ("OPENAI_API_KEY", "OPENROUTER_API_KEY"):
+            os.environ.pop(name, None)
+
+
+def test_vary_refuses_to_replace_a_method_with_a_string():
+    import pytest
+
+    from factoid import ProseDocument
+    from factoid.evals import applied
+
+    class Memo(ProseDocument):
+        """A memo."""
+
+    project = type("P", (), {"documents": [Memo], "facts": [], "entities": [], "settings": type("S", (), {})})()
+    with pytest.raises(ValueError, match="is a method"), applied(project, {"classify": "decision"}):
+        pass
+    assert callable(Memo.classify)

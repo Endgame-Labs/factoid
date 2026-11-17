@@ -5,7 +5,7 @@ from .dates import DateError
 from .document import Chunk, Document, Passage, ProseDocument, Raw
 from .entity import Entity
 from .fact import Fact, Mention, Quote
-from .fact_evals import EvalResult, FactEval, DecisionFloors, Nli
+from .fact_evals import DecisionFloors, EvalResult, FactEval, Nli
 from .judge import Choice, Judgments, Noul, Score, judge
 from .models import Model
 from .settings import Settings
@@ -18,25 +18,25 @@ __all__ = [
     "Choice",
     "Chunk",
     "DateError",
+    "DecisionFloors",
     "Document",
     "Entity",
     "EvalResult",
     "Fact",
-    "Identity",
-    "Ignore",
     "FactEval",
     "FactTrait",
     "Factoid",
+    "Identity",
+    "Ignore",
     "IngestResult",
-    "DecisionFloors",
     "Judgments",
     "Mention",
     "Model",
     "Nli",
     "Noul",
     "Passage",
-    "ProseDocument",
     "Property",
+    "ProseDocument",
     "Quote",
     "Raw",
     "Score",

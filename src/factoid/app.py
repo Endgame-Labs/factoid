@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any, TypeVar
 
 from .dates import format_datetime, now, parse_datetime
-from .document import Document, ProseDocument, Raw, Replacement, classify_raw
+from .document import Document, ProseDocument, Raw, Replacement, UnclaimedDocument, classify_raw
 from .entity import Entity
 from .fact import Fact, Mention, Quote
 from .fact_evals import EvalResult
@@ -31,7 +31,7 @@ from .steps import SKIPPED, run_step
 from .structured import StructuredDocument, header_of
 from .validity import LIFETIME_RANGES
 
-__all__ = ["Factoid", "IngestResult", "SearchHit", "Rejected"]
+__all__ = ["Factoid", "IngestResult", "Rejected", "SearchHit"]
 
 T = TypeVar("T")
 R = TypeVar("R")
@@ -110,6 +110,7 @@ class Factoid:
         self._name_checks: dict[str, bool] = {}
         self.rejected: list[Rejected] = []
         self._duplicates: Counter[str] = Counter()
+        self.skipped_evals: Counter[str] = Counter()  # fact evals that did not run, such as nli with no model, by note
         self._previous_ids: dict[str, dict[str, str]] = {}  # by document: retracted fact ids by text, for reuse
         self._pool = ThreadPoolExecutor(max_workers=max(1, settings.concurrency))
         use(self)
@@ -185,7 +186,7 @@ class Factoid:
                     if len(self.document_classes) == 0:
                         klass = ProseDocument
                     else:
-                        raise ValueError(f"no document class claims {item.uri or 'this document'}")
+                        raise UnclaimedDocument(f"no document class claims {item.uri or 'this document'}")
             item = klass(item.text, metadata=item.metadata, uri=item.uri, title=item.title)
         if not isinstance(item, Document):
             raise TypeError(f"cannot ingest {item!r}")
@@ -709,10 +710,10 @@ class Factoid:
             fact = self.load_fact(fact_id)
             if fact is None:
                 continue
-            if not include_retired and fact.status not in ("current", "contradicted"):
-                # with as_of, a superseded or ended fact still counts if it was valid then
-                if as_of is None or fact.status not in ("superseded", "ended") or fact.valid_until is None:
-                    continue
+            # with as_of, a superseded or ended fact still counts if it was valid then
+            if not include_retired and fact.status not in ("current", "contradicted") and (
+                    as_of is None or fact.status not in ("superseded", "ended") or fact.valid_until is None):
+                continue
             p = fact.valid_at(moment)
             if valid_at is not None and fact.valid_at(parse_datetime(valid_at)) < 0.5:
                 continue

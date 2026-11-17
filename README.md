@@ -126,7 +126,7 @@ factoid search "Vega consent"
 factoid read <fact id>                           # one fact, its quotes, its entities, and its history
 factoid entities list
 factoid eval                                     # score the project against labeled data
-factoid eval --vary fact_evals=none,nli,decision_floors  # compare fact eval chains on the same documents
+factoid eval --vary fact_evals=none,decision_floors  # compare fact eval chains on the same documents
 ```
 
 The sample contract has three facts, and the sample eval expects the `consent_required` and `liability_cap` traits. Get
@@ -169,7 +169,7 @@ acme/
 │   └── prompts/
 │       ├── counsel_email_extract.md.j2
 │       └── thread_summary.md.j2
-└── evals/diligence.jsonl
+└── evals/diligence.py
 ```
 
 `Document` has two base subclasses: `ProseDocument` for text and `StructuredDocument` for tabular
@@ -209,7 +209,7 @@ class CounselEmail(ProseDocument):
 
     @property
     def source_datetime(self):
-        return self.metadata["sent_at"]
+        return self.metadata.get("sent_at")
 
     def extract(self, chunk):
         # Summarize the quoted thread first, then extract with that summary as context.
@@ -221,6 +221,12 @@ Every document has `source_datetime`, its own date from its metadata, such as an
 date, or a wiki page's last edit. Factoid passes `source_datetime` to the extractor ahead of the passages so relative
 dates in the text resolve against the document's date, never against ingest time. Accepted values are ISO-8601 strings
 with a timezone offset or `Z`, epoch seconds, milliseconds, or microseconds, and timezone-aware `datetime` objects.
+
+When `factoid ingest` reads a file, it also reads a JSON file next to it named `<file>.meta.json`, such as
+`supply.txt.meta.json`, if one exists. Its keys become the document's metadata: a date like `signed_at` or `sent_at`, a
+title, parties, or anything a class reads. The classifier sees the metadata too. A class should read metadata with
+`self.metadata.get("signed_at")`, so a file without a sidecar still ingests; `source_datetime` is then `None`, and
+relative dates stay unresolved. In Python, `app.ingest(path, metadata={...})` adds or overrides keys.
 
 ### Chunking
 
@@ -259,7 +265,7 @@ class Contract(ProseDocument):
 
     @property
     def source_datetime(self):
-        return self.metadata["signed_at"]
+        return self.metadata.get("signed_at")
 ```
 
 The built-in `situate` prompt passes the whole document and the chunk to the model:
@@ -456,10 +462,10 @@ free-text `kind` written by discovery, such as `"court"`. Placeholder mentions s
 `"someone"` are refused; a mention that matches no entity stays on the fact as an unlinked mention, and the fact is
 kept.
 
-Untyped entities are searchable, editable, mergeable, and deletable through the CLI, the API, and MCP.
-`factoid entities kinds` lists untyped kinds by entity and fact count, and
-`factoid entities retype --kind "court" Court` promotes matching entities to a declared class, with the decision model
-confirming each one and without re-extracting.
+Untyped entities are kept, linked, and searchable. `factoid entities kinds` lists untyped kinds by entity and fact
+count. Editing, merging, and deleting entities through the CLI, the API, and MCP are planned and not built yet.
+`factoid entities retype --kind "court" Court` is also planned: it will promote matching entities to a declared class
+with the decision model confirming each one and without re-extracting.
 
 When a new entity is stored, Factoid runs a claiming step across existing facts, searching stored facts for the entity's
 names and asking the decision model to confirm each hit. Two entities that share a unique key merge by rule, while two
@@ -517,7 +523,8 @@ class Contract(ProseDocument):
         return None   # the middle band goes to review
 ```
 
-Two classes claiming one file is an error, and files that no class claims go to an unclassified list. `classify_view`
+Two classes claiming one file is an error. `factoid ingest` skips a file that no class claims, lists it at the end,
+and suggests `--as <Class>`. `classify_view`
 controls what the classifier sees, and `factoid classifiers show` lists the registry.
 
 ### Default fact evals
@@ -529,7 +536,7 @@ first failure, so the cheap fact eval goes first.
 
 | Fact eval | Responsibility |
 | --- | --- |
-| `nli` | Small entailment model. Checks that the cited passage entails the sentence. Cheap, so `nli` runs first. |
+| `nli` | Small entailment model that checks that the cited passage entails the sentence (planned: no NLI model is wired up yet, so it is skipped, and `factoid eval` says so). |
 | `decision_floors` | Six yes-or-no questions in one decision-model call. Each probability has a floor; all six must pass. |
 
 Each `decision_floors` answer is a probability that must clear the floor for that question:
@@ -591,7 +598,7 @@ class Transcript(ProseDocument):
     )]
 ```
 
-`factoid eval --vary fact_evals=none,nli,decision_floors` compares chains on the same documents. A value written
+`factoid eval --vary fact_evals=none,decision_floors` compares chains on the same documents. A value written
 `@module:name` uses a chain the project defines, such as `--vary fact_evals=@evals.variants:STRICT`.
 
 ### Model calls
@@ -632,8 +639,49 @@ class Project(Settings):
     )
 ```
 
-Eval runs can swap step strategies from the CLI without modifying project files. `factoid eval --vary
-classify=decision,llm,rules` runs the same documents under each strategy and compares quality, cost, and latency.
+`--vary` sets a class attribute or setting for each value on the same documents, such as
+`--vary fact_evals=none,decision_floors` or `--vary situate=true,false`. For a Python value (a chain of fact evals, a
+set of models, or a replacement method), define it in a module and name it with `@module:NAME`, such as
+`--vary models=@evals.variants:RUNE`. A plain string that would replace a method is refused with an error.
+
+### Eval suites
+
+An eval suite is a Python class in the project's `evals/` folder that subclasses `factoid.evals.Suite`. `documents()`
+yields what to ingest: a `Raw` document (`text`, `metadata`, `uri`, and `title`) goes through classification the way
+`factoid ingest` does, and a `Document` instance skips it. `score(app, results)` gets the app and one `IngestResult`
+per document (each has `.document`, `.facts`, and `.rejected`) and returns a dict of metrics, which becomes the
+scorecard. `factoid.evals` has `prf(tp, fp, fn)` for precision, recall, and F1, plus `aupr(scores, labels)` and
+`precision_at_recall(scores, labels, recall)` for scores.
+
+`factoid eval` runs every suite, or the ones named. Each run gets a fresh store under `runs/<time>/<suite>/<variant>/`.
+`parallel = N` ingests `N` documents at once when they are independent. `factoid init` writes `evals/sample.py` as a
+starting point.
+
+```python
+# evals/diligence.py
+import json
+from pathlib import Path
+
+from factoid import Raw
+from factoid.evals import Suite, prf
+
+DOCS = Path(__file__).parent.parent / "sample_docs"
+
+
+class Diligence(Suite):
+    name = "diligence"
+
+    def documents(self, limit=None):
+        for path in sorted(DOCS.glob("*.txt"))[:limit]:
+            meta_file = path.with_name(path.name + ".meta.json")
+            meta = json.loads(meta_file.read_text()) if meta_file.exists() else {}
+            yield Raw(path.read_text(), meta, uri=str(path), title=meta.get("title"))
+
+    def score(self, app, results):
+        expected = {"consent_required", "liability_cap"}
+        found = {t for r in results for f in r.facts for t in f.trait_names}
+        return {"traits": prf(len(expected & found), len(found - expected), len(expected - found))}
+```
 
 ## Prompts
 
@@ -676,18 +724,18 @@ Fact.search("change of control", about=vega)                      # includes up 
 Fact.search("liability cap", about=agreement, as_of="2027-02-01")   # weight relevance by validity as of a date
 CounselFact.search("closing risk")                                # search scoped to one fact class
 Fact.unlinked(since="30d")                                        # facts with a mention that matched no entity
-chunks.search("assignment consent", about=agreement)              # search source chunks, indexed with situations
+Chunk.search("assignment consent", about=agreement)               # search source chunks, indexed with situations
 ```
 
 Search weights each fact's score by the probability that the fact is still valid at `as_of=` (now by default), so stale
 facts stay findable while ranking lower. Pass `freshness="any"` to disable freshness weighting for historical queries,
 or `valid_at=` to filter to facts likely still valid. Source chunks live in their own namespace and are searched with
-`chunks.search(...)`; searching facts and chunks together runs hybrid search in each namespace and reranks the combined
-list.
+`Chunk.search(...)`. Searching facts and chunks together in one ranked list is planned.
 
 `factoid stats` counts documents, facts, and entities by class and counts facts by status. It also reports facts with
 no trait, unlinked mentions, single-fact entities, facts past their expected validity, and open contradictions. Pass
-`--examples 3` to add three sample facts per fact class and the three entities with the most facts per entity class.
+`--examples 3` to add up to three sample facts per fact class, at most one per document, and the three entities with
+the most facts per entity class.
 Use `--data-dir` to point `factoid stats` at another store, such as an eval run's folder.
 
 ## Usage
@@ -747,6 +795,8 @@ recent = orion.facts(since="30d")      # every recent fact linked to Orion
 
 ## Further reading
 
-Read [docs/mental-model.md](docs/mental-model.md) first, then [docs/README.md](docs/README.md).
-[docs/config.md](docs/config.md) and [docs/plugins.md](docs/plugins.md) still cover the older single-YAML design and
-will be updated.
+- [SPEC.md](SPEC.md) has every design decision, how settled each one is, and what is built (section 17).
+- [docs/cli.md](docs/cli.md) is the command reference.
+- [examples/](examples/) has three apps: `legal` (contracts and amendments), `nba` (game recaps and box scores), and
+  `iscrag` (news transcripts, with a question-answering eval). Each has a README with its eval results.
+- [docs/archive/](docs/archive/) holds docs from an earlier design; do not follow them.

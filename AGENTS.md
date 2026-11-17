@@ -27,6 +27,40 @@ leaves their machine.
 - If the file does not exist, create it the first time the developer states a preference.
 - Do not put secrets in it, and do not put project decisions in it. Project decisions go in `SPEC.md`.
 
+## Develop
+
+Requires Python 3.13 or later, managed by `uv`.
+
+```sh
+uv sync                              # install
+uv run pytest                        # about 80 tests, under two seconds, no network: tests use fake models
+uv run ruff check src tests examples # must pass; settings in pyproject.toml
+uv run factoid --help
+```
+
+To try a change end to end, make a project in a scratch folder with `uv run --project <this repo> factoid init`; its
+`pyproject.toml` installs Factoid from this checkout. Live model calls need keys (`factoid keys set`) or
+`<PROVIDER>_BASE_URL` for a gateway.
+
+`src/factoid/` modules:
+
+- `app.py`: the `Factoid` app (ingest, search, stats, saving, and loading)
+- `document.py`: `Document`, `ProseDocument`, segmenting, chunking, and classifying
+- `structured.py`: `StructuredDocument` for tables
+- `fact.py`: `Fact` and its steps (validate, evaluate, repair, assess, link, and resolve)
+- `fact_evals.py`: `Nli`, `DecisionFloors`, and their questions and floors
+- `entity.py`: `Entity`, linking, and claiming
+- `models.py`: providers, keys, the model client, and the call cache
+- `store.py`: SQLite system of record
+- `search.py`: `LocalIndex` and `Turbopuffer`
+- `evals.py`: `Suite`, `--vary`, and scorecards
+- `cli.py`: the `factoid` command
+- `scaffold.py`: what `factoid init` writes
+- `prompts/`: the built-in Jinja prompts
+
+Example apps in `examples/` have their own `pyproject.toml` and run against this checkout. Their eval suites call real
+models and cost money; run them only when asked.
+
 ## Working rules
 
 - **Keep `SPEC.md` current.** When a design decision is made or changed, update `SPEC.md` in the same change: the

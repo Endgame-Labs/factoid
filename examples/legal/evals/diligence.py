@@ -33,8 +33,14 @@ class Diligence(Suite):
 
     def score(self, app, results) -> dict[str, Any]:
         from legal.entities import Agreement, Company
-        from legal.facts import (AssignmentRestriction, ChangeOfControl, ClosingRisk, CounselFact, LiabilityCap,
-                                 SourceFact)
+        from legal.facts import (
+            AssignmentRestriction,
+            ChangeOfControl,
+            ClosingRisk,
+            CounselFact,
+            LiabilityCap,
+            SourceFact,
+        )
 
         by_doc = {Path(r.document.uri).name: r.facts for r in results}
         contract = by_doc.get("supply_agreement.txt", [])
@@ -66,8 +72,8 @@ class Diligence(Suite):
 
         before = app.search_facts("Vega liability cap", as_of="2026-06-01T00:00:00Z", top_k=3)
         after = app.search_facts("Vega liability cap", as_of="2027-02-01T00:00:00Z", top_k=3)
-        checks["search: cap as of 2026-06-01 is $1M"] = bool(before) and "1,000,000" in before[0].fact.text \
-            or bool(before) and "$1M" in before[0].fact.text
+        checks["search: cap as of 2026-06-01 is $1M"] = (bool(before) and "1,000,000" in before[0].fact.text) \
+            or (bool(before) and "$1M" in before[0].fact.text)
         checks["search: cap as of 2027-02-01 is $2M"] = bool(after) and ("2,000,000" in after[0].fact.text
                                                                          or "$2M" in after[0].fact.text)
         vega = Company.find("Vega Components Corp.") or Company.find("Vega")

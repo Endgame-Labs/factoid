@@ -53,7 +53,7 @@ def get(url: str, polite: bool = False) -> str:
     if polite:
         time.sleep(1.0)
     request = urllib.request.Request(url, headers={"User-Agent": AGENT})
-    with urllib.request.urlopen(request, timeout=60) as response:  # noqa: S310 - fixed https hosts
+    with urllib.request.urlopen(request, timeout=60) as response:
         text = response.read().decode("utf-8", errors="replace")
     cached.write_text(text)
     return text

@@ -9,7 +9,7 @@ from importlib import metadata
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
-__all__ = ["version", "commit", "describe"]
+__all__ = ["commit", "describe", "source", "version"]
 
 
 def version() -> str:
@@ -38,6 +38,24 @@ def commit() -> str | None:
     except (OSError, subprocess.SubprocessError):
         return None
     return (out.stdout.strip() or None) if out.returncode == 0 else None
+
+
+def source() -> str:
+    """Where a new project should install Factoid from, as a `[tool.uv.sources]` value: the local checkout when this
+    Factoid was installed from one, otherwise the GitHub repository at the commit it was installed from."""
+    try:
+        raw = metadata.distribution("factoid").read_text("direct_url.json")
+    except metadata.PackageNotFoundError:
+        raw = None
+    info = json.loads(raw) if raw else {}
+    url = urlparse(info.get("url", ""))
+    if url.scheme == "file":
+        folder = Path(unquote(url.path))
+        if (folder / "pyproject.toml").is_file() and (folder / "src" / "factoid").is_dir():
+            return f'{{ path = "{folder}", editable = true }}'
+    sha = (info.get("vcs_info") or {}).get("commit_id")
+    pin = f', rev = "{sha}"' if sha else ""
+    return f'{{ git = "https://github.com/Endgame-Labs/factoid"{pin} }}'
 
 
 def describe() -> str:

@@ -13,7 +13,7 @@ from typing import Any
 
 import jinja2
 
-__all__ = ["Template", "template", "render", "builtin", "BUILTIN_DIR"]
+__all__ = ["BUILTIN_DIR", "Template", "builtin", "render", "template"]
 
 BUILTIN_DIR = Path(__file__).parent / "prompts"
 
