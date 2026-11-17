@@ -59,7 +59,7 @@ factoid stats --examples 3 --data-dir runs/<time>/playoffs/default
 
 ## Results (2026-11-17)
 
-One run across all 73 documents took 42 minutes, 16,125 model calls, and 22.9 million tokens. The run passes 11 of 11
+One run across all 73 documents took 28 minutes, 16,996 model calls, and 21.2 million tokens. The run passes 11 of 11
 checks:
 
 | Check | Result |
@@ -86,33 +86,32 @@ From the run above (`factoid stats --examples 3`):
 
 | Documents | Count | Facts |
 | --- | --- | --- |
-| Interview | 45 | 1,119 |
-| Recap | 22 | 1,003 |
-| Article | 3 | 718 |
+| Interview | 45 | 1,224 |
+| Recap | 22 | 1,104 |
+| Article | 3 | 812 |
 | BoxScore | 1 (491 rows) | 982 |
 | GameLog | 1 (22 rows) | 44 |
 | PlayerTotals | 1 (14 rows) | 28 |
-| All | 73 | 3,894 |
+| All | 73 | 4,194 |
 
-Facts by status: 3,696 current, 148 superseded, 48 contradicted, and 2 ended. Facts by class: 2,775 `Reported` and
-1,119 `Remark`.
+Facts by status: 3,966 current, 166 superseded, 59 contradicted, and 3 ended. Facts by class: 2,970 `Reported` and
+1,224 `Remark`.
 
 | Entities | Count | Most facts |
 | --- | --- | --- |
-| Player | 141 | Stephen Curry (693), Draymond Green (470), Klay Thompson (374) |
-| Person | 54 | Steve Kerr (405), Gary Payton (61), Taylor Jenkins (23) |
-| Untyped | 48 | 2022 NBA playoffs (236), NBA (52), ESPN (21) |
-| Team | 31 | Golden State Warriors (1,384), Boston Celtics (519), Memphis Grizzlies (248) |
-| Game | 27 | Game 3 of the 2022 NBA Finals (158), Game 2 of the 2022 NBA Finals (135), Game 1 of the 2022 NBA Finals (129) |
-| Series | 9 | 2022 NBA Finals (592), 2022 NBA Eastern Conference finals (31), 2022 Western Conference Finals (21) |
-| All | 310 | |
+| Player | 142 | Stephen Curry (764), Draymond Green (514), Klay Thompson (408) |
+| Person | 54 | Steve Kerr (428), Gary Payton (76), Taylor Jenkins (27) |
+| Untyped | 48 | 2022 NBA playoffs (261), NBA (50), ESPN (19) |
+| Team | 31 | Golden State Warriors (1,525), Boston Celtics (567), Memphis Grizzlies (280) |
+| Game | 27 | Game 3 of the 2022 NBA Finals (160), Game 1 of the 2022 NBA Finals (133), Game 4 of the 2022 NBA Finals (80) |
+| Series | 9 | 2022 NBA Finals (650), 2022 NBA Eastern Conference finals (33), 2022 Western Conference Finals (30) |
+| All | 311 | |
 
 Sample facts:
 
 - `Remark`: "Steve Kerr said the 2022 NBA Finals championship is Stephen Curry's crowning achievement in what has
   already been an incredible career."
-- `Remark`: "Stephen Curry said that Jordan Poole's first NBA Finals game involved a lot of adrenaline and a lot of
-  nerves."
+- `Remark`: "Steve Kerr said the training staff said Stephen Curry was good to go for Game 4 of the 2022 NBA Finals."
 - `Reported`: "Stephen Curry became the first player in NBA history to surpass 500 three-pointers in the playoffs,
   finishing with 561."
 - `Reported`: "In the 2022 NBA Finals, the Celtics lead the series 2-1." (from `games.csv`, row 19; superseded on
@@ -123,16 +122,16 @@ Sample facts:
 ## What it gets wrong
 
 - Recaps and transcripts often use bare game names like "Game 4", and the extractor sometimes keeps them as-is. "Game
-  1", "Game 2", "Game 4", and "Game 5" became four extra Game entities (6 to 35 facts each) instead of linking to the
+  1", "Game 2", "Game 4", and "Game 5" became four extra Game entities (17 to 78 facts each) instead of linking to the
   right game. The same happens with series names: "NBA Finals" and "Memphis series" stay separate from the series in
   the game log. Of the 27 Game and 9 Series entities, 22 games and 4 series are from the Warriors' run. Some of the
   others are real events outside that run, such as the 2022 All-Star Game and the 2019 Finals. (Before the fact eval
   tuning of 2026-11-17, there were 28 Game and 13 Series entities.)
 - ASAP's transcript headers list Gary Payton II as "Gary Payton", which is also his father's name. He became a Person
   rather than a Player.
-- Some facts are not self-contained. An independent model (Kimi K3.1 Pro) flagged 3.0% of 300 random facts for a
-  reference a reader cannot resolve (6.7% before the tuning), such as "In that game, the Suns outscored the Mavericks
-  61-34."
+- Some facts are not self-contained. An independent model (Kimi K3.1 Pro) flagged 4.7% of 300 random facts for a
+  reference a reader cannot resolve (6.7% before the tuning), such as "Bismack Biyombo and Marquese Chriss had a verbal
+  altercation after the foul."
 
 Fixing these issues requires app-level changes, such as guidance that always names the series or passing a game's
 context to the extractor. Those changes have not been tried yet.

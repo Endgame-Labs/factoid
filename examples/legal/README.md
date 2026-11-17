@@ -136,33 +136,35 @@ extract prompt asks the extractor to resolve references and relative dates.
 
 During tuning, an extract prompt line against repeating the document's date stopped facts like "The Sponsorship
 Agreement is dated July 16, 2012." CUAD agreement dates fell to 13 of 18. Rewording it brought them back to 16 of 18.
+The numbers below are from the final code.
 
 | Suite | Before (2026-11-16) | After (2026-11-17) |
 | --- | --- | --- |
 | Sample deal checks | 15/15 | 15/15 |
-| CUAD 1 to 20: clause detection (F1, mean AUPR) | 0.80, 0.97 | 0.80, 0.96 |
-| CUAD 1 to 20: gold clauses quoted by a kept fact | 0.97 | 0.96 |
-| CUAD 1 to 20: gold clauses quoted by a fact with the right trait | 0.83 | 0.84 |
+| CUAD 1 to 20: clause detection (F1, mean AUPR) | 0.80, 0.97 | 0.81, 0.97 |
+| CUAD 1 to 20: gold clauses quoted by a kept fact | 0.97 | 0.97 |
+| CUAD 1 to 20: gold clauses quoted by a fact with the right trait | 0.83 | 0.85 |
 | CUAD 1 to 20: dates (agreement, effective, expiration) | 16/18, 12/14, 8/9 | 16/18, 13/14, 8/9 |
-| Amendment supersessions found (all chains) | 15/16 | 12/16 |
-| Amendment as-of search (all chains) | 35/36 | 32/36 |
-| False changes to base facts (tuning, NEON, fresh, SEC) | 3.3%, 6.8%, 3.4%, 1.4% | 2.1%, 5.9%, 3.5%, 1.2% |
+| Amendment supersessions found (all chains) | 15/16 | 15/16 |
+| Amendment as-of search (all chains) | 35/36 | 34/36 |
+| False changes to base facts (tuning, NEON, fresh, SEC) | 3.3%, 6.8%, 3.4%, 1.4% | 2.6%, 5.9%, 4.0%, 1.0% |
 
-Amendment numbers move by one or two between runs of the same code. Treat a difference of one as noise. This run missed
-two supersessions that passed in the run before it: the ScanSource term extension (both facts were kept, and resolve did
-not connect them) and a Tyson leverage ratio replaced by a schedule of ratios (SPEC decision 69).
+Amendment numbers move by one or two between runs of the same code. Treat a difference of one as noise. An earlier run
+during tuning found 12 of 16 supersessions: it missed the ScanSource term extension (both facts were kept, and resolve
+did not connect them) and a Tyson leverage ratio replaced by a schedule of ratios (SPEC decision 69). The final run
+misses one, the Life Sciences prepayment clause (SPEC decision 71).
 
 | Questions answered with the terms in force (36) | Facts, 2k tokens | Facts, 8k tokens | Chunks, 2k tokens | Chunks, 8k tokens |
 | --- | --- | --- | --- | --- |
 | Before (2026-11-16) | 33 | 34 | 20 | 33 |
-| After (2026-11-17) | 34 | 33 | 20 | 35 |
-| Answered with the outdated terms, after | 0 | 2 | 4 | 0 |
+| After (2026-11-17) | 34 | 35 | 20 | 34 |
+| Answered with the outdated terms, after | 1 | 0 | 4 | 1 |
 
-The two outdated fact answers at 8k are reader mistakes. With more facts in view, the reader picked a later amendment's
-terms for an earlier date (Glu's Fox party in 2005 and ScanSource's returns in 2008).
+The outdated fact answer at 2k is Glu's Fox party in 2005: the reader picked a later amendment's party for an earlier
+date.
 
-After tuning, CUAD 1 to 20 (20 contracts) produced 4,200 facts and 450 entities. It took 19 minutes, 17,715 model calls,
-and 29.8 million tokens.
+After tuning, CUAD 1 to 20 (20 contracts) produced 4,299 facts and 450 entities. It took 16 minutes, 18,046 model calls
+(7,506 replayed), and 19.3 million tokens.
 
 ## Facts and entities
 

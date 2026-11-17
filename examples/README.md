@@ -14,8 +14,8 @@ Facts and entities from each app's last full run (each README has the breakdown 
 | --- | --- | --- | --- | --- |
 | `legal` | The sample deal | 4 | 22 | 11 |
 | `legal` | CUAD contracts 1 to 20 | 20 | 3,884 | 480 |
-| `nba` | The 2022 playoffs | 73 | 3,894 | 310 |
-| `iscrag` | The 100-transcript development sample | 100 | 6,501 | 1,581 |
+| `nba` | The 2022 playoffs | 73 | 4,194 | 311 |
+| `iscrag` | The 100-transcript development sample | 100 | 6,676 | 1,603 |
 
 Data, model-call caches, and run outputs stay out of git: see each app's `.gitignore`. MediaSum is research-use only,
 and the ISC-RAG questions come from the study database, so neither is committed. The NBA app's recaps and transcripts
