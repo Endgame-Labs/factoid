@@ -17,7 +17,15 @@ from typing import Any
 import click
 
 from . import scaffold
-from .models import PROVIDERS, ModelError, keys_file, load_keys
+from .models import (
+    GENERATION_STEPS,
+    KEY_SOURCES,
+    PROVIDERS,
+    ModelError,
+    check_models,
+    keys_file,
+    load_keys,
+)
 from .project import find_root, load, package_name
 
 __all__ = ["main"]
@@ -99,15 +107,22 @@ def cli() -> None:
 
 @cli.command()
 @click.option("--package", help="Python package name (defaults to the folder name).")
-def init(package: str | None) -> None:
+@click.option("--models", "preset", type=click.Choice(list(scaffold.PRESETS)), default="jev", show_default=True,
+              help="Which providers settings.py uses: jev (TypeSafe and Fireworks), fireworks (Fireworks alone), "
+                   "or openai (OpenAI alone).")
+def init(package: str | None, preset: str) -> None:
     """Set up a project in the current folder: sample classes, sample documents, and an eval."""
     root = Path.cwd()
     if (root / "pyproject.toml").exists() and find_root(root) == root:
         raise click.ClickException("this folder is already a Factoid project")
     name = package or root.name.replace("-", "_").lower()
-    for path in scaffold.write(root, name):
+    for path in scaffold.write(root, name, preset):
         click.echo(f"  wrote {path.relative_to(root)}")
-    click.echo("Next: factoid doctor, then factoid ingest sample_docs")
+    providers = scaffold.PRESETS[preset][0]
+    click.echo(f"\nThese models need a key for {' and '.join(providers)}. Next:")
+    click.echo("  factoid keys set               asks for each key and says where to get it")
+    click.echo("  factoid doctor                 one small call per workload")
+    click.echo("  factoid ingest sample_docs")
 
 
 # -- ingest and reads ---------------------------------------------------------------------------------------
@@ -494,31 +509,133 @@ def prompts_show(target: str) -> None:
 # -- keys, models, and doctor -------------------------------------------------------------------------------
 
 
-@cli.group()
-def keys() -> None:
-    """Provider keys."""
+TURBOPUFFER = {"env": "TURBOPUFFER_API_KEY", "url": "https://turbopuffer.com/dashboard",
+               "for": "search, only when settings.py sets search = Turbopuffer(...)"}
+KEY_CHOICES = sorted([*PROVIDERS, "turbopuffer"])
 
 
-@keys.command("set")
-@click.argument("provider", type=click.Choice(sorted([*PROVIDERS, "turbopuffer"])))
-@click.option("--project", "for_project", is_flag=True, help="Store the key for the current project only.")
-def keys_set(provider: str, for_project: bool) -> None:
-    """Prompt for a key and store it in ~/.factoid/.env (or the project's .factoid/.env)."""
-    root = find_root() if for_project else None
-    if for_project and root is None:
-        raise click.ClickException("not inside a Factoid project")
-    env = "TURBOPUFFER_API_KEY" if provider == "turbopuffer" else PROVIDERS[provider].key_env
-    value = click.prompt(f"{env}", hide_input=True).strip()
+def _key_env(provider: str) -> str:
+    return TURBOPUFFER["env"] if provider == "turbopuffer" else PROVIDERS[provider].key_env
+
+
+def _key_status(provider: str) -> str:
+    """Whether a provider's key is set, and where it comes from."""
+    env = _key_env(provider)
+    if not os.environ.get(env, "").strip():
+        return "not set"
+    source = KEY_SOURCES.get(env)
+    value = os.environ[env].strip()
+    stored = {}
+    if source is not None and source.is_file():
+        for line in source.read_text().splitlines():
+            name, _, raw = line.partition("=")
+            stored[name.strip()] = raw.strip().strip("'\"")
+    if stored.get(env) != value:
+        return "set (environment variable)"
+    home = Path.home()
+    shown = f"~/{source.relative_to(home)}" if source.is_relative_to(home) else str(source)
+    return f"set ({shown})"
+
+
+def _needed_keys(app: Any) -> dict[str, list[str]]:
+    """The providers a project's settings call, and the workloads each one serves."""
+    needed: dict[str, list[str]] = {}
+    for workload, model in app.client.models.items():
+        if model is not None and model.provider_name in PROVIDERS:
+            needed.setdefault(model.provider_name, []).append(workload)
+    if type(app.index).__name__ == "Turbopuffer":
+        needed.setdefault("turbopuffer", []).append("search")
+    return needed
+
+
+def _about_key(provider: str) -> list[str]:
+    """What a provider's key is for and where to get one, as lines to print before the prompt."""
+    if provider == "turbopuffer":
+        return [f"turbopuffer: {TURBOPUFFER['for']}.", f"  Get a key: {TURBOPUFFER['url']}"]
+    p = PROVIDERS[provider]
+    lines = [f"{provider}: can serve {', '.join(p.kinds)}.", f"  Get a key: {p.key_url}"]
+    if p.access:
+        lines.append(f"  {p.access}.")
+    if provider == "typesafe":
+        lines.append("  No TypeSafe access? Fireworks (fireworks/rune) and OpenAI (openai/gpt-6-luna) also serve "
+                     "choose; `factoid init --models fireworks` sets a project up with Fireworks alone.")
+    return lines
+
+
+def _store_key(provider: str, value: str, root: Path | None) -> None:
     problem = check_key(provider, value)
     if problem and not click.confirm(f"{problem}. Store it anyway?", default=False):
         raise click.ClickException("key not stored")
+    env = _key_env(provider)
     path = keys_file(root)
     path.parent.mkdir(parents=True, exist_ok=True)
     lines = [ln for ln in (path.read_text().splitlines() if path.exists() else []) if not ln.startswith(f"{env}=")]
     lines.append(f"{env}={value}")
     path.write_text("\n".join(lines) + "\n")
     path.chmod(0o600)
+    os.environ[env] = value
+    KEY_SOURCES[env] = path
     click.echo(f"stored {env} in {path}")
+
+
+@cli.group()
+def keys() -> None:
+    """Provider keys: which ones your models need, where to get them, and where they are stored."""
+
+
+@keys.command("set")
+@click.argument("provider", required=False, type=click.Choice(KEY_CHOICES))
+@click.option("--project", "for_project", is_flag=True, help="Store the key for the current project only.")
+def keys_set(provider: str | None, for_project: bool) -> None:
+    """Store a provider key in ~/.factoid/.env (or the project's .factoid/.env).
+
+    With no PROVIDER, it asks for each key the project's models need (or the default models, outside a project)
+    and says where to get each one. Press Enter to skip a key.
+    """
+    root = find_root() if for_project else None
+    if for_project and root is None:
+        raise click.ClickException("not inside a Factoid project")
+    if provider:
+        for line in _about_key(provider):
+            click.echo(line)
+        value = click.prompt(_key_env(provider), hide_input=True).strip()
+        _store_key(provider, value, root)
+        return
+    app = _project_or_defaults()
+    needed = _needed_keys(app)
+    where = "This project's models" if find_root() is not None else "The default models"
+    click.echo(f"{where} need these keys:")
+    for name, workloads in needed.items():
+        click.echo(f"  {name:<12} {_key_env(name):<22} {', '.join(workloads):<24} {_key_status(name)}")
+    click.echo("")
+    missing = [name for name in needed if _key_status(name) == "not set"]
+    if not missing:
+        click.echo("All set. `factoid keys set <provider>` replaces one; `factoid doctor` checks them.")
+        return
+    click.echo("For each missing key, paste it, or press Enter to skip. On exe.dev, a provider's integration answers "
+               "without a key.")
+    for name in missing:
+        click.echo("")
+        for line in _about_key(name):
+            click.echo(line)
+        value = click.prompt(_key_env(name), default="", show_default=False, hide_input=True).strip()
+        if not value:
+            click.echo(f"skipped {name}")
+            continue
+        _store_key(name, value, root)
+    click.echo("\nNext: factoid doctor")
+
+
+@keys.command("list")
+def keys_list() -> None:
+    """Every provider: whether its key is set, where it comes from, what uses it, and where to get one."""
+    app = _project_or_defaults()
+    needed = _needed_keys(app)
+    click.echo(f"{'provider':<12} {'variable':<22} {'status':<34} {'used by':<24} get a key")
+    for name in KEY_CHOICES:
+        url = TURBOPUFFER["url"] if name == "turbopuffer" else PROVIDERS[name].key_url
+        used = ", ".join(needed.get(name, [])) or "-"
+        click.echo(f"{name:<12} {_key_env(name):<22} {_key_status(name):<34} {used:<24} {url}")
 
 
 @cli.command()
@@ -526,20 +643,25 @@ def models() -> None:
     """Each workload, its model, and whether its key is set."""
     app = _project_or_defaults()
     click.echo(f"{'workload':<10} {'model':<34} key")
-    steps = [s for s in ("situate", "extract", "repair", "discover") if s in app.client.models]
+    steps = [s for s in GENERATION_STEPS if s in app.client.models]
     for workload in ("choose", "generate", *steps, "embed", "rerank"):
         model = app.client.models.get(workload)
         if model is None:
             click.echo(f"{workload:<10} {'(none)':<34} -")
             continue
-        provider = model.provider
-        if provider.api_key():
-            status = "set"
+        provider = PROVIDERS.get(model.provider_name)
+        if provider is None:
+            status = f"unknown provider {model.provider_name!r}"
+        elif provider.api_key():
+            status = _key_status(provider.name)
         elif provider.uses_integration():
-            status = f"not set (`factoid keys set {provider.name}`; on exe.dev, the integration answers)"
+            status = (f"not set: uses the exe.dev integration, which answers only on exe.dev "
+                      f"(`factoid keys set {provider.name}`)")
         else:
             status = f"not set (using {provider.base_url()})"
         click.echo(f"{workload:<10} {model.name:<34} {status}")
+    for problem in check_models(app.client.models):
+        click.echo(f"problem: {problem}")
 
 
 @cli.command()
@@ -549,6 +671,9 @@ def doctor() -> None:
 
     app = _project_or_defaults()
     app.client.replay = False
+    problems = check_models(app.client.models)
+    for problem in problems:
+        click.echo(f"settings   FAILED: {problem}")
     checks = {
         "choose": lambda: app.client.ask({"text": "Factoid doctor."}, {"ok": Noul("Is this a test?")}),
         "generate": lambda: app.client.generate("Answer with the word ok."),
@@ -556,7 +681,7 @@ def doctor() -> None:
     }
     if app.client.models.get("rerank"):
         checks["rerank"] = lambda: app.client.rerank("ok", ["ok", "no"])
-    failed = False
+    failed = bool(problems)
     for workload, check in checks.items():
         try:
             check()

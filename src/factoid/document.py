@@ -295,7 +295,7 @@ class ProseDocument(Document):
     def segment(self) -> list[Passage]:
         """Split the document into passages: paragraphs, with long ones split into sentences."""
         spans: list[tuple[int, int]] = []
-        for match in re.finditer(r"\S(?:.*?\S)?(?=\n\s*\n|\Z)", self.text, re.S):
+        for match in re.finditer(r"\S(?:.*?\S)?(?=\n\s*\n|\s*\Z)", self.text, re.S):
             start, end = match.start(), match.end()
             if self.sentence_passages or end - start > self.max_passage:
                 spans.extend(split_sentences(self.text[start:end], start))
