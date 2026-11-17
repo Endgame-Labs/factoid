@@ -776,8 +776,24 @@ work and needs evals before any claim about its quality.
   project is created. After that, a person changes a model by editing the file.
 - A provider can be keyless: a local runtime, or a gateway that injects credentials.
 
-**Open.** Whether the four decision models share a request shape. Jev takes a JSON state plus named questions of type
-`noul`, `choice`, or `score`, each with instructions and criteria. The other three have not been checked.
+**Decided** (Kyle, 2026-11-17). A project can run on OpenAI alone, or on Fireworks alone (experimental, decision
+80). Fireworks has Rune and Qwen embeddings; OpenAI has its Decisions API and embeddings. `factoid init --models jev|fireworks|openai` writes one of
+three presets, and Jev stays the default and the recommendation.
+
+**Decided** (checked against the providers' docs, 2026-11-17). Request shapes for the decision models:
+
+- Jev and Rune share System One: a JSON `state` and a map of named questions (`noul`, `choice`, and `score`, each with
+  instructions and criteria), answered by a map of the same names. Jev is at `/v1/systemone` on `api.typesafe.ai`;
+  Rune is `accounts/fireworks/models/rune` at `/systemone` under Fireworks' `/inference/v1`.
+- OpenAI's Decisions API (`POST /v1/decisions`, `gpt-6-luna` only) takes an `input` and a list of questions
+  (`predicate`, `choice` with `choices`, and `score` with `levels`), answered by a list in the same order. Factoid
+  sends the state as an `input_json` part, folds a Noul's yes and no criteria into its instructions, names each
+  question by its key, and reads answers back into System One's shape. A refusal is an error.
+- Cloudflare's Clef has not been checked.
+
+**Proposed.** Each provider lists the workloads it can serve, and `factoid models` and `factoid doctor` report an
+assignment a provider cannot serve, before any call: TypeSafe serves `choose`; Fireworks serves `choose`, `generate`,
+`embed`, and `rerank`; OpenAI serves `choose`, `generate`, and `embed`; OpenRouter serves `generate`.
 
 ## 10. History and fingerprints
 
@@ -969,7 +985,8 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   five-step ladder, discovery, untyped entities and claiming, resolve with the six answers, the SQLite store with an
   event log, search over facts and chunks with freshness weighting, the model client with a replay cache, `factoid`
   CLI commands (`init`, `ingest`, `search`, `read`, `stats`, `entities`, `steps show`, `classifiers show`,
-  `prompts show`, `keys set`, `models`, `doctor`, and `eval`), and the eval harness with `--vary`.
+  `prompts show`, `keys set`, `keys list`, `models`, `doctor`, and `eval`), the eval harness with `--vary`, and three
+  decision models for `choose`: Jev, Fireworks' Rune, and OpenAI's Decisions API.
 - **Search backend:** with no `search` setting, a project uses `LocalIndex`, a SQLite file with FTS5 for BM25 and
   exact vector search. `Turbopuffer` is built and used when set. The spec says a project needs turbopuffer; the
   local index makes tests and small projects work without it.
@@ -1036,8 +1053,26 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   show the defaults); `keys set` checks a pasted key for control characters and the provider's prefix; with no key,
   an unreachable exe.dev integration host fails at once with an error naming the key to set (it was retried for
   minutes as a network error); the README installs from GitHub, says a TypeSafe key is needed for `choose`, says the
-  local index needs no service, and marks `factoid setup` as planned. Still true: "one provider key is enough to
-  start" (section 9) needs a second decision model, and Factoid is not on PyPI.
+  local index needs no service, and marks `factoid setup` as planned. Still true: Factoid is not on PyPI.
+- **First install, second pass** (2026-11-17). Fixed:
+  - A file that ended in a newline lost its last paragraph: the paragraph pattern needed `\Z` right after the last
+    non-space character. The sample contract's liability cap was never extracted, so the sample eval failed.
+  - An exe.dev integration host off exe.dev resolves to an address that never answers, so the connection timed out
+    instead of failing, and each call was retried 12 times at 180 seconds. A connect timeout now counts as an
+    unreachable host, the connect timeout is 10 seconds, and later calls to that host fail at once.
+  - `factoid init` writes a `[tool.uv.sources]` entry for the GitHub repository, so `uv sync` and `uv run` work in a
+    new project.
+  - `factoid keys set` with no provider asks for each key the project's models need and links to the page that
+    creates it; `factoid keys list` shows every provider's key, its source, and its use; TypeSafe's waitlist is named.
+  - "One provider key is enough to start" (section 9) is true with `--models openai`. `--models fireworks` is
+    experimental: Rune keeps no facts on the sample contract, because it scores correct facts low on the attribution
+    question (0.09 and 0.56 against Jev's 0.71 and 0.72) and cannot tell them from wrong ones. Tuning is Open.
+  - OpenAI generation sends `max_completion_tokens` and no `temperature`, which its reasoning models require.
+  - The README marks `serve`, `mcp`, `rebuild`, and `contradictions` as planned.
+  - Checked live on 2026-11-17: Rune answers under both `models/rune` and `routers/rune`; the Decisions API answers
+    noul, choice, and score questions; `gpt-6-luna` generates with `max_completion_tokens`; and
+    `text-embedding-3-small` returns 1,536 dimensions. `doctor` passes on both one-provider presets, and the sample
+    eval scores 1.0 with `--models openai`.
 - **Not built yet:** sources (`imap`, `mcp`), MCP and
   HTTP serving, `factoid setup`, fact-class trust and visibility, entity `merge`, `split`, and `retype` commands,
   fingerprint-driven `rebuild`, and decision models other than Jev.
@@ -1276,3 +1311,9 @@ All dates are 2026-11-13 unless noted.
 77. `--vary` values can name a project object, `@module:name`. (2026-11-17)
 78. Until Factoid is on PyPI, the README installs it from GitHub. Without a key, a call to an unreachable exe.dev
     integration host fails at once and names the key to set. (2026-11-17)
+79. A project can run on one provider: `factoid init --models jev|fireworks|openai`. Fireworks' Rune and OpenAI's
+    Decisions API serve `choose` beside Jev, which stays the default. Providers list the workloads they serve, and
+    `factoid keys set` with no provider walks the keys a project needs. (2026-11-17)
+80. The `fireworks` preset is experimental until Rune has its own fact eval questions or floors: with the floors set on
+    Jev, Rune rejects every fact on the sample contract. `--models openai` is the one-key path, and the README's
+    examples use it. (2026-11-17)

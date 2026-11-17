@@ -30,6 +30,8 @@ __all__ = [
     "Model",
     "Provider",
     "PROVIDERS",
+    "WORKLOADS",
+    "check_models",
     "ModelError",
     "CallLog",
     "Meter",
@@ -50,6 +52,8 @@ class Provider:
     integration_url: str
     key_env: str
     kinds: tuple[str, ...]  # which workloads it can serve
+    key_url: str = ""  # where a person gets a key
+    access: str = ""  # how to get access, when a key is not self-serve
 
     def base_url(self) -> str:
         override = os.environ.get(f"{self.name.upper()}_BASE_URL")
@@ -82,17 +86,29 @@ class Provider:
 
 PROVIDERS: dict[str, Provider] = {
     "typesafe": Provider(
-        "typesafe", "https://api.typesafe.ai", "https://typesafe.int.exe.xyz", "TYPESAFE_API_KEY", ("choose",)
+        "typesafe",
+        "https://api.typesafe.ai",
+        "https://typesafe.int.exe.xyz",
+        "TYPESAFE_API_KEY",
+        ("choose",),
+        key_url="https://console.typesafe.ai/",
+        access="TypeSafe keys are not self-serve yet: join the waitlist at https://typesafe.ai",
     ),
     "fireworks": Provider(
         "fireworks",
         "https://api.fireworks.ai/inference/v1",
         "https://fireworks.int.exe.xyz/inference/v1",
         "FIREWORKS_API_KEY",
-        ("generate", "embed", "rerank"),
+        ("choose", "generate", "embed", "rerank"),
+        key_url="https://app.fireworks.ai/settings/users/api-keys",
     ),
     "openai": Provider(
-        "openai", "https://api.openai.com/v1", "https://openai.int.exe.xyz/v1", "OPENAI_API_KEY", ("generate", "embed")
+        "openai",
+        "https://api.openai.com/v1",
+        "https://openai.int.exe.xyz/v1",
+        "OPENAI_API_KEY",
+        ("choose", "generate", "embed"),
+        key_url="https://platform.openai.com/api-keys",
     ),
     "openrouter": Provider(
         "openrouter",
@@ -100,8 +116,44 @@ PROVIDERS: dict[str, Provider] = {
         "https://openrouter.int.exe.xyz/api/v1",
         "OPENROUTER_API_KEY",
         ("generate",),
+        key_url="https://openrouter.ai/settings/keys",
     ),
 }
+
+#: What each workload is for, in the words `factoid keys` and `factoid models` use.
+WORKLOADS = {
+    "choose": "the decision model: classify, evaluate facts, assess, link, and resolve",
+    "generate": "extract facts and describe chunks",
+    "embed": "search",
+    "rerank": "reorder search results (optional)",
+}
+
+#: The generation steps that can have their own model. Each counts as the `generate` workload.
+GENERATION_STEPS = ("situate", "extract", "repair", "discover")
+
+
+def workload_kind(workload: str) -> str:
+    """The workload a models key stands for: a generation step counts as `generate`."""
+    return "generate" if workload in GENERATION_STEPS else workload
+
+
+def check_models(models: dict[str, Model]) -> list[str]:
+    """Problems with a models setting: unknown providers, and providers that cannot serve a workload."""
+    problems = []
+    for workload, model in models.items():
+        if model is None:
+            continue
+        provider = PROVIDERS.get(model.provider_name)
+        if provider is None:
+            problems.append(f"{workload}: unknown provider {model.provider_name!r} in {model.name!r} "
+                            f"(known: {', '.join(PROVIDERS)})")
+            continue
+        kind = workload_kind(workload)
+        if kind in WORKLOADS and kind not in provider.kinds:
+            able = [p.name for p in PROVIDERS.values() if kind in p.kinds]
+            problems.append(f"{workload}: {provider.name} cannot serve the {kind} workload "
+                            f"(providers that can: {', '.join(able)})")
+    return problems
 
 
 def keys_file(project: Path | None = None) -> Path:
@@ -111,6 +163,8 @@ def keys_file(project: Path | None = None) -> Path:
 
 
 _keys_loaded = False
+#: Which file each loaded key came from. A key missing here came from the real environment.
+KEY_SOURCES: dict[str, Path] = {}
 
 
 def load_keys(project: Path | None = None) -> None:
@@ -126,7 +180,10 @@ def load_keys(project: Path | None = None) -> None:
             if not line or line.startswith("#") or "=" not in line:
                 continue
             name, _, value = line.partition("=")
-            os.environ.setdefault(name.strip(), value.strip().strip("'\""))
+            name = name.strip()
+            if name not in os.environ:
+                os.environ[name] = value.strip().strip("'\"")
+                KEY_SOURCES[name] = path
     _keys_loaded = True
 
 
@@ -265,7 +322,9 @@ class ModelClient:
         self.log = log
         self.meter = meter or Meter()
         self.replay = replay
-        self._http = httpx.Client(timeout=timeout)
+        # A short connect timeout: an exe.dev integration host off exe.dev, or a dead host, fails in seconds.
+        self._http = httpx.Client(timeout=httpx.Timeout(timeout, connect=10.0))
+        self._unreachable: set[str] = set()  # integration hosts that did not answer, so later calls fail at once
 
     # -- plumbing ---------------------------------------------------------------------------------------------
 
@@ -273,6 +332,9 @@ class ModelClient:
         model = self.models.get(workload)
         if model is None:
             raise ModelError(f"no model is set for the {workload!r} workload; set it in settings.py")
+        problems = check_models({workload: model})
+        if problems:
+            raise ModelError(f"{problems[0]}; change it in settings.py")
         return model
 
     def _post(self, workload: str, model: Model, url_path: str, body: dict[str, Any],
@@ -287,6 +349,8 @@ class ModelClient:
                 _ = usage
                 return cached, True
         provider = model.provider
+        if provider.uses_integration() and provider.name in self._unreachable:
+            raise ModelError(f"{model.name}: {provider.missing_key()}")
         url = provider.base_url() + url_path
         started = time.monotonic()
         response = None
@@ -295,7 +359,9 @@ class ModelClient:
             try:
                 response = self._http.post(url, headers=provider.headers(), json=body)
             except httpx.TransportError as err:
-                if provider.uses_integration() and isinstance(err, httpx.ConnectError):
+                # Off exe.dev, an integration host either refuses the connection or never answers it.
+                if provider.uses_integration() and isinstance(err, (httpx.ConnectError, httpx.ConnectTimeout)):
+                    self._unreachable.add(provider.name)
                     raise ModelError(f"{model.name}: {provider.missing_key()}") from err
                 if attempt == attempts - 1:
                     raise ModelError(f"{model.name}: {err}") from err
@@ -330,22 +396,25 @@ class ModelClient:
         if not questions:
             return Judgments({})
         model = self.model("choose")
-        if model.provider_name != "typesafe":
-            raise ModelError(f"{model.name}: only Jev (typesafe/...) is supported for the choose workload so far")
         by_key: dict[str, Question] = {}
         names_for: dict[str, list[str]] = {}
         for name, question in questions.items():
             key = question.key()
             by_key[key] = question
             names_for.setdefault(key, []).append(name)
-        body = {
-            "model": model.model_id,
-            "state": state,
-            "questions": {key: q.wire() for key, q in sorted(by_key.items())},
-            **model.params,
-        }
-        data, _ = self._post("choose", model, "/v1/systemone", body)
-        answers = data.get("answers") or {}
+        if model.provider_name == "openai":
+            answers = self._ask_decisions(model, state, by_key)
+        else:
+            # TypeSafe's Jev and Fireworks' Rune both speak System One.
+            path = "/v1/systemone" if model.provider_name == "typesafe" else "/systemone"
+            body = {
+                "model": model.wire_id(),
+                "state": state,
+                "questions": {key: q.wire() for key, q in sorted(by_key.items())},
+                **model.params,
+            }
+            data, _ = self._post("choose", model, path, body)
+            answers = data.get("answers") or {}
         out: dict[str, Any] = {}
         for key, question in by_key.items():
             raw = answers.get(key)
@@ -356,11 +425,38 @@ class ModelClient:
                 out[name] = value
         return Judgments(out)
 
+    def _ask_decisions(self, model: Model, state: Any, by_key: dict[str, Question]) -> dict[str, Any]:
+        """Ask through OpenAI's Decisions API, and return the answers in System One's shape, keyed like `by_key`."""
+        keys = sorted(by_key)
+        if isinstance(state, (dict, list)):
+            content: Any = [{"type": "input_json", "data": state}]
+        else:
+            content = str(state)
+        body = {
+            "model": model.wire_id(),
+            "input": [{"role": "user", "content": content}],
+            "questions": [_decisions_question(key, by_key[key]) for key in keys],
+            **model.params,
+        }
+        data, _ = self._post("choose", model, "/decisions", body)
+        answers: dict[str, Any] = {}
+        for index, raw in enumerate(data.get("answers") or []):
+            key = raw.get("name") or (keys[index] if index < len(keys) else None)
+            if key is None:
+                continue
+            if raw.get("type") == "refusal":
+                raise ModelError(f"{model.name}: refused to answer {by_key[key].instructions!r}")
+            answers[key] = _from_decisions(raw)
+        return answers
+
     # -- generate -------------------------------------------------------------------------------------------
 
     def model_for(self, step: str | None) -> tuple[str, Model]:
         """The model for a generation step (situate, extract, repair, discover), or `generate` when it has none."""
         if step and step in self.models:
+            problems = check_models({step: self.models[step]})
+            if problems:
+                raise ModelError(f"{problems[0]}; change it in settings.py")
             return step, self.models[step]
         return "generate", self.model("generate")
 
@@ -371,8 +467,13 @@ class ModelClient:
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
-        body: dict[str, Any] = {"model": model.wire_id(), "messages": messages, "max_tokens": max_tokens,
-                                "temperature": 0, **model.params}
+        if model.provider_name == "openai":
+            # OpenAI's reasoning models reject max_tokens and any temperature but the default.
+            body: dict[str, Any] = {"model": model.wire_id(), "messages": messages,
+                                    "max_completion_tokens": max_tokens, **model.params}
+        else:
+            body = {"model": model.wire_id(), "messages": messages, "max_tokens": max_tokens, "temperature": 0,
+                    **model.params}
         if json_mode:
             body["response_format"] = {"type": "json_object"}
         data, _ = self._post(step or workload, model, "/chat/completions", body, cache_kind="generate")
@@ -406,6 +507,35 @@ class ModelClient:
         for row in data.get("data") or data.get("results") or []:
             scores[row["index"]] = float(row.get("relevance_score", row.get("score", 0.0)))
         return scores
+
+
+def _decisions_question(key: str, question: Question) -> dict[str, Any]:
+    """One question in the shape of OpenAI's Decisions API."""
+    if isinstance(question, Noul):
+        instructions = question.instructions
+        if (question.true, question.false) != ("Yes.", "No."):
+            instructions += f"\nAnswer yes when: {question.true}\nAnswer no when: {question.false}"
+        return {"type": "predicate", "name": key, "instructions": instructions}
+    if isinstance(question, Choice):
+        return {"type": "choice", "name": key, "instructions": question.instructions,
+                "choices": [{"value": value, "description": description} for value, description in question.options]}
+    if isinstance(question, Score):
+        return {"type": "score", "name": key, "instructions": question.instructions,
+                "levels": [{"label": str(n), "description": level} for n, level in enumerate(question.levels)]}
+    raise ModelError(f"unknown question type {question.type!r}")
+
+
+def _from_decisions(raw: dict[str, Any]) -> dict[str, Any]:
+    """A Decisions API answer in System One's shape, which `_answer` reads."""
+    kind = raw.get("type")
+    if kind == "predicate":
+        return {"noul": raw.get("probability")}
+    if kind == "choice":
+        return {"probabilities": {str(p["value"]): p["probability"] for p in raw.get("probabilities") or []}}
+    if kind == "score":
+        return {"score": raw.get("score"),
+                "probabilities": {str(p["value"]): p["probability"] for p in raw.get("probabilities") or []}}
+    return raw
 
 
 def _answer(question: Question, raw: dict[str, Any]) -> Any:

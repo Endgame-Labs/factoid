@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-__all__ = ["write"]
+__all__ = ["PRESETS", "write"]
 
 PYPROJECT = """[project]
 name = "{name}"
@@ -12,9 +12,35 @@ version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = ["factoid"]
 
+# Factoid is not on PyPI yet, so uv installs it from GitHub.
+[tool.uv.sources]
+factoid = {{ git = "https://github.com/Endgame-Labs/factoid" }}
+
 [tool.factoid]
 package = "{package}"
 """
+
+#: Model presets for `factoid init --models`. Each names the providers whose keys it needs.
+_JEV = """\
+        "choose": Model("typesafe/jev-1.13.0"),  # classify, evaluate facts, assess, link, and resolve
+        "generate": Model("fireworks/glm-5p3-flash", reasoning_effort="low"),  # extract and repair
+        "embed": Model("fireworks/qwen3-embedding-8b"),"""
+
+_FIREWORKS = """\
+        "choose": Model("fireworks/rune"),  # classify, evaluate facts, assess, link, and resolve
+        "generate": Model("fireworks/glm-5p3-flash", reasoning_effort="low"),  # extract and repair
+        "embed": Model("fireworks/qwen3-embedding-8b"),"""
+
+_OPENAI = """\
+        "choose": Model("openai/gpt-6-luna"),  # the Decisions API: classify, evaluate facts, assess, link, and resolve
+        "generate": Model("openai/gpt-6-luna"),  # extract and repair
+        "embed": Model("openai/text-embedding-3-small"),"""
+
+PRESETS: dict[str, tuple[tuple[str, ...], str]] = {
+    "jev": (("typesafe", "fireworks"), _JEV),
+    "fireworks": (("fireworks",), _FIREWORKS),
+    "openai": (("openai",), _OPENAI),
+}
 
 SETTINGS = '''from factoid import Model, Settings
 
@@ -22,11 +48,9 @@ SETTINGS = '''from factoid import Model, Settings
 class Project(Settings):
     """Models, store, and search for this project."""
 
-    models = {
-        "choose": Model("typesafe/jev-1.13.0"),  # classify, evaluate facts, assess, link, and resolve
-        "generate": Model("fireworks/glm-5p3-flash", reasoning_effort="low"),  # extract and repair
-        "embed": Model("fireworks/qwen3-embedding-8b"),
-    }
+    models = {{
+{models}
+    }}
 '''
 
 DOCUMENTS = '''from factoid import ProseDocument
@@ -117,11 +141,11 @@ class Sample(Suite):
 '''
 
 
-def write(root: Path, package: str) -> list[Path]:
+def write(root: Path, package: str, preset: str = "jev") -> list[Path]:
     files = {
         root / "pyproject.toml": PYPROJECT.format(name=package.replace("_", "-"), package=package),
         root / package / "__init__.py": "",
-        root / package / "settings.py": SETTINGS,
+        root / package / "settings.py": SETTINGS.format(models=PRESETS[preset][1]),
         root / package / "documents.py": DOCUMENTS,
         root / package / "entities.py": ENTITIES,
         root / package / "facts.py": FACTS,

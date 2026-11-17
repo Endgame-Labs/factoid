@@ -19,10 +19,14 @@ bm25, and hybrid-reranked search.
 
 ## Quickstart
 
+This takes about five minutes: install Factoid, start a project, add one or two API keys, and ingest the sample
+contract.
+
 ### Install
 
-Factoid requires Python 3.13 or newer. It is not on PyPI yet, and there is no install script. Install it from GitHub
-with `uv`:
+Factoid requires Python 3.13 or newer and [uv](https://docs.astral.sh/uv/). It is not on PyPI yet. The repository is
+private, so your GitHub account needs access to `Endgame-Labs/factoid`, and git needs to be able to clone it (for
+example, after `gh auth login` and `gh auth setup-git`). Then:
 
 ```sh
 uv tool install git+https://github.com/Endgame-Labs/factoid
@@ -32,7 +36,7 @@ Or clone the repository and run `uv tool install .` in it.
 
 Inside a project directory, `factoid` runs in that project's environment without `uv run`.
 
-### Setup
+### Pick your models
 
 Factoid uses models for four kinds of work, and the fourth is optional:
 
@@ -43,63 +47,95 @@ Factoid uses models for four kinds of work, and the fourth is optional:
 | `embed` | Embedding model | Search |
 | `rerank` | Reranking model (optional) | Reordering search results |
 
-Today, the `choose` workload needs Jev from TypeSafe, which is the only decision model Factoid supports so far. A new
-project needs two keys: TypeSafe for `choose`, and Fireworks for `generate` and `embed`. Other decision models
-(OpenAI's decisions API, Fireworks' Rune, and Cloudflare's Clef) are planned and not built yet.
+`factoid init --models <preset>` writes a `settings.py` that uses one of three sets of providers:
+
+| Preset | `choose` | `generate` | `embed` | Keys you need |
+| --- | --- | --- | --- | --- |
+| `jev` (the default) | TypeSafe `jev-1.13.0` | Fireworks `glm-5p3-flash` | Fireworks `qwen3-embedding-8b` | TypeSafe and Fireworks |
+| `fireworks` (experimental) | Fireworks `rune` | Fireworks `glm-5p3-flash` | Fireworks `qwen3-embedding-8b` | Fireworks |
+| `openai` | OpenAI `gpt-6-luna` (Decisions API) | OpenAI `gpt-6-luna` | OpenAI `text-embedding-3-small` | OpenAI |
+
+Jev is the recommended decision model, but TypeSafe keys are not self-serve yet. If you do not have TypeSafe access,
+use `--models openai`, which needs one key you can create yourself. The `fireworks` preset is experimental because the
+default fact eval floors were set on Jev, and Rune does not yet separate good facts from bad ones on the attribution
+question. Tuning Rune's questions and floors is in progress.
+
+You can mix providers by editing `settings.py`. Model names use `provider/model`, so Factoid knows which key a workload
+needs. Not every provider serves every workload:
+
+| Provider | Workloads | Get a key |
+| --- | --- | --- |
+| `typesafe` | `choose` | <https://console.typesafe.ai/> (waitlist: <https://typesafe.ai>) |
+| `fireworks` | `choose`, `generate`, `embed`, and `rerank` | <https://app.fireworks.ai/settings/users/api-keys> |
+| `openai` | `choose`, `generate`, and `embed` | <https://platform.openai.com/api-keys> |
+| `openrouter` | `generate` | <https://openrouter.ai/settings/keys> |
+
+`factoid models` and `factoid doctor` name any workload whose provider cannot serve it. Cloudflare's Clef, as a
+decision model, is planned and not built yet.
 
 Search needs no service to start. With no `search` setting, Factoid keeps a local index in the project's SQLite store.
 Using turbopuffer, or a turbopuffer-compatible service, is optional. Configure it in `settings.py`, and set its key
-with `factoid keys set turbopuffer`.
+with `factoid keys set turbopuffer` (keys at <https://turbopuffer.com/dashboard>).
 
-A guided terminal UI (`factoid setup`) is planned and not built yet. Set your keys and verify your setup with these
-commands:
-
-```sh
-factoid keys set typesafe     # Jev, for the choose workload
-factoid keys set fireworks    # generation and embeddings
-factoid models                # each workload, its model, and whether its key is set
-factoid doctor                # one small call per workload
-```
-
-`factoid models` and `factoid doctor` work anywhere. Outside a project, they show the default models. Inside a
-project, they use the project's `settings.py`.
-
-`factoid keys set` prompts for the key, checks it for spaces, control characters, and terminal escape codes, and
-checks the provider's prefix (Fireworks keys start with `fw_`). It then stores the key in `~/.factoid/.env`, or in the
-project's `.factoid/.env` with `--project`. An environment variable with the standard name, such as
-`FIREWORKS_API_KEY`, takes precedence. Without a key, Factoid tries the provider's exe.dev integration host, which
-supplies credentials on exe.dev machines. Anywhere else, the call fails with an error that names the missing key and
-the `factoid keys set` command.
-
-Here is the `factoid models` output for a new project with both keys set:
-
-```text
-workload   model                              key
-choose     typesafe/jev-1.13.0                set
-generate   fireworks/glm-5p3-flash            set
-embed      fireworks/qwen3-embedding-8b       set
-rerank     (none)                             -
-```
-
-`rerank` is optional, and a new project has none. Without it, search returns results in retrieval order. Add one in
-`settings.py`, such as `fireworks/qwen3-reranker-8b`.
-
-Model names use `provider/model`, so Factoid knows which key a workload needs. Workload assignments live in
-`settings.py`, which is Python, so a project can compute them.
-
-### Use
-
-`factoid init` sets up a project in the current directory with sample classes, sample documents, and an eval.
+### Start a project and add keys
 
 ```sh
 mkdir acme && cd acme
-factoid init
+factoid init --models openai       # or jev, or fireworks (experimental)
+factoid keys set                   # asks for each key settings.py needs, and says where to get it
+factoid doctor                     # one small call per workload
+```
+
+`factoid keys set` with no provider lists the keys the project's models need and whether each is set. It then asks for
+each missing one, with a link to the page where you create it. Press Enter to skip a key. `factoid keys set fireworks`
+sets a single key. `factoid keys list` shows every provider, whether its key is set and where it comes from, what in
+the project uses it, and where to get one.
+
+Keys are checked for spaces, control characters, and terminal escape codes, and against the provider's prefix
+(Fireworks keys start with `fw_`). They are stored in `~/.factoid/.env`, or in the project's `.factoid/.env` with
+`--project`. An environment variable with the standard name, such as `FIREWORKS_API_KEY`, takes precedence.
+
+On exe.dev machines, you can skip keys: without one, Factoid calls the provider's exe.dev integration host, which
+supplies credentials. Anywhere else, a call without a key fails at once with an error that names the missing key and
+the `factoid keys set` command.
+
+Here is `factoid doctor` for a project made with `--models openai`, with its key set:
+
+```text
+choose     ok
+generate   ok
+embed      ok
+search     ok (LocalIndex)
+```
+
+`rerank` is optional, and a new project has none. Without it, search returns results in retrieval order. Add one in
+`settings.py`, such as `fireworks/qwen3-reranker-8b`. Workload assignments live in `settings.py`, which is Python, so a
+project can compute them. `factoid models` shows each workload, its model, and whether its key is set. It and
+`factoid doctor` work anywhere: outside a project, they use the default models.
+
+### Use
+
+`factoid init` wrote sample classes, a sample contract, and an eval.
+
+```sh
 factoid ingest ./sample_docs                     # documents in, facts and entities out
 factoid search "Vega consent"
 factoid read fact_01j9x8k2m                      # one fact, its quotes, its entities, and its history
+factoid entities list
 factoid eval                                     # score the run against labeled data
 factoid eval --vary fact_evals=none,nli,jev_floors  # compare fact eval chains on the same documents
 ```
+
+The sample contract has three facts, and the sample eval expects the `consent_required` and `liability_cap` traits.
+
+### Commands
+
+Built today: `init`, `keys set`, `keys list`, `models`, `doctor`, `ingest`, `search`, `read`, `stats`,
+`entities list`, `entities kinds`, `eval`, `steps show`, `classifiers show`, `prompts show`, and `struct`.
+
+The rest of this README also describes commands that are planned and not built yet: `serve`, `mcp`, `rebuild`, and
+`contradictions`. Each is marked "(planned)" where it appears. A guided terminal UI, `factoid setup`, is planned too.
+`SPEC.md` section 17 lists what is built.
 
 ## Documents, facts, and entities
 
@@ -432,7 +468,8 @@ value, and `corrects` marks an older fact as wrong from the start.
 When two facts contradict, both are marked `contradicted` and point to each other. Reads show both, and search results
 include contradicting facts by default: `contradictions=3` returns up to three contradicting facts in full plus the IDs
 of any others, `contradictions=0` returns IDs only, and `contradictions=False` leaves them out. Contradictions are
-settled by new evidence or through `factoid contradictions`, and go stale without auto-settling when their facts expire.
+settled by new evidence or through `factoid contradictions` (planned), and go stale without auto-settling when their
+facts expire.
 
 ### Classification
 
@@ -645,9 +682,9 @@ Use `--data-dir` to point `factoid stats` at another store, such as an eval run'
 - **Standalone CLI project.** Manage a RAG corpus in its own directory, tune chunking and extraction, and evaluate
   prompt, extractor, and fact eval choices with `factoid ingest`, `factoid search`, and `factoid eval`.
 - **Agent memory over MCP.** Connect `imap`, `folder`, `jsonl`, and `mcp` sources for mail, calls, notes, and chats,
-  then expose fact search and writes to an agent through `factoid mcp` or the CLI.
-- **Python library or HTTP service.** Run `factoid serve` as an HTTP sidecar, or use Factoid as a library inside an
-  application and pass classes to `Factoid(...)`:
+  then expose fact search and writes to an agent through `factoid mcp` (planned) or the CLI.
+- **Python library or HTTP service.** Run `factoid serve` (planned) as an HTTP sidecar, or use Factoid as a library
+  inside an application and pass classes to `Factoid(...)`:
 
 ```python
 from factoid import Entity, Fact, Factoid, Model, ProseDocument, Settings
@@ -691,9 +728,9 @@ recent = orion.facts(since="30d")      # every recent fact linked to Orion
   new entity is stored, Factoid searches stored facts for the entity's names and asks the decision model to confirm each
   hit.
 - **Fingerprints.** Each fact records a fingerprint of the prompts, questions, floors, and settings that produced the
-  fact. When any of those inputs change, facts from the old version are stale, and `factoid rebuild --estimate` prices
-  re-deriving those facts. The model is omitted from the fingerprint, so switching models for price does not force a
-  rebuild.
+  fact. When any of those inputs change, facts from the old version are stale, and `factoid rebuild --estimate`
+  (planned) prices re-deriving those facts. The model is omitted from the fingerprint, so switching models for price
+  does not force a rebuild.
 
 ## Further reading
 
