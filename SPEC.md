@@ -3,7 +3,8 @@
 This file records the decisions behind Factoid, so the README does not have to spell each one out. The README is for
 users. This file is for whoever builds Factoid.
 
-Nothing is built yet. Every section says how settled it is:
+An early implementation is in `src/factoid`; section 17 says what is built and where it differs. Every section says
+how settled it is:
 
 - **Decided**: Kyle chose it. Change it only when he says so.
 - **Proposed**: written into the README or an example, and not yet confirmed by Kyle.
@@ -1028,6 +1029,12 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
 - **Amendment supersession varies between runs** by one or two per suite with the same code, through extraction
   wording that resolve then does or does not connect (ScanSource's term extension). Open: a resolve that is stable
   to wording.
+- **First install, by a new user** (2026-11-17). Fixed: `factoid models` and `doctor` work outside a project (they
+  show the defaults); `keys set` checks a pasted key for control characters and the provider's prefix; with no key,
+  an unreachable exe.dev integration host fails at once with an error naming the key to set (it was retried for
+  minutes as a network error); the README installs from GitHub, says a TypeSafe key is needed for `choose`, says the
+  local index needs no service, and marks `factoid setup` as planned. Still true: "one provider key is enough to
+  start" (section 9) needs a second decision model, and Factoid is not on PyPI.
 - **Not built yet:** sources (`imap`, `mcp`), MCP and
   HTTP serving, `factoid setup`, fact-class trust and visibility, entity `merge`, `split`, and `retype` commands,
   fingerprint-driven `rebuild`, and decision models other than Jev.
@@ -1264,3 +1271,5 @@ All dates are 2026-11-13 unless noted.
     and target 0.5, replacing a lenient question with floor 0.4. Chosen on 30 ISC-RAG dev transcripts against five
     other wordings and floors. (2026-11-17)
 77. `--vary` values can name a project object, `@module:name`. (2026-11-17)
+78. Until Factoid is on PyPI, the README installs it from GitHub. Without a key, a call to an unreachable exe.dev
+    integration host fails at once and names the key to set. (2026-11-17)

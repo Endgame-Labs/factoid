@@ -21,22 +21,16 @@ bm25, and hybrid-reranked search.
 
 ### Install
 
-Factoid requires Python 3.13 or newer. You can install the `factoid` CLI in two ways.
-
-Install with `uv`:
-
-```sh
-uv tool install factoid
-```
-
-Or run the install script, which installs `uv` if `uv` is missing and then installs Factoid:
+Factoid requires Python 3.13 or newer. It is not on PyPI yet, and there is no install script. Install it from GitHub
+with `uv`:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Endgame-Labs/factoid/main/install.sh | bash
+uv tool install git+https://github.com/Endgame-Labs/factoid
 ```
 
-Both methods put `factoid` on your `PATH`. Inside a project directory, `factoid` runs in that project's environment
-without `uv run` or manual virtual environment activation.
+Or clone the repository and run `uv tool install .` in it.
+
+Inside a project directory, `factoid` runs in that project's environment without `uv run`.
 
 ### Setup
 
@@ -49,56 +43,49 @@ Factoid uses models for four kinds of work, and the fourth is optional:
 | `embed` | Embedding model | Search |
 | `rerank` | Reranking model (optional) | Reordering search results |
 
-API keys belong to providers, and one provider can serve several workloads. One provider key is enough to start when
-that provider offers all three required kinds of model. Fireworks and OpenAI both offer all three. Without a `rerank`
-model, search returns results in their retrieval order. For the `choose` workload, Factoid recommends Jev from
-TypeSafe. Jev is the best decision model and is cheap. Other decision models work too: OpenAI's decisions API,
-Fireworks' Rune, and Cloudflare's Clef.
+Today, the `choose` workload needs Jev from TypeSafe, which is the only decision model Factoid supports so far. A new
+project needs two keys: TypeSafe for `choose`, and Fireworks for `generate` and `embed`. Other decision models
+(OpenAI's decisions API, Fireworks' Rune, and Cloudflare's Clef) are planned and not built yet.
 
-Factoid also needs a search index: turbopuffer, or any service with a turbopuffer-compatible API. Set its key the same
-way, and choose a compatible service by setting its base URL in `settings.py`.
+Search needs no service to start. With no `search` setting, Factoid keeps a local index in the project's SQLite store.
+Using turbopuffer, or a turbopuffer-compatible service, is optional. Configure it in `settings.py`, and set its key
+with `factoid keys set turbopuffer`.
 
-```sh
-factoid keys set turbopuffer  # the search index
-```
-
-Guided setup is available as a terminal UI. The terminal UI adds providers, checks each key, and lets you pick a model
-for each workload from the providers you have:
+A guided terminal UI (`factoid setup`) is planned and not built yet. Set your keys and verify your setup with these
+commands:
 
 ```sh
-factoid setup
+factoid keys set typesafe     # Jev, for the choose workload
+factoid keys set fireworks    # generation and embeddings
+factoid models                # each workload, its model, and whether its key is set
+factoid doctor                # one small call per workload
 ```
 
-To do the same steps by hand, store keys and verify your setup with these commands:
+`factoid models` and `factoid doctor` work anywhere. Outside a project, they show the default models. Inside a
+project, they use the project's `settings.py`.
 
-```sh
-factoid keys set fireworks    # one provider is enough to start
-factoid keys set typesafe     # optional: Jev, the recommended decision model
-factoid models                # each workload, its model, and whether its key works
-factoid doctor                # makes one small call per workload and reports what works
-```
+`factoid keys set` prompts for the key, checks it for spaces, control characters, and terminal escape codes, and
+checks the provider's prefix (Fireworks keys start with `fw_`). It then stores the key in `~/.factoid/.env`, or in the
+project's `.factoid/.env` with `--project`. An environment variable with the standard name, such as
+`FIREWORKS_API_KEY`, takes precedence. Without a key, Factoid tries the provider's exe.dev integration host, which
+supplies credentials on exe.dev machines. Anywhere else, the call fails with an error that names the missing key and
+the `factoid keys set` command.
 
-The `factoid keys set` command prompts for the key and stores that key in `~/.factoid/.env`. Pass `--project` to store
-the key for the current project only. An environment variable with the standard provider name, such as
-`FIREWORKS_API_KEY`, takes precedence when that variable is set.
-
-The `factoid models` command shows which model runs each workload. Here is the output with only a Fireworks key set.
-`fireworks/rune` is Fireworks' decision model:
+Here is the `factoid models` output for a new project with both keys set:
 
 ```text
-workload   model                         key
-choose     fireworks/rune                ok
-generate   fireworks/glm-5p3-flash       ok
-embed      fireworks/qwen3-embedding-8b  ok
-rerank     fireworks/qwen3-reranker-8b   ok
+workload   model                              key
+choose     typesafe/jev-1.13.0                set
+generate   fireworks/glm-5p3-flash            set
+embed      fireworks/qwen3-embedding-8b       set
+rerank     (none)                             -
 ```
 
-Running `factoid keys set typesafe` moves `choose` to `typesafe/jev-1.13.0`, and the other workloads stay on Fireworks.
+`rerank` is optional, and a new project has none. Without it, search returns results in retrieval order. Add one in
+`settings.py`, such as `fireworks/qwen3-reranker-8b`.
 
-Every model name uses the `provider/model` format, so Factoid knows which provider key a workload needs and names the
-missing key when that key is not set. Workload assignments live in the project's `settings.py` file. Edit `settings.py`
-to change a model. Because `settings.py` is Python, a project can compute its model assignments, for example to select
-different models in production.
+Model names use `provider/model`, so Factoid knows which key a workload needs. Workload assignments live in
+`settings.py`, which is Python, so a project can compute them.
 
 ### Use
 

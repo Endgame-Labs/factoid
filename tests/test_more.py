@@ -197,3 +197,38 @@ def test_vary_can_name_a_project_object():
 
     assert _value("@factoid.fact_evals:DEFAULT_FLOORS")["grounded"] == 0.45
     assert [type(f).__name__ for f in fact_eval_chain("@factoid.fact:Fact.fact_evals")] == ["Nli", "JevFloors"]
+
+
+def test_keys_set_catches_a_bad_paste():
+    from factoid.cli import check_key
+
+    assert check_key("fireworks", "fw_abc123") is None
+    assert "escape" in check_key("fireworks", "fw_abc\x1b[200~123")
+    assert "start with 'fw_'" in check_key("fireworks", "sk-abc")
+    assert check_key("typesafe", "anything-printable") is None
+
+
+def test_an_unreachable_integration_host_says_to_set_a_key(monkeypatch, tmp_path):
+    import dataclasses
+
+    import pytest
+
+    from factoid.models import PROVIDERS, CallLog, Model, ModelClient, ModelError
+
+    monkeypatch.setenv("FACTOID_HOME", str(tmp_path))
+    monkeypatch.delenv("FIREWORKS_API_KEY", raising=False)
+    monkeypatch.delenv("FIREWORKS_BASE_URL", raising=False)
+    dead = dataclasses.replace(PROVIDERS["fireworks"], integration_url="http://127.0.0.1:9")
+    monkeypatch.setitem(PROVIDERS, "fireworks", dead)
+    client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, CallLog(None))
+    client.replay = False
+    with pytest.raises(ModelError, match="factoid keys set fireworks"):
+        client.generate("hi")
+
+
+def test_models_works_outside_a_project(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("FACTOID_HOME", str(tmp_path))
+    result = CliRunner().invoke(cli, ["models"])
+    assert result.exit_code == 0, result.output
+    assert "not in a Factoid project" in result.output and "choose" in result.output

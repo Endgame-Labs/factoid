@@ -5,7 +5,8 @@ which logs them, counts tokens and time, and replays identical requests from a c
 request, so changing a prompt, a question, or a model is a miss.
 
 Base URLs: a provider's `<PROVIDER>_BASE_URL` environment variable wins. Otherwise, with a key set, Factoid calls the
-vendor's API. With no key, it tries the exe.dev integration host for that provider, which injects credentials.
+vendor's API. With no key, it tries the exe.dev integration host for that provider, which injects credentials; off
+exe.dev that host does not answer, and the error says to set a key.
 """
 
 from __future__ import annotations
@@ -62,6 +63,14 @@ class Provider:
         load_keys()
         value = os.environ.get(self.key_env, "").strip()
         return value or None
+
+    def uses_integration(self) -> bool:
+        """No key and no base URL override: calls go to the exe.dev integration host."""
+        return not os.environ.get(f"{self.name.upper()}_BASE_URL") and not self.api_key()
+
+    def missing_key(self) -> str:
+        return (f"no {self.key_env} is set, so Factoid tried the exe.dev integration host ({self.integration_url}), "
+                f"which only answers on exe.dev. Set a key with `factoid keys set {self.name}`.")
 
     def headers(self) -> dict[str, str]:
         headers = {"content-type": "application/json"}
@@ -286,6 +295,8 @@ class ModelClient:
             try:
                 response = self._http.post(url, headers=provider.headers(), json=body)
             except httpx.TransportError as err:
+                if provider.uses_integration() and isinstance(err, httpx.ConnectError):
+                    raise ModelError(f"{model.name}: {provider.missing_key()}") from err
                 if attempt == attempts - 1:
                     raise ModelError(f"{model.name}: {err}") from err
                 time.sleep(min(60, 2 ** attempt))
@@ -296,7 +307,12 @@ class ModelClient:
             break
         assert response is not None
         if response.status_code >= 400:
-            raise ModelError(f"{model.name}: HTTP {response.status_code}: {response.text[:500]}")
+            hint = ""
+            if provider.uses_integration() and response.status_code in (401, 403, 404):
+                hint = f" ({provider.missing_key()})"
+            elif response.status_code in (400, 401, 403) and provider.api_key():
+                hint = f" (check the key in {provider.key_env}: `factoid keys set {provider.name}` replaces it)"
+            raise ModelError(f"{model.name}: HTTP {response.status_code}: {response.text[:500]}{hint}")
         data = response.json()
         seconds = time.monotonic() - started
         usage = data.get("usage") or {}

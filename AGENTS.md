@@ -4,8 +4,9 @@ Guidance for coding agents working in this repository.
 
 ## What this is
 
-Factoid is a Python framework that turns documents into facts and entities. It is in the design stage: nothing is built
-yet, and the docs settle the design before code is written.
+Factoid is a Python framework that turns documents into facts and entities. An early implementation is in
+`src/factoid`, with example apps in `examples/`. The docs still settle the design before code is written: `SPEC.md`
+section 17 says what is built.
 
 ## Read first
 

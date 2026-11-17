@@ -55,6 +55,35 @@ def _project(**kwargs: Any) -> Any:
     return project, project.app(**kwargs)
 
 
+def _project_or_defaults() -> Any:
+    """The project's app, or, outside a project, an app with the default settings (for `models` and `doctor`)."""
+    if find_root() is not None:
+        return _project(in_memory=True)[1]
+    from .app import Factoid
+    from .settings import Settings
+
+    load_keys(None)
+    click.echo("(not in a Factoid project: showing the default models; `factoid init` creates a project)")
+    return Factoid(Settings, in_memory=True, documents=[], entities=[], facts=[])
+
+
+#: What each provider's keys start with, to catch a paste of the wrong thing.
+KEY_PREFIXES = {"fireworks": "fw_", "openai": "sk-", "openrouter": "sk-or-"}
+
+
+def check_key(provider: str, value: str) -> str | None:
+    """A problem with a pasted key, or None."""
+    if not value:
+        return "the key is empty"
+    if any(not ch.isprintable() or ch.isspace() for ch in value):
+        return ("the key has spaces, control characters, or terminal escape codes in it; paste it again, or set "
+                "it with an environment variable")
+    prefix = KEY_PREFIXES.get(provider)
+    if prefix and not value.startswith(prefix):
+        return f"{provider} keys start with {prefix!r}, and this one does not"
+    return None
+
+
 def _echo_json(value: Any) -> None:
     click.echo(json.dumps(value, indent=2, default=str))
 
@@ -480,6 +509,9 @@ def keys_set(provider: str, for_project: bool) -> None:
         raise click.ClickException("not inside a Factoid project")
     env = "TURBOPUFFER_API_KEY" if provider == "turbopuffer" else PROVIDERS[provider].key_env
     value = click.prompt(f"{env}", hide_input=True).strip()
+    problem = check_key(provider, value)
+    if problem and not click.confirm(f"{problem}. Store it anyway?", default=False):
+        raise click.ClickException("key not stored")
     path = keys_file(root)
     path.parent.mkdir(parents=True, exist_ok=True)
     lines = [ln for ln in (path.read_text().splitlines() if path.exists() else []) if not ln.startswith(f"{env}=")]
@@ -492,7 +524,7 @@ def keys_set(provider: str, for_project: bool) -> None:
 @cli.command()
 def models() -> None:
     """Each workload, its model, and whether its key is set."""
-    _, app = _project(in_memory=True)
+    app = _project_or_defaults()
     click.echo(f"{'workload':<10} {'model':<34} key")
     steps = [s for s in ("situate", "extract", "repair", "discover") if s in app.client.models]
     for workload in ("choose", "generate", *steps, "embed", "rerank"):
@@ -501,7 +533,12 @@ def models() -> None:
             click.echo(f"{workload:<10} {'(none)':<34} -")
             continue
         provider = model.provider
-        status = "set" if provider.api_key() else f"not set (using {provider.base_url()})"
+        if provider.api_key():
+            status = "set"
+        elif provider.uses_integration():
+            status = f"not set (`factoid keys set {provider.name}`; on exe.dev, the integration answers)"
+        else:
+            status = f"not set (using {provider.base_url()})"
         click.echo(f"{workload:<10} {model.name:<34} {status}")
 
 
@@ -510,7 +547,7 @@ def doctor() -> None:
     """Make one small call per workload and report what works."""
     from .judge import Noul
 
-    _, app = _project(in_memory=True)
+    app = _project_or_defaults()
     app.client.replay = False
     checks = {
         "choose": lambda: app.client.ask({"text": "Factoid doctor."}, {"ok": Noul("Is this a test?")}),
