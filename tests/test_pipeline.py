@@ -594,3 +594,45 @@ def test_chunk_search_finds_source_text(make_app, fake):
     rows = Chunk.search("liability capped")
     assert rows and "capped" in rows[0]["text"]
     assert Chunk.search("liability capped", about=Company.find("Vega"))
+
+
+def _ingest_cap_and_amendment(app):
+    first = app.ingest_text(
+        "Vega's liability to Orion is capped at $1M under the supply agreement.\n\n"
+        "Orion may not assign the supply agreement to anyone without Vega's written consent.",
+        document_type=Contract, metadata={"signed_at": "2025-03-01T00:00:00Z"}, uri="supply.txt")
+    app.ingest_text("Amendment 2 raises Vega's liability cap to Orion to $2M from January 1, 2027.",
+                    document_type=Contract, metadata={"signed_at": "2026-10-03T00:00:00Z"}, uri="amendment2.txt")
+    return Fact.get(first.facts[0].id)
+
+
+def test_resolve_verify_drops_a_supersession_the_check_rejects(make_app, fake, monkeypatch):
+    app = build(make_app, fake)
+    inner = fake.noul
+    fake.noul = lambda q, s: 0.2 if "itself state" in q.instructions else inner(q, s)
+    monkeypatch.setattr(SourceFact, "resolve_verify", 0.5)
+    assert _ingest_cap_and_amendment(app).status == "current"
+    assert any("itself state" in q.instructions for _, qs in fake.asked for q in qs.values())
+
+
+def test_resolve_verify_keeps_a_supersession_the_check_confirms(make_app, fake, monkeypatch):
+    app = build(make_app, fake)
+    monkeypatch.setattr(SourceFact, "resolve_verify", 0.5)
+    assert _ingest_cap_and_amendment(app).status == "superseded"
+
+
+def test_resolve_batch_asks_about_one_stored_fact_per_request(make_app, fake, monkeypatch):
+    app = build(make_app, fake)
+    monkeypatch.setattr(SourceFact, "resolve_batch", 1)
+    assert _ingest_cap_and_amendment(app).status == "superseded"
+    resolves = [s for s, qs in fake.asked if isinstance(s, dict) and "stored_facts" in s]
+    assert resolves and all(len(s["stored_facts"]) == 1 for s in resolves)
+    assert len(resolves) >= 2  # the amendment's fact is compared with both stored facts, one at a time
+
+
+def test_rune_gets_its_resolve_check_by_default(make_app, fake):
+    app = build(make_app, fake)
+    fake.models["choose"] = type("M", (), {"name": "fireworks/rune"})()
+    assert SourceFact.resolve_settings(app) == (None, 0.5)
+    fake.models["choose"] = "fake"
+    assert SourceFact.resolve_settings(app) == (None, None)

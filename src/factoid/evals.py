@@ -85,10 +85,12 @@ FACT_EVAL_CHAINS: dict[str, Any] = {
 
 
 def _value(raw: str) -> Any:
-    """A `--vary` value: on/off, a number, `@module:name` for an object the project defines, or a string."""
+    """A `--vary` value: on/off, none, a number, `@module:name` for an object the project defines, or a string."""
     if raw.startswith("@"):
         return _import(raw[1:])
     lowered = raw.lower()
+    if lowered in ("none", "null"):
+        return None
     if lowered in ("true", "on", "yes"):
         return True
     if lowered in ("false", "off", "no"):

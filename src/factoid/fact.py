@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from .dates import format_datetime, now, parse_datetime
 from .fact_evals import DecisionFloors, EvalResult, FactEval, Nli
-from .judge import Choice, Judgments, Question
+from .judge import Choice, Judgments, Noul, Question
 from .runtime import ModelCalls, Registered, current
 from .steps import run_step
 from .templates import Template, builtin, render
@@ -26,7 +26,7 @@ from .validity import EXPIRES, LIFETIME_RANGES, validity
 if TYPE_CHECKING:
     from .entity import Entity
 
-__all__ = ["RESOLVE_ANSWERS", "Fact", "Mention", "Quote", "new_id"]
+__all__ = ["MODEL_RESOLVE", "RESOLVE_ANSWERS", "Fact", "Mention", "Quote", "new_id"]
 
 
 def new_id(prefix: str) -> str:
@@ -80,6 +80,14 @@ RESOLVE_ANSWERS: dict[str, str] = {
 }
 
 
+#: Resolve settings for decision models other than the default. Rune calls many pairs a supersession that only refer
+#: to what changed, at probabilities a floor cannot separate from real ones, so each of its changes is checked with
+#: `resolve_verify_question` (SPEC decision 94).
+MODEL_RESOLVE: dict[str, dict[str, Any]] = {
+    "fireworks/rune": {"verify": 0.5},
+}
+
+
 class Fact(Registered, ModelCalls):
     """A self-contained fact."""
 
@@ -125,6 +133,20 @@ class Fact(Registered, ModelCalls):
     )
     resolve_question: ClassVar[str] = (
         "Compare the new fact with stored fact {key}. Which answer describes how the new fact relates to it?"
+    )
+    #: The answers to `resolve_question`, each with what it means. Keep the keys; reword the meanings.
+    resolve_answers: ClassVar[dict[str, str]] = RESOLVE_ANSWERS
+    #: How many stored facts one resolve request compares; None asks about all candidates at once. None here takes
+    #: the decision model's value from `MODEL_RESOLVE`.
+    resolve_batch: ClassVar[int | None] = None
+    #: When set, a supersession, end, or correction is checked with `resolve_verify_question` and dropped below this
+    #: probability. None here takes the decision model's value from `MODEL_RESOLVE`.
+    resolve_verify: ClassVar[float | None] = None
+    resolve_verify_question: ClassVar[str] = (
+        "Does stored fact {key} itself state a term, amount, date, party, place, or rule that the new fact sets "
+        "differently, so that what stored fact {key} says stops being true when the new fact takes effect? Answer no "
+        "if stored fact {key} only refers to or depends on what changed, if it is about a different agreement or "
+        "signing, or if both facts can be true at once."
     )
     repair_prompt: ClassVar[str | Template] = builtin("repair.md.j2")
 
@@ -373,24 +395,47 @@ class Fact(Registered, ModelCalls):
         candidates = app.related_facts(self, limit=type(self).resolve_candidates)
         if not candidates:
             return []
-        keys = [f"F{i + 1}" for i in range(len(candidates))]
-        state = {
-            "new_fact": {"text": self.text, "date": _fmt(self.valid_from or self.source_datetime),
-                         "source": app.document_title(self.document_id)},
-            "stored_facts": {
+        klass = type(self)
+        batch, verify = klass.resolve_settings(app)
+        new_fact = {"text": self.text, "date": _fmt(self.valid_from or self.source_datetime),
+                    "source": app.document_title(self.document_id)}
+
+        def ask(group: list[Fact], make: Any) -> list[Any]:
+            keys = [f"F{i + 1}" for i in range(len(group))]
+            state = {"new_fact": new_fact, "stored_facts": {
                 key: {"text": other.text, "date": _fmt(other.valid_from or other.source_datetime),
-                      "source": app.document_title(other.document_id)}
-                for key, other in zip(keys, candidates)
-            },
-        }
-        questions = {key: Choice(type(self).resolve_question.format(key=key), RESOLVE_ANSWERS) for key in keys}
-        judgments = app.client.ask(state, questions)
+                      "source": app.document_title(other.document_id)} for key, other in zip(keys, group)}}
+            judgments = app.client.ask(state, {key: make(key) for key in keys})
+            return [judgments[key] for key in keys]
+
+        def batched(group: list[Fact], make: Any) -> list[Any]:
+            size = batch or len(group)
+            return [a for i in range(0, len(group), size) for a in ask(group[i:i + size], make)]
+
+        answers = batched(candidates, lambda key: Choice(klass.resolve_question.format(key=key), klass.resolve_answers))
+        out = self._resolve_outcomes(candidates, answers)
+        if verify is not None:
+            changes = [o for o in out if o[0] in ("supersedes", "ends", "corrects")]
+            if changes:
+                sure = batched([o[1] for o in changes], lambda key: Noul(klass.resolve_verify_question.format(key=key)))
+                dropped = {id(o[1]) for o, p in zip(changes, sure) if float(p) < verify}
+                out = [o for o in out if id(o[1]) not in dropped]
+        return out
+
+    @classmethod
+    def resolve_settings(cls, app: Any) -> tuple[int | None, float | None]:
+        """`resolve_batch` and `resolve_verify` for the decision model: the class's own values, else the model's."""
+        model = app.client.models.get("choose")
+        defaults = MODEL_RESOLVE.get(getattr(model, "name", model) or "", {})
+        return (cls.resolve_batch if cls.resolve_batch is not None else defaults.get("batch"),
+                cls.resolve_verify if cls.resolve_verify is not None else defaults.get("verify"))
+
+    def _resolve_outcomes(self, candidates: list[Fact], answers: list[Any]) -> list[tuple[str, Fact, float]]:
         out = []
         klass = type(self)
         bars = {"duplicate": klass.duplicate_threshold, "contradicts": klass.contradiction_threshold}
         mine = self.valid_from or self.source_datetime
-        for key, other in zip(keys, candidates):
-            answer = judgments[key]
+        for answer, other in zip(answers, candidates):
             theirs = other.valid_from or other.source_datetime
             same_subject = answer.get("duplicate", 0) + answer.get("supersedes", 0)
             if (max(answer, key=answer.get) in ("duplicate", "supersedes")

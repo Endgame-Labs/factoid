@@ -1120,6 +1120,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     question (0.09 and 0.56 against Jev's 0.71 and 0.72) and cannot tell them from wrong ones. Fixed the same day
     (decision 81): with its own floors and the reworded attribution question, Rune keeps all three sample facts and
     the sample eval scores 1.0. The legal suites on Rune ran on 2026-11-18 (decision 92).
+  - Resolve settings per decision model (`MODEL_RESOLVE`): `resolve_batch` (stored facts per request) and
+    `resolve_verify` (a yes-or-no check on each supersession, end, or correction, which drops it below the bar). Rune
+    gets `resolve_verify = 0.5` (decision 94). `--vary` reads `none` as None.
   - OpenAI generation sends `max_completion_tokens` and no `temperature`, which its reasoning models require.
   - The README marks `serve`, `mcp`, `rebuild`, and `contradictions` as planned.
   - Checked live on 2026-11-17: Rune answers under both `models/rune` and `routers/rune`; the Decisions API answers
@@ -1469,3 +1472,14 @@ All dates are 2026-11-13 unless noted.
 93. Facts leave Factoid through sinks. Two are standard: Parquet files in a local folder or an S3 bucket, and a
     turbopuffer-compatible API. Warehouses load the Parquet files themselves; native warehouse sinks may come later.
     (Kyle, 2026-11-18)
+94. Rune's false changes to base facts come from resolve: it calls a stored fact "superseded" when the fact only
+    refers to what changed (an appointment "within the Territory" when the Territory changed, or one signing's parties
+    when a later amendment is signed), at 0.57 to 0.95, where real supersessions also fall, so no floor separates them.
+    Reworded answers moved the errors between chains. A second question on each change ("does the stored fact itself
+    state the term the new fact sets differently?") fixes most of it; Rune gets it at 0.5 (`MODEL_RESOLVE`), chosen on
+    the tuning chains. Comparing one stored fact per request did not help end to end and is off. Held-out chains, run
+    once, with Jev in brackets: false changes 5.0%, 5.9%, and 2.4% on NEON, fresh, and SEC (5.9%, 4.0%, 1.0%; before
+    the check 7.8%, 7.7%, and 3.8%); tuning chains 0.5% (2.6%). Supersessions 14/16 (15/16), as-of 32/36 (34/36),
+    sample deal 15/15, untouched clauses kept 7/9 (9/9). CUAD on the same 20 contracts as Jev: F1 0.79 against 0.81,
+    mean AUPR 0.967 against 0.969 (decision 92 compared 102 contracts with 20 and overstated the gap). The `fireworks`
+    preset stays experimental until Kyle decides. (2026-11-18)
