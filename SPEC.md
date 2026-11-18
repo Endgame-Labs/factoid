@@ -843,7 +843,8 @@ assignment a provider cannot serve, before any call: TypeSafe serves `choose`; F
 - **v1 system of record: SQLite.** One database file per project. It holds documents, chunks, facts, quotes, entity
   links, traits, entities, and the event log, and it answers every lookup that is not a search: facts for an entity,
   entities by identity, facts by trait and time, and unlinked facts.
-- **v1 search: turbopuffer, or any endpoint compatible with its API.** It is required. It serves vector, BM25, and
+- **v1 search: turbopuffer, or any endpoint compatible with its API.** (Superseded: the built-in local index is the
+  default, and turbopuffer is optional; see section 17.) It serves vector, BM25, and
   hybrid search, and the nearest-neighbor queries that resolve and entity linking need. The endpoint's base URL is a
   setting, so a compatible server can stand in for turbopuffer.
 - **No flat-file store for now.** Set aside: files with a SQLite index (as endgame-wiki does), and a bucket-only store
@@ -870,6 +871,17 @@ assignment a provider cannot serve, before any call: TypeSafe serves `choose`; F
 - Many processes writing at once, or a hosted deployment, is the case for a Postgres backend. It is not built in v1.
 - Later back ends behind the same interfaces: Postgres (pgvector and pgvectorscale) for the system of record and for
   search, and LanceDB on a bucket.
+
+**Decided** (Kyle, 2026-11-18): **data warehouses are sources and sinks, not stores.**
+
+- BigQuery, Snowflake, and similar warehouses can be where documents and rows come from (a source) and where finished
+  facts, entities, and history go (an export), so analysts get facts in their own warehouse.
+- A warehouse is never the system of record or the search index. Ingest makes thousands of small reads and writes per
+  document (linking, resolving, and saving), and a warehouse is too slow for them and charges for each query.
+- Order of work: put the remaining raw SQL in `app.py`, `cli.py`, and `entity.py` behind the `Store` interface, write
+  the `Index` contract with tests every backend passes, then a Postgres backend, then warehouse export, then warehouse
+  sources.
+- Nobody has to know turbopuffer: the local index is the default, and turbopuffer stays an option for scale.
 
 **Decided** (Kyle, 2026-11-14): **Factoid requires keys.** There is no keyless local mode in v1, and maybe never. The
 setup wizard makes getting keys easy. A provider can still be pointed at a custom base URL with no key (a gateway, or a
@@ -1408,3 +1420,6 @@ All dates are 2026-11-13 unless noted.
 85. Per-project keys are stored as decided in section 12: at `~/.factoid/projects/<id>/.env`, named by an `id` in the
     project's `pyproject.toml` that `factoid init` writes and the project commits. Keys stored inside a project by
     0.1.1 and earlier are still read, and the next `keys set --project` moves them out. (Kyle, 2026-11-17)
+86. Data warehouses (BigQuery, Snowflake) are sources and export targets, never the system of record or the search
+    index, which take ingest's many small reads and writes. Next storage work: the `Store` and `Index` interfaces,
+    then Postgres, then warehouse export, then warehouse sources. (Kyle, 2026-11-18)
