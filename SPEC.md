@@ -1460,8 +1460,9 @@ All dates are 2026-11-13 unless noted.
     runs the tests, and builds with `uv build`; a second job in the `pypi` environment publishes through PyPI trusted
     publishing, so no token is stored. Tests and ruff run on every push to main. The sdist holds the library, its
     tests, the README, the license, and `pyproject.toml` only. A project made by a PyPI install depends on
-    `factoid>=<version>` with no uv source; one made from a checkout or a git install points at that. Nothing is
-    released until Kyle says so; until then, install from GitHub. (Kyle, 2026-11-18)
+    `factoid>=<version>` with no uv source; one made from a checkout or a git install points at that. The PyPI
+    account is `endgame-labs`, and its trusted publisher for this repo is set up. Nothing is released until Kyle says
+    so; until then, install from GitHub. (Kyle, 2026-11-18)
 91. The repository is public as of 2026-11-18. Before the switch, gitleaks found no leaks in the 242 commits or the
     working tree, and no `.env` or `.local` file is tracked. GitHub secret scanning and push protection are on. (Kyle,
     2026-11-18)
