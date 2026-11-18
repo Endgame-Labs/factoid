@@ -916,6 +916,9 @@ assignment a provider cannot serve, before any call: TypeSafe serves `choose`; F
   `class`, `traits`, `status`, `valid_from`, `valid_until`, `document_id`, and `entity_ids`. `text` has a BM25 index for
   hybrid search. Entities, documents, and quotes stay out; apps join them from Parquet or Factoid's API.
   (Kyle, 2026-11-18)
+- **When sinks run:** only on `factoid sync` by default. `sync_after_ingest = True` in `settings.py` syncs after each
+  ingest; a failed sync then warns and does not fail the ingest, and the next sync catches up from the cursor.
+  (Kyle, 2026-11-18)
 
 **Decided** (Kyle, 2026-11-14): **Factoid requires keys.** There is no keyless local mode in v1, and maybe never. The
 setup wizard makes getting keys easy. A provider can still be pointed at a custom base URL with no key (a gateway, or a
@@ -1539,3 +1542,5 @@ All dates are 2026-11-13 unless noted.
      and credentials come from the environment. (Kyle, 2026-11-18)
 101. The turbopuffer sink writes one row per fact: its vector, `text` (with BM25), `class`, `traits`, `status`,
      `valid_from`, `valid_until`, `document_id`, and `entity_ids`. (Kyle, 2026-11-18)
+102. Sinks run on `factoid sync`. `sync_after_ingest = True` syncs after each ingest, and a failed sync there only
+     warns. (Kyle, 2026-11-18)
