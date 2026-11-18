@@ -1480,6 +1480,7 @@ All dates are 2026-11-13 unless noted.
     the tuning chains. Comparing one stored fact per request did not help end to end and is off. Held-out chains, run
     once, with Jev in brackets: false changes 5.0%, 5.9%, and 2.4% on NEON, fresh, and SEC (5.9%, 4.0%, 1.0%; before
     the check 7.8%, 7.7%, and 3.8%); tuning chains 0.5% (2.6%). Supersessions 14/16 (15/16), as-of 32/36 (34/36),
-    sample deal 15/15, untouched clauses kept 7/9 (9/9). CUAD on the same 20 contracts as Jev: F1 0.79 against 0.81,
-    mean AUPR 0.967 against 0.969 (decision 92 compared 102 contracts with 20 and overstated the gap). The `fireworks`
+    sample deal 15/15, untouched clauses kept 7/9 (9/9). CUAD on the same 20-contract slices as Jev (tuning, held out,
+    fresh): F1 0.79, 0.82, and 0.79 (0.81, 0.84, 0.81), mean AUPR 0.97, 0.93, and 0.92 (0.97, 0.97, 0.95). Decision 92
+    compared Rune on all contracts past each offset with Jev on 20 and overstated the F1 gap. The `fireworks`
     preset stays experimental until Kyle decides. (2026-11-18)
