@@ -899,6 +899,9 @@ assignment a provider cannot serve, before any call: TypeSafe serves `choose`; F
   after it, read from the event log. Parquet writes a new file per sync, with a view or compaction for the latest state
   of each fact; turbopuffer upserts the changed facts. A superseded fact is updated with its status and end date, never
   deleted, so as-of search works downstream. `--full` rebuilds a sink from scratch. (Kyle, 2026-11-18)
+- **Parquet tables:** `facts`, `entities`, `documents`, and `events`. A `facts` row holds the fact's own fields, with
+  its mentions (entity id, role, and the text as written) and its quotes (document id, section, and quoted text) as
+  nested list columns, not tables of their own. (Kyle, 2026-11-18)
 
 **Decided** (Kyle, 2026-11-14): **Factoid requires keys.** There is no keyless local mode in v1, and maybe never. The
 setup wizard makes getting keys easy. A provider can still be pointed at a custom base URL with no key (a gateway, or a
@@ -1491,3 +1494,5 @@ All dates are 2026-11-13 unless noted.
     preset stays experimental until Kyle decides. (2026-11-18)
 95. A sink receives changes since its cursor (the last event it sent), read from the event log; `--full` rebuilds it.
     A superseded fact is updated, never deleted. (Kyle, 2026-11-18)
+96. The Parquet sink writes `facts`, `entities`, `documents`, and `events`. Mentions and quotes are nested list columns
+    in `facts`. (Kyle, 2026-11-18)
