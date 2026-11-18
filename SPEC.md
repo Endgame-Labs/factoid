@@ -1045,8 +1045,8 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   `prompts show`, `keys set`, `keys list`, `models`, `doctor`, and `eval`), the eval harness with `--vary`, and three
   decision models for `choose`: Jev, Fireworks' Rune, and OpenAI's Decisions API.
 - **Search backend:** with no `search` setting, a project uses `LocalIndex`, a SQLite file with FTS5 for BM25 and
-  exact vector search. `Turbopuffer` is built and used when set. The spec says a project needs turbopuffer; the
-  local index makes tests and small projects work without it.
+  exact vector search. `Turbopuffer` is built and used when set, and is optional. Decision 23 said a project needs
+  turbopuffer; the local index replaced that, so tests and small projects work without it.
 - **`Nli`** is in the default chain but no NLI model is wired up yet. With none set, it is skipped: `factoid eval`
   prints how many facts it skipped and `scorecard.json` has `skipped_fact_evals`. So the working default chain is
   `DecisionFloors`. The README marks it planned, and its Quickstart compares `none` and `decision_floors`.
@@ -1167,6 +1167,17 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     this one of these kinds". The sample says "a contract, an agreement, or an amendment", the classifier sees the
     metadata, and the sample eval yields a `Raw` document so it classifies the way `ingest` does. Checked live: all
     three presets ingest the sample and score 1.0 on `factoid eval --fresh`.
+  - Ki's first-run passes on 897e408 (2026-11-18). In the `jev` preset, the extraction model (`glm-5p3-flash`)
+    folded the signing date into the other two sample facts in 5 of 7 fresh runs, which left 2 facts, and the sample
+    eval still scored 1.0 because it checked only traits. The sample eval now scores three facts: the signing (a fact
+    with no trait that names March 1, 2025), the consent clause, and the cap. On a replay of a 2-fact run it scores
+    recall 0.67. `factoid init --models <preset>` in an existing project switches the models block in `settings.py`
+    when it matches a preset, and otherwise prints the lines to use. `factoid keys set` with no terminal says to run
+    it in a terminal or pipe the key in, instead of "Aborted!". `stats --examples N` fills up to N facts from the same
+    documents when there are fewer than N documents. The README's Quickstart leads with `factoid init` (jev), says
+    an eval never reads the project's store, and no longer calls the repository private. Not bugs: `gpt-6-luna` rates
+    the consent fact's lifetime shorter than Jev ("still valid now" 0.55 to 0.63, against 0.79 to 0.81), and the
+    agreement entity's name follows how the extraction model wrote it.
   - Expected failures (`ModelError`, `DateError`, `ClassificationError`, `ExtractionError`, and `UnclaimedDocument`)
     print one line; `FACTOID_DEBUG=1` shows the traceback. An unclaimed file in a folder is skipped and listed.
   - Per-project keys are built as decided (decision 85): `factoid init` writes `id = "<package>-<8 hex>"` under
@@ -1317,7 +1328,8 @@ All dates are 2026-11-13 unless noted.
     dashboard links. All flavor text lives in markdown files.
 22. No flat-file store for now. Postgres is the leading proposal for the system of record in both modes.
 23. Storage is pluggable. v1 uses SQLite as the system of record, and requires turbopuffer or a
-    turbopuffer-compatible endpoint for search.
+    turbopuffer-compatible endpoint for search. (Superseded for search: a project with no `search` setting uses the
+    built-in `LocalIndex`, and turbopuffer is optional. See section 17.)
 24. Judges are renamed fact evals (`FactEval`).
 25. Five levels of customization. Decision steps are worded as questions, and generation steps as prompts.
 26. Current state is the source of truth. The event log is kept for audit and provenance, and is not replayed.
@@ -1502,3 +1514,6 @@ All dates are 2026-11-13 unless noted.
 97. The Parquet sink leaves vectors out by default; an option includes them. (Kyle, 2026-11-18)
 98. When vectors are included, `facts` gets `vector` (a list of 32-bit floats) and `embedding_model`. (Kyle,
     2026-11-18)
+99. Fixes from Ki's first-run report: the sample eval scores all three sample facts, `factoid init --models` switches an
+    existing project's preset, and `keys set` explains what to do without a terminal. Decision 23's turbopuffer
+    requirement is marked superseded. (Kyle, 2026-11-18)

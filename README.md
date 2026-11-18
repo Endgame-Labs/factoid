@@ -24,9 +24,8 @@ contract.
 
 ### Install
 
-Factoid requires Python 3.13 or newer and [uv](https://docs.astral.sh/uv/). It is not on PyPI yet. The repository is
-private, so your GitHub account needs access to `Endgame-Labs/factoid`, and git needs to be able to clone it (for
-example, after `gh auth login` and `gh auth setup-git`). Then:
+Factoid requires Python 3.13 or newer and [uv](https://docs.astral.sh/uv/). It is not on PyPI yet. Install it from
+GitHub:
 
 ```sh
 uv tool install git+https://github.com/Endgame-Labs/factoid
@@ -81,10 +80,15 @@ with `factoid keys set turbopuffer` (keys at <https://turbopuffer.com/dashboard>
 
 ```sh
 mkdir acme && cd acme
-factoid init --models openai       # or jev, or fireworks (experimental)
+factoid init                       # the jev models; or --models openai, or --models fireworks (experimental)
 factoid keys set                   # asks for each key settings.py needs, and says where to get it
 factoid doctor                     # one small call per workload
 ```
+
+`factoid init` uses the jev models unless you pass `--models`. In an existing project, run `factoid init --models
+<preset>` to switch `settings.py` to another preset. If you edited its models, init leaves the file alone and prints the
+lines to use instead. `factoid keys set` needs a terminal to prompt for a key. Without one, such as under a coding
+agent's `!` prompt, run it in your own terminal or pipe the key in: `factoid keys set openai < key.txt`.
 
 `factoid keys set` with no provider lists the keys the project's models need and whether each is set. It then asks for
 each missing one, with a link to the page where you create it. Press Enter to skip a key. `factoid keys set fireworks`
@@ -130,9 +134,11 @@ factoid eval                                     # score the project against lab
 factoid eval --vary fact_evals=none,decision_floors  # compare fact eval chains on the same documents
 ```
 
-The sample contract has three facts, and the sample eval expects the `consent_required` and `liability_cap` traits. Get
-`<fact id>` from `factoid facts list` or `factoid search`. Pass `--data-dir runs/<time>/<suite>/<variant>` to
-`facts list`, `search`, `read`, `stats`, or `entities list` to read an eval run's store.
+The sample contract has three facts: the signing, the consent clause, and the liability cap. The sample eval checks that
+all three are extracted as separate facts, that the consent fact has the `consent_required` trait, and that the cap fact
+has `liability_cap`. Get `<fact id>` from `factoid facts list` or `factoid search`. Pass `--data-dir
+runs/<time>/<suite>/<variant>` to `facts list`, `search`, `read`, `stats`, or `entities list` to read an eval run's
+store.
 
 Ingesting a file that has not changed skips it. Pass `--again` to ingest it anyway. When a changed file is ingested
 again, facts that say the same thing keep their ids.
@@ -141,6 +147,10 @@ Model calls are cached in `.factoid/calls.db`. A request identical to one made b
 nothing, and gives the same result. Both `ingest` and `eval` print how many calls were replayed. Right after `ingest`,
 `eval` replays almost everything, so its first score is a rescoring of saved answers. Pass `--fresh` on either command
 to call the models again.
+
+An eval never reads the project store. Each run builds its own store under `runs/` from the same documents. Evals replay
+saved answers, including those from a `--fresh` run. Because of this, an eval after `eval --fresh` scores that run's
+answers. Those results can differ from the facts `ingest` stored in the project.
 
 ### Commands
 

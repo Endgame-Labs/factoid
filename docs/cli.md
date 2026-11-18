@@ -14,12 +14,13 @@ factoid models                                                 # show workloads,
 factoid doctor                                                 # test each workload and show the search index
 ```
 
-- `init` writes `settings.py`, sample classes, a sample contract, and an eval. `jev` (default) uses TypeSafe and
-  Fireworks, `fireworks` uses Fireworks alone (experimental), and `openai` uses OpenAI alone.
+- `init` writes `settings.py`, sample classes, a sample contract, and an eval. Presets: `jev` (default) uses TypeSafe
+  and Fireworks, `fireworks` uses Fireworks only (experimental), and `openai` uses OpenAI only. In an existing project,
+  `init --models <preset>` switches `settings.py` to that preset unless you edited its models by hand.
 - `keys set` stores a key in `~/.factoid/.env`, or with `--project` in `~/.factoid/projects/<id>/.env`, named by the
   `id` that `init` writes into `pyproject.toml` (a project without one gets one). With no provider,
   it asks for each key the project needs and says where to get it; Enter skips. Providers: `fireworks`, `openai`,
-  `openrouter`, `turbopuffer`, and `typesafe`.
+  `openrouter`, `turbopuffer`, and `typesafe`. Without a terminal for prompting, it prints how to pipe a key in instead.
 - `keys list` prints each provider, whether its key is set, where it comes from, what uses it, and where to get one.
 - `models` prints each workload (`choose`, `generate`, `embed`, and `rerank`), its model, and whether its key is set.
 - `doctor` runs one small call per workload and prints the search index in use.

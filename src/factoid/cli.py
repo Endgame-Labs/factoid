@@ -174,14 +174,25 @@ def cli() -> None:
 
 @cli.command()
 @click.option("--package", help="Python package name (defaults to the folder name).")
-@click.option("--models", "preset", type=click.Choice(list(scaffold.PRESETS)), default="jev", show_default=True,
-              help="Which providers settings.py uses: jev (TypeSafe and Fireworks), fireworks (Fireworks alone), "
-                   "or openai (OpenAI alone).")
-def init(package: str | None, preset: str) -> None:
+@click.option("--models", "preset", type=click.Choice(list(scaffold.PRESETS)), default=None,
+              help="Which providers settings.py uses: jev (TypeSafe and Fireworks, the default), fireworks (Fireworks "
+                   "alone), or openai (OpenAI alone). In an existing project, switches its settings.py to the preset.")
+def init(package: str | None, preset: str | None) -> None:
     """Set up a project in the current folder: sample classes, sample documents, and an eval."""
     root = Path.cwd()
     if (root / "pyproject.toml").exists() and find_root(root) == root:
-        raise click.ClickException("this folder is already a Factoid project")
+        if preset is None:
+            raise click.ClickException("this folder is already a Factoid project; `factoid init --models <preset>` "
+                                       "switches its models")
+        settings = root / package_name(root) / "settings.py"
+        if not settings.exists() or not scaffold.switch(settings, preset):
+            raise click.ClickException(f"{settings.relative_to(root)} has models of its own, so init left it alone; "
+                                       f"edit its `models` to use these:\n{scaffold.PRESETS[preset][1]}")
+        click.echo(f"Switched {settings.relative_to(root)} to the {preset} models. Next:")
+        click.echo("  factoid keys set               asks for any key the new models need")
+        click.echo("  factoid doctor                 one small call per workload")
+        return
+    preset = preset or "jev"
     name = package or root.name.replace("-", "_").lower()
     for path in scaffold.write(root, name, preset):
         click.echo(f"  wrote {path.relative_to(root)}")
@@ -758,6 +769,10 @@ def _store_key(provider: str, value: str, root: Path | None) -> None:
     click.echo(f"stored {env} in {path}")
 
 
+_NO_TERMINAL = ("there is no terminal to ask for the key in (as under a coding agent's `!`). Run `factoid keys set` "
+                "in a terminal of your own, or pipe the key in: factoid keys set {provider} < key.txt")
+
+
 @cli.group()
 def keys() -> None:
     """Provider keys: which ones your models need, where to get them, and where they are stored."""
@@ -782,7 +797,12 @@ def keys_set(provider: str | None, for_project: bool) -> None:
     if provider:
         for line in _about_key(provider):
             click.echo(line)
-        value = click.prompt(_key_env(provider), hide_input=True).strip()
+        if not sys.stdin.isatty():
+            value = sys.stdin.readline().strip()
+            if not value:
+                raise click.ClickException(_NO_TERMINAL.format(provider=provider))
+        else:
+            value = click.prompt(_key_env(provider), hide_input=True).strip()
         _store_key(provider, value, root)
         return
     app = _project_or_defaults()
@@ -801,7 +821,12 @@ def keys_set(provider: str | None, for_project: bool) -> None:
         click.echo("")
         for line in _about_key(name):
             click.echo(line)
-        value = click.prompt(_key_env(name), default="", show_default=False, hide_input=True).strip()
+        try:
+            value = click.prompt(_key_env(name), default="", show_default=False, hide_input=True).strip()
+        except click.Abort:
+            if sys.stdin.isatty():
+                raise
+            raise click.ClickException(_NO_TERMINAL.format(provider=name)) from None
         if not value:
             click.echo(f"skipped {name}")
             continue

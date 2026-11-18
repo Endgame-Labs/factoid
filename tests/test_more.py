@@ -123,6 +123,38 @@ def test_init_scaffolds_a_project(tmp_path, monkeypatch):
     assert "[tool.factoid]" in (tmp_path / "pyproject.toml").read_text()
 
 
+def test_init_in_a_project_switches_its_models(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    CliRunner().invoke(cli, ["init", "--package", "deal"])
+    settings = tmp_path / "deal" / "settings.py"
+    assert "already a Factoid project" in CliRunner().invoke(cli, ["init"]).output
+    result = CliRunner().invoke(cli, ["init", "--models", "openai"])
+    assert result.exit_code == 0, result.output
+    assert "openai/gpt-6-luna" in settings.read_text() and "typesafe/" not in settings.read_text()
+    settings.write_text(settings.read_text().replace("gpt-6-luna", "my-model"))
+    result = CliRunner().invoke(cli, ["init", "--models", "jev"])
+    assert result.exit_code != 0 and "left it alone" in result.output and "my-model" in settings.read_text()
+
+
+def test_the_sample_eval_counts_the_signing_as_a_fact():
+    from types import SimpleNamespace as NS
+
+    from factoid import scaffold
+
+    namespace: dict = {"__file__": "evals/sample.py"}
+    exec(scaffold.SAMPLE_SUITE.format(package="x"), namespace)
+    suite = namespace["Sample"]()
+
+    def score(*facts):
+        result = NS(facts=[NS(text=text, trait_names=traits) for text, traits in facts])
+        return suite.score(None, [result])["facts"]
+
+    consent = ("Orion may not assign it, made on March 1, 2025, without Vega's consent.", ["consent_required"])
+    cap = ("Vega's liability under it, made on March 1, 2025, is capped at $1,000,000.", ["liability_cap"])
+    assert score(("Orion and Vega made it on March 1, 2025.", []), consent, cap)["recall"] == 1.0
+    assert score(consent, cap)["recall"] < 1.0
+
+
 def test_fireworks_model_ids():
     from factoid import Model
 
@@ -190,6 +222,11 @@ def test_stats_counts_by_class_with_examples(make_app, fake):
     assert data["facts_by_class"] == {"SourceFact": 1} and data["entities_by_class"]["Company"] == 2
     assert data["examples"]["facts"]["SourceFact"][0].startswith("Vega's liability")
     assert [e["name"] for e in data["examples"]["entities"]["Company"]] == ["Orion", "Vega"]
+    app.ingest_text("Vega's liability to Orion is capped at $1M under the supply agreement.\n\n"
+                    "Orion may not assign the supply agreement without the prior written consent of Vega.",
+                    document_type=Contract, metadata={"signed_at": "2025-03-01T00:00:00Z"}, uri="a.txt")
+    # One document, two facts: both are shown, not just the first.
+    assert len(app.stats(examples=2)["examples"]["facts"]["SourceFact"]) == 2
 
 
 def test_vary_can_name_a_project_object():
@@ -197,6 +234,15 @@ def test_vary_can_name_a_project_object():
 
     assert _value("@factoid.fact_evals:DEFAULT_FLOORS")["grounded"] == 0.45
     assert [type(f).__name__ for f in fact_eval_chain("@factoid.fact:Fact.fact_evals")] == ["Nli", "DecisionFloors"]
+
+
+def test_keys_set_with_no_terminal_says_how_to_set_a_key(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("FACTOID_HOME", str(tmp_path / "home"))
+    result = CliRunner().invoke(cli, ["keys", "set", "openai"], input="")
+    assert result.exit_code != 0 and "no terminal" in result.output and "< key.txt" in result.output
+    result = CliRunner().invoke(cli, ["keys", "set", "openai"], input="sk-test123\n")
+    assert result.exit_code == 0, result.output
 
 
 def test_keys_set_catches_a_bad_paste():

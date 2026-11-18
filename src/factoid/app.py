@@ -860,21 +860,26 @@ class Factoid:
         """Sample facts per fact class (current, with a trait, from different documents, of readable length) and the
         entities with the most facts per entity class."""
         q = self.store.query
+        rows = q("select class, text, document_id, traits from facts where status = 'current' "
+                 "and length(text) between 60 and 220 order by traits = '[]', document_id, id")
         facts: dict[str, list[str]] = {}
-        for row in q("select class, text, document_id, traits from facts where status = 'current' "
-                     "and length(text) between 60 and 220 order by traits = '[]', document_id, id"):
-            picked = facts.setdefault(row["class"], [])
-            seen = facts.setdefault(f"_{row['class']}", [])
-            if len(picked) < n and row["document_id"] not in seen:
+        seen: dict[str, set[str]] = {}
+        # One fact per document first, then more from the same documents when there are fewer documents than n.
+        for spread in (True, False):
+            for row in rows:
+                picked = facts.setdefault(row["class"], [])
+                docs = seen.setdefault(row["class"], set())
+                if len(picked) >= n or row["text"] in picked or (spread and row["document_id"] in docs):
+                    continue
                 picked.append(row["text"])
-                seen.append(row["document_id"])
+                docs.add(row["document_id"])
         entities: dict[str, list[dict[str, Any]]] = {}
         for row in q("select e.class, e.name, count(distinct m.fact_id) n from entities e join mentions m "
                      "on m.entity_id = e.id where e.merged_into is null group by e.id order by n desc, e.name"):
             picked_entities = entities.setdefault(row["class"], [])
             if len(picked_entities) < n:
                 picked_entities.append({"name": row["name"], "facts": row["n"]})
-        return {"facts": {k: v for k, v in facts.items() if not k.startswith("_")}, "entities": entities}
+        return {"facts": facts, "entities": entities}
 
 
 def _store(path: Path | None) -> Any:

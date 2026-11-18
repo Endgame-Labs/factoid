@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .project_id import new_project_id
 
-__all__ = ["PRESETS", "write"]
+__all__ = ["PRESETS", "switch", "write"]
 
 PYPROJECT = """[project]
 name = "{name}"
@@ -114,7 +114,7 @@ Vega Corp.'s total liability under this Supply Agreement is capped at $1,000,000
 
 SAMPLE_META = '{"signed_at": "2025-03-01T00:00:00Z", "title": "Orion and Vega Supply Agreement"}\n'
 
-SAMPLE_SUITE = '''"""A tiny suite: the sample contract, and the traits its facts should carry."""
+SAMPLE_SUITE = '''"""A tiny suite: the sample contract, and the three facts it should give."""
 
 from pathlib import Path
 
@@ -136,9 +136,12 @@ class Sample(Suite):
         yield Raw((HERE / "supply.txt").read_text(), meta, uri="sample_docs/supply.txt", title=meta["title"])
 
     def score(self, app, results):
-        expected = {{"consent_required", "liability_cap"}}
-        found = {{t for r in results for f in r.facts for t in f.trait_names}}
-        return {{"traits": prf(len(expected & found), len(found - expected), len(expected - found))}}
+        # The signing is a fact of its own, with no trait; the other two facts carry one trait each.
+        expected = {{"signing", "consent_required", "liability_cap"}}
+        found = set()
+        for f in (f for r in results for f in r.facts):
+            found |= set(f.trait_names) or ({{"signing"}} if "March 1, 2025" in f.text else set())
+        return {{"facts": prf(len(expected & found), len(found - expected), len(expected - found))}}
 '''
 
 
@@ -157,6 +160,17 @@ def _version() -> str:
 
     found = version()
     return found if found[:1].isdigit() else "0.1.1"
+
+
+def switch(settings: Path, preset: str) -> bool:
+    """Swap the models block in a settings.py that `init` wrote for another preset's. False when the block was edited
+    and matches no preset, so nothing is changed."""
+    text = settings.read_text()
+    for _, block in PRESETS.values():
+        if block in text:
+            settings.write_text(text.replace(block, PRESETS[preset][1]))
+            return True
+    return False
 
 
 def write(root: Path, package: str, preset: str = "jev") -> list[Path]:
