@@ -214,37 +214,37 @@ def init(package: str | None, preset: str | None) -> None:
     click.echo("  factoid ingest sample_docs")
 
 
-# -- sync ---------------------------------------------------------------------------------------------------
+# -- export -------------------------------------------------------------------------------------------------
 
 
 @cli.command()
 @click.argument("names", nargs=-1)
-@click.option("--full", is_flag=True, help="Send everything again, replacing what the sink holds.")
-def sync(names: tuple[str, ...], full: bool) -> None:
-    """Send each sink in settings.py (or the ones named) what changed since its last sync."""
+@click.option("--full", is_flag=True, help="Send everything again, replacing what the export holds.")
+def export(names: tuple[str, ...], full: bool) -> None:
+    """Send each export in settings.py (or the ones named) what changed since its last export."""
     project, app = _project()
-    sinks = project.settings.sinks
-    if not sinks:
-        raise click.ClickException("settings.py declares no sinks. Add, for example:\n"
-                                   "    from factoid.sinks import Parquet\n"
-                                   "    sinks = {\"warehouse\": Parquet(\"exports/\")}")
+    exports = project.settings.exports
+    if not exports:
+        raise click.ClickException("settings.py declares no exports. Add, for example:\n"
+                                   "    from factoid.exports import Parquet\n"
+                                   "    exports = {\"warehouse\": Parquet(\"exports/\")}")
     try:
-        results = _run_sync(app, sinks, list(names) or None, full)
+        results = _run_export(app, exports, list(names) or None, full)
     except KeyError as err:
         raise click.ClickException(str(err.args[0])) from err
     except RuntimeError as err:
         raise click.ClickException(str(err)) from err
-    _echo_sync(results)
+    _echo_export(results)
     app.close()
 
 
-def _run_sync(app: Any, sinks: dict[str, Any], names: list[str] | None, full: bool) -> list[Any]:
-    from .sinks import sync as run
+def _run_export(app: Any, exports: dict[str, Any], names: list[str] | None, full: bool) -> list[Any]:
+    from .exports import export as run
 
-    return run(app, sinks, names, full)
+    return run(app, exports, names, full)
 
 
-def _echo_sync(results: list[Any]) -> None:
+def _echo_export(results: list[Any]) -> None:
     for result in results:
         if result.skipped:
             click.echo(f"{result.name}: up to date (event {result.batch.end})")
@@ -301,11 +301,11 @@ def ingest(paths: tuple[Path, ...], as_class: str | None, dry_run: bool, again: 
             for rejected in result.rejected:
                 click.echo(f"  - {rejected.text}  ({', '.join(rejected.reasons)})")
     _echo_calls(app.meter.total(), getattr(app.calls, "path", None))
-    if project.settings.sync_after_ingest and project.settings.sinks and not dry_run:
+    if project.settings.export_after_ingest and project.settings.exports and not dry_run:
         try:
-            _echo_sync(_run_sync(app, project.settings.sinks, None, False))
-        except Exception as err:  # a sink failure never fails the ingest; the next sync catches up from the cursor
-            click.echo(f"warning: sync failed, and the next `factoid sync` will catch up: {err}", err=True)
+            _echo_export(_run_export(app, project.settings.exports, None, False))
+        except Exception as err:  # an export failure never fails the ingest; the next export catches up from the cursor
+            click.echo(f"warning: export failed, and the next `factoid export` will catch up: {err}", err=True)
     if unclaimed:
         names = ", ".join(k.__name__ for k in app.document_classes) or "none"
         click.echo(f"{len(unclaimed)} file(s) skipped because no document class claims them. Pass --as <Class> to "

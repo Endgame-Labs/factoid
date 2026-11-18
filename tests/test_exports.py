@@ -3,7 +3,7 @@ from pathlib import Path
 import pyarrow.parquet as pq
 from test_pipeline import Contract, build
 
-from factoid.sinks import TURBOPUFFER_SCHEMA, Parquet, Turbopuffer, sync
+from factoid.exports import TURBOPUFFER_SCHEMA, Parquet, Turbopuffer, export
 
 FIRST = ("Vega's liability to Orion is capped at $1M under the supply agreement.\n\n"
          "Orion may not assign the supply agreement to anyone without Vega's written consent.")
@@ -22,9 +22,9 @@ def test_parquet_sends_changes_since_the_cursor_and_rebuilds_with_full(make_app,
     app = build(make_app, fake)
     first = _ingest(app, FIRST, "supply.txt", "2025-03-01T00:00:00Z")
     cap, consent = first.facts
-    sinks = {"warehouse": Parquet(str(tmp_path / "out"), vectors=True)}
+    exports = {"warehouse": Parquet(str(tmp_path / "out"), vectors=True)}
 
-    [result] = sync(app, sinks)
+    [result] = export(app, exports)
     assert len(result.batch.facts) == 2 and not result.skipped
     [(name, facts)] = _read(tmp_path / "out" / "facts")
     assert name.startswith("0000000000-")
@@ -36,11 +36,11 @@ def test_parquet_sends_changes_since_the_cursor_and_rebuilds_with_full(make_app,
     assert len(_read(tmp_path / "out" / "entities")[0][1]) == 2
     assert _read(tmp_path / "out" / "documents")[0][1][0]["uri"] == "supply.txt"
 
-    [again] = sync(app, sinks)
+    [again] = export(app, exports)
     assert again.skipped  # nothing changed since the cursor
 
     _ingest(app, AMENDMENT, "amendment2.txt", "2026-10-03T00:00:00Z")
-    [second] = sync(app, sinks)
+    [second] = export(app, exports)
     files = _read(tmp_path / "out" / "facts")
     assert len(files) == 2
     changed = {f["id"]: f for f in files[1][1]}
@@ -50,19 +50,19 @@ def test_parquet_sends_changes_since_the_cursor_and_rebuilds_with_full(make_app,
     events = [e for _, rows in _read(tmp_path / "out" / "events") for e in rows]
     assert [e["seq"] for e in events] == list(range(1, len(events) + 1))  # every event once, in order
 
-    [full] = sync(app, sinks, full=True)
+    [full] = export(app, exports, full=True)
     assert full.batch.full
     [(_, facts)] = _read(tmp_path / "out" / "facts")
-    assert len(facts) == 3 and {f["synced_through"] for f in facts} == {second.batch.end}
+    assert len(facts) == 3 and {f["exported_through"] for f in facts} == {second.batch.end}
 
 
 def test_each_sink_keeps_its_own_cursor(make_app, fake, tmp_path):
     app = build(make_app, fake)
     _ingest(app, FIRST, "supply.txt", "2025-03-01T00:00:00Z")
-    sinks = {"a": Parquet(str(tmp_path / "a")), "b": Parquet(str(tmp_path / "b"))}
-    sync(app, sinks, ["a"])
+    exports = {"a": Parquet(str(tmp_path / "a")), "b": Parquet(str(tmp_path / "b"))}
+    export(app, exports, ["a"])
     _ingest(app, AMENDMENT, "amendment2.txt", "2026-10-03T00:00:00Z")
-    a, b = sync(app, sinks)
+    a, b = export(app, exports)
     assert len(a.batch.facts) == 2 and len(b.batch.facts) == 3  # b catches up from the start
     assert "vector" not in pq.read_table(next((tmp_path / "b" / "facts").glob("*.parquet"))).column_names
 
@@ -85,8 +85,8 @@ def test_turbopuffer_sink_writes_one_row_per_fact(make_app, fake, monkeypatch):
             return {}
 
     monkeypatch.setattr(Turbopuffer, "_client", lambda self: Client())
-    sinks = {"search": Turbopuffer(namespace="acme-facts")}
-    sync(app, sinks)
+    exports = {"search": Turbopuffer(namespace="acme-facts")}
+    export(app, exports)
     [(path, body)] = posts
     assert path == "/v2/namespaces/acme-facts" and body["schema"] == TURBOPUFFER_SCHEMA
     rows = {r["id"]: r for r in body["upsert_rows"]}
@@ -95,5 +95,5 @@ def test_turbopuffer_sink_writes_one_row_per_fact(make_app, fake, monkeypatch):
                         "document_id", "entity_ids"}
     assert len(row["vector"]) == 64 and len(row["entity_ids"]) == 2 and row["status"] == "current"
     assert not deletes
-    sync(app, sinks, full=True)
+    export(app, exports, full=True)
     assert deletes == ["https://tp.example/v2/namespaces/acme-facts"]

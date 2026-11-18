@@ -53,7 +53,7 @@ To try a change end to end, make a project in a scratch folder with `uv run --pr
 - `models.py`: providers, keys, the model client, and the call cache
 - `store.py`: SQLite system of record
 - `search.py`: `LocalIndex` and `Turbopuffer`
-- `sinks.py`: `Parquet` and `Turbopuffer` sinks, and `sync`, which sends each sink what changed since its cursor
+- `exports.py`: `Parquet` and `Turbopuffer` exports, and `export`, which sends each export what changed since its cursor
 - `evals.py`: `Suite`, `--vary`, and scorecards
 - `cli.py`: the `factoid` command
 - `scaffold.py`: what `factoid init` writes

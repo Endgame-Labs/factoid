@@ -65,7 +65,7 @@ create table if not exists events (
     seq integer primary key autoincrement, at text not null, type text not null, subject text not null,
     data text not null default '{}'
 );
-create table if not exists sink_cursors (
+create table if not exists export_cursors (
     name text primary key, seq integer not null, at text not null
 );
 """
@@ -290,20 +290,20 @@ class Store:
             self.event(db, "entity.merged", keep, merged=gone, reason=reason)
 
 
-    # -- sink cursors ---------------------------------------------------------------------------------------
+    # -- export cursors ---------------------------------------------------------------------------------------
 
     def last_event(self) -> int:
         row = self.one("select max(seq) seq from events")
         return int(row["seq"] or 0) if row else 0
 
     def cursor(self, name: str) -> int:
-        """The last event a sink was sent, or 0 for one never synced."""
-        row = self.one("select seq from sink_cursors where name = ?", (name,))
+        """The last event an export was sent, or 0 for one never run."""
+        row = self.one("select seq from export_cursors where name = ?", (name,))
         return int(row["seq"]) if row else 0
 
     def set_cursor(self, name: str, seq: int) -> None:
         with self.tx() as db:
-            db.execute("insert or replace into sink_cursors values (?,?,?)", (name, seq, _now()))
+            db.execute("insert or replace into export_cursors values (?,?,?)", (name, seq, _now()))
 
 
 def _norm(value: str) -> str:

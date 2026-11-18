@@ -1,16 +1,16 @@
-"""Sinks: where a project's facts go for other systems to use.
+"""Exports: where a project's facts go for other systems to use.
 
-A project declares its sinks by name in `settings.py`:
+A project declares its exports by name in `settings.py`:
 
-    from factoid.sinks import Parquet, Turbopuffer
+    from factoid.exports import Parquet, Turbopuffer
 
     class Project(Settings):
-        sinks = {
+        exports = {
             "warehouse": Parquet("s3://bucket/facts/"),
             "search": Turbopuffer(namespace="acme-facts"),
         }
 
-`factoid sync` sends each sink what changed since its cursor, the last event it was sent, read from the event log.
+`factoid export` sends each export what changed since its cursor, the last event it was sent, read from the event log.
 `--full` sends everything again. A superseded or retracted fact is sent again with its new status, never deleted.
 Credentials come from the environment: AWS's usual variables and files for S3, and `TURBOPUFFER_API_KEY` or
 `TURBOPUFFER_BASE_URL` for turbopuffer.
@@ -23,39 +23,39 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-__all__ = ["Batch", "Parquet", "Sink", "SyncResult", "Turbopuffer", "changes", "sync"]
+__all__ = ["Batch", "Export", "ExportResult", "Parquet", "Turbopuffer", "changes", "export"]
 
 
 @dataclass
 class Batch:
-    """What one sync sends a sink: the rows that changed between two events, as plain dicts."""
+    """What one run sends an export: the rows that changed between two events, as plain dicts."""
 
-    start: int  # the sink's cursor before this sync; 0 for a first or full sync
+    start: int  # the export's cursor before this run; 0 for a first or full run
     end: int  # the last event included
-    full: bool  # --full: the sink replaces what it holds
+    full: bool  # --full: the export replaces what it holds
     facts: list[dict[str, Any]] = field(default_factory=list)
     entities: list[dict[str, Any]] = field(default_factory=list)
     documents: list[dict[str, Any]] = field(default_factory=list)
     events: list[dict[str, Any]] = field(default_factory=list)
-    vectors: dict[str, list[float]] = field(default_factory=dict)  # fact vectors by id, for sinks that want them
+    vectors: dict[str, list[float]] = field(default_factory=dict)  # fact vectors by id, for exports that want them
     embedding_model: str = ""
-    root: Any = None  # the project folder, which relative sink paths are under
+    root: Any = None  # the project folder, which relative export paths are under
 
     def empty(self) -> bool:
         return not (self.facts or self.entities or self.documents or self.events)
 
 
 @dataclass
-class SyncResult:
+class ExportResult:
     name: str
     batch: Batch
     skipped: bool = False  # nothing changed since the cursor
 
 
-class Sink:
+class Export:
     """A destination for facts. Subclasses implement `send`."""
 
-    #: Whether `sync` should look up each fact's vector for this sink.
+    #: Whether `export` should look up each fact's vector for this export.
     wants_vectors: bool = False
 
     def send(self, batch: Batch) -> None:
@@ -70,7 +70,7 @@ class Sink:
 
 def changes(app: Any, since: int, until: int, full: bool = False) -> Batch:
     """The facts, entities, documents, and events that changed after event `since`, up to event `until`.
-    With `since` 0, everything. `full` marks a batch that replaces what the sink holds."""
+    With `since` 0, everything. `full` marks a batch that replaces what the export holds."""
     store = app.store
     events = [dict(r) for r in store.query("select seq, at, type, subject, data from events where seq > ? and seq <= ? "
                                            "order by seq", (since, until))]
@@ -178,31 +178,32 @@ def _time(value: str | None) -> datetime | None:
     return parse_datetime(value)
 
 
-# -- running a sync ----------------------------------------------------------------------------------------
+# -- running an export ------------------------------------------------------------------------------------
 
 
-def sync(app: Any, sinks: dict[str, Sink], names: list[str] | None = None, full: bool = False) -> list[SyncResult]:
-    """Send each named sink (or every sink) what changed since its cursor, and move the cursor once it is sent.
-    A sink that fails keeps its cursor, so the next sync sends the same changes again."""
-    chosen = names or list(sinks)
-    unknown = [n for n in chosen if n not in sinks]
+def export(app: Any, exports: dict[str, Export], names: list[str] | None = None,
+           full: bool = False) -> list[ExportResult]:
+    """Send each named export (or every export) what changed since its cursor, and move the cursor once it is sent.
+    An export that fails keeps its cursor, so the next run sends the same changes again."""
+    chosen = names or list(exports)
+    unknown = [n for n in chosen if n not in exports]
     if unknown:
-        raise KeyError(f"unknown sinks {unknown}; settings.py declares {sorted(sinks)}")
+        raise KeyError(f"unknown exports {unknown}; settings.py declares {sorted(exports)}")
     until = app.store.last_event()
     results = []
     for name in chosen:
-        sink = sinks[name]
+        target = exports[name]
         since = 0 if full else app.store.cursor(name)
         if since >= until and not full:
-            results.append(SyncResult(name, Batch(start=since, end=until, full=False), skipped=True))
+            results.append(ExportResult(name, Batch(start=since, end=until, full=False), skipped=True))
             continue
         batch = changes(app, since, until, full)
         batch.root = getattr(app, "root", None)
-        if sink.wants_vectors and batch.facts:
+        if target.wants_vectors and batch.facts:
             batch.vectors, batch.embedding_model = _vectors(app, batch.facts)
-        sink.send(batch)
+        target.send(batch)
         app.store.set_cursor(name, until)
-        results.append(SyncResult(name, batch))
+        results.append(ExportResult(name, batch))
     return results
 
 
@@ -221,14 +222,14 @@ def _vectors(app: Any, facts: list[dict[str, Any]]) -> tuple[dict[str, list[floa
 # -- Parquet -----------------------------------------------------------------------------------------------
 
 
-class Parquet(Sink):
+class Parquet(Export):
     """Parquet files in a local folder or on S3 (`s3://bucket/path/`): `facts`, `entities`, `documents`, and `events`.
     A relative folder is under the project folder. For an S3-compatible store such as R2 or MinIO, set
     `AWS_ENDPOINT_URL`; `AWS_PROFILE` picks a profile.
 
-    Each sync writes one file per table that changed, named by the events it covers, such as
+    Each run writes one file per table that changed, named by the events it covers, such as
     `facts/0000000041-0000000097.parquet`. A row that changed again appears in a later file, so the current version
-    of a fact or entity is its row with the highest `synced_through`. `--full` removes this sink's earlier files and
+    of a fact or entity is its row with the highest `exported_through`. `--full` removes this export's earlier files and
     writes every row again. Mentions and quotes are nested list columns in `facts`. With `vectors=True`, `facts` also
     gets `vector` (a list of 32-bit floats) and `embedding_model`.
     """
@@ -252,7 +253,7 @@ class Parquet(Sink):
                 continue
             fs.create_dir(folder, recursive=True)
             if table != "events":
-                rows = [{**r, "synced_through": batch.end} for r in rows]
+                rows = [{**r, "exported_through": batch.end} for r in rows]
             if table == "facts" and self.wants_vectors:
                 rows = [{**r, "vector": batch.vectors.get(r["id"]), "embedding_model": batch.embedding_model}
                         for r in rows]
@@ -265,7 +266,7 @@ class Parquet(Sink):
             import pyarrow.fs as pafs
             import pyarrow.parquet as pq
         except ImportError as err:
-            raise RuntimeError("the Parquet sink needs pyarrow: install factoid[parquet], or add pyarrow to the "
+            raise RuntimeError("the Parquet export needs pyarrow: install factoid[parquet], or add pyarrow to the "
                                "project's dependencies") from err
         if "://" in self.path:
             fs, root = pafs.FileSystem.from_uri(self.path)
@@ -281,7 +282,7 @@ class Parquet(Sink):
 
 
 def _clear(fs: Any, folder: str) -> None:
-    """Remove the Parquet files this sink wrote in one table's folder, and nothing else."""
+    """Remove the Parquet files this export wrote in one table's folder, and nothing else."""
     import pyarrow.fs as pafs
 
     for info in fs.get_file_info(pafs.FileSelector(folder, allow_not_found=True)):
@@ -300,15 +301,15 @@ def _schema(pa: Any, table: str, vectors: bool) -> Any:
                   ("chunk_id", text), ("traits", pa.list_(text)), ("trait_scores", text), ("valid_from", ts),
                   ("expires", text), ("valid_until", ts), ("lifetime", text), ("source_datetime", ts),
                   ("extracted_at", ts), ("created_at", ts), ("updated_at", ts), ("entity_ids", pa.list_(text)),
-                  ("mentions", pa.list_(mention)), ("quotes", pa.list_(quote)), ("synced_through", pa.int64())]
+                  ("mentions", pa.list_(mention)), ("quotes", pa.list_(quote)), ("exported_through", pa.int64())]
         if vectors:
             fields += [("vector", pa.list_(pa.float32())), ("embedding_model", text)]
     elif table == "entities":
         fields = [("id", text), ("class", text), ("kind", text), ("name", text), ("aliases", pa.list_(text)),
-                  ("props", text), ("created_at", ts), ("merged_into", text), ("synced_through", pa.int64())]
+                  ("props", text), ("created_at", ts), ("merged_into", text), ("exported_through", pa.int64())]
     elif table == "documents":
         fields = [("id", text), ("class", text), ("uri", text), ("title", text), ("source_datetime", ts),
-                  ("metadata", text), ("text", text), ("ingested_at", ts), ("synced_through", pa.int64())]
+                  ("metadata", text), ("text", text), ("ingested_at", ts), ("exported_through", pa.int64())]
     else:
         fields = [("seq", pa.int64()), ("at", ts), ("type", text), ("subject", text), ("data", text)]
     return pa.schema(fields)
@@ -317,7 +318,7 @@ def _schema(pa: Any, table: str, vectors: bool) -> Any:
 # -- turbopuffer -------------------------------------------------------------------------------------------
 
 
-class Turbopuffer(Sink):
+class Turbopuffer(Export):
     """A turbopuffer namespace, or one on a turbopuffer-compatible service, for an app to search.
 
     One row per fact, keyed by its id: its vector, `text` (with a BM25 index), `class`, `traits`, `status`,

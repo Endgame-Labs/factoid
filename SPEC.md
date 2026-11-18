@@ -878,7 +878,7 @@ assignment a provider cannot serve, before any call: TypeSafe serves `choose`; F
 - Later back ends behind the same interfaces: Postgres (pgvector and pgvectorscale) for the system of record and for
   search, and LanceDB on a bucket.
 
-**Decided** (Kyle, 2026-11-18): **data warehouses are sources and sinks, not stores.**
+**Decided** (Kyle, 2026-11-18): **data warehouses are sources and export targets, not stores.**
 
 - BigQuery, Snowflake, and similar warehouses can be where documents and rows come from (a source) and where finished
   facts, entities, and history go (an export), so analysts get facts in their own warehouse.
@@ -889,36 +889,39 @@ assignment a provider cannot serve, before any call: TypeSafe serves `choose`; F
   sources.
 - Nobody has to know turbopuffer: the local index is the default, and turbopuffer stays an option for scale.
 
-**Decided** (Kyle, 2026-11-18): **facts leave Factoid through sinks, and two are standard.**
+**Decided** (Kyle, 2026-11-18): **facts leave Factoid through exports, and two are standard.**
 
 - **Parquet:** tables written to a local folder or an S3 bucket. BigQuery, Snowflake, DuckDB, Athena, and pandas all
-  read Parquet, so one sink reaches every warehouse through the warehouse's own load step, and Factoid holds no
+  read Parquet, so one export reaches every warehouse through the warehouse's own load step, and Factoid holds no
   warehouse credentials.
 - **A turbopuffer-compatible API:** facts written to a namespace an application searches. This is an output for other
   systems to read, separate from the optional turbopuffer search index Factoid itself uses.
-- Other sinks (a native warehouse, Postgres, or a queue) can be added behind the same interface later.
-- **A sink receives changes.** Each sink keeps a cursor, the last event it sent, and each sync sends what changed
-  after it, read from the event log. Parquet writes a new file per sync, with a view or compaction for the latest state
+- Other exports (a native warehouse, Postgres, or a queue) can be added behind the same interface later.
+- **An export receives changes.** Each export keeps a cursor, the last event it sent, and each run sends what changed
+  after it, read from the event log. Parquet writes a new file per run, with a view or compaction for the latest state
   of each fact; turbopuffer upserts the changed facts. A superseded fact is updated with its status and end date, never
-  deleted, so as-of search works downstream. `--full` rebuilds a sink from scratch. (Kyle, 2026-11-18)
+  deleted, so as-of search works downstream. `--full` rebuilds an export from scratch. (Kyle, 2026-11-18)
 - **Parquet tables:** `facts`, `entities`, `documents`, and `events`. A `facts` row holds the fact's own fields, with
   its mentions (entity id, role, and the text as written) and its quotes (document id, section, and quoted text) as
   nested list columns, not tables of their own. (Kyle, 2026-11-18)
 - **Vectors in Parquet:** left out by default; an option includes each fact's vector. When included, `facts` gets a
   `vector` column (a list of 32-bit floats) and an `embedding_model` column naming the model that made it. Warehouses
   read the list as an array without a custom parser; Snowflake needs one cast to `VECTOR(FLOAT, N)`. (Kyle, 2026-11-18)
-- **Setting up and running sinks:** a project declares its sinks by name in `settings.py`, such as
-  `sinks = {"warehouse": Parquet("s3://bucket/path/"), "search": Turbopuffer(namespace="facts")}`. `factoid sync` runs
-  every sink, `factoid sync <name>` runs one, and `--full` rebuilds one from scratch. Each sink keeps its own cursor in
+- **Setting up and running exports:** a project declares its exports by name in `settings.py`, such as `exports =
+  {"warehouse": Parquet("s3://bucket/path/"), "search": Turbopuffer(namespace="facts")}`. `factoid export` runs every
+  export, `factoid export <name>` runs one, and `--full` rebuilds one from scratch. Each export keeps its own cursor in
   the store, so one that falls behind holds up no other. Credentials come from the environment, never from
   `settings.py`. (Kyle, 2026-11-18)
-- **Turbopuffer sink rows:** one row per fact, keyed by the fact's id, with its vector and the attributes `text`,
+- **Turbopuffer export rows:** one row per fact, keyed by the fact's id, with its vector and the attributes `text`,
   `class`, `traits`, `status`, `valid_from`, `valid_until`, `document_id`, and `entity_ids`. `text` has a BM25 index for
   hybrid search. Entities, documents, and quotes stay out; apps join them from Parquet or Factoid's API.
   (Kyle, 2026-11-18)
-- **When sinks run:** only on `factoid sync` by default. `sync_after_ingest = True` in `settings.py` syncs after each
-  ingest; a failed sync then warns and does not fail the ingest, and the next sync catches up from the cursor.
+- **When exports run:** only on `factoid export` by default. `export_after_ingest = True` in `settings.py` runs them
+  after each ingest; a failed export then warns and does not fail the ingest, and the next run catches up from the
+  cursor.
   (Kyle, 2026-11-18)
+- **Names:** these were first called sinks, run by `factoid sync`. Kyle renamed them because "sink" and "sync" sound
+  too alike: `exports` in `settings.py`, `factoid export`, `export_after_ingest`, and the module `factoid.exports`.
 
 **Decided** (Kyle, 2026-11-14): **Factoid requires keys.** There is no keyless local mode in v1, and maybe never. The
 setup wizard makes getting keys easy. A provider can still be pointed at a custom base URL with no key (a gateway, or a
@@ -1192,16 +1195,16 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     an eval never reads the project's store, and no longer calls the repository private. Not bugs: `gpt-6-luna` rates
     the consent fact's lifetime shorter than Jev ("still valid now" 0.55 to 0.63, against 0.79 to 0.81), and the
     agreement entity's name follows how the extraction model wrote it.
-  - Sinks are built (decisions 93 to 102), in `src/factoid/sinks.py`, with `factoid sync [name] [--full]` and
-    `sync_after_ingest`. Cursors live in a `sink_cursors` table in the store. The event log now also records
-    `document.saved`, `entity.aliased`, and `fact.updated` (set by `set_fields`, as when a supersession sets an end
-    date), so every change a sink needs is an event. Choices made while building, not decided by Kyle: Parquet writes
-    one file per table per sync, named `<from>-<to>.parquet` by event number, and each entity, document, and fact row
-    has `synced_through`, so the current version of a row is the one with the highest; `--full` deletes the files
-    this sink wrote and writes everything again. pyarrow is an optional extra, `factoid[parquet]`. A relative Parquet
-    path is under the project folder, and S3-compatible stores use `AWS_ENDPOINT_URL`. The turbopuffer sink's
-    `--full` deletes its namespace. Vectors come from the project's index (`Index.vectors`), and a fact the index
-    does not hold is embedded. Checked on 2026-11-18 with a CUAD run's store (4,069 facts, 400 entities, 20
+  - Exports (first called sinks) are built (decisions 93 to 103), in `src/factoid/exports.py`, with `factoid export
+    [name] [--full]` and `export_after_ingest`. Cursors live in an `export_cursors` table in the store. The event log
+    now also records `document.saved`, `entity.aliased`, and `fact.updated` (set by `set_fields`, as when a supersession
+    sets an end date), so every change an export needs is an event. Choices made while building, not decided by Kyle:
+    Parquet writes one file per table per run, named `<from>-<to>.parquet` by event number, and each entity, document,
+    and fact row has `exported_through`, so the current version of a row is the one with the highest; `--full` deletes
+    the files this export wrote and writes everything again. pyarrow is an optional extra, `factoid[parquet]`. A
+    relative Parquet path is under the project folder, and S3-compatible stores use `AWS_ENDPOINT_URL`. The turbopuffer
+    export's `--full` deletes its namespace. Vectors come from the project's index (`Index.vectors`), and a fact the
+    index does not hold is embedded. Checked on 2026-11-18 with a CUAD run's store (4,069 facts, 400 entities, 20
     documents, and 15,424 events): local Parquet with vectors in 2.2 seconds (27 MB of facts), DuckDB read the nested
     mentions and ran cosine search on the vectors, R2 took the files in 7 seconds and `--full` replaced them, and a
     turbopuffer namespace took all 4,069 rows in 28 seconds and answered BM25, status, and count queries. In a
@@ -1558,3 +1561,6 @@ All dates are 2026-11-13 unless noted.
      `valid_from`, `valid_until`, `document_id`, and `entity_ids`. (Kyle, 2026-11-18)
 102. Sinks run on `factoid sync`. `sync_after_ingest = True` syncs after each ingest, and a failed sync there only
      warns. (Kyle, 2026-11-18)
+103. Sinks are renamed exports, because "sink" and "sync" sound too alike: `exports` in `settings.py`,
+     `factoid export [name] [--full]`, and `export_after_ingest`. Decisions 93 to 102 keep their old wording.
+     (Kyle, 2026-11-18)
