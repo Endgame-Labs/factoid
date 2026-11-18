@@ -772,7 +772,7 @@ recent = orion.facts(since="30d")      # every recent fact linked to Orion
 
 - **Fact-level retrieval.** Search returns short, self-contained sentences within a token budget. On dialogue, fact
   retrieval outperformed chunk retrieval while using about one-seventh of the read tokens
-  ([docs/prior-art.md](docs/prior-art.md)).
+  ([examples/iscrag](examples/iscrag/README.md) measures it).
 - **Deterministic provenance.** Prose extraction cites numbered passages and structured extraction cites the file, row,
   and column; Factoid's code attaches the exact quote or cell, speaker, and timestamp.
 - **Event log for history.** Current state in SQLite is the source of truth. Each change also writes a fact event

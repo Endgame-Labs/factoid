@@ -18,7 +18,7 @@ Decisions not made yet. Algorithm choices are not listed here: those are settled
 
 ## Product
 
-6. **Articles.** OpenEndgame and endgame-wiki build cited pages from facts. Is that a separate project that follows
+6. **Articles.** Earlier systems built cited pages from facts. Is that a separate project that follows
    `/v1/events`, or a Factoid feature?
 7. **Answers.** Should `factoid ask` (answer a question from facts, cited) be a first-class command, or only an eval
    reader?
@@ -26,7 +26,7 @@ Decisions not made yet. Algorithm choices are not listed here: those are settled
 
 ## Evals
 
-9. **The first suites.** Candidates: OpenEndgame's 272 labeled candidates, ISC-RAG, MediaSumQA, EnronQA, and
+9. **The first suites.** Candidates: an internal set of 272 labeled candidates, ISC-RAG, MediaSumQA, EnronQA, and
    SalesTranscriptQA. Which ship in the repo, and which are imported?
 10. **Matching extracted facts to gold facts.** Recall of `keep` facts needs a "states the same claim" judge, which is
     itself a model that must be calibrated. Against what?

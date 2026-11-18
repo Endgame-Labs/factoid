@@ -7,5 +7,5 @@ The code now uses Python classes (`Document`, `Fact`, `FactTrait`, and `Entity`)
 with the event log kept for audit, and eval suites written as Python classes.
 
 They are kept for the reasoning behind decisions. Files: `mental-model.md`, `documents.md`, `facts.md`, `config.md`,
-`plugins.md`, `evals.md`, `api.md`, `open-questions.md`, and `potential/`. For the current design, read
+`plugins.md`, `evals.md`, `api.md`, and `open-questions.md`. For the current design, read
 [`../../README.md`](../../README.md) and [`../../SPEC.md`](../../SPEC.md).

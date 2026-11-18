@@ -265,8 +265,8 @@ value, not a category of fact.
 - Entities that share a strong identity merge by rule. Entities that share only a weak identity go to a question with a
   high floor. Merge and split are logged as events, so each can be traced (and, if section 10's proposal holds, undone).
 
-Sources for these choices: cerebro's link ladder and its over-creation cleanup jobs, and OpenEndgame's claims,
-unlinked facts, and reversible merges (`docs/prior-art.md`, and the research summarized in the session of 2026-11-13).
+These choices draw on earlier internal fact systems: a link ladder with cleanup of over-created entities, claims,
+unlinked facts, and reversible merges.
 
 ### Relations between entities
 
@@ -314,7 +314,7 @@ entity", and "a discovered entity is stored only with a strong identity or when 
   They are linked with the same ladder as typed entities.
 - Commands: `factoid entities search`, `show`, `edit`, `rename`, `merge`, `split`, `retype`, and `delete`. Each is an
   event.
-- Guards against over-creation (the problem cerebro's cleanup jobs fixed): link before create; refuse placeholders;
+- Guards against over-creation (a problem earlier systems needed cleanup jobs for): link before create; refuse placeholders;
   dedupe continuously, with candidate duplicates (similar names, shared facts) sent to the decision model as merge
   questions; and report entities with only one fact in `factoid stats`.
 
@@ -560,8 +560,7 @@ situation in front of its text. When it is off, the chunk's text alone is indexe
   the same prompt and inspection without calling a model, to paste into any agent.
 - **A parser has a dry run.** It runs the parser on a few rows and prints the facts, links, and warnings (such as
   columns the map does not cover), and writes nothing. It is the loop a person or agent uses to test a parser.
-- Ideas taken from prosaic, an earlier prototype (cerebro branch `kyle/frontend-bridge-integrations`,
-  `src/briefs/briefs/prosaic/`): rows become sentences, a file's layout is worked out once, and ID and email columns
+- Ideas taken from an earlier prototype: rows become sentences, a file's layout is worked out once, and ID and email columns
   connect files. Left out: generating parser code with an unattended agent run, one long narrative per row, and fuzzy
   file-to-file joins.
 
@@ -646,7 +645,7 @@ things: a fact eval gates one fact at ingest, and `factoid eval` measures the pi
   `decision_floors`. The chain rejects at the first failure.
 - `decision_floors` asks six yes-or-no questions in one call: grounded, attribution, self-contained, atomic, useful, and
   distinct. Each has its own floor, and all six must pass. Scores are never averaged.
-- Starting floors, from OpenEndgame: grounded 0.75, attribution 0.7, self-contained 0.65, atomic 0.4, useful 0.7, and
+- Starting floors, from an earlier internal system: grounded 0.75, attribution 0.7, self-contained 0.65, atomic 0.4, useful 0.7, and
   distinct 0.6. Floors are calibrated on labeled data.
 - A near miss gets one repair (a rewording), then is evaluated again.
 - A project changes one floor or adds a fact eval without replacing the chain.
@@ -712,7 +711,7 @@ one question with six answers: duplicate, supersedes, ends, corrects, contradict
 - **Corrects:** the new fact says the old one was wrong from the start ("restated Q1 revenue was $380M" corrects
   "$402M"). The old fact is marked `corrected` and is not shown as true at any time.
 
-Neither cerebro nor OpenEndgame detects that a newer fact replaces or contradicts an older one, so this step is new
+None of the earlier systems we studied detects that a newer fact replaces or contradicts an older one, so this step is new
 work and needs evals before any claim about its quality.
 
 **Decided** (Kyle, 2026-11-14): how contradictions are handled.
@@ -852,7 +851,7 @@ assignment a provider cannot serve, before any call: TypeSafe serves `choose`; F
   default, and turbopuffer is optional; see section 17.) It serves vector, BM25, and
   hybrid search, and the nearest-neighbor queries that resolve and entity linking need. The endpoint's base URL is a
   setting, so a compatible server can stand in for turbopuffer.
-- **No flat-file store for now.** Set aside: files with a SQLite index (as endgame-wiki does), and a bucket-only store
+- **No flat-file store for now.** Set aside: files with a SQLite index, and a bucket-only store
   (an event log in S3 or R2, with LanceDB tables as views).
 
 **Proposed.**
@@ -970,7 +969,7 @@ local runtime such as Ollama), but local runtimes are not promised or tested.
 **Decided** (Kyle, 2026-11-14). Factoid is a self-contained fact service. It creates, changes, ranks, and serves facts
 and entities, and that is where it stops. It can be used in many ways, and those uses are built on it rather than in
 it: briefs and articles about an entity, digests of what changed, choosing which entities to track, publishing, and so
-on (`docs/archive/potential/crm-starter.md` sketches one).
+on.
 
 One use the docs call out: personal agents can use Factoid over MCP as a more rigorous memory, with facts that carry
 sources, dates, validity, and contradictions instead of loose notes.
@@ -1004,8 +1003,9 @@ Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
 ## 16. Docs that lag the design
 
 **Decided** (Kyle, 2026-11-17). The docs from the single-YAML design (`mental-model.md`, `documents.md`, `facts.md`,
-`config.md`, `plugins.md`, `evals.md`, `api.md`, `open-questions.md`, and `potential/`) moved to `docs/archive/`,
-with a note that the code no longer follows them. `docs/` keeps `cli.md` (current), `prior-art.md`, and `research/`.
+`config.md`, `plugins.md`, `evals.md`, `api.md`, and `open-questions.md`) moved to `docs/archive/`, with a note that
+the code no longer follows them. `docs/` keeps `cli.md` (current) and `research/`. `docs/prior-art.md` and the CRM
+note, which described internal Endgame systems, were removed on 2026-11-18 (decision 88).
 The README's "Further reading" points at SPEC.md, `docs/cli.md`, and the example apps.
 
 - README.md uses the legal example (Acme buying Orion, and Orion's supply agreement with Vega), and is checked against
@@ -1304,7 +1304,7 @@ All dates are 2026-11-13 unless noted.
     Python class with a column map. Factoid can write it with a model, or print the prompt for any coding agent, and it
     has a dry run.
 29. MIT license for Factoid and prosaic.
-30. prosaic is a separate repo (`Endgame-Labs/prosaic`) and a dependency of Factoid. Endgame uses it too.
+30. prosaic is a separate library and a dependency of Factoid.
 31. Chunks are searchable as well as facts. A chunk is indexed with its situation when `situate` is on. Facts and
     chunks are in separate namespaces.
 32. Searching facts and chunks together is hybrid search in each, then a rerank. Benchmark specs live in
@@ -1430,3 +1430,6 @@ All dates are 2026-11-13 unless noted.
     then Postgres, then warehouse export, then warehouse sources. (Kyle, 2026-11-18)
 87. Retrying extraction after a rejection, with the rejected fact and the reason as context, is approved as an
     experiment, starting with "grounded" failures; it ships only if an eval shows it helps. (Kyle, 2026-11-18)
+88. The repo does not describe Endgame's internal systems. `docs/prior-art.md` and the archived CRM note are removed,
+    and SPEC names no internal system or private repository; it says "earlier internal fact systems" where a lesson came
+    from one. (Kyle, 2026-11-18)

@@ -11,7 +11,7 @@ for far fewer tokens.
 
 ## Prior result
 
-From the ISC papers (`dorkitude/phd`, summarized in `docs/prior-art.md`):
+From earlier research on the ISC-RAG data:
 
 - ISC-RAG: 500 held-out documents, 69,746 facts, and 499 questions. Facts won all 32 cells against chunk policies. The
   best fact cell scored 85.2% at about 2.2k read tokens. The best plain chunk cell scored 72.5% at 16.3k.
