@@ -1444,3 +1444,7 @@ All dates are 2026-11-13 unless noted.
     main. The sdist holds the library and its tests only. A project made by a PyPI install depends on
     `factoid>=<version>` with no uv source; one made from a checkout or a git install points at that. (Kyle,
     2026-11-18)
+    The first release waits until a PyPI trusted publisher is added for the repo; until then, install from GitHub.
+91. The repository is public as of 2026-11-18. Before the switch, gitleaks found no leaks in the 242 commits or the
+    working tree, and no `.env` or `.local` file is tracked. GitHub secret scanning and push protection are on. (Kyle,
+    2026-11-18)
