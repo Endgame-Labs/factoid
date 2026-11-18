@@ -1110,7 +1110,7 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     experimental: Rune keeps no facts on the sample contract, because it scores correct facts low on the attribution
     question (0.09 and 0.56 against Jev's 0.71 and 0.72) and cannot tell them from wrong ones. Fixed the same day
     (decision 81): with its own floors and the reworded attribution question, Rune keeps all three sample facts and
-    the sample eval scores 1.0. The legal suites on Rune are still to run.
+    the sample eval scores 1.0. The legal suites on Rune ran on 2026-11-18 (decision 92).
   - OpenAI generation sends `max_completion_tokens` and no `temperature`, which its reasoning models require.
   - The README marks `serve`, `mcp`, `rebuild`, and `contradictions` as planned.
   - Checked live on 2026-11-17: Rune answers under both `models/rune` and `routers/rune`; the Decisions API answers
@@ -1449,3 +1449,11 @@ All dates are 2026-11-13 unless noted.
 91. The repository is public as of 2026-11-18. Before the switch, gitleaks found no leaks in the 242 commits or the
     working tree, and no `.env` or `.local` file is tracked. GitHub secret scanning and push protection are on. (Kyle,
     2026-11-18)
+92. The `fireworks` preset stays experimental after the legal suites on Rune (2026-11-18, every legal suite, with Jev's
+    numbers from 2026-11-17 in brackets). Even or close: sample deal 15/15 (15/15), supersessions 15/16 (15/16), as-of
+    search 33/36 (34/36), and questions answered from facts 34 and 33 of 36 at 2k and 8k tokens (33, 34). Worse: CUAD
+    clause F1 0.79, 0.80, and 0.79 on tuning, held-out, and fresh (0.81, 0.84, 0.81), with recall at 0.97 and lower
+    precision (0.67), mean AUPR 0.93 (0.95 to 0.97), untouched clauses kept 7/9 (9/9), and false changes to base facts
+    4.5%, 7.8%, 7.7%, and 3.8% on tuning, NEON, fresh, and SEC (2.6%, 5.9%, 4.0%, 1.0%). Rune keeps more facts than
+    it should and replaces base facts too readily. Next step, when wanted: floors for Rune's change and resolve
+    decisions, tuned on the tuning chains and checked on the fresh and SEC chains.
