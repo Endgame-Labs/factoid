@@ -1,5 +1,12 @@
 # Factoid 📚
 
+[![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
+[![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
+[![arXiv](https://img.shields.io/badge/arXiv-2608.16621-b31b1b.svg)](https://arxiv.org/abs/2608.16621)
+[![tests](https://github.com/Endgame-Labs/factoid/actions/workflows/test.yml/badge.svg)](https://github.com/Endgame-Labs/factoid/actions/workflows/test.yml)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 > **Status: Early implementation.** The v1 framework is in `src/factoid` and runs end to end. SPEC section 17 lists what is
 > built and where the code differs from the spec.
 
@@ -847,7 +854,8 @@ recent = orion.facts(since="30d")      # every recent fact linked to Orion
 
 - **Fact-level retrieval.** Search returns short, self-contained sentences within a token budget. On dialogue, fact
   retrieval outperformed chunk retrieval while using about one-seventh of the read tokens
-  ([examples/iscrag](examples/iscrag/README.md) measures it).
+  ([examples/iscrag](examples/iscrag/README.md) measures it, after
+  [RAG Deserves an Index](https://arxiv.org/abs/2608.20845)).
 - **Deterministic provenance.** Prose extraction cites numbered passages and structured extraction cites the file, row,
   and column; Factoid's code attaches the exact quote or cell, speaker, and timestamp.
 - **Event log for history.** Current state in SQLite is the source of truth. Each change also writes a fact event
@@ -868,6 +876,61 @@ recent = orion.facts(since="30d")      # every recent fact linked to Orion
   fact. When any of those inputs change, facts from the old version are stale, and `factoid rebuild --estimate`
   (planned) prices re-deriving those facts. The model is omitted from the fingerprint, so switching models for price
   does not force a rebuild.
+
+## Research
+
+Factoid builds on three papers by Kyle Wild, Yusuke Takahashi, and Asako Uraki.
+
+- [*RAG Deserves an Index: Why Ingest-Time Compilation Beats Query-Time Interpretation*](https://arxiv.org/abs/2608.20845)
+  (2026). Most RAG systems retrieve raw chunks and have a model interpret them on every query. The paper extracts
+  single-claim sentences once at ingest time and checks each one against its source passage. On 500 held-out interview
+  transcripts, compiled claims scored higher than every chunk configuration: 85.2% correct from about 2.2k reader
+  tokens, against 72.5% from 16.3k. [examples/iscrag](examples/iscrag/README.md) reruns this benchmark with Factoid.
+- [*Ingest-Time Fact Compilation for Cost-Efficient and Reliable Question Answering over Revised Corpora*](https://arxiv.org/abs/2609.29661)
+  (2026). This paper resolves revisions, deletions, effective dates, and differences in source authority once at ingest
+  time. At query time, an inexpensive model reads the current state without rebuilding it per question. In its
+  controlled experiment, the compiled path was right in 30 of 30 trials, against 1 of 30, at 12.89 times lower read
+  cost. Factoid does this with supersession, end dates, and as-of search.
+- [*Cost Scales with Change, Not Corpus Size: Incrementally Maintaining an Evolving Semantic Substrate*](https://arxiv.org/abs/2608.16621)
+  (2026). When documents are added or revised, incremental updates process only what changed. They ran 33.7 times
+  cheaper than a full rebuild and produced the same result.
+
+<details>
+<summary>BibTeX</summary>
+
+```bibtex
+@misc{wild2026ragindex,
+  title         = {RAG Deserves an Index: Why Ingest-Time Compilation Beats Query-Time Interpretation},
+  author        = {Wild, Kyle and Takahashi, Yusuke and Uraki, Asako},
+  year          = {2026},
+  eprint        = {2608.20845},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.AI},
+  doi           = {10.48550/arXiv.2608.20845}
+}
+
+@misc{wild2026factcompilation,
+  title         = {Ingest-Time Fact Compilation for Cost-Efficient and Reliable Question Answering over Revised Corpora},
+  author        = {Wild, Kyle and Takahashi, Yusuke and Uraki, Asako},
+  year          = {2026},
+  eprint        = {2609.29661},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.AI},
+  doi           = {10.48550/arXiv.2609.29661}
+}
+
+@misc{takahashi2026costscales,
+  title         = {Cost Scales with Change, Not Corpus Size: Incrementally Maintaining an Evolving Semantic Substrate},
+  author        = {Takahashi, Yusuke and Wild, Kyle and Uraki, Asako},
+  year          = {2026},
+  eprint        = {2608.16621},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.AI},
+  doi           = {10.48550/arXiv.2608.16621}
+}
+```
+
+</details>
 
 ## Further reading
 

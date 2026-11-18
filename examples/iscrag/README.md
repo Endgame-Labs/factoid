@@ -1,9 +1,9 @@
 # iscrag
 
-This is the held-out benchmark from "RAG Deserves an Index" (arXiv 2608.20845), rerun with Factoid in place of the
-original ISC pipeline. It uses 500 MediaSum transcripts and 499 questions, keeping the paper's answer prompt, judge
-prompt, source rendering, and token budgets. The `dev` suite is the paper's 100-transcript development sample (200
-questions), used for tuning. The `heldout` suite is the held-out 500.
+This is the held-out benchmark from "RAG Deserves an Index" ([arXiv 2608.20845](https://arxiv.org/abs/2608.20845)),
+rerun with Factoid in place of the original ISC pipeline. It uses 500 MediaSum transcripts and 499 questions, keeping
+the paper's answer prompt, judge prompt, source rendering, and token budgets. The `dev` suite is the paper's
+100-transcript development sample (200 questions), used for tuning. The `heldout` suite is the held-out 500.
 
 ## Running it
 
