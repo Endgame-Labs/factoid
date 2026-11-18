@@ -905,6 +905,11 @@ assignment a provider cannot serve, before any call: TypeSafe serves `choose`; F
 - **Vectors in Parquet:** left out by default; an option includes each fact's vector. When included, `facts` gets a
   `vector` column (a list of 32-bit floats) and an `embedding_model` column naming the model that made it. Warehouses
   read the list as an array without a custom parser; Snowflake needs one cast to `VECTOR(FLOAT, N)`. (Kyle, 2026-11-18)
+- **Setting up and running sinks:** a project declares its sinks by name in `settings.py`, such as
+  `sinks = {"warehouse": Parquet("s3://bucket/path/"), "search": Turbopuffer(namespace="facts")}`. `factoid sync` runs
+  every sink, `factoid sync <name>` runs one, and `--full` rebuilds one from scratch. Each sink keeps its own cursor in
+  the store, so one that falls behind holds up no other. Credentials come from the environment, never from
+  `settings.py`. (Kyle, 2026-11-18)
 
 **Decided** (Kyle, 2026-11-14): **Factoid requires keys.** There is no keyless local mode in v1, and maybe never. The
 setup wizard makes getting keys easy. A provider can still be pointed at a custom base URL with no key (a gateway, or a
@@ -1517,3 +1522,5 @@ All dates are 2026-11-13 unless noted.
 99. Fixes from Ki's first-run report: the sample eval scores all three sample facts, `factoid init --models` switches an
     existing project's preset, and `keys set` explains what to do without a terminal. Decision 23's turbopuffer
     requirement is marked superseded. (Kyle, 2026-11-18)
+100. Sinks are declared by name in `settings.py` and run with `factoid sync [name] [--full]`. Each keeps its own cursor,
+     and credentials come from the environment. (Kyle, 2026-11-18)
