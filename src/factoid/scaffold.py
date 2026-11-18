@@ -12,12 +12,8 @@ PYPROJECT = """[project]
 name = "{name}"
 version = "0.1.0"
 requires-python = ">=3.13"
-dependencies = ["factoid"]
-
-# Factoid is not on PyPI yet: uv installs it from where this `factoid` came from.
-[tool.uv.sources]
-factoid = {source}
-
+dependencies = ["factoid>={version}"]
+{sources}
 [tool.factoid]
 package = "{package}"
 id = "{project_id}"  # names this project's keys in ~/.factoid/projects/; keep it committed
@@ -146,16 +142,28 @@ class Sample(Suite):
 '''
 
 
-def _source() -> str:
+def _sources() -> str:
+    """A `[tool.uv.sources]` block when this Factoid came from a checkout or from git; nothing when from PyPI."""
     from .version import source
 
-    return source()
+    found = source()
+    if found is None:
+        return ""
+    return f"\n# uv installs Factoid from where this `factoid` came from.\n[tool.uv.sources]\nfactoid = {found}\n"
+
+
+def _version() -> str:
+    from .version import version
+
+    found = version()
+    return found if found[:1].isdigit() else "0.1.1"
 
 
 def write(root: Path, package: str, preset: str = "jev") -> list[Path]:
     files = {
         root / "pyproject.toml": PYPROJECT.format(name=package.replace("_", "-"), package=package,
-                                                  source=_source(), project_id=new_project_id(package)),
+                                                  sources=_sources(), version=_version(),
+                                                  project_id=new_project_id(package)),
         root / package / "__init__.py": "",
         root / package / "settings.py": SETTINGS.format(models=PRESETS[preset][1]),
         root / package / "documents.py": DOCUMENTS,

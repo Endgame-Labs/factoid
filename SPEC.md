@@ -1439,3 +1439,8 @@ All dates are 2026-11-13 unless noted.
 89. TypeSafe keys are self-serve (checked 2026-11-18: the console offers sign-up with Google or email, and the quick
     start says to create a key there). The waitlist wording is gone, `jev` stays the default preset, and `keys set`
     links to `https://console.typesafe.ai/keys`. (Kyle, 2026-11-18)
+90. Factoid is published to PyPI as `factoid` (the name was free on 2026-11-18). A `v*` tag publishes through PyPI
+    trusted publishing (`.github/workflows/release.yml`), so no token is stored; tests and ruff run on every push to
+    main. The sdist holds the library and its tests only. A project made by a PyPI install depends on
+    `factoid>=<version>` with no uv source; one made from a checkout or a git install points at that. (Kyle,
+    2026-11-18)

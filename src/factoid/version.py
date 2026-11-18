@@ -40,19 +40,24 @@ def commit() -> str | None:
     return (out.stdout.strip() or None) if out.returncode == 0 else None
 
 
-def source() -> str:
+def source() -> str | None:
     """Where a new project should install Factoid from, as a `[tool.uv.sources]` value: the local checkout when this
-    Factoid was installed from one, otherwise the GitHub repository at the commit it was installed from."""
+    Factoid was installed from one, or the GitHub repository at the commit it was installed from. None when it came
+    from a package index (PyPI), where a new project gets it too."""
     try:
         raw = metadata.distribution("factoid").read_text("direct_url.json")
     except metadata.PackageNotFoundError:
         raw = None
-    info = json.loads(raw) if raw else {}
+    if not raw:
+        return None
+    info = json.loads(raw)
     url = urlparse(info.get("url", ""))
     if url.scheme == "file":
         folder = Path(unquote(url.path))
         if (folder / "pyproject.toml").is_file() and (folder / "src" / "factoid").is_dir():
             return f'{{ path = "{folder}", editable = true }}'
+        if folder.is_file() or folder.suffix in (".whl", ".gz"):
+            return None  # a built package: the new project gets the same version from the index
     sha = (info.get("vcs_info") or {}).get("commit_id")
     pin = f', rev = "{sha}"' if sha else ""
     return f'{{ git = "https://github.com/Endgame-Labs/factoid"{pin} }}'

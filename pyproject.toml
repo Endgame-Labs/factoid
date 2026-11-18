@@ -5,6 +5,13 @@ description = "Turn documents into facts and entities."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.13"
+authors = [{ name = "Endgame Labs" }]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing",
+]
 dependencies = [
     "click>=8.1",
     "httpx>=0.27",
@@ -12,6 +19,11 @@ dependencies = [
     "numpy>=2.5.4",
     "pydantic>=2.9",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Endgame-Labs/factoid"
+Source = "https://github.com/Endgame-Labs/factoid"
+Issues = "https://github.com/Endgame-Labs/factoid/issues"
 
 [project.scripts]
 factoid = "factoid.cli:main"
@@ -45,3 +57,7 @@ ignore = ["RUF012", "B905"]  # B905: zip over lists built together, where a leng
 [tool.ruff.lint.per-file-ignores]
 # Example suites hold long expected answers and real quotes (en dashes included) as data.
 "examples/**" = ["E501", "RUF001", "SIM115"]
+
+[tool.hatch.build.targets.sdist]
+# The source release is the library and its tests. Example apps keep large local data (data/, runs/, .factoid/).
+include = ["src/factoid", "tests", "README.md", "LICENSE", "pyproject.toml"]

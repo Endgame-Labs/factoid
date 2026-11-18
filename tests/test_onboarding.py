@@ -256,3 +256,23 @@ def test_a_project_without_an_id_gets_one_when_it_first_stores_a_key(tmp_path):
     assert project_id(tmp_path) is None
     made = project_id(tmp_path, create=True)
     assert made.startswith("legal-") and project_id(tmp_path) == made
+
+
+def test_a_pypi_install_writes_no_uv_source(tmp_path, monkeypatch):
+    import tomllib
+
+    from factoid import version
+
+    class Dist:
+        version = "0.1.1"
+
+        def read_text(self, name):
+            return None  # an index install has no direct_url.json
+
+    monkeypatch.setattr(version.metadata, "distribution", lambda name: Dist())
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("FACTOID_HOME", str(tmp_path / "home"))
+    assert CliRunner().invoke(cli, ["init", "--package", "acme"]).exit_code == 0
+    pyproject = tomllib.loads((tmp_path / "pyproject.toml").read_text())
+    assert "uv" not in pyproject.get("tool", {})
+    assert pyproject["project"]["dependencies"][0].startswith("factoid>=")
