@@ -2,13 +2,14 @@
 
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
-[![arXiv](https://img.shields.io/badge/arXiv-2608.16621-b31b1b.svg)](https://arxiv.org/abs/2608.16621)
+[![version](https://img.shields.io/badge/version-0.1.1-blue.svg)](pyproject.toml)
 [![tests](https://github.com/Endgame-Labs/factoid/actions/workflows/test.yml/badge.svg)](https://github.com/Endgame-Labs/factoid/actions/workflows/test.yml)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-> **Status: Early implementation.** The v1 framework is in `src/factoid` and runs end to end. SPEC section 17 lists what is
-> built and where the code differs from the spec.
+> **Status: Version 0.1.1.** Factoid runs end to end, and three example apps publish their eval results. It covers
+> ingest, fact extraction with evals, entities, supersession and as-of search, eval suites, and exports. The API may
+> still change before 1.0. [SPEC.md](SPEC.md) section 17 lists what is built.
 
 Factoid turns `Documents` into `Facts`.  A fact is a short, self-contained sentence, devoid of filler and explicit in its language (no pronouns, etc).
 Each fact is tied to an exact location in the source document.
@@ -866,8 +867,8 @@ recent = orion.facts(since="30d")      # every recent fact linked to Orion
   `assess`, `link`, and `resolve` come from eval results. `factoid eval` measures accuracy, cost, and latency on labeled
   data.
 - **Pluggable backends.** Storage, search, sources (`folder`, `jsonl`, `imap`, and `mcp`), models, and fact evals share
-  small base classes that projects can subclass. In v1, Factoid stores data in SQLite and searches with turbopuffer or
-  a compatible endpoint, and either can be replaced.
+  small base classes that projects can subclass. Today, Factoid stores data in SQLite and searches with a local index or
+  turbopuffer, and either can be replaced.
 - **Emergent entities and kept facts.** Every extracted entity is kept and linked, even with no declared class, and a
   placeholder mention that matches nothing stays on the fact as an unlinked mention so the fact is still kept. When a
   new entity is stored, Factoid searches stored facts for the entity's names and asks the decision model to confirm each
@@ -879,7 +880,8 @@ recent = orion.facts(since="30d")      # every recent fact linked to Orion
 
 ## Research
 
-Factoid builds on three papers by Kyle Wild, Yusuke Takahashi, and Asako Uraki.
+Most of Factoid comes from internal research and production experience at Endgame. A smaller part builds on three
+published papers by Kyle Wild, Yusuke Takahashi, and Asako Uraki.
 
 - [*RAG Deserves an Index: Why Ingest-Time Compilation Beats Query-Time Interpretation*](https://arxiv.org/abs/2608.20845)
   (2026). Most RAG systems retrieve raw chunks and have a model interpret them on every query. The paper extracts
