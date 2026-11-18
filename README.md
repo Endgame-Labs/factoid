@@ -87,8 +87,10 @@ factoid doctor                     # one small call per workload
 
 `factoid init` uses the jev models unless you pass `--models`. In an existing project, run `factoid init --models
 <preset>` to switch `settings.py` to another preset. If you edited its models, init leaves the file alone and prints the
-lines to use instead. `factoid keys set` needs a terminal to prompt for a key. Without one, such as under a coding
-agent's `!` prompt, run it in your own terminal or pipe the key in: `factoid keys set openai < key.txt`.
+lines to use instead. `factoid init` never overwrites existing files, but it recreates deleted sample files. To get the
+current sample eval after an upgrade, delete `evals/sample.py` and run `factoid init`. `factoid keys set` needs a
+terminal to prompt for a key. Without one, such as under a coding agent's `!` prompt, run it in your own terminal or
+pipe the key in: `factoid keys set openai < key.txt`.
 
 `factoid keys set` with no provider lists the keys the project's models need and whether each is set. It then asks for
 each missing one, with a link to the page where you create it. Press Enter to skip a key. `factoid keys set fireworks`

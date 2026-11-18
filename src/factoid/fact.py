@@ -191,6 +191,7 @@ class Fact(Registered, ModelCalls):
         self.extracted_at = extracted_at or now()
         self.scores: dict[str, Any] = dict(scores or {})
         self.similar: list[Fact] = []  # stored facts near this one, filled before evaluate and resolve
+        self.skipped_evals: list[str] = []  # fact evals that did not run on this fact, such as nli with no model
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} {self.id} {self.text!r}>"
@@ -295,12 +296,13 @@ class Fact(Registered, ModelCalls):
     def evaluate(self) -> EvalResult:
         """Run the fact eval chain. The chain stops at the first failure."""
         combined = EvalResult(passed=True)
+        self.skipped_evals = []
         for check in self.fact_eval_chain():
             result = check.check(self)
             combined.scores.update({f"{check.name}.{k}": v for k, v in result.scores.items()})
             if result.skipped:
                 combined.note = (combined.note + f" {check.name}: {result.note}").strip()
-                current().skipped_evals[f"{check.name}: {result.note}"] += 1
+                self.skipped_evals.append(f"{check.name}: {result.note}")  # counted when the fact is saved
                 continue
             if not result.passed:
                 combined.passed = False

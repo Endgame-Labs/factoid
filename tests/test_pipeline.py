@@ -233,6 +233,8 @@ def test_a_compound_near_miss_is_split(make_app, fake):
     assert sorted(f.text for f in result.facts) == ["Orion may not assign the agreement without Vega's consent.",
                                                     "Vega's liability to Orion is capped at $1M."]
     assert all(f.scores["repaired_from"] for f in result.facts) and all(f.quotes for f in result.facts)
+    # The skipped nli eval counts the 2 stored facts, not the candidate the repair replaced.
+    assert dict(app.skipped_evals) == {"nli: no nli model is set; skipped": 2}
 
 
 def test_same_claim_from_a_later_document_supersedes(make_app, fake):

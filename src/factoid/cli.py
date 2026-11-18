@@ -181,9 +181,17 @@ def init(package: str | None, preset: str | None) -> None:
     """Set up a project in the current folder: sample classes, sample documents, and an eval."""
     root = Path.cwd()
     if (root / "pyproject.toml").exists() and find_root(root) == root:
+        # In a project, init never overwrites a file: it writes back sample files that were deleted, so deleting
+        # evals/sample.py and running init again gets the current sample eval.
+        restored = scaffold.write(root, package_name(root), preset or "jev")
+        for path in restored:
+            click.echo(f"  wrote {path.relative_to(root)}")
         if preset is None:
-            raise click.ClickException("this folder is already a Factoid project; `factoid init --models <preset>` "
-                                       "switches its models")
+            if not restored:
+                raise click.ClickException("this folder is already a Factoid project; `factoid init --models "
+                                           "<preset>` switches its models, and init writes back any sample file "
+                                           "you delete")
+            return
         settings = root / package_name(root) / "settings.py"
         if not settings.exists() or not scaffold.switch(settings, preset):
             raise click.ClickException(f"{settings.relative_to(root)} has models of its own, so init left it alone; "
@@ -773,6 +781,21 @@ _NO_TERMINAL = ("there is no terminal to ask for the key in (as under a coding a
                 "in a terminal of your own, or pipe the key in: factoid keys set {provider} < key.txt")
 
 
+def _ask_key(provider: str, required: bool) -> str:
+    """A key typed at a hidden prompt, or read from a pipe when there is no terminal. Reading the pipe directly skips
+    getpass, which warns that input may be echoed. With no terminal and nothing piped in, says what to do instead."""
+    if sys.stdin.isatty():
+        if required:
+            return click.prompt(_key_env(provider), hide_input=True).strip()
+        return click.prompt(_key_env(provider), default="", show_default=False, hide_input=True).strip()
+    line = sys.stdin.readline()
+    if not line:
+        raise click.ClickException(_NO_TERMINAL.format(provider=provider))
+    if required and not line.strip():
+        raise click.ClickException(f"no key was piped in for {provider}")
+    return line.strip()
+
+
 @cli.group()
 def keys() -> None:
     """Provider keys: which ones your models need, where to get them, and where they are stored."""
@@ -797,12 +820,7 @@ def keys_set(provider: str | None, for_project: bool) -> None:
     if provider:
         for line in _about_key(provider):
             click.echo(line)
-        if not sys.stdin.isatty():
-            value = sys.stdin.readline().strip()
-            if not value:
-                raise click.ClickException(_NO_TERMINAL.format(provider=provider))
-        else:
-            value = click.prompt(_key_env(provider), hide_input=True).strip()
+        value = _ask_key(provider, required=True)
         _store_key(provider, value, root)
         return
     app = _project_or_defaults()
@@ -821,12 +839,7 @@ def keys_set(provider: str | None, for_project: bool) -> None:
         click.echo("")
         for line in _about_key(name):
             click.echo(line)
-        try:
-            value = click.prompt(_key_env(name), default="", show_default=False, hide_input=True).strip()
-        except click.Abort:
-            if sys.stdin.isatty():
-                raise
-            raise click.ClickException(_NO_TERMINAL.format(provider=name)) from None
+        value = _ask_key(name, required=False)
         if not value:
             click.echo(f"skipped {name}")
             continue

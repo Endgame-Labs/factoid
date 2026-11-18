@@ -16,7 +16,8 @@ factoid doctor                                                 # test each workl
 
 - `init` writes `settings.py`, sample classes, a sample contract, and an eval. Presets: `jev` (default) uses TypeSafe
   and Fireworks, `fireworks` uses Fireworks only (experimental), and `openai` uses OpenAI only. In an existing project,
-  `init --models <preset>` switches `settings.py` to that preset unless you edited its models by hand.
+  `init --models <preset>` switches `settings.py` to that preset unless you edited its models by hand. It never overwrites a file, and it
+  writes back any sample file you deleted, such as `evals/sample.py`.
 - `keys set` stores a key in `~/.factoid/.env`, or with `--project` in `~/.factoid/projects/<id>/.env`, named by the
   `id` that `init` writes into `pyproject.toml` (a project without one gets one). With no provider,
   it asks for each key the project needs and says where to get it; Enter skips. Providers: `fireworks`, `openai`,

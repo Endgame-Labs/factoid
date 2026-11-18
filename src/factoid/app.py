@@ -472,6 +472,9 @@ class Factoid:
         return hashlib.sha256("\n".join(parts).encode()).hexdigest()[:16]
 
     def save_fact(self, fact: Fact) -> None:
+        # Counted here, not in evaluate, so a candidate that a repair replaced is not counted as well.
+        self.skipped_evals.update(getattr(fact, "skipped_evals", []))
+        fact.skipped_evals = []
         row = {
             "id": fact.id, "class": type(fact).__qualname__, "text": fact.text, "document_id": fact.document_id,
             "chunk_id": fact.chunk_id, "status": fact.status, "traits": fact.trait_names,

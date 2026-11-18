@@ -347,8 +347,9 @@ entity", and "a discovered entity is stored only with a strong identity or when 
 - A class's declared properties are validated with Pydantic when written.
 - `Class.where(prop=value)` queries properties through SQLite's JSON functions. A busy property can get an index later
   without a schema change.
-- Entities are mirrored into a third turbopuffer namespace, `<project-id>-entities` (names, aliases, kind, and a name
-  embedding), for entity search and fuzzy linking. SQLite stays the record.
+- Entities are mirrored into a third namespace, `<project-id>-entities`, in the project's search index (the built-in
+  `LocalIndex` by default, or turbopuffer when set), with their names and aliases for BM25 and their class, for entity
+  search and fuzzy linking. SQLite stays the record. A name embedding is not built yet.
 - turbopuffer was checked as a document store (2026-11-14): vectors are optional, attribute filters and ordering work,
   and it has patches, conditional writes, and strong reads. It has no nested objects, no multi-document transactions,
   no get-by-id, writes of about 165 ms p50, and 16 concurrent queries per namespace. So it is not the record.
@@ -858,7 +859,8 @@ assignment a provider cannot serve, before any call: TypeSafe serves `choose`; F
 
 - SQLite is the truth, and the turbopuffer namespace is a view. If the index is lost or its settings change,
   `factoid rebuild` repopulates it from SQLite.
-- Two turbopuffer namespaces per project, named from the project id: one for facts and one for chunks. Each row is a
+- Three namespaces per project, named from the project id: one for facts, one for chunks, and one for entities (see
+  section 7). They live in turbopuffer when it is set, and in the built-in `LocalIndex` otherwise. Each row is a
   fact or a chunk, with its vector, its text for BM25, and its entity ids, traits, and times as filterable attributes.
 - Writes go to SQLite first, then to the index. A write the index has not confirmed is retried, so the index catches
   up with the truth.
@@ -1187,6 +1189,12 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     an eval never reads the project's store, and no longer calls the repository private. Not bugs: `gpt-6-luna` rates
     the consent fact's lifetime shorter than Jev ("still valid now" 0.55 to 0.63, against 0.79 to 0.81), and the
     agreement entity's name follows how the extraction model wrote it.
+  - Ki's passes 10 to 12 on 7bca4fe (2026-11-18). `keys set` with no terminal reads a piped key directly instead of
+    through getpass, so Python's "input may be echoed" warning is gone. `factoid init` in a project writes back any
+    deleted sample file and never overwrites one, so an older project gets the current sample eval by deleting
+    `evals/sample.py` and running `factoid init`. The eval's "fact eval skipped on N facts" line counts facts when
+    they are saved, so a candidate that a repair replaced is not counted too. Section 7, section 11, and decision 39
+    now say the entities namespace lives in whichever index the project uses.
   - Expected failures (`ModelError`, `DateError`, `ClassificationError`, `ExtractionError`, and `UnclaimedDocument`)
     print one line; `FACTOID_DEBUG=1` shows the traceback. An unclaimed file in a folder is skipped and listed.
   - Per-project keys are built as decided (decision 85): `factoid init` writes `id = "<package>-<8 hex>"` under
@@ -1364,7 +1372,8 @@ All dates are 2026-11-13 unless noted.
 38. High-cardinality things (accounts, tickets, games) are ordinary entities. The discovery prompt teaches entity
     altitude. Every entity has a JSON property bag; typed entities declare first-class properties.
 39. No ORM for entities: one SQLite table with a JSON `props` column, validated per class, plus an entities
-    namespace in turbopuffer for search and linking.
+    namespace in turbopuffer for search and linking. (Superseded in part: the entities namespace lives in whichever
+    index the project uses, `LocalIndex` by default; see section 7.)
 40. The v1 entity class: a docstring, optional `unique_keys`, typed properties with `where()`, and per-class tuning of
     the AI steps. Domain methods, callbacks, and `normalize` are on the roadmap. No trait defaults per entity class.
 41. Prose extraction never fills entity properties; it writes facts only.

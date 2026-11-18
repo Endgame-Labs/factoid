@@ -131,6 +131,10 @@ def test_init_in_a_project_switches_its_models(tmp_path, monkeypatch):
     result = CliRunner().invoke(cli, ["init", "--models", "openai"])
     assert result.exit_code == 0, result.output
     assert "openai/gpt-6-luna" in settings.read_text() and "typesafe/" not in settings.read_text()
+    (tmp_path / "evals" / "sample.py").unlink()
+    result = CliRunner().invoke(cli, ["init"])
+    assert result.exit_code == 0 and "wrote evals/sample.py" in result.output
+    assert "openai/gpt-6-luna" in settings.read_text()  # restoring a sample file leaves settings.py alone
     settings.write_text(settings.read_text().replace("gpt-6-luna", "my-model"))
     result = CliRunner().invoke(cli, ["init", "--models", "jev"])
     assert result.exit_code != 0 and "left it alone" in result.output and "my-model" in settings.read_text()
@@ -241,6 +245,8 @@ def test_keys_set_with_no_terminal_says_how_to_set_a_key(tmp_path, monkeypatch):
     monkeypatch.setenv("FACTOID_HOME", str(tmp_path / "home"))
     result = CliRunner().invoke(cli, ["keys", "set", "openai"], input="")
     assert result.exit_code != 0 and "no terminal" in result.output and "< key.txt" in result.output
+    result = CliRunner().invoke(cli, ["keys", "set"], input="")
+    assert result.exit_code != 0 and "no terminal" in result.output and "echoed" not in result.output
     result = CliRunner().invoke(cli, ["keys", "set", "openai"], input="sk-test123\n")
     assert result.exit_code == 0, result.output
 
