@@ -1432,4 +1432,6 @@ All dates are 2026-11-13 unless noted.
     experiment, starting with "grounded" failures; it ships only if an eval shows it helps. (Kyle, 2026-11-18)
 88. The repo does not describe Endgame's internal systems. `docs/prior-art.md` and the archived CRM note are removed,
     and SPEC names no internal system or private repository; it says "earlier internal fact systems" where a lesson came
-    from one. (Kyle, 2026-11-18)
+    from one. Git history is not rewritten: older commits may mention those systems, which is acceptable as long as
+    nothing in history is dangerous. gitleaks over all 240 commits, the pull request included, found no leaks.
+    (Kyle, 2026-11-18)
