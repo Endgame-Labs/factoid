@@ -895,6 +895,10 @@ assignment a provider cannot serve, before any call: TypeSafe serves `choose`; F
 - **A turbopuffer-compatible API:** facts written to a namespace an application searches. This is an output for other
   systems to read, separate from the optional turbopuffer search index Factoid itself uses.
 - Other sinks (a native warehouse, Postgres, or a queue) can be added behind the same interface later.
+- **A sink receives changes.** Each sink keeps a cursor, the last event it sent, and each sync sends what changed
+  after it, read from the event log. Parquet writes a new file per sync, with a view or compaction for the latest state
+  of each fact; turbopuffer upserts the changed facts. A superseded fact is updated with its status and end date, never
+  deleted, so as-of search works downstream. `--full` rebuilds a sink from scratch. (Kyle, 2026-11-18)
 
 **Decided** (Kyle, 2026-11-14): **Factoid requires keys.** There is no keyless local mode in v1, and maybe never. The
 setup wizard makes getting keys easy. A provider can still be pointed at a custom base URL with no key (a gateway, or a
@@ -1484,3 +1488,5 @@ All dates are 2026-11-13 unless noted.
     fresh): F1 0.79, 0.82, and 0.79 (0.81, 0.84, 0.81), mean AUPR 0.97, 0.93, and 0.92 (0.97, 0.97, 0.95). Decision 92
     compared Rune on all contracts past each offset with Jev on 20 and overstated the F1 gap. The `fireworks`
     preset stays experimental until Kyle decides. (2026-11-18)
+95. A sink receives changes since its cursor (the last event it sent), read from the event log; `--full` rebuilds it.
+    A superseded fact is updated, never deleted. (Kyle, 2026-11-18)
