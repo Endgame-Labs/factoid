@@ -1439,12 +1439,13 @@ All dates are 2026-11-13 unless noted.
 89. TypeSafe keys are self-serve (checked 2026-11-18: the console offers sign-up with Google or email, and the quick
     start says to create a key there). The waitlist wording is gone, `jev` stays the default preset, and `keys set`
     links to `https://console.typesafe.ai/keys`. (Kyle, 2026-11-18)
-90. Factoid is published to PyPI as `factoid` (the name was free on 2026-11-18). A `v*` tag publishes through PyPI
-    trusted publishing (`.github/workflows/release.yml`), so no token is stored; tests and ruff run on every push to
-    main. The sdist holds the library and its tests only. A project made by a PyPI install depends on
-    `factoid>=<version>` with no uv source; one made from a checkout or a git install points at that. (Kyle,
-    2026-11-18)
-    The first release waits until a PyPI trusted publisher is added for the repo; until then, install from GitHub.
+90. Factoid is published to PyPI as `factoid` from the Endgame PyPI account (the name was free on 2026-11-18).
+    Publishing a GitHub release runs `.github/workflows/release.yml`: one job checks that the tag matches the version,
+    runs the tests, and builds with `uv build`; a second job in the `pypi` environment publishes through PyPI trusted
+    publishing, so no token is stored. Tests and ruff run on every push to main. The sdist holds the library, its
+    tests, the README, the license, and `pyproject.toml` only. A project made by a PyPI install depends on
+    `factoid>=<version>` with no uv source; one made from a checkout or a git install points at that. Nothing is
+    released until Kyle says so; until then, install from GitHub. (Kyle, 2026-11-18)
 91. The repository is public as of 2026-11-18. Before the switch, gitleaks found no leaks in the 242 commits or the
     working tree, and no `.env` or `.local` file is tracked. GitHub secret scanning and push protection are on. (Kyle,
     2026-11-18)

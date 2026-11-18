@@ -60,4 +60,4 @@ ignore = ["RUF012", "B905"]  # B905: zip over lists built together, where a leng
 
 [tool.hatch.build.targets.sdist]
 # The source release is the library and its tests. Example apps keep large local data (data/, runs/, .factoid/).
-include = ["src/factoid", "tests", "README.md", "LICENSE", "pyproject.toml"]
+include = ["/src/factoid", "/tests", "/README.md", "/LICENSE", "/pyproject.toml"]

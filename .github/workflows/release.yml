@@ -1,23 +1,37 @@
-# Publishes to PyPI when a version tag (v0.1.1) is pushed. Uses PyPI trusted publishing: no token is stored anywhere.
-# One-time setup on pypi.org: add a trusted publisher for Endgame-Labs/factoid, workflow release.yml, environment pypi.
+# Publishes to PyPI when a GitHub release is published. Uses PyPI trusted publishing: no token is stored anywhere.
+# One-time setup on pypi.org: a trusted publisher for Endgame-Labs/factoid, workflow release.yml, environment pypi.
 name: release
 
 on:
-  push:
-    tags: ["v*"]
+  release:
+    types: [published]
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
-    environment: pypi
     permissions:
-      id-token: write
       contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - name: Check the tag matches the version
+      - name: Check the release tag matches the version
         run: test "v$(grep -m1 '^version' pyproject.toml | cut -d'"' -f2)" = "$GITHUB_REF_NAME"
       - run: uv run --frozen pytest -q
       - run: uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
