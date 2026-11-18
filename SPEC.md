@@ -887,6 +887,15 @@ assignment a provider cannot serve, before any call: TypeSafe serves `choose`; F
   sources.
 - Nobody has to know turbopuffer: the local index is the default, and turbopuffer stays an option for scale.
 
+**Decided** (Kyle, 2026-11-18): **facts leave Factoid through sinks, and two are standard.**
+
+- **Parquet:** tables written to a local folder or an S3 bucket. BigQuery, Snowflake, DuckDB, Athena, and pandas all
+  read Parquet, so one sink reaches every warehouse through the warehouse's own load step, and Factoid holds no
+  warehouse credentials.
+- **A turbopuffer-compatible API:** facts written to a namespace an application searches. This is an output for other
+  systems to read, separate from the optional turbopuffer search index Factoid itself uses.
+- Other sinks (a native warehouse, Postgres, or a queue) can be added behind the same interface later.
+
 **Decided** (Kyle, 2026-11-14): **Factoid requires keys.** There is no keyless local mode in v1, and maybe never. The
 setup wizard makes getting keys easy. A provider can still be pointed at a custom base URL with no key (a gateway, or a
 local runtime such as Ollama), but local runtimes are not promised or tested.
@@ -1457,3 +1466,6 @@ All dates are 2026-11-13 unless noted.
     4.5%, 7.8%, 7.7%, and 3.8% on tuning, NEON, fresh, and SEC (2.6%, 5.9%, 4.0%, 1.0%). Rune keeps more facts than
     it should and replaces base facts too readily. Next step, when wanted: floors for Rune's change and resolve
     decisions, tuned on the tuning chains and checked on the fresh and SEC chains.
+93. Facts leave Factoid through sinks. Two are standard: Parquet files in a local folder or an S3 bucket, and a
+    turbopuffer-compatible API. Warehouses load the Parquet files themselves; native warehouse sinks may come later.
+    (Kyle, 2026-11-18)
