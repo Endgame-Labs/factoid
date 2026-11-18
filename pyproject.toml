@@ -20,6 +20,9 @@ dependencies = [
     "pydantic>=2.9",
 ]
 
+[project.optional-dependencies]
+parquet = ["pyarrow>=18"]
+
 [project.urls]
 Homepage = "https://github.com/Endgame-Labs/factoid"
 Source = "https://github.com/Endgame-Labs/factoid"
@@ -30,6 +33,7 @@ factoid = "factoid.cli:main"
 
 [dependency-groups]
 dev = [
+    "pyarrow>=18",
     "pytest>=8",
     "ruff>=0.17.5",
 ]

@@ -39,6 +39,11 @@ class Settings:
     concurrency: ClassVar[int] = 8
     #: Reuse stored responses for identical model requests.
     replay: ClassVar[bool] = True
+    #: Where facts go for other systems, by name: `Parquet` and `Turbopuffer` from `factoid.sinks`. `factoid sync`
+    #: sends each one what changed since its last sync.
+    sinks: ClassVar[dict[str, Any]] = {}
+    #: Sync every sink after each `factoid ingest`. A failed sync then warns, and the next sync catches up.
+    sync_after_ingest: ClassVar[bool] = False
 
     @classmethod
     def data_path(cls, project_root: Path) -> Path:

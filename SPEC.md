@@ -1192,6 +1192,20 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     an eval never reads the project's store, and no longer calls the repository private. Not bugs: `gpt-6-luna` rates
     the consent fact's lifetime shorter than Jev ("still valid now" 0.55 to 0.63, against 0.79 to 0.81), and the
     agreement entity's name follows how the extraction model wrote it.
+  - Sinks are built (decisions 93 to 102), in `src/factoid/sinks.py`, with `factoid sync [name] [--full]` and
+    `sync_after_ingest`. Cursors live in a `sink_cursors` table in the store. The event log now also records
+    `document.saved`, `entity.aliased`, and `fact.updated` (set by `set_fields`, as when a supersession sets an end
+    date), so every change a sink needs is an event. Choices made while building, not decided by Kyle: Parquet writes
+    one file per table per sync, named `<from>-<to>.parquet` by event number, and each entity, document, and fact row
+    has `synced_through`, so the current version of a row is the one with the highest; `--full` deletes the files
+    this sink wrote and writes everything again. pyarrow is an optional extra, `factoid[parquet]`. A relative Parquet
+    path is under the project folder, and S3-compatible stores use `AWS_ENDPOINT_URL`. The turbopuffer sink's
+    `--full` deletes its namespace. Vectors come from the project's index (`Index.vectors`), and a fact the index
+    does not hold is embedded. Checked on 2026-11-18 with a CUAD run's store (4,069 facts, 400 entities, 20
+    documents, and 15,424 events): local Parquet with vectors in 2.2 seconds (27 MB of facts), DuckDB read the nested
+    mentions and ran cosine search on the vectors, R2 took the files in 7 seconds and `--full` replaced them, and a
+    turbopuffer namespace took all 4,069 rows in 28 seconds and answered BM25, status, and count queries. In a
+    turbopuffer filter, a fact with no `valid_from` matches `valid_from < date`.
   - Ki's passes 10 to 12 on 7bca4fe (2026-11-18). `keys set` with no terminal reads a piped key directly instead of
     through getpass, so Python's "input may be echoed" warning is gone. `factoid init` in a project writes back any
     deleted sample file and never overwrites one, so an older project gets the current sample eval by deleting

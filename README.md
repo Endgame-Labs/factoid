@@ -157,7 +157,8 @@ answers. Those results can differ from the facts `ingest` stored in the project.
 ### Commands
 
 Built today: `init`, `keys set`, `keys list`, `models`, `doctor`, `ingest`, `facts list`, `search`, `read`,
-`stats`, `entities list`, `entities kinds`, `eval`, `steps show`, `classifiers show`, `prompts show`, and `struct`.
+`stats`, `entities list`, `entities kinds`, `eval`, `sync`, `steps show`, `classifiers show`, `prompts show`, and
+`struct`.
 
 The rest of this README also describes commands that are planned and not built yet: `serve`, `mcp`, `rebuild`, and
 `contradictions`. Each is marked "(planned)" where it appears. A guided terminal UI, `factoid setup`, is planned too.
@@ -747,10 +748,71 @@ or `valid_at=` to filter to facts likely still valid. Source chunks live in thei
 
 `factoid stats` counts documents, facts, and entities by class and counts facts by status. It also reports facts with
 no trait, unlinked mentions, single-fact entities, facts past their expected validity, and open contradictions. Pass
-`--examples 3` to add up to three sample facts per fact class, at most one per document, and the three entities with
-the most facts per entity class.
+`--examples 3` to add up to three sample facts per fact class, from different documents where it can, and the three
+entities with the most facts per entity class.
 Use `--data-dir` to point `factoid stats` at another store, such as an eval run's folder.
 
+## Sinks
+
+A sink sends a project's facts to another system. There are two sinks. `Parquet` writes files to a local folder or to S3
+for a data warehouse. `Turbopuffer` writes to a turbopuffer namespace for an app to search. Declare sinks by name in
+`settings.py`:
+
+```python
+from factoid import Settings
+from factoid.sinks import Parquet, Turbopuffer
+
+
+class Project(Settings):
+    sinks = {
+        "warehouse": Parquet("s3://my-bucket/facts/"),
+        "search": Turbopuffer(namespace="acme-facts"),
+    }
+    sync_after_ingest = False  # True syncs every sink after each ingest
+```
+
+```sh
+factoid sync                 # every sink
+factoid sync warehouse       # one sink
+factoid sync search --full   # send everything again
+```
+
+Each sync reads the event log and sends what changed since that sink's last sync. A superseded or retracted fact is sent
+again with its new status and dates. It is never deleted. Each sink tracks its own position in the log, so a sink that
+falls behind does not block the others. When `sync_after_ingest = True`, `factoid ingest` runs a sync at the end. A
+failed sync prints a warning without failing the ingest. The next sync catches up.
+
+### Parquet
+
+The Parquet sink needs pyarrow. Install `factoid[parquet]` or add `pyarrow` to the project's dependencies. It writes
+four folders: `facts`, `entities`, `documents`, and `events`. Relative paths resolve under the project folder. Each sync
+adds one file per folder, named after the events it covers. When a row changes again, the new version appears in a later
+file. The current version of a row is the one with the highest `synced_through`. Each `facts` row stores its mentions
+and quotes as nested lists. Passing `--full` removes the files this sink wrote earlier and writes every row again.
+
+`Parquet(path, vectors=True)` adds a `vector` column (a list of 32-bit floats) and an `embedding_model` column.
+Warehouses read this list as an array without a custom parser. BigQuery reads it as `ARRAY<FLOAT64>` with list inference
+on, Databricks reads it as `array<float>`, and DuckDB and ClickHouse read it natively. Snowflake needs one cast to
+`VECTOR(FLOAT, N)`.
+
+S3 credentials come from standard AWS environment variables and files. For an S3-compatible store such as R2 or MinIO,
+set `AWS_ENDPOINT_URL`.
+
+DuckDB reads the current version of each fact like this:
+
+```sql
+select * from 'exports/facts/*.parquet'
+qualify row_number() over (partition by id order by synced_through desc) = 1;
+```
+
+### Turbopuffer
+
+The turbopuffer sink writes one row per fact, keyed by the fact's id. Each row includes its vector, `text` (with a BM25
+index), `class`, `traits`, `status`, `valid_from`, `valid_until`, `document_id`, and `entity_ids`. Entities, documents,
+and quotes are not included. Join them from the Parquet files or Factoid's API. This namespace is separate from the
+index Factoid searches itself. The sink uses `TURBOPUFFER_API_KEY` or `TURBOPUFFER_BASE_URL`. Passing `--full` deletes
+the namespace and writes every fact again. In a turbopuffer filter, a fact with no `valid_from` still matches
+`valid_from < date`. Add `["valid_from", "NotEq", null]` when you need to exclude those facts.
 ## Usage
 
 - **Standalone CLI project.** Manage a RAG corpus in its own directory, tune chunking and extraction, and evaluate

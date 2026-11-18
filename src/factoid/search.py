@@ -38,6 +38,10 @@ class Index:
     def delete(self, namespace: str, ids: list[str]) -> None:
         raise NotImplementedError
 
+    def vectors(self, namespace: str, ids: list[str]) -> dict[str, list[float]]:
+        """The stored vectors of these rows, by id. A row with none is left out."""
+        return {}
+
     def bm25(self, namespace: str, text: str, top_k: int, filters: dict[str, Any] | None = None) -> list[str]:
         raise NotImplementedError
 
@@ -95,6 +99,17 @@ class LocalIndex(Index):
                 self.db.execute("delete from fts where ns = ? and id = ?", (namespace, id_))
             self.db.commit()
             self._vectors.pop(namespace, None)
+
+    def vectors(self, namespace: str, ids: list[str]) -> dict[str, list[float]]:
+        out: dict[str, list[float]] = {}
+        with self._lock:
+            for start in range(0, len(ids), 500):
+                part = ids[start:start + 500]
+                rows = self.db.execute(
+                    f"select id, vector from rows where ns = ? and vector is not null and id in "
+                    f"({','.join('?' * len(part))})", (namespace, *part)).fetchall()
+                out.update({id_: np.frombuffer(blob, dtype=np.float32).tolist() for id_, blob in rows})
+        return out
 
     def _passes(self, attrs: dict[str, Any], filters: dict[str, Any] | None) -> bool:
         if not filters:
@@ -210,6 +225,17 @@ class Turbopuffer(Index):
     def delete(self, namespace: str, ids: list[str]) -> None:
         if ids:
             self._post(f"/v2/namespaces/{self._ns(namespace)}", {"deletes": ids})
+
+    def vectors(self, namespace: str, ids: list[str]) -> dict[str, list[float]]:
+        out: dict[str, list[float]] = {}
+        for start in range(0, len(ids), 500):
+            part = ids[start:start + 500]
+            body = {"filters": ["id", "In", part], "rank_by": ["id", "asc"], "top_k": len(part),
+                    "include_attributes": ["vector"]}
+            for row in self._post(f"/v2/namespaces/{self._ns(namespace)}/query", body)["rows"]:
+                if row.get("vector") is not None:
+                    out[row["id"]] = row["vector"]
+        return out
 
     @staticmethod
     def _filters(filters: dict[str, Any] | None) -> list[Any] | None:

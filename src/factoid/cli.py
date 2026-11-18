@@ -214,6 +214,54 @@ def init(package: str | None, preset: str | None) -> None:
     click.echo("  factoid ingest sample_docs")
 
 
+# -- sync ---------------------------------------------------------------------------------------------------
+
+
+@cli.command()
+@click.argument("names", nargs=-1)
+@click.option("--full", is_flag=True, help="Send everything again, replacing what the sink holds.")
+def sync(names: tuple[str, ...], full: bool) -> None:
+    """Send each sink in settings.py (or the ones named) what changed since its last sync."""
+    project, app = _project()
+    sinks = project.settings.sinks
+    if not sinks:
+        raise click.ClickException("settings.py declares no sinks. Add, for example:\n"
+                                   "    from factoid.sinks import Parquet\n"
+                                   "    sinks = {\"warehouse\": Parquet(\"exports/\")}")
+    try:
+        results = _run_sync(app, sinks, list(names) or None, full)
+    except KeyError as err:
+        raise click.ClickException(str(err.args[0])) from err
+    except RuntimeError as err:
+        raise click.ClickException(str(err)) from err
+    _echo_sync(results)
+    app.close()
+
+
+def _run_sync(app: Any, sinks: dict[str, Any], names: list[str] | None, full: bool) -> list[Any]:
+    from .sinks import sync as run
+
+    return run(app, sinks, names, full)
+
+
+def _echo_sync(results: list[Any]) -> None:
+    for result in results:
+        if result.skipped:
+            click.echo(f"{result.name}: up to date (event {result.batch.end})")
+            continue
+        b = result.batch
+        span = "everything" if b.full else f"events {b.start + 1} to {b.end}"
+        counts = ", ".join(_plural(len(rows), noun) for rows, noun in
+                           ((b.facts, "fact"), (b.entities, "entity"), (b.documents, "document")))
+        click.echo(f"{result.name}: {counts}, and {_plural(len(b.events), 'event')} ({span})")
+
+
+def _plural(n: int, noun: str) -> str:
+    if n == 1:
+        return f"1 {noun}"
+    return f"{n} {noun[:-1]}ies" if noun.endswith("y") else f"{n} {noun}s"
+
+
 # -- ingest and reads ---------------------------------------------------------------------------------------
 
 
@@ -253,6 +301,11 @@ def ingest(paths: tuple[Path, ...], as_class: str | None, dry_run: bool, again: 
             for rejected in result.rejected:
                 click.echo(f"  - {rejected.text}  ({', '.join(rejected.reasons)})")
     _echo_calls(app.meter.total(), getattr(app.calls, "path", None))
+    if project.settings.sync_after_ingest and project.settings.sinks and not dry_run:
+        try:
+            _echo_sync(_run_sync(app, project.settings.sinks, None, False))
+        except Exception as err:  # a sink failure never fails the ingest; the next sync catches up from the cursor
+            click.echo(f"warning: sync failed, and the next `factoid sync` will catch up: {err}", err=True)
     if unclaimed:
         names = ", ".join(k.__name__ for k in app.document_classes) or "none"
         click.echo(f"{len(unclaimed)} file(s) skipped because no document class claims them. Pass --as <Class> to "

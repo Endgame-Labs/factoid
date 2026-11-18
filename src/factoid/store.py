@@ -65,6 +65,9 @@ create table if not exists events (
     seq integer primary key autoincrement, at text not null, type text not null, subject text not null,
     data text not null default '{}'
 );
+create table if not exists sink_cursors (
+    name text primary key, seq integer not null, at text not null
+);
 """
 
 
@@ -151,6 +154,7 @@ class Store:
                 [(c["id"], doc["id"], c["n"], c["first_passage"], c["last_passage"], c["text"], c.get("situation"))
                  for c in chunks],
             )
+            self.event(db, "document.saved", doc["id"], uri=doc.get("uri"))
 
     def retire_document_facts(self, document_id: str) -> dict[str, str]:
         """When a document is re-ingested, its old facts are retracted. Returns their ids by text, so a fact that
@@ -209,6 +213,7 @@ class Store:
         cols = ", ".join(f"{name} = ?" for name in fields)
         with self.tx() as db:
             db.execute(f"update facts set {cols}, updated_at = ? where id = ?", (*fields.values(), _now(), fact_id))
+            self.event(db, "fact.updated", fact_id, **fields)
 
     def relate(self, fact_id: str, other_id: str, relation: str) -> None:
         with self.tx() as db:
@@ -271,6 +276,7 @@ class Store:
             aliases.append(alias)
             with self.tx() as db:
                 db.execute("update entities set aliases = ? where id = ?", (json.dumps(aliases), entity_id))
+                self.event(db, "entity.aliased", entity_id, alias=alias)
 
     def save_entity_key(self, key: str, value: str, entity_id: str) -> None:
         with self.tx() as db:
@@ -282,6 +288,22 @@ class Store:
             db.execute("update mentions set entity_id = ? where entity_id = ?", (keep, gone))
             db.execute("update entity_keys set entity_id = ? where entity_id = ?", (keep, gone))
             self.event(db, "entity.merged", keep, merged=gone, reason=reason)
+
+
+    # -- sink cursors ---------------------------------------------------------------------------------------
+
+    def last_event(self) -> int:
+        row = self.one("select max(seq) seq from events")
+        return int(row["seq"] or 0) if row else 0
+
+    def cursor(self, name: str) -> int:
+        """The last event a sink was sent, or 0 for one never synced."""
+        row = self.one("select seq from sink_cursors where name = ?", (name,))
+        return int(row["seq"]) if row else 0
+
+    def set_cursor(self, name: str, seq: int) -> None:
+        with self.tx() as db:
+            db.execute("insert or replace into sink_cursors values (?,?,?)", (name, seq, _now()))
 
 
 def _norm(value: str) -> str:

@@ -73,6 +73,18 @@ factoid eval [SUITE...] [--vary SETTING=A,B] [--limit N] [--fresh] [--quiet]  # 
 - Cached calls replay by default, so a rerun costs nothing, is repeatable, and measures a code change alone. `--fresh`
   calls the models again and shows how much results vary between draws.
 
+## Sync
+
+```sh
+factoid sync [NAME...] [--full]  # send each sink in settings.py what changed since its last sync
+```
+
+- Sinks are declared by name in `settings.py`: `Parquet` (a local folder or S3) and `Turbopuffer` (a namespace), from
+  `factoid.sinks`. With no names, every sink syncs.
+- Each sink keeps its own cursor, the last event it was sent. A sink that is up to date says so.
+- `--full` sends everything again: Parquet removes the files it wrote before, and turbopuffer deletes the namespace.
+- With `sync_after_ingest = True` in `settings.py`, `factoid ingest` syncs at the end, and a failed sync only warns.
+
 ## Inspect
 
 ```sh
