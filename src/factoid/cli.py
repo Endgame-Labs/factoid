@@ -716,8 +716,8 @@ def _about_key(provider: str) -> list[str]:
     if p.access:
         lines.append(f"  {p.access}.")
     if provider == "typesafe":
-        lines.append("  No TypeSafe access? OpenAI (openai/gpt-6-luna) also serves choose; `factoid init --models "
-                     "openai` sets a project up with OpenAI alone. Fireworks' Rune is experimental.")
+        lines.append("  Sign up with Google or an email address, then create a key. To use one key in all, "
+                     "`factoid init --models openai` sets a project up with OpenAI alone.")
     return lines
 
 

@@ -58,7 +58,7 @@ def test_check_models_names_providers_that_cannot_serve_a_workload():
 
 def test_every_provider_says_where_to_get_a_key():
     assert all(p.key_url.startswith("https://") for p in PROVIDERS.values())
-    assert "waitlist" in PROVIDERS["typesafe"].access
+    assert PROVIDERS["typesafe"].key_url == "https://console.typesafe.ai/keys"
 
 
 def _client_answering(model, response):
@@ -179,7 +179,8 @@ def test_keys_set_with_no_provider_walks_the_needed_keys(tmp_path, monkeypatch):
         monkeypatch.delenv(env, raising=False)
     result = CliRunner().invoke(cli, ["keys", "set"], input="\nfw_test123\n")
     assert result.exit_code == 0, result.output
-    assert "typesafe" in result.output and "waitlist" in result.output and "skipped typesafe" in result.output
+    assert "typesafe" in result.output and "console.typesafe.ai/keys" in result.output
+    assert "skipped typesafe" in result.output
     assert "https://app.fireworks.ai/settings/users/api-keys" in result.output
     assert "FIREWORKS_API_KEY=fw_test123" in (tmp_path / "home" / ".env").read_text()
 

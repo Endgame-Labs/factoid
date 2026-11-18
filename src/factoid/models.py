@@ -90,8 +90,7 @@ PROVIDERS: dict[str, Provider] = {
         "https://api.typesafe.ai",
         "TYPESAFE_API_KEY",
         ("choose",),
-        key_url="https://console.typesafe.ai/",
-        access="TypeSafe keys are not self-serve yet: join the waitlist at https://typesafe.ai",
+        key_url="https://console.typesafe.ai/keys",
     ),
     "fireworks": Provider(
         "fireworks",

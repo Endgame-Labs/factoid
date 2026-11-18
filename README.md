@@ -55,8 +55,8 @@ Factoid uses models for four kinds of work, and the fourth is optional:
 | `fireworks` (experimental) | Fireworks `rune` | Fireworks `glm-5p3-flash` | Fireworks `qwen3-embedding-8b` | Fireworks |
 | `openai` | OpenAI `gpt-6-luna` (Decisions API) | OpenAI `gpt-6-luna` | OpenAI `text-embedding-3-small` | OpenAI |
 
-Jev is the recommended decision model, but TypeSafe keys are not self-serve yet. If you do not have TypeSafe access,
-use `--models openai`, which needs one key you can create yourself. Rune now has its own fact eval floors. On a
+Jev is the recommended decision model. A TypeSafe key is self-serve: sign up at the console and create one. To start
+with one key in all, use `--models openai`. Rune now has its own fact eval floors. On a
 news-transcript eval, it answers about as many questions as Jev. The `fireworks` preset stays experimental until the
 contract evals have been run on Rune.
 
@@ -65,7 +65,7 @@ needs. Not every provider serves every workload:
 
 | Provider | Workloads | Get a key |
 | --- | --- | --- |
-| `typesafe` | `choose` | <https://console.typesafe.ai/> (waitlist: <https://typesafe.ai>) |
+| `typesafe` | `choose` | <https://console.typesafe.ai/keys> |
 | `fireworks` | `choose`, `generate`, `embed`, and `rerank` | <https://app.fireworks.ai/settings/users/api-keys> |
 | `openai` | `choose`, `generate`, and `embed` | <https://platform.openai.com/api-keys> |
 | `openrouter` | `generate` | <https://openrouter.ai/settings/keys> |

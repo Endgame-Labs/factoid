@@ -1104,7 +1104,8 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   - `factoid init` writes a `[tool.uv.sources]` entry for the GitHub repository, so `uv sync` and `uv run` work in a
     new project.
   - `factoid keys set` with no provider asks for each key the project's models need and links to the page that
-    creates it; `factoid keys list` shows every provider's key, its source, and its use; TypeSafe's waitlist is named.
+    creates it; `factoid keys list` shows every provider's key, its source, and its use. (TypeSafe's waitlist was named
+    until 2026-11-18; the console now lets anyone sign up and create a key.)
   - "One provider key is enough to start" (section 9) is true with `--models openai`. `--models fireworks` is
     experimental: Rune keeps no facts on the sample contract, because it scores correct facts low on the attribution
     question (0.09 and 0.56 against Jev's 0.71 and 0.72) and cannot tell them from wrong ones. Fixed the same day
@@ -1435,3 +1436,6 @@ All dates are 2026-11-13 unless noted.
     from one. Git history is not rewritten: older commits may mention those systems, which is acceptable as long as
     nothing in history is dangerous. gitleaks over all 240 commits, the pull request included, found no leaks.
     (Kyle, 2026-11-18)
+89. TypeSafe keys are self-serve (checked 2026-11-18: the console offers sign-up with Google or email, and the quick
+    start says to create a key there). The waitlist wording is gone, `jev` stays the default preset, and `keys set`
+    links to `https://console.typesafe.ai/keys`. (Kyle, 2026-11-18)
