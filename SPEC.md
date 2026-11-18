@@ -676,6 +676,11 @@ things: a fact eval gates one fact at ingest, and `factoid eval` measures the pi
   rejections.
 - Every eval run writes `rejected.jsonl`: each rejected fact with its scores, quotes, and repair attempts.
 
+**Proposed** (Kyle, 2026-11-18): **retry after a rejection.** When a fact fails for a known reason, the extractor gets
+one more try, with the rejected fact and the reason as context. It starts as an experiment on "grounded" failures,
+where repair does not help today, and ships only if an eval shows more kept facts without lower QA accuracy or more
+unresolved references.
+
 **Decided** (Kyle, 2026-11-17): the default chain's second eval is `DecisionFloors` (`decision_floors`), named for
 what it uses, a decision (System One) model, and not for one vendor's model. It was `JevFloors`.
 
@@ -1423,3 +1428,5 @@ All dates are 2026-11-13 unless noted.
 86. Data warehouses (BigQuery, Snowflake) are sources and export targets, never the system of record or the search
     index, which take ingest's many small reads and writes. Next storage work: the `Store` and `Index` interfaces,
     then Postgres, then warehouse export, then warehouse sources. (Kyle, 2026-11-18)
+87. Retrying extraction after a rejection, with the rejected fact and the reason as context, is approved as an
+    experiment, starting with "grounded" failures; it ships only if an eval shows it helps. (Kyle, 2026-11-18)
