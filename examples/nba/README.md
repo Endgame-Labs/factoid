@@ -33,6 +33,7 @@ None of the data is committed. `fetch.py` downloads it into `data/` (ignored by 
   Warriors' 2021-22 season.
 
 The recaps and transcripts are copyrighted by their publishers. They are read for this example and never redistributed.
+`fetch.py` downloads them for your own use, and you are responsible for following each source's terms.
 
 ## Running it
 
