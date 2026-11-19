@@ -1663,3 +1663,7 @@ All dates are 2026-11-13 unless noted.
 113. 0.1.9: one model call is bounded by `Settings.model_attempts`, `model_timeout`, and `model_deadline` (issue #5).
      The defaults keep decision 83's behavior for evals; the deadline also caps each request's read timeout, and a
      wait that would pass it raises at once. (2026-11-19)
+114. 0.1.10: model calls carry the step that made them, from a context variable `run_step` sets and `app.map`
+     copies into worker threads; work that is not a step (choosing a fact class, the specific-name check, claims, and
+     replaced sections) is labelled by name. The call log stores the step, `factoid calls` reads it, and scorecards
+     count by step. Cutting decision calls per document (issue #7) is next, and evals decide it. (2026-11-19)

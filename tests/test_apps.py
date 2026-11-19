@@ -42,3 +42,12 @@ def test_a_thread_can_activate_its_own_app(make_app, fake):
     thread.start()
     thread.join()
     assert found == [first] and current() is second
+
+
+def test_the_step_label_reaches_worker_threads(make_app, fake):
+    from factoid.steps import current_step, labelled
+
+    app = build(make_app, fake)
+    with labelled("resolve"):
+        seen = app.map(lambda _: current_step(), range(6))
+    assert seen == ["resolve"] * 6

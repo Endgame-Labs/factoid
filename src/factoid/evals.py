@@ -226,7 +226,8 @@ def run_suite(project: Project, suite: Suite, variant: Variant, *, limit: int | 
         wall = time.monotonic() - started
         metrics = suite.score(app, results)
         skipped_evals = dict(app.skipped_evals)
-        usage = {"by_workload": app.meter.rows, "total": app.meter.total(), "wall_seconds": round(wall, 2)}
+        usage = {"by_workload": app.meter.rows, "by_step": app.meter.steps, "total": app.meter.total(),
+                 "wall_seconds": round(wall, 2)}
         app.close()
     latency = {}
     if latencies:

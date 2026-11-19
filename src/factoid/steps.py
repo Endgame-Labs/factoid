@@ -9,7 +9,10 @@ calls `before_<step>` and `after_<step>`. They do nothing unless a class defines
 
 from __future__ import annotations
 
+import contextvars
 import inspect
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any
 
 __all__ = ["SKIPPED", "Skip", "describe_steps", "run_step"]
@@ -30,8 +33,34 @@ class _Skipped:
 SKIPPED = _Skipped()
 
 
+_step: contextvars.ContextVar[str | None] = contextvars.ContextVar("factoid_step", default=None)
+
+
+def current_step() -> str | None:
+    """The step running now (the innermost one), which labels its model calls."""
+    return _step.get()
+
+
+@contextmanager
+def labelled(name: str) -> Iterator[None]:
+    """Label the model calls made inside the block with `name`, for work that is not a step of its own."""
+    token = _step.set(name)
+    try:
+        yield
+    finally:
+        _step.reset(token)
+
+
 def run_step(target: Any, name: str, *args: Any, **kwargs: Any) -> Any:
     """Run `target.<name>(*args, **kwargs)` between its `before_` and `after_` hooks."""
+    token = _step.set(name)
+    try:
+        return _run_step(target, name, *args, **kwargs)
+    finally:
+        _step.reset(token)
+
+
+def _run_step(target: Any, name: str, *args: Any, **kwargs: Any) -> Any:
     before = getattr(target, f"before_{name}", None)
     if before is not None:
         try:

@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import contextvars
 import hashlib
 import json
 from collections import Counter
@@ -29,7 +30,7 @@ from .runtime import activates, use
 from .runtime import active as _active
 from .search import Index, LocalIndex
 from .settings import Settings
-from .steps import SKIPPED, run_step
+from .steps import SKIPPED, labelled, run_step
 from .structured import StructuredDocument, header_of
 from .validity import LIFETIME_RANGES
 
@@ -145,13 +146,15 @@ class Factoid:
     def map(self, fn: Callable[[T], R], items: Iterable[T]) -> list[R]:
         items = list(items)
 
-        def run(item: T) -> R:  # pool threads do not inherit the caller's active app
+        def run(item: T) -> R:
             with _active(self):
                 return fn(item)
 
         if len(items) <= 1:
             return [run(item) for item in items]
-        return list(self._pool.map(run, items))
+        # Pool threads do not inherit the caller's context: the active app, and the step that labels model calls.
+        contexts = [contextvars.copy_context() for _ in items]
+        return list(self._pool.map(lambda pair: pair[0].run(run, pair[1]), zip(contexts, items)))
 
     def entity_class(self, name: str) -> type[Entity]:
         for klass in self.entity_classes:
@@ -435,7 +438,8 @@ class Factoid:
         questions = {k: Noul(f"Section {section} was replaced as a whole. Does new fact {k} replace what the old fact "
                              "says: the same term, right, duty, amount, or rule, now worded or set differently?")
                      for k in keys}
-        judgments = self.client.ask(state, questions)
+        with labelled("replace_sections"):
+            judgments = self.client.ask(state, questions)
         best = max(keys, key=lambda k: judgments[k])
         if require and judgments[best] < type(old).replace_threshold:
             return None
@@ -448,7 +452,8 @@ class Factoid:
             questions = classes[0].class_question(classes)
             for klass in classes:
                 questions.update(_judge_questions(klass.classify))
-            judgments = self.client.ask(fact.state(), questions)
+            with labelled("fact_class"):
+                judgments = self.client.ask(fact.state(), questions)
             scores = {}
             for klass in classes:
                 answer = run_step(klass, "classify", fact, judgments)
@@ -679,7 +684,8 @@ class Factoid:
         if key not in self._name_checks:
             from .entity import PLACEHOLDER_QUESTION
 
-            answer = self.client.ask({"mention": name}, {"named": PLACEHOLDER_QUESTION})["named"]
+            with labelled("specific_name"):
+                answer = self.client.ask({"mention": name}, {"named": PLACEHOLDER_QUESTION})["named"]
             self._name_checks[key] = answer >= self.placeholder_floor
         return self._name_checks[key]
 
@@ -726,7 +732,8 @@ class Factoid:
         state = {"entity": {"name": entity.name, "kind": entity.kind},
                  "facts": {k: f.text for k, f in zip(keys, facts)}}
         questions = {k: Noul(f"Is fact {k} about {entity.name}?") for k in keys}
-        judgments = self.client.ask(state, questions)
+        with labelled("claim"):
+            judgments = self.client.ask(state, questions)
         claimed = 0
         with self.store.tx() as db:
             for key, fact in zip(keys, facts):

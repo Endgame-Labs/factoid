@@ -34,6 +34,7 @@ factoid facts list [--document NAME] [--trait NAME] [--status STATUS] [--limit 5
 factoid search QUERY [--about ENTITY] [--as-of DATE] [--top-k 10] [--chunks] [--json]  # search facts or source chunks
 factoid read FACT_ID                                                  # show full details for one fact
 factoid stats [--examples N] [--json]                                 # show counts and store health
+factoid calls [--last N] [--step NAME] [--json]                       # recent model calls, by step
 factoid entities list [--class NAME]                                  # list entities and aliases
 factoid entities kinds                                                # count untyped entity kinds
 ```
@@ -46,6 +47,10 @@ factoid entities kinds                                                # count un
   or no longer states becomes `replaced`. This is separate from `retracted`, which a person sets. `--fresh` calls the
   models even when an identical request is cached. Output ends with model calls, tokens, calls replayed from
   `.factoid/calls.db`, and whether any saved answers came from a different version of Factoid.
+- After `ingest`, a line counts model calls and input tokens by step (`evaluate`, `assess`, `link`, `resolve`,
+  `extract`, and others). `factoid calls` lists the latest calls in `.factoid/calls.db` with their step, model, and
+  tokens. For decision calls, it also lists the questions asked. Eval scorecards have the same counts under
+  `usage.by_step`.
 - `facts list` prints facts in the order added, with ids and traits (`--limit 0` lists all). `--status` is `current`
   (the default), `superseded`, `ended`, `corrected`, `contradicted`, `replaced`, `retracted`, or `all`.
 - `search` returns facts, or source chunks with `--chunks`. The score orders results: keyword and vector ranks fused

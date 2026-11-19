@@ -430,3 +430,27 @@ def test_tries_and_the_deadline_bound_one_call(monkeypatch, tmp_path):
     with pytest.raises(ModelError, match="model_deadline"):
         client.generate("hi")
     assert sum(slept) < 1.5
+
+
+def test_model_calls_are_labelled_by_step(monkeypatch, tmp_path):
+    import httpx
+
+    from factoid.models import CallLog, Model, ModelClient
+    from factoid.steps import labelled, run_step
+
+    monkeypatch.setenv("FACTOID_HOME", str(tmp_path))
+    monkeypatch.setenv("FIREWORKS_API_KEY", "fw_test")
+    client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, CallLog(None), replay=False)
+    client._http = httpx.Client(transport=httpx.MockTransport(
+        lambda r: httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}],
+                                            "usage": {"prompt_tokens": 7, "completion_tokens": 1}})))
+
+    class Thing:
+        def extract(self, text):
+            return client.generate(text)
+
+    run_step(Thing(), "extract", "a")
+    with labelled("fact_class"):
+        client.generate("b")
+    assert client.meter.steps["extract"]["input_tokens"] == 7 and client.meter.steps["fact_class"]["calls"] == 1
+    assert [row["step"] for row in client.log.recent()] == ["fact_class", "extract"]

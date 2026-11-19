@@ -98,11 +98,15 @@ def _echo_json(value: Any) -> None:
     click.echo(json.dumps(value, indent=2, default=str))
 
 
-def _echo_calls(total: dict[str, float], cache: Path | None) -> None:
+def _echo_calls(total: dict[str, float], cache: Path | None, steps: dict[str, dict[str, float]] | None = None) -> None:
     """The model call line, which says plainly when answers came from the cache instead of the models."""
     calls, replayed, older = int(total["calls"]), int(total["cache_hits"]), int(total.get("older_hits", 0))
     click.echo(f"model calls: {calls}, {int(total['input_tokens']):,} input tokens, "
                f"{int(total['output_tokens']):,} output tokens")
+    if steps and len(steps) > 1:
+        parts = [f"{name} {int(row['calls'])} ({int(row['input_tokens']):,} in)"
+                 for name, row in sorted(steps.items(), key=lambda kv: -kv[1]["input_tokens"])]
+        click.echo(f"  by step: {', '.join(parts)}")
     if replayed:
         where = f" from {_rel(cache)}" if cache else ""
         click.echo(f"  {replayed} of the {calls} calls were replayed{where}: identical requests reuse saved answers "
@@ -346,7 +350,7 @@ def ingest(paths: tuple[Path, ...], as_class: str | None, dry_run: bool, again: 
                 click.echo(f"  + {fact.text}{traits}")
             for rejected in result.rejected:
                 click.echo(f"  - {rejected.text}  ({', '.join(rejected.reasons)})")
-    _echo_calls(app.meter.total(), getattr(app.calls, "path", None))
+    _echo_calls(app.meter.total(), getattr(app.calls, "path", None), app.meter.steps)
     if project.settings.export_after_ingest and project.settings.exports and not dry_run:
         try:
             _echo_export(_run_export(app, project.settings.exports, None, False))
@@ -440,6 +444,41 @@ def _validity_note(fact: Any) -> str:
     total = sum(fact.lifetime.values()) or 1.0
     spread = ", ".join(f"{name} {weight / total:.0%}" for name, weight in fact.lifetime.items())
     return f"the chance it still holds: it decays from valid_from by its estimated lifetime ({spread})"
+
+
+@cli.command()
+@click.option("--last", default=20, show_default=True, help="How many calls, newest first.")
+@click.option("--step", help="Only calls made by this step, such as evaluate, assess, link, or resolve.")
+@click.option("--json", "as_json", is_flag=True, help="Every field, with the full request.")
+def calls(last: int, step: str | None, as_json: bool) -> None:
+    """The latest model calls in .factoid/calls.db: the step that made each one, its model, its tokens, and the
+    questions a decision call asked."""
+    _, app = _project()
+    rows = app.calls.recent(last, step)
+    if as_json:
+        return _echo_json(rows)
+    if not rows:
+        click.echo("no calls yet" + (f" from the {step} step" if step else ""))
+    for row in rows:
+        when = datetime.fromtimestamp(row["created_at"]).astimezone().isoformat(timespec="seconds")
+        click.echo(f"{when}  {row['step'] or row['workload']}  {row['model']}  "
+                   f"{row['input_tokens'] or 0:,} in, {row['output_tokens'] or 0:,} out")
+        for question in _instructions(row["request"])[:8]:
+            click.echo(f"  ? {question[:110]}")
+
+
+def _instructions(request: Any) -> list[str]:
+    """The questions in a decision request, in order."""
+    found: list[str] = []
+    if isinstance(request, dict):
+        if isinstance(request.get("instructions"), str):
+            found.append(" ".join(request["instructions"].split()))
+        for value in request.values():
+            found += _instructions(value)
+    elif isinstance(request, list):
+        for value in request:
+            found += _instructions(value)
+    return found
 
 
 @cli.command()

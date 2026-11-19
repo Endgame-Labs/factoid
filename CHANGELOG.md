@@ -2,6 +2,12 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.10 (2026-11-19)
+
+- **Model calls by step.** Each model call is labelled with the step that made it (`evaluate`, `assess`, `link`,
+  `resolve`, and so on). `ingest` prints calls and tokens by step, eval scorecards add `usage.by_step`, and
+  `factoid calls` lists recent calls with their step, tokens, and the questions a decision call asked (issue #7).
+
 ## 0.1.9 (2026-11-19)
 
 - **Bounds on model calls.** `Settings.model_attempts` (12 by default), `model_timeout` (180 seconds per response),

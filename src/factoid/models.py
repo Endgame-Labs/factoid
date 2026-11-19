@@ -25,6 +25,7 @@ from typing import Any
 import httpx
 
 from .judge import Choice, Judgments, Noul, Question, Score, ScoreAnswer
+from .steps import current_step
 
 __all__ = [
     "PROVIDERS",
@@ -266,6 +267,8 @@ class CallLog:
         columns = [row[1] for row in self._db.execute("pragma table_info(calls)")]
         if "factoid" not in columns:  # caches from before 0.1.1
             self._db.execute("alter table calls add column factoid text")
+        if "step" not in columns:  # caches from before 0.1.10
+            self._db.execute("alter table calls add column step text")
         self._db.commit()
         from .version import describe
 
@@ -287,15 +290,24 @@ class CallLog:
         return (json.loads(row[0]), row[1]) if row else None
 
     def put(self, key: str, workload: str, model: str, request: dict[str, Any], response: dict[str, Any],
-            input_tokens: int, output_tokens: int, seconds: float) -> None:
+            input_tokens: int, output_tokens: int, seconds: float, step: str | None = None) -> None:
         with self._lock:
             self._db.execute(
                 "insert or replace into calls (key, workload, model, request, response, input_tokens, output_tokens, "
-                "seconds, created_at, factoid) values (?,?,?,?,?,?,?,?,?,?)",
+                "seconds, created_at, factoid, step) values (?,?,?,?,?,?,?,?,?,?,?)",
                 (key, workload, model, json.dumps(request), json.dumps(response), input_tokens, output_tokens,
-                 seconds, time.time(), self.factoid),
+                 seconds, time.time(), self.factoid, step),
             )
             self._db.commit()
+
+    def recent(self, limit: int = 20, step: str | None = None) -> list[dict[str, Any]]:
+        """The latest calls, newest first: when, the workload and step, the model, tokens, and the request."""
+        sql = ("select created_at, workload, step, model, input_tokens, output_tokens, seconds, request from calls"
+               + (" where step = ?" if step else "") + " order by created_at desc limit ?")
+        with self._lock:
+            rows = self._db.execute(sql, (step, limit) if step else (limit,)).fetchall()
+        keys = ("created_at", "workload", "step", "model", "input_tokens", "output_tokens", "seconds", "request")
+        return [{**dict(zip(keys, row)), "request": json.loads(row[7])} for row in rows]
 
 
 @dataclass
@@ -303,12 +315,20 @@ class Meter:
     """Counts calls, cache hits, tokens, time, and cost, per workload."""
 
     rows: dict[str, dict[str, float]] = field(default_factory=dict)
+    #: The same counts by the step that made each call, such as "evaluate" or "resolve".
+    steps: dict[str, dict[str, float]] = field(default_factory=dict)
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def add(self, workload: str, *, hit: bool, input_tokens: int, output_tokens: int, seconds: float,
-            cost: float | None, older: bool = False) -> None:
+            cost: float | None, older: bool = False, step: str | None = None) -> None:
         """`older`: a cache hit saved by a different Factoid (another version or commit)."""
         with self._lock:
+            row = self.steps.setdefault(step or workload, {"calls": 0, "cache_hits": 0, "input_tokens": 0,
+                                                           "output_tokens": 0})
+            row["calls"] += 1
+            row["cache_hits"] += int(hit)
+            row["input_tokens"] += input_tokens
+            row["output_tokens"] += output_tokens
             row = self.rows.setdefault(workload, {"calls": 0, "cache_hits": 0, "older_hits": 0, "input_tokens": 0,
                                                   "output_tokens": 0, "seconds": 0.0, "cost": 0.0,
                                                   "priced": 1})
@@ -377,7 +397,7 @@ class ModelClient:
             if found is not None:
                 cached, saved_by = found
                 self.meter.add(workload, hit=True, input_tokens=0, output_tokens=0, seconds=0.0, cost=0.0,
-                               older=saved_by != self.log.factoid)
+                               older=saved_by != self.log.factoid, step=current_step())
                 return cached, True
         provider = model.provider
         if not provider.ready():
@@ -429,8 +449,9 @@ class ModelClient:
         usage = data.get("usage") or {}
         tokens_in = int(usage.get("input_tokens") or usage.get("prompt_tokens") or 0)
         tokens_out = int(usage.get("output_tokens") or usage.get("completion_tokens") or 0)
-        self.log.put(key, workload, model.name, body, data, tokens_in, tokens_out, seconds)
+        self.log.put(key, workload, model.name, body, data, tokens_in, tokens_out, seconds, step=current_step())
         self.meter.add(workload, hit=False, input_tokens=tokens_in, output_tokens=tokens_out, seconds=seconds,
+                       step=current_step(),
                        cost=_cost(model, tokens_in, tokens_out))
         return data, False
 
