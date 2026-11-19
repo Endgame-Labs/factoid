@@ -59,11 +59,14 @@ def test_two_classes_with_one_name_are_refused_in_one_app(make_app):
     def risk(module, **attrs):
         return type("Risk", (Fact,), {"__module__": module, "__doc__": "A risk.", **attrs})
 
+    def make(facts):  # explicit lists: other tests register classes with names of their own
+        return make_app(facts=facts, documents=[], entities=[])
+
     first, second = risk("project_a.facts"), risk("project_b.facts")
     with pytest.raises(ValueError, match="two fact classes are named 'Risk'"):
-        make_app(facts=[first, second])
+        make([first, second])
     renamed = risk("project_b.facts", class_name="DealRisk")
-    app = make_app(facts=[first, renamed])
+    app = make([first, renamed])
     assert app.fact_class("DealRisk") is renamed and app.fact_class("Risk") is first
-    other = make_app(facts=[second])  # another app in the process keeps its own Risk
+    other = make([second])  # another app in the process keeps its own Risk
     assert other.fact_class("Risk") is second and other.fact_class("DealRisk") is Fact
