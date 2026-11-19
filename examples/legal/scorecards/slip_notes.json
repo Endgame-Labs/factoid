@@ -1,0 +1,175 @@
+{
+  "suite": "slip_notes",
+  "variant": "fact_evals=default",
+  "overrides": {
+    "fact_evals": "default"
+  },
+  "documents": 5,
+  "facts": 10,
+  "rejected": 0,
+  "rejected_by_reason": {},
+  "metrics": {
+    "slip_kept": "5/5",
+    "padded_kept": 0,
+    "details": [
+      {
+        "document": "slip_0",
+        "slip_kept": true,
+        "facts": [
+          "Grace Liu raised that the second clinic's network upgrade slips to January, which moves its go-live."
+        ],
+        "padded": []
+      },
+      {
+        "document": "slip_1",
+        "slip_kept": true,
+        "facts": [
+          "Omar Haddad raised that the Reno warehouse's scanner rollout slips to March, which moves its cutover."
+        ],
+        "padded": []
+      },
+      {
+        "document": "slip_2",
+        "slip_kept": true,
+        "facts": [
+          "Priya Nair raised that the Austin office's badge readers slip to February, which moves the Austin office's move-in."
+        ],
+        "padded": []
+      },
+      {
+        "document": "slip_3",
+        "slip_kept": true,
+        "facts": [
+          "Dana Ruiz raised that the second store's terminal install slips to April, which moves its opening."
+        ],
+        "padded": []
+      },
+      {
+        "document": "slip_4",
+        "slip_kept": true,
+        "facts": [
+          "Sam Okoye raised that the west plant's sensor install slips to May, which moves its first production run."
+        ],
+        "padded": []
+      }
+    ]
+  },
+  "latency": {
+    "p50_doc_s": 9.26,
+    "p95_doc_s": 10.72
+  },
+  "usage": {
+    "by_workload": {
+      "embed": {
+        "calls": 10,
+        "cache_hits": 0,
+        "older_hits": 0,
+        "input_tokens": 381,
+        "output_tokens": 0,
+        "seconds": 2.37983015505597,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "extract": {
+        "calls": 5,
+        "cache_hits": 0,
+        "older_hits": 0,
+        "input_tokens": 3406,
+        "output_tokens": 920,
+        "seconds": 26.806785627966747,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "choose": {
+        "calls": 57,
+        "cache_hits": 2,
+        "older_hits": 0,
+        "input_tokens": 47817,
+        "output_tokens": 10846,
+        "seconds": 6.537388851866126,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "repair": {
+        "calls": 3,
+        "cache_hits": 0,
+        "older_hits": 0,
+        "input_tokens": 1015,
+        "output_tokens": 267,
+        "seconds": 9.450115799205378,
+        "cost": 0.0,
+        "priced": 0
+      }
+    },
+    "by_step": {
+      "ingest": {
+        "calls": 10,
+        "cache_hits": 0,
+        "input_tokens": 381,
+        "output_tokens": 0
+      },
+      "extract": {
+        "calls": 5,
+        "cache_hits": 0,
+        "input_tokens": 3406,
+        "output_tokens": 920
+      },
+      "fact_class": {
+        "calls": 10,
+        "cache_hits": 0,
+        "input_tokens": 4265,
+        "output_tokens": 530
+      },
+      "evaluate": {
+        "calls": 14,
+        "cache_hits": 2,
+        "input_tokens": 13399,
+        "output_tokens": 2220
+      },
+      "repair": {
+        "calls": 3,
+        "cache_hits": 0,
+        "input_tokens": 1015,
+        "output_tokens": 267
+      },
+      "assess": {
+        "calls": 10,
+        "cache_hits": 0,
+        "input_tokens": 18495,
+        "output_tokens": 6324
+      },
+      "link": {
+        "calls": 16,
+        "cache_hits": 0,
+        "input_tokens": 8039,
+        "output_tokens": 1305
+      },
+      "resolve": {
+        "calls": 5,
+        "cache_hits": 0,
+        "input_tokens": 2931,
+        "output_tokens": 400
+      },
+      "claim": {
+        "calls": 2,
+        "cache_hits": 0,
+        "input_tokens": 688,
+        "output_tokens": 67
+      }
+    },
+    "total": {
+      "calls": 75,
+      "cache_hits": 2,
+      "older_hits": 0,
+      "input_tokens": 52619,
+      "output_tokens": 12033,
+      "seconds": 45.17412043409422,
+      "cost": 0.0
+    },
+    "wall_seconds": 10.74
+  },
+  "rejected_samples": {},
+  "skipped_fact_evals": {
+    "nli: no nli model is set; skipped": 10
+  }
+}

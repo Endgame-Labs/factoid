@@ -1,0 +1,255 @@
+{
+  "suite": "linking",
+  "variant": "default",
+  "overrides": {},
+  "documents": 0,
+  "facts": 0,
+  "rejected": 0,
+  "rejected_by_reason": {},
+  "metrics": {
+    "precision": 1.0,
+    "recall": 0.5833,
+    "f1": 0.7368,
+    "tp": 7,
+    "fp": 0,
+    "fn": 5,
+    "true_negatives": 12,
+    "accuracy": 0.792,
+    "cases": 24,
+    "details": [
+      {
+        "name": "Acme Corporation",
+        "mention": "Acme Corp",
+        "same": true,
+        "linked": true,
+        "method": "decision",
+        "ok": true
+      },
+      {
+        "name": "Acme Corporation",
+        "mention": "ACME",
+        "same": true,
+        "linked": true,
+        "method": "decision",
+        "ok": true
+      },
+      {
+        "name": "International Business Machines",
+        "mention": "IBM",
+        "same": true,
+        "linked": false,
+        "method": "created",
+        "ok": false
+      },
+      {
+        "name": "Robert Smith",
+        "mention": "Bob Smith",
+        "same": true,
+        "linked": true,
+        "method": "decision",
+        "ok": true
+      },
+      {
+        "name": "Katherine O'Neill",
+        "mention": "Kate O'Neill",
+        "same": true,
+        "linked": true,
+        "method": "decision",
+        "ok": true
+      },
+      {
+        "name": "Brightwater Logistics, Inc.",
+        "mention": "Brightwater",
+        "same": true,
+        "linked": false,
+        "method": "created",
+        "ok": false
+      },
+      {
+        "name": "The Coca-Cola Company",
+        "mention": "Coca-Cola",
+        "same": true,
+        "linked": true,
+        "method": "decision",
+        "ok": true
+      },
+      {
+        "name": "Kestrel Foods LLC",
+        "mention": "Kestrel",
+        "same": true,
+        "linked": false,
+        "method": "created",
+        "ok": false
+      },
+      {
+        "name": "Massachusetts Institute of Technology",
+        "mention": "MIT",
+        "same": true,
+        "linked": false,
+        "method": "created",
+        "ok": false
+      },
+      {
+        "name": "Johnson & Johnson",
+        "mention": "Johnson and Johnson",
+        "same": true,
+        "linked": true,
+        "method": "decision",
+        "ok": true
+      },
+      {
+        "name": "Deutsche Bank AG",
+        "mention": "Deutsche Bank",
+        "same": true,
+        "linked": true,
+        "method": "decision",
+        "ok": true
+      },
+      {
+        "name": "Grace Liu",
+        "mention": "Ms. Liu",
+        "same": true,
+        "linked": false,
+        "method": "created",
+        "ok": false
+      },
+      {
+        "name": "Acme Corporation",
+        "mention": "Acme Labs",
+        "same": false,
+        "linked": false,
+        "method": "created",
+        "ok": true
+      },
+      {
+        "name": "John Smith",
+        "mention": "Jane Smith",
+        "same": false,
+        "linked": false,
+        "method": "created",
+        "ok": true
+      },
+      {
+        "name": "Apple Inc.",
+        "mention": "Apple Hospitality REIT",
+        "same": false,
+        "linked": false,
+        "method": "created",
+        "ok": true
+      },
+      {
+        "name": "Delta Air Lines",
+        "mention": "Delta Dental",
+        "same": false,
+        "linked": false,
+        "method": "created",
+        "ok": true
+      },
+      {
+        "name": "Orion Robotics, Inc.",
+        "mention": "Orion Health",
+        "same": false,
+        "linked": false,
+        "method": "created",
+        "ok": true
+      },
+      {
+        "name": "Vega Components Corp.",
+        "mention": "Vega Holdings",
+        "same": false,
+        "linked": false,
+        "method": "created",
+        "ok": true
+      },
+      {
+        "name": "Robert Smith",
+        "mention": "Robert Smith Jr.",
+        "same": false,
+        "linked": false,
+        "method": "created",
+        "ok": true
+      },
+      {
+        "name": "General Motors Company",
+        "mention": "General Mills",
+        "same": false,
+        "linked": false,
+        "method": "created",
+        "ok": true
+      },
+      {
+        "name": "Kestrel Foods LLC",
+        "mention": "Kestrel Aerospace",
+        "same": false,
+        "linked": false,
+        "method": "created",
+        "ok": true
+      },
+      {
+        "name": "Brightwater Logistics, Inc.",
+        "mention": "Brightwater Capital",
+        "same": false,
+        "linked": false,
+        "method": "created",
+        "ok": true
+      },
+      {
+        "name": "Grace Liu",
+        "mention": "Grace Lee",
+        "same": false,
+        "linked": false,
+        "method": "created",
+        "ok": true
+      },
+      {
+        "name": "Massachusetts Institute of Technology",
+        "mention": "Michigan Tech",
+        "same": false,
+        "linked": false,
+        "method": "created",
+        "ok": true
+      }
+    ]
+  },
+  "latency": {},
+  "usage": {
+    "by_workload": {
+      "choose": {
+        "calls": 45,
+        "cache_hits": 0,
+        "older_hits": 0,
+        "input_tokens": 20030,
+        "output_tokens": 2716,
+        "seconds": 4.534251945326105,
+        "cost": 0.0,
+        "priced": 0
+      }
+    },
+    "by_step": {
+      "choose": {
+        "calls": 38,
+        "cache_hits": 0,
+        "input_tokens": 17509,
+        "output_tokens": 2485
+      },
+      "specific_name": {
+        "calls": 7,
+        "cache_hits": 0,
+        "input_tokens": 2521,
+        "output_tokens": 231
+      }
+    },
+    "total": {
+      "calls": 45,
+      "cache_hits": 0,
+      "older_hits": 0,
+      "input_tokens": 20030,
+      "output_tokens": 2716,
+      "seconds": 4.534251945326105,
+      "cost": 0.0
+    },
+    "wall_seconds": 0.0
+  },
+  "rejected_samples": {},
+  "skipped_fact_evals": {}
+}

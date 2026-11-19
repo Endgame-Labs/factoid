@@ -1,0 +1,149 @@
+{
+  "suite": "grounded_cases",
+  "variant": "default",
+  "overrides": {},
+  "documents": 0,
+  "facts": 0,
+  "rejected": 0,
+  "rejected_by_reason": {},
+  "metrics": {
+    "accuracy": 1.0,
+    "floor": 0.45,
+    "cases": 16,
+    "unsupported_passed": 0,
+    "supported_failed": 0,
+    "details": [
+      {
+        "fact": "Tom Becker owns the security review for the Kestrel account.",
+        "supported": true,
+        "p": 0.99,
+        "ok": true
+      },
+      {
+        "fact": "Tom Becker decides on the Kestrel account.",
+        "supported": false,
+        "p": 0.1,
+        "ok": true
+      },
+      {
+        "fact": "Tom Becker is the decision maker for the Kestrel deal.",
+        "supported": false,
+        "p": 0.29,
+        "ok": true
+      },
+      {
+        "fact": "Priya Nair approves the purchase.",
+        "supported": false,
+        "p": 0.09,
+        "ok": true
+      },
+      {
+        "fact": "Priya Nair is a member of the buying committee.",
+        "supported": true,
+        "p": 0.98,
+        "ok": true
+      },
+      {
+        "fact": "Grace Liu raised that the second clinic's network upgrade slips to January 2027.",
+        "supported": false,
+        "p": 0.17,
+        "ok": true
+      },
+      {
+        "fact": "Grace Liu raised that the second clinic's network upgrade slips to January, putting the go-live timeline at risk of failure.",
+        "supported": false,
+        "p": 0.34,
+        "ok": true
+      },
+      {
+        "fact": "Grace Liu raised that the second clinic's network upgrade slips to January, which moves the clinic's go-live.",
+        "supported": true,
+        "p": 0.97,
+        "ok": true
+      },
+      {
+        "fact": "Dana Ruiz said the pilot can start on 1 December 2026 if security signs off.",
+        "supported": true,
+        "p": 0.98,
+        "ok": true
+      },
+      {
+        "fact": "Dana Ruiz said the pilot will start on 1 December 2026.",
+        "supported": false,
+        "p": 0.15,
+        "ok": true
+      },
+      {
+        "fact": "Sam agreed to send a pilot plan by 10 November 2026.",
+        "supported": true,
+        "p": 0.98,
+        "ok": true
+      },
+      {
+        "fact": "Sam sent a pilot plan on 10 November 2026.",
+        "supported": false,
+        "p": 0.16,
+        "ok": true
+      },
+      {
+        "fact": "The warehouse team spends about six hours a week reconciling shipment exceptions by hand.",
+        "supported": true,
+        "p": 0.86,
+        "ok": true
+      },
+      {
+        "fact": "The warehouse team loses about six hours a week, which costs the company $50,000 a year.",
+        "supported": false,
+        "p": 0.16,
+        "ok": true
+      },
+      {
+        "fact": "Vega's liability to Orion is capped at $1M.",
+        "supported": true,
+        "p": 0.98,
+        "ok": true
+      },
+      {
+        "fact": "Vega's liability to Orion is capped at $1M, the lowest cap in Orion's contracts.",
+        "supported": false,
+        "p": 0.16,
+        "ok": true
+      }
+    ]
+  },
+  "latency": {},
+  "usage": {
+    "by_workload": {
+      "choose": {
+        "calls": 16,
+        "cache_hits": 0,
+        "older_hits": 0,
+        "input_tokens": 7294,
+        "output_tokens": 528,
+        "seconds": 1.6131722494028509,
+        "cost": 0.0,
+        "priced": 0
+      }
+    },
+    "by_step": {
+      "choose": {
+        "calls": 16,
+        "cache_hits": 0,
+        "input_tokens": 7294,
+        "output_tokens": 528
+      }
+    },
+    "total": {
+      "calls": 16,
+      "cache_hits": 0,
+      "older_hits": 0,
+      "input_tokens": 7294,
+      "output_tokens": 528,
+      "seconds": 1.6131722494028509,
+      "cost": 0.0
+    },
+    "wall_seconds": 0.0
+  },
+  "rejected_samples": {},
+  "skipped_fact_evals": {}
+}
