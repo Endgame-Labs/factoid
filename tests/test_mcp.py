@@ -56,7 +56,7 @@ def test_an_agent_ingests_searches_and_reads_over_mcp(make_app, fake):
     vega = _data(replies[6])
     assert vega["name"] == "Vega" and vega["related"][0]["name"] == "Orion"
     assert [e["name"] for e in _data(replies[7])] == ["Orion"]
-    assert len(_data(replies[8])) == 3 and _data(replies[9])
+    assert len(_data(replies[8])) == 3 and _data(replies[9])["facts"] == {"current": 2, "superseded": 1}
     assert replies[10]["result"] == {}
 
     read = _session(server, _call(11, "read_fact", id=cap["id"]))[11]

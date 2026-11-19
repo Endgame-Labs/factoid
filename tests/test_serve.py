@@ -49,7 +49,8 @@ def test_ingest_search_and_read_over_http(served):
     vega = httpx.get(f"{base}/entities/Vega").json()
     assert vega["name"] == "Vega" and vega["facts"] and vega["related"][0]["name"] == "Orion"
     assert {e["name"] for e in httpx.get(f"{base}/entities").json()} == {"Vega", "Orion"}
-    assert httpx.get(f"{base}/stats").json()
+    stats = httpx.get(f"{base}/stats")
+    assert stats.status_code == 200 and stats.json()["facts"] == {"current": 2, "superseded": 1}
     assert httpx.get(f"{base}/health").json()["ok"] is True
 
 

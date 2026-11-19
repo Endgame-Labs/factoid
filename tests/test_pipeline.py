@@ -190,8 +190,15 @@ def test_rerank_sees_the_best_weighted_candidates(make_app, fake):
                     metadata={"signed_at": "2025-03-01T00:00:00Z"}, uri="e.txt")
     app.ingest_text("Amendment 2 raises Vega's liability cap to Orion to $2M from January 1, 2027.",
                     document_type=Contract, metadata={"signed_at": "2026-10-03T00:00:00Z"}, uri="f.txt")
+    calls = []
+    fake.rerank = lambda query, docs: calls.append(docs) or [1.0 if "$2M" in d else 0.1 for d in docs]
     hits = Fact.search("liability cap", as_of="2027-06-01T00:00:00Z")
     assert "$2M" in hits[0].fact.text and hits[0].score > hits[-1].score
+    assert calls and any("$1M" in d for d in calls[-1]) and any("$2M" in d for d in calls[-1])
+    # With freshness off and retired facts in, both facts weigh the same, so the reranker alone decides the order.
+    for favorite in ("$1M", "$2M"):
+        fake.rerank = lambda query, docs, f=favorite: [1.0 if f in d else 0.1 for d in docs]
+        assert favorite in Fact.search("liability cap", freshness="any", include_retired=True)[0].fact.text
 
 
 def test_an_unsure_duplicate_keeps_the_new_fact(make_app, fake):
@@ -544,7 +551,10 @@ def test_decision_floors_use_a_decision_models_own_floors_unless_the_project_set
     class Strict(DecisionFloors):
         floors = {**DEFAULT_FLOORS, "atomic": 0.4}
 
-    assert Strict().floors_for("fireworks/rune")[0]["atomic"] == 0.4
+    strict = Strict().floors_for("fireworks/rune")[0]
+    assert strict["atomic"] == 0.4
+    # The subclass changed only atomic, so Rune keeps its own floors for every other question.
+    assert all(strict[k] == v for k, v in MODEL_FLOORS["fireworks/rune"].items() if k != "atomic")
 
 
 def test_reingesting_skips_an_unchanged_document_and_keeps_unchanged_fact_ids(make_app, fake):
@@ -621,6 +631,7 @@ def test_resolve_verify_keeps_a_supersession_the_check_confirms(make_app, fake, 
     app = build(make_app, fake)
     monkeypatch.setattr(SourceFact, "resolve_verify", 0.5)
     assert _ingest_cap_and_amendment(app).status == "superseded"
+    assert any("itself state" in q.instructions for _, qs in fake.asked for q in qs.values())
 
 
 def test_resolve_batch_asks_about_one_stored_fact_per_request(make_app, fake, monkeypatch):
@@ -638,3 +649,55 @@ def test_rune_gets_its_resolve_check_by_default(make_app, fake):
     assert SourceFact.resolve_settings(app) == (None, 0.5)
     fake.models["choose"] = "fake"
     assert SourceFact.resolve_settings(app) == (None, None)
+
+
+def _answer(fake, answer, new_has, old_has):
+    """Make resolve give `answer` when a new fact containing `new_has` meets a stored fact containing `old_has`."""
+    inner = fake.choice
+
+    def choice(question, state, name):
+        if name.startswith("F") and new_has in state["new_fact"]["text"] \
+                and old_has in json.dumps(state["stored_facts"][name]):
+            return {k: (0.9 if k == answer else 0.01) for k, _ in question.options}
+        if name.startswith("F"):
+            return {k: (0.9 if k == "unrelated" else 0.01) for k, _ in question.options}
+        return inner(question, state, name)
+
+    fake.choice = choice
+
+
+def _cap(app, text, signed, uri):
+    return app.ingest_text(text, document_type=Contract, metadata={"signed_at": signed}, uri=uri)
+
+
+def test_a_duplicate_confirms_the_stored_fact(make_app, fake):
+    app = build(make_app, fake)
+    _answer(fake, "duplicate", "$1M", "$1M")
+    first = _cap(app, "Vega's liability to Orion is capped at $1M.", "2025-03-01T00:00:00Z", "a.txt").facts[0]
+    second = _cap(app, "Vega's liability to Orion is capped at $1M.", "2025-06-01T00:00:00Z", "b.txt")
+    assert second.facts == [] and second.duplicates == 1
+    assert {q["document_id"] for q in app.store.quotes(first.id)} == {first.document_id, second.document.id}
+    assert app.stats()["facts"] == {"current": 1}
+
+
+def test_a_correction_was_never_true(make_app, fake):
+    app = build(make_app, fake)
+    _answer(fake, "corrects", "$2M", "$1M")
+    old = _cap(app, "Vega's liability to Orion is capped at $1M.", "2025-03-01T00:00:00Z", "a.txt").facts[0]
+    new = _cap(app, "Vega's liability to Orion was always capped at $2M.", "2025-06-01T00:00:00Z", "b.txt").facts[0]
+    old = Fact.get(old.id)
+    assert old.status == "corrected" and old.valid_at("2025-04-01T00:00:00Z") == 0.0
+    assert (new.id, "corrects", old.id) in [(r["fact_id"], r["relation"], r["other_id"])
+                                            for r in app.store.relations(old.id)]
+    # An as-of search before the correction still leaves the wrong fact out.
+    assert old.id not in {h.fact.id for h in Fact.search("liability cap", as_of="2025-04-01T00:00:00Z")}
+
+
+def test_an_end_closes_the_old_fact_at_the_new_one(make_app, fake):
+    app = build(make_app, fake)
+    _answer(fake, "ends", "no longer", "$1M")
+    old = _cap(app, "Vega's liability to Orion is capped at $1M.", "2025-03-01T00:00:00Z", "a.txt").facts[0]
+    _cap(app, "Vega's liability to Orion is no longer capped from 2027.", "2026-10-03T00:00:00Z", "b.txt")
+    old = Fact.get(old.id)
+    assert old.status == "ended" and old.valid_until.date().isoformat() == "2027-01-01"
+    assert old.id in {h.fact.id for h in Fact.search("liability cap", as_of="2026-06-01T00:00:00Z")}

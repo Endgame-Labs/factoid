@@ -889,7 +889,7 @@ class Factoid:
         single = q("select count(*) n from (select entity_id from mentions where entity_id is not null "
                    "group by entity_id having count(distinct fact_id) = 1)")[0]["n"]
         stale = sum(1 for i in current_ids if (f := self.load_fact(i)) is not None and f.valid_at() < 0.5)
-        contradictions = q("select count(*) n from relations where relation = 'contradicts'")[0]["n"]
+        contradictions = len(self.contradictions())
         entities = q("select count(*) n from entities where merged_into is null")[0]["n"]
         live = "status in ('current', 'contradicted', 'superseded', 'ended')"
         out = {
@@ -984,9 +984,3 @@ def _durable(fact: Fact) -> bool:
                    if LIFETIME_RANGES.get(k, timedelta(0)) >= timedelta(days=30))
         return long >= 0.5
     return False
-
-
-def _cosine(a: list[float], b: list[float]) -> float:
-    dot = sum(x * y for x, y in zip(a, b))
-    norm = (sum(x * x for x in a) ** 0.5) * (sum(y * y for y in b) ** 0.5)
-    return dot / norm if norm else 0.0

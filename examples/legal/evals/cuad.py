@@ -83,12 +83,13 @@ class Cuad(Suite):
     description = "CUAD test split: clause traits and contract dates."
     parallel = 4
     offset = 0
+    count: int | None = None  # how many contracts from offset; None means every one
 
     def documents(self, limit: int | None = None):
         from legal.documents import Contract
 
         self.contracts = {}
-        contracts = load_contracts()[self.offset:]
+        contracts = load_contracts()[self.offset:][:self.count]
         for contract in contracts[:limit]:
             doc_id = "cuad_" + re.sub(r"[^a-z0-9]+", "_", contract["title"].lower())[:80]
             self.contracts[doc_id] = contract
@@ -183,6 +184,7 @@ class CuadHeldOut(Cuad):
     name = "cuad_heldout"
     description = "CUAD test contracts 21 to 40, held out from tuning."
     offset = 20
+    count = 20
 
 
 class CuadFresh(Cuad):
@@ -191,4 +193,5 @@ class CuadFresh(Cuad):
     name = "cuad_fresh"
     description = "CUAD test contracts 41 to 60, never seen before the final run."
     offset = 40
+    count = 20
 

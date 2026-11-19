@@ -115,6 +115,28 @@ def test_vary_and_metrics():
     assert precision_at_recall([0.9, 0.5, 0.4], [True, False, True], 1.0) == pytest.approx(0.6667, abs=1e-3)
 
 
+def test_tied_scores_make_one_point_on_the_curve():
+    # A constant score cannot rank positives above negatives, in either input order.
+    assert aupr([0.0, 0.0], [True, False]) == aupr([0.0, 0.0], [False, True]) == 0.5
+    assert aupr([0.5, 0.5, 0.5, 0.5], [True, True, False, False]) == 0.5
+    assert precision_at_recall([0.0, 0.0], [True, False], 0.5) == 0.5
+    assert aupr([0.9, 0.5, 0.5, 0.1], [True, True, False, False]) == aupr([0.9, 0.5, 0.5, 0.1],
+                                                                           [True, False, True, False])
+    assert aupr([0.1, 0.9], [False, True]) == 1.0  # unsorted input
+    assert aupr([0.3, 0.2], [False, False]) == 0.0  # no positives
+
+
+def test_turbopuffer_filters_traits_by_membership():
+    from factoid.search import Turbopuffer
+
+    assert Turbopuffer._filters({"traits": ["liability_cap"]}) == ["traits", "ContainsAny", ["liability_cap"]]
+    assert Turbopuffer._filters({"entity_ids": "e1"}) == ["entity_ids", "Contains", "e1"]
+    assert Turbopuffer._filters({"status": ["current", "contradicted"]}) == ["status", "In", ["current",
+                                                                                           "contradicted"]]
+    assert Turbopuffer._filters({"class": "SourceFact", "traits": ["a"]}) == [
+        "And", [["class", "Eq", "SourceFact"], ["traits", "ContainsAny", ["a"]]]]
+
+
 def test_init_scaffolds_a_project(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     result = CliRunner().invoke(cli, ["init", "--package", "deal"])
@@ -155,8 +177,14 @@ def test_the_sample_eval_counts_the_signing_as_a_fact():
 
     consent = ("Orion may not assign it, made on March 1, 2025, without Vega's consent.", ["consent_required"])
     cap = ("Vega's liability under it, made on March 1, 2025, is capped at $1,000,000.", ["liability_cap"])
-    assert score(("Orion and Vega made it on March 1, 2025.", []), consent, cap)["recall"] == 1.0
+    signing = ("Orion and Vega made it on March 1, 2025.", [])
+    assert score(signing, consent, cap) == {"precision": 1.0, "recall": 1.0, "f1": 1.0, "tp": 3, "fp": 0, "fn": 0}
     assert score(consent, cap)["recall"] < 1.0
+    # One fact with both claims, swapped traits, and extra facts all score below 1.
+    both = ("Orion needs Vega's consent to assign, and the cap is $1,000,000.", ["consent_required", "liability_cap"])
+    assert score(signing, both)["recall"] < 1.0
+    assert score(signing, (consent[0], ["liability_cap"]), (cap[0], ["consent_required"]))["recall"] < 1.0
+    assert score(signing, consent, cap, ("Vega makes widgets.", []))["precision"] == 0.75
 
 
 def test_fireworks_model_ids():

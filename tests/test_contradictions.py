@@ -73,6 +73,72 @@ def test_new_evidence_settles_a_contradiction(make_app, fake):
     assert settled and settled[0]["how"] == "evidence" and settled[0]["answer"] == "supersedes"
 
 
+def test_evidence_against_one_side_lets_the_other_stand(make_app, fake):
+    app, one, three = _contradicting(make_app, fake)
+    inner = fake.choice
+
+    def choice(question, state, name):  # a $5M cap replaces the $3M one only
+        if name.startswith("F") and "$5M" in state["new_fact"]["text"]:
+            stored = json.dumps(state["stored_facts"][name])
+            return {k: (0.9 if k == ("supersedes" if "$3M" in stored else "unrelated") else 0.01)
+                    for k, _ in question.options}
+        return inner(question, state, name)
+
+    fake.choice = choice
+    five = app.ingest_text("Vega's liability to Orion is capped at $5M under the supply agreement.",
+                           document_type=app.document_classes[0], uri="d.txt",
+                           metadata={"signed_at": "2025-06-01T00:00:00Z"}).facts[0]
+    assert Fact.get(three.id).status == "superseded" and Fact.get(one.id).status == "current"
+    assert app.contradictions() == [] and app.stats()["open_contradictions"] == 0
+    event = json.loads(app.store.events_for(one.id)[-1]["data"])
+    assert event["how"] == "evidence" and event["by"] == five.id and event["status"] == "current"
+
+
+def test_search_carries_open_contradictions(make_app, fake):
+    app, one, three = _contradicting(make_app, fake)
+    hits = {h.fact.id: h for h in app.search_facts("liability cap")}
+    assert hits[one.id].contradiction_ids == [three.id] and hits[one.id].contradictions[0].id == three.id
+    ids_only = {h.fact.id: h for h in app.search_facts("liability cap", contradictions=0)}
+    assert ids_only[one.id].contradiction_ids == [three.id] and ids_only[one.id].contradictions == []
+    left_out = {h.fact.id: h for h in app.search_facts("liability cap", contradictions=False)}
+    assert left_out[one.id].contradiction_ids == []
+
+
+def test_a_retracted_side_closes_the_pair_everywhere(make_app, fake):
+    app, one, _three = _contradicting(make_app, fake)
+    Fact.get(one.id).retract("re-ingested")
+    assert app.contradictions() == [] and app.stats()["open_contradictions"] == 0
+
+
+def test_a_fact_in_two_pairs_stays_contradicted_until_both_settle(make_app, fake):
+    app, one, three = _contradicting(make_app, fake)
+    inner = fake.choice
+
+    def choice(question, state, name):  # a $4M cap contradicts the $1M one too
+        if name.startswith("F") and "$4M" in state["new_fact"]["text"]:
+            stored = json.dumps(state["stored_facts"][name])
+            return {k: (0.9 if k == ("contradicts" if "$1M" in stored else "unrelated") else 0.01)
+                    for k, _ in question.options}
+        return inner(question, state, name)
+
+    fake.choice = choice
+    four = app.ingest_text("Vega's liability to Orion is capped at $4M under the supply agreement.",
+                           document_type=app.document_classes[0], uri="e.txt",
+                           metadata={"signed_at": "2025-03-01T00:00:00Z"}).facts[0]
+    assert len(app.contradictions()) == 2
+    app.settle_contradiction(one.id, three.id, keep="both")
+    assert Fact.get(one.id).status == "contradicted" and Fact.get(three.id).status == "current"
+    app.settle_contradiction(one.id, four.id, keep=one.id)
+    assert Fact.get(one.id).status == "current" and Fact.get(four.id).status == "retracted"
+
+
+def test_a_stale_pair_is_marked_and_can_be_left_out(make_app, fake):
+    app, one, _three = _contradicting(make_app, fake)
+    app.store.set_fields(one.id, valid_until="2025-12-31T00:00:00Z")
+    [pair] = app.contradictions()
+    assert pair.stale and app.contradictions(include_stale=False) == []
+
+
 def test_contradictions_over_http_and_mcp(make_app, fake):
     app, one, three = _contradicting(make_app, fake)
     server = make_server(app, port=0)
@@ -87,6 +153,8 @@ def test_contradictions_over_http_and_mcp(make_app, fake):
         with pytest.raises(urllib.error.HTTPError) as err:
             urllib.request.urlopen(request)
         assert err.value.code == 400 and "keep" in json.load(err.value)["error"]
+        with urllib.request.urlopen(f"{base}/contradictions?stale=false") as response:
+            assert len(json.load(response)) == 1
     finally:
         server.shutdown()
 
@@ -103,3 +171,29 @@ def test_contradictions_over_http_and_mcp(make_app, fake):
     assert json.loads(app.store.events_for(three.id)[-1]["data"])["by"] == "mcp:claude-code"
     names = {t["name"] for t in Server(app, read_only=True).tools}
     assert "settle_contradiction" not in names and "list_contradictions" in names
+    # A read-only server refuses the settle tool even when an agent calls it by name.
+    refused = _session(Server(app, read_only=True), _call(5, "settle_contradiction", fact_id=one.id,
+                                                          other_id=three.id, keep="both", reason="x"))[5]
+    assert refused["error"]["code"] == -32602
+
+
+def test_settling_over_http(make_app, fake):
+    app, one, three = _contradicting(make_app, fake)
+    server = make_server(app, port=0)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{server.server_port}"
+
+    def settle(**body):
+        request = urllib.request.Request(f"{base}/contradictions/settle", method="POST",
+                                         data=json.dumps(body).encode())
+        with urllib.request.urlopen(request) as response:
+            return json.load(response)
+
+    try:
+        done = settle(fact_id=one.id, other_id=three.id, keep=three.id, reason="signed copy", by="http")
+        assert done["kept"] == three.id and [f["status"] for f in done["facts"]] == ["retracted", "current"]
+        with pytest.raises(urllib.error.HTTPError) as err:
+            settle(fact_id=one.id, other_id=three.id, keep="both")
+        assert err.value.code == 404 and "no open contradiction" in json.load(err.value)["error"]
+    finally:
+        server.shutdown()

@@ -177,6 +177,9 @@ class LocalIndex(Index):
         return out
 
 
+#: Attributes the index stores as lists, which filter by membership.
+ARRAY_ATTRIBUTES = {"traits"}
+
 class Turbopuffer(Index):
     """turbopuffer, or any service with a turbopuffer-compatible API."""
 
@@ -243,7 +246,7 @@ class Turbopuffer(Index):
             return None
         clauses = []
         for key, want in filters.items():
-            if key.endswith("_ids"):  # array attributes
+            if key in ARRAY_ATTRIBUTES or key.endswith("_ids"):
                 if isinstance(want, (list, tuple, set)):
                     clauses.append([key, "ContainsAny", list(want)])
                 else:

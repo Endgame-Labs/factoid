@@ -1068,7 +1068,8 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   prints how many facts it skipped and `scorecard.json` has `skipped_fact_evals`. So the working default chain is
   `DecisionFloors`. The README marks it planned, and its Quickstart compares `none` and `decision_floors`.
 - **Starting floors** for `DecisionFloors` are fixed values until calibration is built: grounded 0.45, attribution 0.3,
-  self-contained 0.4, atomic 0.25, useful 0.45, and distinct 0.2. They were set from CUAD runs (2026-11-15). The
+  self-contained 0.4, atomic 0.25, useful 0.45, and distinct 0.2. They were set from CUAD runs (2026-11-15), and
+  self-contained is now 0.1 with a target of 0.5 (decision 76; `DEFAULT_FLOORS` has the current values). The
   first values (0.45 to 0.6) rejected most good facts; with these, and the grounded and attribution questions narrowed
   to the claim, the share of gold clauses quoted by a kept fact went from 0.61 to 0.96 on 20 contracts.
 - **Structured documents** (2026-11-16): `StructuredDocument` with `Identity`, `Property`, template strings, `Text`,
@@ -1257,6 +1258,23 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   when either is past `valid_until`; `--read-only` MCP leaves out `settle_contradiction`. Checked on 2026-11-19 against
   a copy of a CUAD run's store: 20 open pairs (1 stale), and settling one with `--keep both` returned both facts to
   current and dropped the count to 19.
+- **Test and eval review (0.1.5).** Neon (agy) reviewed the tests and evals on 2026-11-19; each finding below was
+  checked against the code first. Fixed: `aupr` and `precision_at_recall` made one curve point per distinct score, so
+  tied scores no longer inflate the area or depend on input order (a constant score on one positive and one negative
+  gave 1.0 or 0.5 by order; CUAD's `mean_aupr` figures were computed before this fix); a `DecisionFloors` subclass that
+  changed one floor dropped every per-model floor, and now owns only the values it changed; `stats()` counted open
+  contradictions whose side had been retracted; the sample eval's precision could never fall below 1.0 and a fact with
+  both traits passed, and it now matches each of the three facts to its own extracted fact and counts extras against
+  precision; `cuad_heldout` and `cuad_fresh` scored every contract past their offset without `--limit 20`, and now take
+  20; and the diligence suite's 15-day check passed on the contract's own fact, and its no-change check passed on an
+  empty list. Turbopuffer trait filters now use `ContainsAny`, its documented array operator; a live check showed `In`
+  gave the same rows, so this was not a live bug. New tests cover duplicate confirmation, corrections, ends, evidence
+  that settles one side, search results carrying contradictions, two open pairs on one fact, stale pairs, HTTP settling,
+  and that the reranker and the resolve check actually run. Each of the five regression tests fails on the old code.
+  Open, for Kyle: the legal QA comparison reranks facts but not chunks; the amendments suite's recall accepts any fact
+  from the amending document and its false-change rate reads only base documents; the suites called scored once have
+  been rescored; iscrag's dev scores pool its 30 tuning transcripts with the 70 unseen ones, and the README's
+  one-seventh figure is the paper's; and scorecards are not committed.
 - **Not built yet:** sources (`imap`, `mcp`), `factoid setup`, fact-class trust and visibility, entity
   `merge`, `split`, and `retype` commands, and fingerprint-driven `rebuild`.
 - **`situate`:** the setting `situate = True` runs the built-in step (`situate_chunk`); a method named `situate` on a
@@ -1597,3 +1615,7 @@ All dates are 2026-11-13 unless noted.
 106. 0.1.4 builds `factoid contradictions`: list open pairs, and settle one by keeping one side or both, from the CLI,
      the HTTP API, and MCP. New evidence (a supersession, end, or correction of one side) settles a pair too. This
      builds decision 34. Not released to PyPI. (Kyle, 2026-11-19)
+107. 0.1.5 fixes the framework bugs and tests found in Neon's review of the tests and evals: tied scores in AUPR, per-
+     model floors under a `DecisionFloors` subclass, the open-contradiction count, the sample eval, the CUAD held-out
+     slices, and the diligence checks. Changes to how the example evals compare and report (reranking both arms, held-
+     out reuse, and iscrag's split) wait for Kyle. (Kyle, 2026-11-19)

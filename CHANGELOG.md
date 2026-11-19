@@ -2,6 +2,18 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.5 (2026-11-19)
+
+- **Eval fixes.** AUPR and precision at recall treat tied scores as one threshold, so they no longer depend on input
+  order or overstate the area. A `DecisionFloors` subclass that changes one floor keeps each decision model's other
+  floors. The sample eval checks each of the three facts on its own and counts extra facts against precision.
+- **Fixes.** `stats` no longer counts a contradiction whose side was retracted, and turbopuffer filters traits with its
+  array operator.
+- **Example evals.** `cuad_heldout` and `cuad_fresh` score 20 contracts each without `--limit`, and two diligence
+  checks no longer pass when the email extracted nothing.
+- **Tests.** Duplicates, corrections, ends, contradictions settled by evidence, and checks that the reranker and the
+  resolve check run.
+
 ## 0.1.4 (2026-11-19)
 
 - **Settling contradictions.** `factoid contradictions` lists pairs of facts that disagree, and `factoid contradictions

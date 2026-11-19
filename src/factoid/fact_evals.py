@@ -193,9 +193,11 @@ class DecisionFloors(FactEval):
         if missing:
             raise ValueError(f"questions with no floor: {sorted(missing)}")
         self._changed = {k: q for k, q in merged.items() if QUESTIONS.get(k) is not q}
-        self._own_floors = set(floors) | (set(type(self).floors) if type(self).floors is not DEFAULT_FLOORS else set())
-        self._own_targets = set(targets or {}) | (
-            set(type(self).targets) if type(self).targets is not DEFAULT_TARGETS else set())
+        # The project owns a floor or target it set: by argument, or by a subclass value that differs from the
+        # default. Model values apply to the rest.
+        self._own_floors = set(floors) | {k for k, v in type(self).floors.items() if DEFAULT_FLOORS.get(k) != v}
+        self._own_targets = set(targets or {}) | {
+            k for k, v in type(self).targets.items() if DEFAULT_TARGETS.get(k) != v}
         self.targets = {k: v for k, v in {**type(self).targets, **(targets or {})}.items() if k in self.questions}
         for name, target in self.targets.items():
             if target < self.floors[name]:

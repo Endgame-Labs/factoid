@@ -136,12 +136,21 @@ class Sample(Suite):
         yield Raw((HERE / "supply.txt").read_text(), meta, uri="sample_docs/supply.txt", title=meta["title"])
 
     def score(self, app, results):
-        # The signing is a fact of its own, with no trait; the other two facts carry one trait each.
-        expected = {{"signing", "consent_required", "liability_cap"}}
-        found = set()
+        # Three separate facts: the signing (no trait), the consent clause, and the cap, each with its own trait.
+        # Each fact can match one of them, and a fact that matches none counts against precision.
+        wanted = {{
+            "signing": lambda f: not f.trait_names and ("March 1, 2025" in f.text or "2025-03-01" in f.text),
+            "consent": lambda f: f.trait_names == ["consent_required"] and "consent" in f.text.lower(),
+            "cap": lambda f: f.trait_names == ["liability_cap"] and "1,000,000" in f.text,
+        }}
+        matched, extra = set(), 0
         for f in (f for r in results for f in r.facts):
-            found |= set(f.trait_names) or ({{"signing"}} if "March 1, 2025" in f.text else set())
-        return {{"facts": prf(len(expected & found), len(found - expected), len(expected - found))}}
+            hit = next((k for k, test in wanted.items() if k not in matched and test(f)), None)
+            if hit:
+                matched.add(hit)
+            else:
+                extra += 1
+        return {{"facts": prf(len(matched), extra, len(wanted) - len(matched))}}
 '''
 
 
@@ -159,7 +168,7 @@ def _version() -> str:
     from .version import version
 
     found = version()
-    return found if found[:1].isdigit() else "0.1.4"
+    return found if found[:1].isdigit() else "0.1.5"
 
 
 def switch(settings: Path, preset: str) -> bool:

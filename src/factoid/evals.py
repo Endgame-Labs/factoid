@@ -208,11 +208,12 @@ def run_suite(project: Project, suite: Suite, variant: Variant, *, limit: int | 
             use(app)
             t0 = time.monotonic()
             result = app.ingest(document)
-            latencies.append(time.monotonic() - t0)
+            elapsed = time.monotonic() - t0
+            latencies.append(elapsed)
             if log:
                 label = getattr(document, "title", None) or getattr(document, "uri", None) or document.id
                 log(f"  {variant.name}: {label}: {len(result.facts)} facts, {len(result.rejected)} rejected, "
-                    f"{latencies[-1]:.1f}s")
+                    f"{elapsed:.1f}s")
             return result
 
         started = time.monotonic()
@@ -319,12 +320,14 @@ def _curve(scores: list[float], labels: list[bool]) -> list[tuple[float, float]]
     pairs = sorted(zip(scores, labels), key=lambda p: -p[0])
     tp = fp = 0
     points = []
-    for _, label in pairs:
+    for i, (score, label) in enumerate(pairs):
         if label:
             tp += 1
         else:
             fp += 1
-        points.append((tp / positives, tp / (tp + fp)))
+        # Tied scores are one threshold, so they make one point: input order must not change the curve.
+        if i + 1 == len(pairs) or pairs[i + 1][0] != score:
+            points.append((tp / positives, tp / (tp + fp)))
     best, out = 0.0, []
     for recall, precision in reversed(points):
         best = max(best, precision)
