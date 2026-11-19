@@ -347,11 +347,12 @@ class ModelClient:
     """Sends requests for the four workloads, through the cache and the meter."""
 
     def __init__(self, models: dict[str, Model], log: CallLog, meter: Meter | None = None,
-                 replay: bool = True, timeout: float = 180.0):
+                 replay: bool = True, timeout: float = 180.0, attempts: int = 12, deadline: float | None = None):
         self.models = models
         self.log = log
         self.meter = meter or Meter()
         self.replay = replay
+        self.timeout, self.attempts, self.deadline = timeout, max(1, attempts), deadline
         # A short connect timeout, so a wrong base URL fails in seconds.
         self._http = httpx.Client(timeout=httpx.Timeout(timeout, connect=10.0))
         self._reachable: set[str] = set()  # providers that have answered, whose connect errors are retried
@@ -384,10 +385,21 @@ class ModelClient:
         url = provider.base_url() + url_path
         started = time.monotonic()
         response = None
-        attempts = 12  # rate limits during a big eval can last minutes; give up only after about ten
+        attempts = self.attempts
+
+        def left() -> float:
+            return float("inf") if self.deadline is None else self.deadline - (time.monotonic() - started)
+
+        def wait(seconds: float, why: str) -> None:
+            if seconds >= left():
+                raise ModelError(f"{model.name}: gave up after {attempt + 1} tries in "
+                                 f"{time.monotonic() - started:.0f}s (model_deadline): {why}")
+            time.sleep(seconds)
+
         for attempt in range(attempts):
             try:
-                response = self._http.post(url, headers=provider.headers(), json=body)
+                response = self._http.post(url, headers=provider.headers(), json=body,
+                                           timeout=httpx.Timeout(max(0.1, min(self.timeout, left())), connect=10.0))
             except httpx.TransportError as err:
                 # A host that has never answered is probably a wrong base URL: say so at once. A connect error
                 # from a host that has answered before is a blip, and is retried.
@@ -396,10 +408,11 @@ class ModelClient:
                     raise ModelError(f"{model.name}: could not connect to {provider.base_url()} ({err})") from err
                 if attempt == attempts - 1:
                     raise ModelError(f"{model.name}: {err}") from err
-                time.sleep(min(60, 2 ** attempt))
+                wait(min(60, 2 ** attempt), str(err))
                 continue
             if response.status_code in (429, 500, 502, 503, 504) and attempt < attempts - 1:
-                time.sleep(_retry_after(response) or min(60, 2 ** attempt) * (0.5 + random.random()))
+                wait(_retry_after(response) or min(60, 2 ** attempt) * (0.5 + random.random()),
+                     f"HTTP {response.status_code}")
                 continue
             break
         assert response is not None

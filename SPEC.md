@@ -1660,3 +1660,6 @@ All dates are 2026-11-13 unless noted.
      for a document's own facts: "duplicate" keeps the old id (`fact.restated`), and a change marks the old fact
      `replaced` with a `replaces` relation. `replaced` counts as retired: validity 0, out of search and claims. Keyed
      tables still update rows in place. `retire_document_facts` stays as a name for `begin_revision`. (2026-11-19)
+113. 0.1.9: one model call is bounded by `Settings.model_attempts`, `model_timeout`, and `model_deadline` (issue #5).
+     The defaults keep decision 83's behavior for evals; the deadline also caps each request's read timeout, and a
+     wait that would pass it raises at once. (2026-11-19)

@@ -2,6 +2,12 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.9 (2026-11-19)
+
+- **Bounds on model calls.** `Settings.model_attempts` (12 by default), `model_timeout` (180 seconds per response),
+  and `model_deadline` (seconds for one call in all, tries and waits included) let an app that answers people fail a
+  stuck call in seconds instead of minutes (issue #5).
+
 ## 0.1.8 (2026-11-19)
 
 - **Saving a changed document again.** Old facts stay current until the new version's facts are saved, so a failed

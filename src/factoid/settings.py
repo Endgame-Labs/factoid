@@ -39,6 +39,13 @@ class Settings:
     concurrency: ClassVar[int] = 8
     #: Reuse stored responses for identical model requests.
     replay: ClassVar[bool] = True
+    #: How many times one model call is tried. Rate limits during a big eval can last minutes, so the default is
+    #: generous; an app that answers people may want 3.
+    model_attempts: ClassVar[int] = 12
+    #: Seconds to wait for one response to arrive.
+    model_timeout: ClassVar[float] = 180.0
+    #: Seconds one call may take in all, tries and waits included. `None` means no limit beyond the tries.
+    model_deadline: ClassVar[float | None] = None
     #: Where facts go for other systems, by name: `Parquet` and `Turbopuffer` from `factoid.exports`. `factoid export`
     #: sends each one what changed since its last export.
     exports: ClassVar[dict[str, Any]] = {}

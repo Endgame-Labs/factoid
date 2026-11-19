@@ -112,7 +112,9 @@ class Factoid:
         self.calls = CallLog(Path(calls_path) if calls_path else None if in_memory else data / "calls.db")
         self.meter = Meter()
         self.client = ModelClient(settings.all_models(), self.calls, self.meter,
-                                  replay=settings.replay if replay is None else replay)
+                                  replay=settings.replay if replay is None else replay,
+                                  timeout=settings.model_timeout, attempts=settings.model_attempts,
+                                  deadline=settings.model_deadline)
         self.index: Index = settings.search or LocalIndex(None if in_memory else data / "index.db")
         self.document_classes = list(documents) if documents is not None else list(Document.registered())
         self.entity_classes = list(entities) if entities is not None else list(Entity.registered())

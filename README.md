@@ -7,7 +7,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
 
-> **Status: Version 0.1.8.** Factoid runs end to end, and three example apps publish their eval results. It covers
+> **Status: Version 0.1.9.** Factoid runs end to end, and three example apps publish their eval results. It covers
 > ingest, fact extraction with evals, entities, supersession and as-of search, settling contradictions, eval suites,
 > exports, an HTTP API, and an MCP server. [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) section 17 lists what is built.
 > [CHANGELOG.md](https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md) lists what changed in each version.
@@ -673,6 +673,8 @@ class Project(Settings):
         retrieve="hybrid-rrf",
         budget_tokens=1500,
     )
+    model_attempts = 3                                 # tries per model call (12 by default, for big evals)
+    model_deadline = 120                               # seconds one call may take in all, waits included
 ```
 
 `--vary` sets a class attribute or setting for each value on the same documents, such as

@@ -396,3 +396,37 @@ def test_vary_refuses_to_replace_a_method_with_a_string():
     with pytest.raises(ValueError, match="is a method"), applied(project, {"classify": "decision"}):
         pass
     assert callable(Memo.classify)
+
+
+def test_tries_and_the_deadline_bound_one_call(monkeypatch, tmp_path):
+    import httpx
+
+    from factoid import models
+    from factoid.models import CallLog, Model, ModelClient, ModelError
+
+    monkeypatch.setenv("FACTOID_HOME", str(tmp_path))
+    monkeypatch.setenv("FIREWORKS_API_KEY", "fw_test")
+    slept, clock = [], [0.0]
+
+    def sleep(seconds):  # a fake clock: waiting moves time on, and nothing really sleeps
+        slept.append(seconds)
+        clock[0] += seconds
+
+    monkeypatch.setattr(models.time, "sleep", sleep)
+    monkeypatch.setattr(models.time, "monotonic", lambda: clock[0])
+
+    def busy(request):
+        return httpx.Response(503, json={"error": "busy"})
+
+    client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, CallLog(None), replay=False, attempts=3)
+    client._http = httpx.Client(transport=httpx.MockTransport(busy))
+    with pytest.raises(ModelError, match="HTTP 503"):
+        client.generate("hi")
+    assert len(slept) == 2  # three tries, two waits
+
+    slept.clear()
+    client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, CallLog(None), replay=False, deadline=1.5)
+    client._http = httpx.Client(transport=httpx.MockTransport(busy))
+    with pytest.raises(ModelError, match="model_deadline"):
+        client.generate("hi")
+    assert sum(slept) < 1.5
