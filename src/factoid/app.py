@@ -793,6 +793,21 @@ class Factoid:
         entity.props = json.loads(row["props"])
         return entity
 
+    def document(self, document_id: str) -> dict[str, Any] | None:
+        """A stored document's id, class, uri, title, date, metadata, and how many earlier revisions it has."""
+        row = self.store.one("select id, class, uri, title, source_datetime, metadata, ingested_at from documents "
+                             "where id = ?", (document_id,))
+        if row is None:
+            return None
+        revisions = self.store.one("select count(*) n from revisions where document_id = ?", (document_id,))["n"]
+        return {**dict(row), "metadata": json.loads(row["metadata"] or "{}"), "revisions": revisions}
+
+    def events(self, after: int = 0, limit: int = 100) -> list[dict[str, Any]]:
+        """Events after sequence number `after`, oldest first: pass the last `seq` back to read on."""
+        rows = self.store.query("select seq, at, type, subject, data from events where seq > ? order by seq limit ?",
+                                (int(after), max(1, min(int(limit), 1000))))
+        return [{**dict(r), "data": json.loads(r["data"] or "{}")} for r in rows]
+
     def document_title(self, document_id: str | None) -> str | None:
         if not document_id:
             return None
@@ -886,7 +901,11 @@ class Factoid:
                      traits: list[Any] | None = None, as_of: str | datetime | None = None,
                      valid_at: str | datetime | None = None, freshness: bool | str = True,
                      contradictions: int | bool = 3, top_k: int = 10, include_retired: bool = False,
-                     fact_class: type[Fact] | None = None) -> list[SearchHit]:
+                     fact_class: type[Fact] | None = None, min_score: float | None = None) -> list[SearchHit]:
+        """`min_score` drops hits the reranker scores below it (0 to 1, weighted by validity unless freshness is
+        off). It needs a rerank model: without one, a score is a fused rank, which means nothing across queries."""
+        if min_score is not None and not self.client.models.get("rerank"):
+            raise ValueError("min_score needs a rerank model; set models['rerank'] in settings.py")
         filters: dict[str, Any] = {}
         if about is not None:
             about_list = about if isinstance(about, list) else [about]
@@ -923,6 +942,8 @@ class Factoid:
                     weight = 1.0 if freshness in (False, "any") else (0.25 + 0.75 * hit.validity)
                     hit.score = s * weight
                 hits = sorted(head, key=lambda h: -h.score)  # reranked scores are not comparable to the rest
+                if min_score is not None:
+                    hits = [h for h in hits if h.score >= min_score]
         hits = hits[:top_k]
         if contradictions is not False:
             limit = int(contradictions)

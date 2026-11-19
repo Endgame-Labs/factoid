@@ -7,7 +7,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
 
-> **Status: Version 0.1.14.** Factoid runs end to end, and three example apps publish their eval results. It covers
+> **Status: Version 0.1.15.** Factoid runs end to end, and three example apps publish their eval results. It covers
 > ingest, fact extraction with evals, entities, supersession and as-of search, settling contradictions, eval suites,
 > exports, an HTTP API, and an MCP server. [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) section 17 lists what is built.
 > [CHANGELOG.md](https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md) lists what changed in each version.
@@ -876,12 +876,14 @@ factoid serve --port 9000 --data-dir runs/20261118-034725/cuad/default
 
 | Route | Returns |
 |---|---|
-| `GET /search?q=...` | Facts that match, best first. Also `about` (an entity), `as_of` (a date), `top_k`, and `chunks=true`. |
+| `GET /search?q=...` | Facts that match, best first. Also `about` (an entity), `as_of` (a date), `top_k`, `min_score` (with a reranker), and `chunks=true`. |
 | `GET /facts` | Facts in the order they were added. Also `document`, `trait`, `status`, and `limit`. |
 | `GET /facts/<id>` | One fact with its quotes, mentions, relations, and history. |
 | `GET /entities` | Entities with their fact counts. Also `class`, `name`, and `limit`. |
 | `GET /entities/<name or id>` | One entity, its current facts, and the entities it appears with most. |
 | `GET /stats` | Counts by class and status. |
+| `GET /documents/<id>` | One document's uri, title, date, metadata, and number of earlier revisions. |
+| `GET /events?after=N` | Events after sequence number `N`, oldest first, to read what changed. Also `limit`. |
 | `GET /contradictions` | Open contradictions, newest first, with both facts. Also `stale=false` and `limit`. |
 | `POST /contradictions/settle` | Settles one with `{"fact_id", "other_id", "keep", "reason", "by"}`. `keep` is one of the two IDs or `both`. |
 | `POST /ingest` | Ingests `{"text": ..., "document_type", "uri", "title", "metadata"}` and returns the facts kept and rejected. |
@@ -891,13 +893,13 @@ factoid serve --port 9000 --data-dir runs/20261118-034725/cuad/default
 curl "http://127.0.0.1:8765/search?q=liability%20cap&as_of=2026-06-01"
 ```
 
-Each fact includes its text, status, traits, dates, quotes, mentions, and the probability that it still holds now
-(`still_valid`). A bare date in `as_of` means midnight UTC. Errors return `{"error": ...}` with a 400, 401, or 404
+Each fact includes its text, status, traits, dates, quotes, mentions, its document's uri and metadata, and the
+probability that it still holds now (`still_valid`). A bare date in `as_of` means midnight UTC. Errors return `{"error": ...}` with a 400, 401, or 404
 status.
 
 The server listens on 127.0.0.1 by default. To serve other machines, set `FACTOID_API_TOKEN` and pass `--host`. Every
-request then requires `Authorization: Bearer <token>`. Requests run one at a time against the store, so a long ingest
-blocks reads until it finishes. The server uses only the standard library.
+request then requires `Authorization: Bearer <token>`. Writes run one at a time; reads do not wait for them. The
+server uses only the standard library.
 
 ## MCP
 
@@ -910,12 +912,13 @@ claude mcp add factoid -- factoid mcp                # or: factoid mcp --read-on
 
 | Tool | What it does |
 |---|---|
-| `search_facts` | Searches facts, with `about` (an entity), `as_of` (a date), and `top_k`. |
+| `search_facts` | Searches facts, with `about` (an entity), `as_of` (a date), `top_k`, and `min_score`. |
 | `read_fact` | One fact with its quotes, mentions, relations, and history. |
 | `list_facts` | Facts from one document, with one trait, or with one status. |
 | `find_entities` | Entities by part of a name or by class, with their fact counts. |
 | `read_entity` | One entity, its current facts, and the entities it appears with most. |
 | `stats` | Counts by class and status. |
+| `read_events` | Events after a sequence number, to read what changed. |
 | `list_contradictions` | Open contradictions, newest first, with both facts. |
 | `settle_contradiction` | Settles one by keeping one fact or both, with a reason. `--read-only` leaves it out. |
 | `ingest_text` | Adds a document's text and returns the facts kept and rejected. `--read-only` leaves it out. |

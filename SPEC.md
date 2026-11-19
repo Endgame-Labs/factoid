@@ -1236,7 +1236,8 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
 - **HTTP API (0.1.2).** `factoid serve` serves `GET /search`, `/facts`, `/facts/<id>`, `/entities`,
   `/entities/<name or id>`, `/stats`, and `/health`, and `POST /ingest`, as JSON, from `src/factoid/serve.py`. The
   reads live in `src/factoid/api.py` so `factoid mcp` can share them. Choices made while building, not decided by
-  Kyle: only the standard library (`ThreadingHTTPServer`), with requests run one at a time against the store; port
+  Kyle: only the standard library (`ThreadingHTTPServer`), with writes run one at a time (reads were too, until
+  0.1.7); port
   8765 on 127.0.0.1 by default; a host beyond this machine needs `FACTOID_API_TOKEN`, which every request must then
   send as a bearer token; errors are `{"error": ...}` with a 400, 401, 404, or 500 status; and a bare `as_of` date
   means midnight UTC. Checked on 2026-11-19 against a CUAD run's store: search in 1.6 seconds, with entities, facts,
@@ -1685,3 +1686,8 @@ All dates are 2026-11-13 unless noted.
      new entity of the same class. Each writes an event (`entity.updated`, `merged`, or `split`). The CLI has `merge`
      and `split`; HTTP, MCP, editing, deleting, and `retype` are later. The near-miss linking eval is still owed.
      Entities stay optional, and the README says so. (2026-11-19)
+119. 0.1.15: reads for apps that keep their own records. A fact's document now carries its uri, date, and metadata,
+     and `Factoid.document(id)` and `GET /documents/<id>` read one (issue #15). `search_facts(min_score=...)` drops
+     hits the reranker scores below it, and refuses without a reranker, since a fused rank means nothing across
+     queries (issue #16). `Factoid.events(after, limit)`, `GET /events`, and the MCP tool `read_events` read the event
+     log from a cursor (issue #17). (2026-11-19)

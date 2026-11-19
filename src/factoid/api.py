@@ -20,7 +20,7 @@ class NotFound(LookupError):
 
 
 def search(app: Any, query: str, *, about: str | None = None, as_of: str | None = None, top_k: int = 10,
-           chunks: bool = False) -> list[dict[str, Any]]:
+           chunks: bool = False, min_score: float | None = None) -> list[dict[str, Any]]:
     """Facts that match `query`, best first. `about` limits them to one entity (a name, key, or id); `as_of` weights
     them by how likely each was still true on that date (a bare date is midnight UTC), and includes superseded facts
     that were true then."""
@@ -30,7 +30,8 @@ def search(app: Any, query: str, *, about: str | None = None, as_of: str | None 
     top_k = max(1, min(int(top_k), 100))
     if chunks:
         return [_plain(r) for r in app.search_chunks(query, about=entity, top_k=top_k)]
-    hits = app.search_facts(query, about=entity, as_of=as_of, top_k=top_k)
+    hits = app.search_facts(query, about=entity, as_of=as_of, top_k=top_k,
+                            min_score=float(min_score) if min_score is not None else None)
     return [{**_fact(app, h.fact), "score": round(h.score, 6), "validity": round(h.validity, 4),
              "contradicted_by": h.contradiction_ids} for h in hits]
 
@@ -157,12 +158,26 @@ def _entity(app: Any, name_or_id: str) -> Any:
     return found
 
 
+def events(app: Any, *, after: int = 0, limit: int = 100) -> list[dict[str, Any]]:
+    """Events after sequence number `after`, oldest first. Pass the last `seq` back to read on."""
+    return app.events(after, limit)
+
+
+def document(app: Any, document_id: str) -> dict[str, Any]:
+    found = app.document(document_id)
+    if found is None:
+        raise NotFound(f"no document {document_id}")
+    return found
+
+
 def _fact(app: Any, f: Any) -> dict[str, Any]:
+    doc = app.document(f.document_id) if f.document_id else None
     return {
         "id": f.id, "class": stored_name(type(f)), "text": f.text, "status": f.status, "traits": f.trait_names,
         "valid_from": _iso(f.valid_from), "valid_until": _iso(f.valid_until), "expires": f.expires,
         "still_valid": round(f.valid_at(), 4),
-        "document": {"id": f.document_id, "title": app.document_title(f.document_id)},
+        "document": {"id": f.document_id, "title": app.document_title(f.document_id),
+                     **({k: doc[k] for k in ("uri", "source_datetime", "metadata")} if doc else {})},
         "quotes": [{"document_id": q.document_id, "passage": q.passage_n, "section": q.section, "text": q.text,
                     "speaker": q.speaker, "said_at": q.said_at} for q in f.quotes],
         "mentions": [{"text": m.text, "role": m.role, "entity_id": m.entity_id} for m in f.mentions],

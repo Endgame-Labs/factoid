@@ -2,6 +2,12 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.15 (2026-11-19)
+
+- **Reads for apps.** A fact's document comes with its uri, date, and metadata, and `GET /documents/<id>` reads one
+  (issue #15). `min_score` leaves out facts the reranker scores low, in Python, HTTP, and MCP (issue #16).
+  `Factoid.events`, `GET /events?after=`, and the MCP tool `read_events` read what changed from a cursor (issue #17).
+
 ## 0.1.14 (2026-11-19)
 
 - **Following another system's records.** `Entity.upsert(name, keys=...)` finds an entity by key and renames or

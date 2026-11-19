@@ -32,6 +32,8 @@ TOOLS: list[dict[str, Any]] = [
             "about": {**_STR, "description": "Only facts about this entity (a name, key, or id)."},
             "as_of": {**_STR, "description": "A date (2026-06-01) or ISO time: rank by what was true then."},
             "top_k": {**_INT, "description": "How many facts to return, 1 to 100. Default 10."},
+            "min_score": {"type": "number", "description": "Leave out facts the reranker scores below this, 0 to 1. "
+                                                           "Needs a rerank model."},
         }},
     },
     {
@@ -66,6 +68,15 @@ TOOLS: list[dict[str, Any]] = [
         "inputSchema": {"type": "object", "required": ["name"], "properties": {
             "name": {**_STR, "description": "A name, other name, key, or id."},
             "limit": {**_INT, "description": "How many facts. Default 50."},
+        }},
+    },
+    {
+        "name": "read_events",
+        "description": "What changed, from the event log: events after sequence number `after`, oldest first. "
+                       "Pass the last seq back as `after` to read on.",
+        "inputSchema": {"type": "object", "properties": {
+            "after": {**_INT, "description": "Default 0, the start."},
+            "limit": {**_INT, "description": "Default 100, at most 1,000."},
         }},
     },
     {
@@ -195,7 +206,9 @@ class Server:
         app = self.app
         if name == "search_facts":
             return api.search(app, a["query"], about=a.get("about"), as_of=a.get("as_of"),
-                              top_k=int(a.get("top_k", 10)))
+                              top_k=int(a.get("top_k", 10)), min_score=a.get("min_score"))
+        if name == "read_events":
+            return api.events(app, after=int(a.get("after", 0)), limit=int(a.get("limit", 100)))
         if name == "read_fact":
             return api.fact(app, a["id"])
         if name == "list_facts":

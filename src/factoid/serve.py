@@ -86,7 +86,8 @@ def make_server(app: Any, host: str = "127.0.0.1", port: int = 8765, token: str 
                     if not q.get("q"):
                         raise _Error(400, "search needs q, the query")
                     return api.search(app, q["q"], about=q.get("about"), as_of=q.get("as_of"),
-                                      top_k=int(q.get("top_k", 10)), chunks=_flag(q.get("chunks")))
+                                      top_k=int(q.get("top_k", 10)), chunks=_flag(q.get("chunks")),
+                                      min_score=q.get("min_score"))
                 case "GET", ["facts"]:
                     return api.facts(app, document=q.get("document"), trait=q.get("trait"),
                                      status=q.get("status", "current"), limit=int(q.get("limit", 50)))
@@ -99,6 +100,10 @@ def make_server(app: Any, host: str = "127.0.0.1", port: int = 8765, token: str 
                     return api.entity(app, name, limit=int(q.get("limit", 50)))
                 case "GET", ["stats"]:
                     return api.stats(app)
+                case "GET", ["events"]:
+                    return api.events(app, after=int(q.get("after", 0)), limit=int(q.get("limit", 100)))
+                case "GET", ["documents", document_id]:
+                    return api.document(app, document_id)
                 case "GET", ["contradictions"]:
                     return api.contradictions(app, include_stale=q.get("stale", "true") != "false",
                                               limit=int(q.get("limit", 50)))
