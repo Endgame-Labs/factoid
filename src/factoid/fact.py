@@ -125,6 +125,9 @@ class Fact(Registered, ModelCalls):
     replace_threshold: ClassVar[float] = 0.6
     #: Run one repair (a rewording) on a near miss.
     repair_enabled: ClassVar[bool] = True
+    #: Ask the assess questions (traits and time) in the same decision request as the fact evals, instead of in a
+    #: second request with the same fact. Off by default while evals decide (issue #7).
+    assess_with_evaluate: ClassVar[bool] = False
     #: The longest fact sentence `validate` accepts, in characters.
     max_length: ClassVar[int] = 600
 
@@ -363,8 +366,10 @@ class Fact(Registered, ModelCalls):
         return asked
 
     def assess(self) -> Judgments:
-        """Traits and time properties, in one request."""
-        judgments = current().client.ask(self.state(), type(self).assess_questions())
+        """Traits and time properties, in one request, or from the fact evals' request when they asked them."""
+        early = getattr(self, "assessed_early", None)
+        judgments = early[1] if early and early[0] == self.text else \
+            current().client.ask(self.state(), type(self).assess_questions())
         carried, scores = [], {}
         for trait in type(self).traits:
             decided = trait.decide(self, judgments)

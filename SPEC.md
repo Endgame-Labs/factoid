@@ -1707,3 +1707,7 @@ All dates are 2026-11-13 unless noted.
      Repeat identical calls inside Factoid replay from the cache; fresh calls to the decision model still vary, and no
      seed is sent. Tokens by step (decision 114): evaluate, assess, and resolve take 84% to 93% of input tokens, and
      extraction 1% to 2%. (2026-11-19)
+123. 0.1.19 (issue #7): `Fact.assess_with_evaluate` adds the assess questions, prefixed `assess.`, to the fact evals'
+     request and keeps their answers on the fact for `assess`, if its text is unchanged; a repaired fact is evaluated,
+     and so assessed, again. Assess is 11% to 29% of input tokens (decision 122). Off by default; the evals decide.
+     (2026-11-19)

@@ -752,3 +752,24 @@ def test_a_grounded_failure_is_trimmed_only_when_asked(make_app, fake):
         del SourceFact.fact_evals
     assert [f.text for f in kept] == ["The second clinic's network upgrade slips to January."]
     assert any("Keep only what they state" in p for p in prompts)
+
+
+def test_assess_can_ride_along_with_the_fact_evals(make_app, fake):
+    text = "Vega's liability to Orion is capped at $1M under the supply agreement."
+    meta = {"signed_at": "2025-03-01T00:00:00Z"}
+    counts = []
+    for early in (False, True):
+        app = build(make_app, fake)
+        asks = []
+        inner = fake.ask
+        fake.ask = lambda state, questions, inner=inner, asks=asks: (asks.append(sorted(questions)),
+                                                                     inner(state, questions))[1]
+        SourceFact.assess_with_evaluate = early
+        try:
+            fact = app.ingest_text(text, document_type=Contract, metadata=meta, uri=f"{early}.txt").facts[0]
+        finally:
+            del SourceFact.assess_with_evaluate
+            fake.ask = inner
+        counts.append(len(asks))
+        assert fact.trait_names == ["liability_cap"] and fact.expires is not None
+    assert counts[1] == counts[0] - 1  # one request fewer for the one fact

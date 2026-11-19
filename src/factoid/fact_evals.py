@@ -12,7 +12,7 @@ import json
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from .judge import Noul
+from .judge import Judgments, Noul
 from .runtime import current
 
 if TYPE_CHECKING:
@@ -220,7 +220,14 @@ class DecisionFloors(FactEval):
     def check(self, fact: Fact) -> EvalResult:
         app = current()
         state: dict[str, Any] = fact.eval_state()
-        judgments = app.client.ask(state, dict(self.questions))
+        asked: dict[str, Any] = dict(self.questions)
+        early = getattr(type(fact), "assess_with_evaluate", False)
+        if early:  # one request instead of two: the assess questions ride along, prefixed so names cannot clash
+            asked.update({f"assess.{k}": q for k, q in type(fact).assess_questions().items()})
+        judgments = app.client.ask(state, asked)
+        if early:
+            fact.assessed_early = (fact.text, Judgments({k: judgments[f"assess.{k}"]
+                                                         for k in type(fact).assess_questions()}))
         scores = {name: float(judgments[name]) for name in self.questions}
         model = app.client.models.get("choose")
         floors, targets = self.floors_for(getattr(model, "name", model))

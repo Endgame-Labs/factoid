@@ -2,6 +2,12 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.19 (2026-11-19)
+
+- **Fewer decision requests, as an experiment.** `assess_with_evaluate = True` on a fact class asks the trait and time
+  questions in the fact evals' request, one request per fact instead of two. Off by default until the evals decide
+  (issue #7).
+
 ## 0.1.18 (2026-11-19)
 
 - **Steadier decisions.** A decision request asks its questions in the order the code lists them, not by a hash of
