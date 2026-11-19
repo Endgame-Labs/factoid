@@ -250,8 +250,15 @@ class Model:
 class CallLog:
     """A SQLite cache of model calls. Identical requests replay their stored response."""
 
-    def __init__(self, path: Path | None):
+    #: What `put` keeps: "full" (requests and responses, which replay), "metadata" (the key, model, step, and tokens,
+    #: with no text, so nothing replays), or "none" (nothing).
+    MODES = ("full", "metadata", "none")
+
+    def __init__(self, path: Path | None, mode: str = "full"):
+        if mode not in self.MODES:
+            raise ValueError(f"call_log must be one of {', '.join(self.MODES)}, not {mode!r}")
         self.path = path
+        self.mode = mode
         self._lock = threading.Lock()
         if path is None:
             self._db = sqlite3.connect(":memory:", check_same_thread=False)
@@ -287,16 +294,20 @@ class CallLog:
         """The stored response, and the Factoid (version and commit) that stored it, or None before 0.1.1."""
         with self._lock:
             row = self._db.execute("select response, factoid from calls where key = ?", (key,)).fetchone()
-        return (json.loads(row[0]), row[1]) if row else None
+        return (json.loads(row[0]), row[1]) if row and row[0] is not None else None
 
     def put(self, key: str, workload: str, model: str, request: dict[str, Any], response: dict[str, Any],
             input_tokens: int, output_tokens: int, seconds: float, step: str | None = None) -> None:
+        if self.mode == "none":
+            return
+        bodies = self.mode == "full"
         with self._lock:
             self._db.execute(
                 "insert or replace into calls (key, workload, model, request, response, input_tokens, output_tokens, "
                 "seconds, created_at, factoid, step) values (?,?,?,?,?,?,?,?,?,?,?)",
-                (key, workload, model, json.dumps(request), json.dumps(response), input_tokens, output_tokens,
-                 seconds, time.time(), self.factoid, step),
+                (key, workload, model, json.dumps(request) if bodies else None,
+                 json.dumps(response) if bodies else None, input_tokens, output_tokens, seconds, time.time(),
+                 self.factoid, step),
             )
             self._db.commit()
 
@@ -307,7 +318,7 @@ class CallLog:
         with self._lock:
             rows = self._db.execute(sql, (step, limit) if step else (limit,)).fetchall()
         keys = ("created_at", "workload", "step", "model", "input_tokens", "output_tokens", "seconds", "request")
-        return [{**dict(zip(keys, row)), "request": json.loads(row[7])} for row in rows]
+        return [{**dict(zip(keys, row)), "request": json.loads(row[7]) if row[7] else None} for row in rows]
 
 
 @dataclass

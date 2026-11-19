@@ -7,7 +7,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
 
-> **Status: Version 0.1.11.** Factoid runs end to end, and three example apps publish their eval results. It covers
+> **Status: Version 0.1.12.** Factoid runs end to end, and three example apps publish their eval results. It covers
 > ingest, fact extraction with evals, entities, supersession and as-of search, settling contradictions, eval suites,
 > exports, an HTTP API, and an MCP server. [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) section 17 lists what is built.
 > [CHANGELOG.md](https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md) lists what changed in each version.
@@ -161,6 +161,10 @@ Model calls are cached in `.factoid/calls.db`. A request identical to one made b
 nothing, and gives the same result. Both `ingest` and `eval` print how many calls were replayed. Right after `ingest`,
 `eval` replays almost everything, so its first score is a rescoring of saved answers. Pass `--fresh` on either command
 to call the models again.
+
+The cache holds the text of every request and answer, document text included. A project that must not keep third-party
+text sets `call_log = "metadata"` in its settings, which keeps only the model, step, and tokens of each call, or
+`call_log = "none"`, which keeps nothing. Either way, nothing replays.
 
 An eval never reads the project store. Each run builds its own store under `runs/` from the same documents. Evals replay
 saved answers, including those from a `--fresh` run. Because of this, an eval after `eval --fresh` scores that run's

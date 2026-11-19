@@ -1671,3 +1671,6 @@ All dates are 2026-11-13 unless noted.
      registered; an app refuses two of its own classes with one stored name; `class_name` sets the stored name (not
      `name`, which entities use for their own name); and fact and entity lookups no longer fall back to the process
      registry. (2026-11-19)
+116. 0.1.12 (issue #10): `Settings.call_log` is "full" (the default), "metadata", or "none". "metadata" keeps the
+     key, model, step, and tokens of each call with no bodies, so a project that must not keep third-party text can
+     still see its costs; neither mode replays. A mode that keeps no document text in the store is a later item. (2026-11-19)

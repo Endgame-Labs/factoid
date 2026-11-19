@@ -454,3 +454,31 @@ def test_model_calls_are_labelled_by_step(monkeypatch, tmp_path):
         client.generate("b")
     assert client.meter.steps["extract"]["input_tokens"] == 7 and client.meter.steps["fact_class"]["calls"] == 1
     assert [row["step"] for row in client.log.recent()] == ["fact_class", "extract"]
+
+
+def test_the_call_log_can_keep_no_text(monkeypatch, tmp_path):
+    import httpx
+
+    from factoid.models import CallLog, Model, ModelClient
+
+    monkeypatch.setenv("FACTOID_HOME", str(tmp_path))
+    monkeypatch.setenv("FIREWORKS_API_KEY", "fw_test")
+    sent = []
+
+    def handler(request):
+        sent.append(request)
+        return httpx.Response(200, json={"choices": [{"message": {"content": "a secret answer"}}],
+                                         "usage": {"prompt_tokens": 9, "completion_tokens": 3}})
+
+    for mode, rows in (("metadata", 1), ("none", 0)):
+        log = CallLog(tmp_path / f"{mode}.db", mode=mode)
+        client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, log)
+        client._http = httpx.Client(transport=httpx.MockTransport(handler))
+        assert client.generate("a secret note") == "a secret answer"
+        assert client.generate("a secret note") == "a secret answer"  # nothing to replay, so it calls again
+        stored = log._db.execute("select request, response, input_tokens from calls").fetchall()
+        assert len(stored) == rows and all(r[0] is None and r[1] is None and r[2] == 9 for r in stored)
+        assert b"secret" not in (tmp_path / f"{mode}.db").read_bytes()
+    assert len(sent) == 4
+    with pytest.raises(ValueError, match="call_log must be one of"):
+        CallLog(None, mode="bodies")

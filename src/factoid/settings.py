@@ -39,6 +39,9 @@ class Settings:
     concurrency: ClassVar[int] = 8
     #: Reuse stored responses for identical model requests.
     replay: ClassVar[bool] = True
+    #: What `.factoid/calls.db` keeps of each model call: "full" (requests and responses, so identical calls replay),
+    #: "metadata" (model, step, and tokens, with no document text; nothing replays), or "none".
+    call_log: ClassVar[str] = "full"
     #: How many times one model call is tried. Rate limits during a big eval can last minutes, so the default is
     #: generous; an app that answers people may want 3.
     model_attempts: ClassVar[int] = 12

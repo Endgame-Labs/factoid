@@ -2,6 +2,11 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.12 (2026-11-19)
+
+- **A call log with no text.** `Settings.call_log = "metadata"` keeps each model call's model, step, and tokens but no
+  request or answer text, and `"none"` keeps nothing. Both turn off replay (issue #10).
+
 ## 0.1.11 (2026-11-19)
 
 - **Class names.** An app refuses two document, entity, or fact classes with the same name, where one used to replace

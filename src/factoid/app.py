@@ -110,7 +110,8 @@ class Factoid:
         if settings.store is not None and data_dir is None:
             store_path = settings.store.resolve(self.root)
         self.store = _store(None if in_memory else store_path)
-        self.calls = CallLog(Path(calls_path) if calls_path else None if in_memory else data / "calls.db")
+        self.calls = CallLog(Path(calls_path) if calls_path else None if in_memory else data / "calls.db",
+                             mode=settings.call_log)
         self.meter = Meter()
         self.client = ModelClient(settings.all_models(), self.calls, self.meter,
                                   replay=settings.replay if replay is None else replay,
