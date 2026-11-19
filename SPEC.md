@@ -1231,9 +1231,16 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     GitHub pinned at the installed commit. Before, a project made from a checkout installed GitHub's main.
   - `pyproject.toml` has ruff settings, and `src`, `tests`, and `examples` pass. `AGENTS.md` has a Develop section:
     the commands, a module map, and a warning that example evals cost money.
-- **Not built yet:** sources (`imap`, `mcp`), MCP and
-  HTTP serving, `factoid setup`, fact-class trust and visibility, entity `merge`, `split`, and `retype` commands,
-  and fingerprint-driven `rebuild`.
+- **HTTP API (0.1.2).** `factoid serve` serves `GET /search`, `/facts`, `/facts/<id>`, `/entities`,
+  `/entities/<name or id>`, `/stats`, and `/health`, and `POST /ingest`, as JSON, from `src/factoid/serve.py`. The
+  reads live in `src/factoid/api.py` so `factoid mcp` can share them. Choices made while building, not decided by
+  Kyle: only the standard library (`ThreadingHTTPServer`), with requests run one at a time against the store; port
+  8765 on 127.0.0.1 by default; a host beyond this machine needs `FACTOID_API_TOKEN`, which every request must then
+  send as a bearer token; errors are `{"error": ...}` with a 400, 401, 404, or 500 status; and a bare `as_of` date
+  means midnight UTC. Checked on 2026-11-19 against a CUAD run's store: search in 1.6 seconds, with entities, facts,
+  and related entities as expected. Versions and their features are in `CHANGELOG.md`.
+- **Not built yet:** sources (`imap`, `mcp`), MCP serving, `factoid setup`, fact-class trust and visibility, entity
+  `merge`, `split`, and `retype` commands, and fingerprint-driven `rebuild`.
 - **`situate`:** the setting `situate = True` runs the built-in step (`situate_chunk`); a method named `situate` on a
   class replaces it.
 - **A duplicate** adds its quotes to the stored fact, which restarts its clock, and writes no event.

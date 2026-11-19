@@ -1,15 +1,15 @@
 # Factoid 📚
 
-[![version](https://img.shields.io/badge/version-0.1.1-blue.svg)](pyproject.toml)
+[![version](https://img.shields.io/badge/version-0.1.2-blue.svg)](pyproject.toml)
 [![tests](https://github.com/Endgame-Labs/factoid/actions/workflows/test.yml/badge.svg)](https://github.com/Endgame-Labs/factoid/actions/workflows/test.yml)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
 
-> **Status: Version 0.1.1.** Factoid runs end to end, and three example apps publish their eval results. It covers
-> ingest, fact extraction with evals, entities, supersession and as-of search, eval suites, and exports. The API may
-> still change before 1.0. [SPEC.md](SPEC.md) section 17 lists what is built.
+> **Status: Version 0.1.2.** Factoid runs end to end, and three example apps publish their eval results. It covers
+> ingest, fact extraction with evals, entities, supersession and as-of search, eval suites, exports, and an HTTP API.
+> [SPEC.md](SPEC.md) section 17 lists what is built. [CHANGELOG.md](CHANGELOG.md) lists what changed in each version.
 
 Factoid turns `Documents` into `Facts`.  A fact is a short, self-contained sentence, devoid of filler and explicit in its language (no pronouns, etc).
 Each fact is tied to an exact location in the source document.
@@ -165,10 +165,10 @@ answers. Those results can differ from the facts `ingest` stored in the project.
 ### Commands
 
 Built today: `init`, `keys set`, `keys list`, `models`, `doctor`, `ingest`, `facts list`, `search`, `read`,
-`stats`, `entities list`, `entities kinds`, `eval`, `export`, `steps show`, `classifiers show`, `prompts show`, and
+`stats`, `entities list`, `entities kinds`, `eval`, `export`, `serve`, `steps show`, `classifiers show`, `prompts show`, and
 `struct`.
 
-The rest of this README also describes commands that are planned and not built yet: `serve`, `mcp`, `rebuild`, and
+The rest of this README also describes commands that are planned and not built yet: `mcp`, `rebuild`, and
 `contradictions`. Each is marked "(planned)" where it appears. A guided terminal UI, `factoid setup`, is planned too.
 `SPEC.md` section 17 lists what is built.
 
@@ -822,14 +822,46 @@ from the index Factoid searches itself. The export uses `TURBOPUFFER_API_KEY` or
 `--full` deletes the namespace and writes every fact again. In a turbopuffer filter, a fact with no `valid_from` still
 matches `valid_from < date`. Add `["valid_from", "NotEq", null]` when you need to exclude those facts.
 
+## HTTP API
+
+`factoid serve` makes a project's facts available as JSON over HTTP for apps and pipelines not written in Python.
+
+```sh
+factoid serve                         # http://127.0.0.1:8765
+factoid serve --port 9000 --data-dir runs/20261118-034725/cuad/default
+```
+
+| Route | Returns |
+|---|---|
+| `GET /search?q=...` | Facts that match, best first. Also `about` (an entity), `as_of` (a date), `top_k`, and `chunks=true`. |
+| `GET /facts` | Facts in the order they were added. Also `document`, `trait`, `status`, and `limit`. |
+| `GET /facts/<id>` | One fact with its quotes, mentions, relations, and history. |
+| `GET /entities` | Entities with their fact counts. Also `class`, `name`, and `limit`. |
+| `GET /entities/<name or id>` | One entity, its current facts, and the entities it appears with most. |
+| `GET /stats` | Counts by class and status. |
+| `POST /ingest` | Ingests `{"text": ..., "document_type", "uri", "title", "metadata"}` and returns the facts kept and rejected. |
+| `GET /health` | `{"ok": true, "version": ...}` |
+
+```sh
+curl "http://127.0.0.1:8765/search?q=liability%20cap&as_of=2026-06-01"
+```
+
+Each fact includes its text, status, traits, dates, quotes, mentions, and the probability that it still holds now
+(`still_valid`). A bare date in `as_of` means midnight UTC. Errors return `{"error": ...}` with a 400, 401, or 404
+status.
+
+The server listens on 127.0.0.1 by default. To serve other machines, set `FACTOID_API_TOKEN` and pass `--host`. Every
+request then requires `Authorization: Bearer <token>`. Requests run one at a time against the store, so a long ingest
+blocks reads until it finishes. The server uses only the standard library.
+
 ## Usage
 
 - **Standalone CLI project.** Manage a RAG corpus in its own directory, tune chunking and extraction, and evaluate
   prompt, extractor, and fact eval choices with `factoid ingest`, `factoid search`, and `factoid eval`.
 - **Agent memory over MCP.** Connect `imap`, `folder`, `jsonl`, and `mcp` sources for mail, calls, notes, and chats,
   then expose fact search and writes to an agent through `factoid mcp` (planned) or the CLI.
-- **Python library or HTTP service.** Run `factoid serve` (planned) as an HTTP sidecar, or use Factoid as a library
-  inside an application and pass classes to `Factoid(...)`:
+- **Python library or HTTP service.** Run `factoid serve` as an HTTP sidecar ([HTTP API](#http-api)), or use Factoid
+  as a library inside an application and pass classes to `Factoid(...)`:
 
 ```python
 from factoid import Entity, Fact, Factoid, Model, ProseDocument, Settings

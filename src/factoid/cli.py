@@ -238,6 +238,33 @@ def export(names: tuple[str, ...], full: bool) -> None:
     app.close()
 
 
+@cli.command()
+@click.option("--host", default="127.0.0.1", show_default=True, help="The address to listen on.")
+@click.option("--port", default=8765, show_default=True)
+@_data_dir_option
+def serve(host: str, port: int, data_dir: Path | None) -> None:
+    """Serve the project's facts over HTTP, as JSON: search, facts, entities, stats, and ingest. With
+    FACTOID_API_TOKEN set, requests need `Authorization: Bearer <token>`."""
+    import os
+
+    from .serve import make_server
+
+    token = os.environ.get("FACTOID_API_TOKEN") or None
+    if host not in ("127.0.0.1", "localhost", "::1") and not token:
+        raise click.ClickException(f"serving on {host} lets other machines read and ingest; set FACTOID_API_TOKEN "
+                                   "first, or serve on 127.0.0.1")
+    app = _app_for(data_dir)
+    server = make_server(app, host, port, token)
+    click.echo(f"serving on http://{host}:{server.server_port} (ctrl-c stops){'; token required' if token else ''}")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+        app.close()
+
+
 def _run_export(app: Any, exports: dict[str, Any], names: list[str] | None, full: bool) -> list[Any]:
     from .exports import export as run
 

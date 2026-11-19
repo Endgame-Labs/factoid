@@ -54,6 +54,8 @@ To try a change end to end, make a project in a scratch folder with `uv run --pr
 - `store.py`: SQLite system of record
 - `search.py`: `LocalIndex` and `Turbopuffer`
 - `exports.py`: `Parquet` and `Turbopuffer` exports, and `export`, which sends each export what changed since its cursor
+- `api.py`: reads and ingest as JSON-ready dicts, shared by `serve` and `mcp`
+- `serve.py`: `factoid serve`, the HTTP API (standard library only)
 - `evals.py`: `Suite`, `--vary`, and scorecards
 - `cli.py`: the `factoid` command
 - `scaffold.py`: what `factoid init` writes

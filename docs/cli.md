@@ -86,6 +86,17 @@ factoid export [NAME...] [--full]  # send each export in settings.py what change
 - With `export_after_ingest = True` in `settings.py`, `factoid ingest` runs every export at the end, and a failed export
   only warns.
 
+## Serve
+
+```sh
+factoid serve [--host 127.0.0.1] [--port 8765] [--data-dir DIR]  # the project's facts as JSON over HTTP
+```
+
+- Routes: `GET /search`, `/facts`, `/facts/<id>`, `/entities`, `/entities/<name or id>`, `/stats`, and `/health`, and
+  `POST /ingest`. The README's "HTTP API" section lists their parameters.
+- With `FACTOID_API_TOKEN` set, every request needs `Authorization: Bearer <token>`. A host other than 127.0.0.1
+  needs the token.
+
 ## Inspect
 
 ```sh
@@ -105,5 +116,4 @@ factoid struct try FILE [--rows 20] [--as CLASS]             # dry-run a parser 
 
 ## Planned
 
-Planned and not built: `setup` (a guided terminal UI), `serve` (HTTP API and daemon), `mcp`, `rebuild`, and
-`contradictions`.
+Planned and not built: `setup` (a guided terminal UI), `mcp`, `rebuild`, and `contradictions`.
