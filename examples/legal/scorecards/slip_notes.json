@@ -5,43 +5,39 @@
     "fact_evals": "default"
   },
   "documents": 5,
-  "facts": 10,
-  "rejected": 0,
-  "rejected_by_reason": {},
+  "facts": 7,
+  "rejected": 3,
+  "rejected_by_reason": {
+    "decision_floors.grounded": 3
+  },
   "metrics": {
-    "slip_kept": "5/5",
+    "slip_kept": "2/5",
     "padded_kept": 0,
     "details": [
       {
         "document": "slip_0",
         "slip_kept": true,
         "facts": [
-          "Grace Liu raised that the second clinic's network upgrade slips to January, which moves its go-live."
+          "Grace Liu raised that the second clinic's network upgrade slips to January, which moves the second clinic's go-live."
         ],
         "padded": []
       },
       {
         "document": "slip_1",
-        "slip_kept": true,
-        "facts": [
-          "Omar Haddad raised that the Reno warehouse's scanner rollout slips to March, which moves its cutover."
-        ],
+        "slip_kept": false,
+        "facts": [],
         "padded": []
       },
       {
         "document": "slip_2",
-        "slip_kept": true,
-        "facts": [
-          "Priya Nair raised that the Austin office's badge readers slip to February, which moves the Austin office's move-in."
-        ],
+        "slip_kept": false,
+        "facts": [],
         "padded": []
       },
       {
         "document": "slip_3",
-        "slip_kept": true,
-        "facts": [
-          "Dana Ruiz raised that the second store's terminal install slips to April, which moves its opening."
-        ],
+        "slip_kept": false,
+        "facts": [],
         "padded": []
       },
       {
@@ -55,18 +51,18 @@
     ]
   },
   "latency": {
-    "p50_doc_s": 9.26,
-    "p95_doc_s": 10.72
+    "p50_doc_s": 14.05,
+    "p95_doc_s": 16.86
   },
   "usage": {
     "by_workload": {
       "embed": {
-        "calls": 10,
-        "cache_hits": 0,
-        "older_hits": 0,
-        "input_tokens": 381,
+        "calls": 11,
+        "cache_hits": 7,
+        "older_hits": 7,
+        "input_tokens": 179,
         "output_tokens": 0,
-        "seconds": 2.37983015505597,
+        "seconds": 1.0457111417781562,
         "cost": 0.0,
         "priced": 0
       },
@@ -74,102 +70,102 @@
         "calls": 5,
         "cache_hits": 0,
         "older_hits": 0,
-        "input_tokens": 3406,
-        "output_tokens": 920,
-        "seconds": 26.806785627966747,
+        "input_tokens": 3501,
+        "output_tokens": 958,
+        "seconds": 56.062554366653785,
         "cost": 0.0,
         "priced": 0
       },
       "choose": {
-        "calls": 57,
-        "cache_hits": 2,
-        "older_hits": 0,
-        "input_tokens": 47817,
-        "output_tokens": 10846,
-        "seconds": 6.537388851866126,
+        "calls": 46,
+        "cache_hits": 12,
+        "older_hits": 10,
+        "input_tokens": 35974,
+        "output_tokens": 7987,
+        "seconds": 2.8013791816774756,
         "cost": 0.0,
         "priced": 0
       },
       "repair": {
-        "calls": 3,
-        "cache_hits": 0,
-        "older_hits": 0,
-        "input_tokens": 1015,
-        "output_tokens": 267,
-        "seconds": 9.450115799205378,
+        "calls": 2,
+        "cache_hits": 2,
+        "older_hits": 2,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
         "cost": 0.0,
-        "priced": 0
+        "priced": 1
       }
     },
     "by_step": {
       "ingest": {
-        "calls": 10,
-        "cache_hits": 0,
-        "input_tokens": 381,
+        "calls": 11,
+        "cache_hits": 7,
+        "input_tokens": 179,
         "output_tokens": 0
       },
       "extract": {
         "calls": 5,
         "cache_hits": 0,
-        "input_tokens": 3406,
-        "output_tokens": 920
+        "input_tokens": 3501,
+        "output_tokens": 958
       },
       "fact_class": {
         "calls": 10,
         "cache_hits": 0,
-        "input_tokens": 4265,
+        "input_tokens": 4563,
         "output_tokens": 530
       },
       "evaluate": {
-        "calls": 14,
+        "calls": 13,
         "cache_hits": 2,
-        "input_tokens": 13399,
-        "output_tokens": 2220
+        "input_tokens": 13580,
+        "output_tokens": 2035
       },
       "repair": {
-        "calls": 3,
-        "cache_hits": 0,
-        "input_tokens": 1015,
-        "output_tokens": 267
+        "calls": 2,
+        "cache_hits": 2,
+        "input_tokens": 0,
+        "output_tokens": 0
       },
       "assess": {
-        "calls": 10,
+        "calls": 8,
         "cache_hits": 0,
-        "input_tokens": 18495,
-        "output_tokens": 6324
+        "input_tokens": 15001,
+        "output_tokens": 5057
       },
       "link": {
-        "calls": 16,
-        "cache_hits": 0,
-        "input_tokens": 8039,
-        "output_tokens": 1305
+        "calls": 12,
+        "cache_hits": 10,
+        "input_tokens": 913,
+        "output_tokens": 127
       },
       "resolve": {
-        "calls": 5,
+        "calls": 3,
         "cache_hits": 0,
-        "input_tokens": 2931,
-        "output_tokens": 400
-      },
-      "claim": {
-        "calls": 2,
-        "cache_hits": 0,
-        "input_tokens": 688,
-        "output_tokens": 67
+        "input_tokens": 1917,
+        "output_tokens": 238
       }
     },
     "total": {
-      "calls": 75,
-      "cache_hits": 2,
-      "older_hits": 0,
-      "input_tokens": 52619,
-      "output_tokens": 12033,
-      "seconds": 45.17412043409422,
+      "calls": 64,
+      "cache_hits": 21,
+      "older_hits": 19,
+      "input_tokens": 39654,
+      "output_tokens": 8945,
+      "seconds": 59.90964469010942,
       "cost": 0.0
     },
-    "wall_seconds": 10.74
+    "wall_seconds": 16.9
   },
-  "rejected_samples": {},
+  "rejected_samples": {
+    "decision_floors.grounded": [
+      "Omar Haddad raised that the Reno warehouse's scanner rollout slips to March 2027, which moves its cutover.",
+      "Priya Nair raised that the Austin office's badge readers slip to February 2027, which moves the Austin office's move-in.",
+      "Dana Ruiz raised that the second store's terminal install slips to April 2027, which moves the second store's opening."
+    ]
+  },
   "skipped_fact_evals": {
-    "nli: no nli model is set; skipped": 10
+    "nli: no nli model is set; skipped": 7
   }
 }

@@ -152,7 +152,8 @@ class SlipNotes(Suite):
     def documents(self, limit: int | None = None):
         for i, (text, _) in enumerate(SLIPS[:limit]):
             # The base class, not a subclass: a subclass here would join the app's document classes in every suite.
-            yield ProseDocument(text, id=f"slip_{i}", uri=f"slip_{i}.txt", title="Call note")
+            yield ProseDocument(text, id=f"slip_{i}", uri=f"slip_{i}.txt", title="Call note",
+                                metadata={"source_datetime": "2026-11-04T17:00:00Z"})  # a date invites a year
 
     def score(self, app: Any, results: list[Any]) -> dict[str, Any]:
         rows = []
