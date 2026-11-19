@@ -20,6 +20,7 @@ from __future__ import annotations
 import hmac
 import json
 import threading
+from contextlib import nullcontext
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.parse import parse_qs, unquote, urlsplit
@@ -62,7 +63,8 @@ def make_server(app: Any, host: str = "127.0.0.1", port: int = 8765, token: str 
                 url = urlsplit(self.path)
                 query = {k: v[-1] for k, v in parse_qs(url.query).items()}
                 parts = [unquote(p) for p in url.path.strip("/").split("/") if p]
-                with lock:
+                # Writes take turns; reads do not wait for them. The store and index lock each query on their own.
+                with lock if method == "POST" else nullcontext(), app.active():
                     body = self._route(method, parts, query)
                 self._send(200, body)
             except _Error as err:

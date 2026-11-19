@@ -12,6 +12,7 @@ import json
 from collections import Counter
 from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import AbstractContextManager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -24,7 +25,8 @@ from .fact import Fact, Mention, Quote
 from .fact_evals import EvalResult
 from .judge import Noul
 from .models import CallLog, Meter, ModelClient
-from .runtime import use
+from .runtime import activates, use
+from .runtime import active as _active
 from .search import Index, LocalIndex
 from .settings import Settings
 from .steps import SKIPPED, run_step
@@ -133,11 +135,21 @@ class Factoid:
             return name
         return f"{self.project_id}-{name}"
 
+    def active(self) -> AbstractContextManager[Factoid]:
+        """Make this app the active one inside a `with` block, in this thread. Needed only with several apps in one
+        process, around calls such as `Fact.get` or `Entity.find` that are not app methods."""
+        return _active(self)
+
     def map(self, fn: Callable[[T], R], items: Iterable[T]) -> list[R]:
         items = list(items)
+
+        def run(item: T) -> R:  # pool threads do not inherit the caller's active app
+            with _active(self):
+                return fn(item)
+
         if len(items) <= 1:
-            return [fn(item) for item in items]
-        return list(self._pool.map(fn, items))
+            return [run(item) for item in items]
+        return list(self._pool.map(run, items))
 
     def entity_class(self, name: str) -> type[Entity]:
         for klass in self.entity_classes:
@@ -162,6 +174,7 @@ class Factoid:
 
     # -- ingest ---------------------------------------------------------------------------------------------
 
+    @activates
     def classify(self, raw: Raw) -> tuple[type[Document] | None, dict[str, Any]]:
         """A tabular file goes to the structured class whose columns its header has, with no model call. Otherwise,
         or when several classes match equally, the decision model picks."""
@@ -177,6 +190,7 @@ class Factoid:
                     return best[0], {"header": best[0].__name__}
         return classify_raw(raw, classes, self.client.ask)
 
+    @activates
     def ingest(self, item: Document | Raw | str | Path, *, document_type: type[Document] | None = None,
                metadata: dict[str, Any] | None = None, again: bool = False) -> IngestResult:
         """Ingest a document instance, a raw document, or a file path.
@@ -216,6 +230,7 @@ class Factoid:
         rejected = [r for r in self.rejected[before:] if r.document_id == item.id]
         return IngestResult(item, facts, rejected, self._duplicates.pop(item.id, 0))
 
+    @activates
     def ingest_text(self, text: str, *, document_type: type[Document] | None = None,
                     metadata: dict[str, Any] | None = None, uri: str | None = None,
                     title: str | None = None) -> IngestResult:
@@ -569,6 +584,7 @@ class Factoid:
             "traits": fact.trait_names or ["-"], "document_id": fact.document_id,
         }])
 
+    @activates
     def load_fact(self, fact_id: str) -> Fact | None:
         row = self.store.fact_row(fact_id)
         if row is None:
@@ -617,6 +633,7 @@ class Factoid:
             self._name_checks[key] = answer >= self.placeholder_floor
         return self._name_checks[key]
 
+    @activates
     def load_entity(self, entity_id: str) -> Entity | None:
         row = self.store.entity_row(entity_id)
         if row is None:
@@ -634,6 +651,7 @@ class Factoid:
         row = self.store.one("select title, uri from documents where id = ?", (document_id,))
         return (row["title"] or row["uri"]) if row else None
 
+    @activates
     def similar_entities(self, text: str, limit: int = 5) -> list[Any]:
         ids = self.index.bm25(self.ns("entities"), text, limit)
         rows = [self.store.entity_row(i) for i in ids]
@@ -644,6 +662,7 @@ class Factoid:
                 out.append(row)
         return out
 
+    @activates
     def claim(self, entity: Entity, limit: int = 8) -> int:
         """Search stored facts for a new entity's names, and confirm each hit with the decision model."""
         ids = self.index.bm25(self.ns("facts"), entity.name, limit)
@@ -686,6 +705,7 @@ class Factoid:
                 out.append(other)
         return out
 
+    @activates
     def related_facts(self, fact: Fact, limit: int = 5) -> list[Fact]:
         """Stored current facts that share an entity with `fact`, most similar first."""
         entity_ids = sorted({m.entity_id for m in fact.mentions if m.entity_id})
@@ -711,6 +731,7 @@ class Factoid:
                 break
         return out
 
+    @activates
     def search_facts(self, query: str, *, about: Entity | list[Entity] | None = None,
                      traits: list[Any] | None = None, as_of: str | datetime | None = None,
                      valid_at: str | datetime | None = None, freshness: bool | str = True,
@@ -762,6 +783,7 @@ class Factoid:
                 hit.contradictions = [f for f in (self.load_fact(i) for i in others[:limit]) if f is not None]
         return hits
 
+    @activates
     def search_chunks(self, query: str, *, about: Entity | None = None, top_k: int = 10) -> list[dict[str, Any]]:
         filters = None
         if about is not None:
@@ -780,6 +802,7 @@ class Factoid:
                             "situation": row["situation"], "score": score})
         return out
 
+    @activates
     def entity_facts(self, entity: Entity, *, traits: list[Any] | None = None, since: str | None = None,
                      role: str | None = None, include_retired: bool = False) -> list[Fact]:
         sql = ("select distinct f.id from facts f join mentions m on m.fact_id = f.id where m.entity_id = ?")
@@ -799,6 +822,7 @@ class Factoid:
             facts = [f for f in facts if keys & set(f.trait_names)]
         return facts
 
+    @activates
     def related_entities(self, entity: Entity) -> list[dict[str, Any]]:
         rows = self.store.query(
             "select m2.entity_id as other, f.id as fact_id from mentions m1 join mentions m2 "
@@ -821,6 +845,7 @@ class Factoid:
         out.sort(key=lambda r: -r["weight"])
         return out
 
+    @activates
     def unlinked_facts(self, since: str | None = None) -> list[Fact]:
         sql = ("select distinct f.id from facts f join mentions m on m.fact_id = f.id "
                "where m.entity_id is null and f.status in ('current', 'contradicted')")
@@ -830,6 +855,7 @@ class Factoid:
             params.append(_since(since))
         return [f for f in (self.load_fact(r["id"]) for r in self.store.query(sql, params)) if f is not None]
 
+    @activates
     def list_facts(self, *, fact_class: type[Fact] | None = None, document_id: str | None = None,
                    status: str | None = None) -> list[Fact]:
         sql, params = "select id from facts where 1=1", []
@@ -848,6 +874,7 @@ class Factoid:
 
     # -- contradictions -------------------------------------------------------------------------------------
 
+    @activates
     def contradictions(self, *, include_stale: bool = True, limit: int = 0) -> list[Contradiction]:
         """Open contradictions, newest first: pairs related by `contradicts` whose facts are both still current or
         contradicted."""
@@ -866,6 +893,7 @@ class Factoid:
                 break
         return out
 
+    @activates
     def settle_contradiction(self, fact_id: str, other_id: str, *, keep: str, reason: str = "",
                              by: str | None = None) -> None:
         """Settle the open contradiction between two facts by picking a side. `keep` is one of the two ids, which
@@ -878,6 +906,7 @@ class Factoid:
         if not self.store.settle(fact_id, other_id, dropped=dropped, **data):
             raise LookupError(f"no open contradiction between {fact_id} and {other_id}")
 
+    @activates
     def stats(self, examples: int = 0) -> dict[str, Any]:
         """Counts for the store. With `examples`, also that many sample facts per fact class and the most connected
         entities per entity class."""

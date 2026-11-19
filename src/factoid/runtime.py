@@ -7,6 +7,9 @@ Classes defined inside the `factoid` package itself (such as `ProseDocument`) ar
 from __future__ import annotations
 
 import contextvars
+import functools
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any
 
 from .judge import Choice, Judgments, Noul, Question, Score
@@ -14,7 +17,7 @@ from .judge import Choice, Judgments, Noul, Question, Score
 if TYPE_CHECKING:
     from .app import Factoid
 
-__all__ = ["ModelCalls", "NoApp", "Registered", "current", "use"]
+__all__ = ["ModelCalls", "NoApp", "Registered", "active", "current", "use"]
 
 _current: contextvars.ContextVar[Factoid | None] = contextvars.ContextVar("factoid_app", default=None)
 _global: list[Factoid] = []
@@ -32,9 +35,30 @@ def current() -> Factoid:
 
 
 def use(app: Factoid) -> None:
-    """Make `app` the active app for this process (the last one created wins)."""
+    """Make `app` the active app here, and the fallback for threads that have none (the last one created wins)."""
     _global.append(app)
     _current.set(app)
+
+
+@contextmanager
+def active(app: Factoid) -> Iterator[Factoid]:
+    """Make `app` the active app inside the block, in this thread only."""
+    token = _current.set(app)
+    try:
+        yield app
+    finally:
+        _current.reset(token)
+
+
+def activates(method: Callable[..., Any]) -> Callable[..., Any]:
+    """Run an app method with its app active, so classes it calls read the right store and models."""
+    @functools.wraps(method)
+    def wrapper(self: Factoid, *args: Any, **kwargs: Any) -> Any:
+        if _current.get() is self:
+            return method(self, *args, **kwargs)
+        with active(self):
+            return method(self, *args, **kwargs)
+    return wrapper
 
 
 class Registered:

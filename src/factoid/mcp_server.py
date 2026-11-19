@@ -179,7 +179,8 @@ class Server:
             raise _RpcError(-32602, f"unknown tool: {name}")
         stdout, sys.stdout = sys.stdout, sys.stderr  # anything printed while working must not reach the protocol
         try:
-            data = self._run_tool(name, args)
+            with self.app.active():
+                data = self._run_tool(name, args)
         except KeyError as err:
             return _text(f"error: missing argument {err}", error=True)
         except (api.NotFound, ValueError, TypeError) as err:

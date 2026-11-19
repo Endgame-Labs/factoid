@@ -2,6 +2,12 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.7 (2026-11-19)
+
+- **Many apps in one process.** Worker threads now use the app that started the work, not the last one made, so two
+  apps in one process no longer write into each other's stores (issue #2). `app.active()` makes an app active for class
+  reads such as `Fact.get` in a block. `factoid serve` no longer makes reads wait for an ingest.
+
 ## 0.1.6 (2026-11-19)
 
 - **Resolve fix.** A later restatement of a fact no longer supersedes it when the decision model gives a change no

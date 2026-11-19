@@ -7,7 +7,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
 
-> **Status: Version 0.1.6.** Factoid runs end to end, and three example apps publish their eval results. It covers
+> **Status: Version 0.1.7.** Factoid runs end to end, and three example apps publish their eval results. It covers
 > ingest, fact extraction with evals, entities, supersession and as-of search, settling contradictions, eval suites,
 > exports, an HTTP API, and an MCP server. [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) section 17 lists what is built.
 > [CHANGELOG.md](https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md) lists what changed in each version.
@@ -773,6 +773,10 @@ no trait, unlinked mentions, single-fact entities, facts past their expected val
 `--examples 3` to add up to three sample facts per fact class, from different documents where it can, and the three
 entities with the most facts per entity class.
 Use `--data-dir` to point `factoid stats` at another store, such as an eval run's folder.
+
+Class reads such as `Fact.search` and `Company.find` use the active app: the last `Factoid` made, unless a block says
+otherwise. With several apps in one process, wrap class reads in `with app.active():`. App methods (`app.ingest`,
+`app.search_facts`, and the rest) always use their own app, in every worker thread.
 
 ## Exports
 

@@ -1648,3 +1648,7 @@ All dates are 2026-11-13 unless noted.
      - Many apps in one process are supported, with lookups scoped to each app (issue #2). The call log gets a setting
        to keep no bodies now; a mode with no stored document text comes later (issue #10). Passages and quotes get a
        general `attrs` dict, and decision 36 (no sides in v1) stands (issue #18).
+111. 0.1.7 fixes issue #2: `Factoid.map` runs each pool task with its app active, public app methods activate their
+     app, and `app.active()` scopes class reads. Before, pool threads fell back to the last app made, so a second app in
+     the process got the first one's facts. `factoid serve` serializes writes only, so reads no longer wait for ingest.
+     Duplicate class names are issue #13. (2026-11-19)
