@@ -26,7 +26,7 @@ from .fact import Fact, Mention, Quote
 from .fact_evals import EvalResult
 from .judge import Noul
 from .models import CallLog, Meter, ModelClient
-from .runtime import activates, use
+from .runtime import activates, stored_name, use
 from .runtime import active as _active
 from .search import Index, LocalIndex
 from .settings import Settings
@@ -121,6 +121,16 @@ class Factoid:
         self.entity_classes = list(entities) if entities is not None else list(Entity.registered())
         fact_classes = list(facts) if facts is not None else list(Fact.registered())
         self.fact_classes: list[type[Fact]] = fact_classes or [Fact]
+        for kind, classes in (("document", self.document_classes), ("entity", self.entity_classes),
+                              ("fact", self.fact_classes)):
+            named: dict[str, type] = {}
+            for klass in classes:
+                other = named.setdefault(stored_name(klass), klass)
+                if other is not klass:
+                    raise ValueError(
+                        f"two {kind} classes are named {stored_name(klass)!r}: {other.__module__}.{other.__qualname__} "
+                        f"and {klass.__module__}.{klass.__qualname__}. Pass this app its own list of classes, or set "
+                        f"class_name on one of them.")
         self.document_entities: dict[str, dict[str, str]] = {}
         self.placeholders: set[str] = set()
         self._name_checks: dict[str, bool] = {}
@@ -158,19 +168,19 @@ class Factoid:
 
     def entity_class(self, name: str) -> type[Entity]:
         for klass in self.entity_classes:
-            if klass.__qualname__ == name:
+            if stored_name(klass) == name:
                 return klass
-        return Entity._registry.get(name, Entity)  # type: ignore[return-value]
+        return Entity  # a class this app does not list: never another project's class of the same name
 
     def fact_class(self, name: str) -> type[Fact]:
         for klass in self.fact_classes:
-            if klass.__qualname__ == name:
+            if stored_name(klass) == name:
                 return klass
-        return Fact._registry.get(name, Fact)  # type: ignore[return-value]
+        return Fact
 
     def document_class(self, name: str) -> type[Document]:
         for klass in self.document_classes:
-            if klass.__qualname__ == name or klass.__name__ == name:
+            if stored_name(klass) == name or klass.__name__ == name:
                 return klass
         raise KeyError(f"no document class named {name!r}")
 
@@ -220,7 +230,7 @@ class Factoid:
             item = klass(item.text, metadata=item.metadata, uri=item.uri, title=item.title)
         if not isinstance(item, Document):
             raise TypeError(f"cannot ingest {item!r}")
-        if not again and self.store.has_document(item.id, item.content_hash, type(item).__qualname__,
+        if not again and self.store.has_document(item.id, item.content_hash, stored_name(type(item)),
                                                  item.metadata):
             current = self.store.query("select id from facts where document_id = ? and status = 'current'",
                                        (item.id,))
@@ -542,7 +552,7 @@ class Factoid:
         self.skipped_evals.update(getattr(fact, "skipped_evals", []))
         fact.skipped_evals = []
         row = {
-            "id": fact.id, "class": type(fact).__qualname__, "text": fact.text, "document_id": fact.document_id,
+            "id": fact.id, "class": stored_name(type(fact)), "text": fact.text, "document_id": fact.document_id,
             "chunk_id": fact.chunk_id, "status": fact.status, "traits": fact.trait_names,
             "trait_scores": fact.trait_scores, "valid_from": _fmt(fact.valid_from), "expires": fact.expires,
             "valid_until": _fmt(fact.valid_until), "lifetime": fact.lifetime,
@@ -634,7 +644,7 @@ class Factoid:
     def _index_fact(self, fact: Fact) -> None:
         vector = getattr(fact, "vector", None) or self.client.embed([fact.text])[0]
         self.index.upsert(self.ns("facts"), [{
-            "id": fact.id, "text": fact.text, "vector": vector, "class": type(fact).__qualname__,
+            "id": fact.id, "text": fact.text, "vector": vector, "class": stored_name(type(fact)),
             "entity_ids": sorted({m.entity_id for m in fact.mentions if m.entity_id}) or ["-"],
             "traits": fact.trait_names or ["-"], "document_id": fact.document_id,
         }])
@@ -661,10 +671,10 @@ class Factoid:
         return fact
 
     def save_entity(self, entity: Entity, keys: dict[str, str]) -> None:
-        self.store.save_entity({"id": entity.id, "class": type(entity).__qualname__, "kind": entity.kind,
+        self.store.save_entity({"id": entity.id, "class": stored_name(type(entity)), "kind": entity.kind,
                                 "name": entity.name, "aliases": entity.aliases, "props": entity.props}, keys)
         self.index.upsert(self.ns("entities"), [{"id": entity.id, "text": " ".join([entity.name, *entity.aliases]),
-                                                 "class": type(entity).__qualname__}])
+                                                 "class": stored_name(type(entity))}])
 
     def add_alias(self, entity_id: str, alias: str) -> None:
         """Record another name for an entity, and make it findable by that name.
@@ -802,8 +812,8 @@ class Factoid:
         if traits:
             filters["traits"] = [t if isinstance(t, str) else t.key() for t in traits]
         if fact_class is not None:
-            filters["class"] = [k.__qualname__ for k in self.fact_classes if issubclass(k, fact_class)] or \
-                [fact_class.__qualname__]
+            filters["class"] = [stored_name(k) for k in self.fact_classes if issubclass(k, fact_class)] or \
+                [stored_name(fact_class)]
         vector = self.client.embed([query])[0]
         pool = max(self.settings.search_candidates, top_k)
         fused = self.index.hybrid(self.ns("facts"), query, vector, pool, filters or None)
@@ -918,8 +928,8 @@ class Factoid:
                    status: str | None = None) -> list[Fact]:
         sql, params = "select id from facts where 1=1", []
         if fact_class is not None:
-            names = [k.__qualname__ for k in self.fact_classes if issubclass(k, fact_class)] or \
-                [fact_class.__qualname__]
+            names = [stored_name(k) for k in self.fact_classes if issubclass(k, fact_class)] or \
+                [stored_name(fact_class)]
             sql += f" and class in ({','.join('?' * len(names))})"
             params += names
         if document_id:

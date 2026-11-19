@@ -10,6 +10,8 @@ import json
 from datetime import date, datetime
 from typing import Any
 
+from .runtime import stored_name
+
 __all__ = ["NotFound", "contradictions", "entities", "entity", "fact", "facts", "ingest", "search", "settle", "stats"]
 
 
@@ -94,7 +96,7 @@ def entity(app: Any, name_or_id: str, *, limit: int = 50) -> dict[str, Any]:
     """One entity (by id, key, name, or other name), its current facts, newest first, and the entities it appears
     with most."""
     found = _entity(app, name_or_id)
-    out: dict[str, Any] = {"id": found.id, "class": type(found).__qualname__, "kind": found.kind,
+    out: dict[str, Any] = {"id": found.id, "class": stored_name(type(found)), "kind": found.kind,
                            "name": found.name, "aliases": list(found.aliases)}
     out["facts"] = [_fact(app, f) for f in app.entity_facts(found)[:limit]]
     out["related"] = [{"id": r["entity"].id, "name": r["entity"].name, "co_mentions": r["co_mentions"],
@@ -131,12 +133,12 @@ def ingest(app: Any, text: str, *, document_type: str | None = None, uri: str | 
     the project; without it, the project's classifiers pick one."""
     klass = None
     if document_type:
-        klass = next((k for k in app.document_classes if k.__qualname__ == document_type), None)
+        klass = next((k for k in app.document_classes if stored_name(k) == document_type), None)
         if klass is None:
-            names = ", ".join(k.__qualname__ for k in app.document_classes) or "none"
+            names = ", ".join(stored_name(k) for k in app.document_classes) or "none"
             raise NotFound(f"no document class {document_type}; the project has: {names}")
     result = app.ingest_text(text, document_type=klass, metadata=metadata, uri=uri, title=title)
-    return {"document": {"id": result.document.id, "class": type(result.document).__qualname__,
+    return {"document": {"id": result.document.id, "class": stored_name(type(result.document)),
                          "uri": result.document.uri, "title": result.document.title},
             "unchanged": result.unchanged, "facts": [_fact(app, f) for f in result.facts],
             "rejected": [{"text": r.text, "reasons": list(r.reasons)} for r in result.rejected],
@@ -157,7 +159,7 @@ def _entity(app: Any, name_or_id: str) -> Any:
 
 def _fact(app: Any, f: Any) -> dict[str, Any]:
     return {
-        "id": f.id, "class": type(f).__qualname__, "text": f.text, "status": f.status, "traits": f.trait_names,
+        "id": f.id, "class": stored_name(type(f)), "text": f.text, "status": f.status, "traits": f.trait_names,
         "valid_from": _iso(f.valid_from), "valid_until": _iso(f.valid_until), "expires": f.expires,
         "still_valid": round(f.valid_at(), 4),
         "document": {"id": f.document_id, "title": app.document_title(f.document_id)},

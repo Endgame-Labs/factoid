@@ -2,6 +2,12 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.11 (2026-11-19)
+
+- **Class names.** An app refuses two document, entity, or fact classes with the same name, where one used to replace
+  the other without a word. `class_name = "..."` stores a class under another name, and a stored class an app does not
+  list loads as the base class, never as another project's class of the same name (issue #13).
+
 ## 0.1.10 (2026-11-19)
 
 - **Model calls by step.** Each model call is labelled with the step that made it (`evaluate`, `assess`, `link`,

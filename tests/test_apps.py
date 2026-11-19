@@ -51,3 +51,19 @@ def test_the_step_label_reaches_worker_threads(make_app, fake):
     with labelled("resolve"):
         seen = app.map(lambda _: current_step(), range(6))
     assert seen == ["resolve"] * 6
+
+
+def test_two_classes_with_one_name_are_refused_in_one_app(make_app):
+    import pytest
+
+    def risk(module, **attrs):
+        return type("Risk", (Fact,), {"__module__": module, "__doc__": "A risk.", **attrs})
+
+    first, second = risk("project_a.facts"), risk("project_b.facts")
+    with pytest.raises(ValueError, match="two fact classes are named 'Risk'"):
+        make_app(facts=[first, second])
+    renamed = risk("project_b.facts", class_name="DealRisk")
+    app = make_app(facts=[first, renamed])
+    assert app.fact_class("DealRisk") is renamed and app.fact_class("Risk") is first
+    other = make_app(facts=[second])  # another app in the process keeps its own Risk
+    assert other.fact_class("Risk") is second and other.fact_class("DealRisk") is Fact

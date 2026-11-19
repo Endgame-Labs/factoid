@@ -30,7 +30,7 @@ def snake(name: str) -> str:
 class FactTrait(Registered):
     """Base class for traits. Subclass it and write a docstring."""
 
-    _registry: ClassVar[dict[str, type]] = {}
+    _registry: ClassVar[list[type]] = []
 
     #: The probability the yes-or-no answer must reach.
     threshold: ClassVar[float] = 0.5

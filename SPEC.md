@@ -1667,3 +1667,7 @@ All dates are 2026-11-13 unless noted.
      copies into worker threads; work that is not a step (choosing a fact class, the specific-name check, claims, and
      replaced sections) is labelled by name. The call log stores the step, `factoid calls` reads it, and scorecards
      count by step. Cutting decision calls per document (issue #7) is next, and evals decide it. (2026-11-19)
+115. 0.1.11 (issue #13): the class registries are lists, so same-named classes from two projects both stay
+     registered; an app refuses two of its own classes with one stored name; `class_name` sets the stored name (not
+     `name`, which entities use for their own name); and fact and entity lookups no longer fall back to the process
+     registry. (2026-11-19)

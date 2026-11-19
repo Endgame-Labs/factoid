@@ -18,7 +18,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from .fact import Mention, new_id
 from .judge import Choice, Noul
-from .runtime import ModelCalls, Registered, current
+from .runtime import ModelCalls, Registered, current, stored_name
 from .templates import render
 
 if TYPE_CHECKING:
@@ -42,7 +42,7 @@ PLACEHOLDER_QUESTION = Noul(
 class Entity(Registered, ModelCalls):
     """A thing facts are about. Subclass it and write a docstring."""
 
-    _registry: ClassVar[dict[str, type]] = {}
+    _registry: ClassVar[list[type]] = []
 
     STEPS: ClassVar[tuple[str, ...]] = (
         "identify", "create", "find", "where", "claim", "merge", "split", "retype", "related", "facts",
@@ -172,8 +172,8 @@ class Entity(Registered, ModelCalls):
 
 def _class_names(cls: type[Entity]) -> list[str]:
     if cls is Entity:
-        return [k.__qualname__ for k in Entity.registered()] + ["Entity"]
-    return [k.__qualname__ for k in Entity.registered() if issubclass(k, cls)]
+        return [stored_name(k) for k in Entity.registered()] + ["Entity"]
+    return [stored_name(k) for k in Entity.registered() if issubclass(k, cls)]
 
 
 def _kind_of(cls: type[Entity]) -> str | None:
@@ -282,7 +282,7 @@ def discover_entity(mention: Mention, fact: Fact) -> Entity | None:
     classes = [k for k in app.entity_classes if k is not Entity]
     questions: dict[str, Any] = {"named": PLACEHOLDER_QUESTION}
     if classes:
-        options = {k.__qualname__: k.description() + (f" {k.discovery_guidance}" if k.discovery_guidance else "")
+        options = {stored_name(k): k.description() + (f" {k.discovery_guidance}" if k.discovery_guidance else "")
                    for k in classes}
         options["_none"] = "None of these."
         questions["entity_class"] = Choice("Which kind of thing is the mention?", options)

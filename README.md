@@ -7,7 +7,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
 
-> **Status: Version 0.1.10.** Factoid runs end to end, and three example apps publish their eval results. It covers
+> **Status: Version 0.1.11.** Factoid runs end to end, and three example apps publish their eval results. It covers
 > ingest, fact extraction with evals, entities, supersession and as-of search, settling contradictions, eval suites,
 > exports, an HTTP API, and an MCP server. [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) section 17 lists what is built.
 > [CHANGELOG.md](https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md) lists what changed in each version.
@@ -210,6 +210,10 @@ Every step has `before_<step>` and `after_<step>` hooks, which do nothing by def
 `before_<step>` can raise `factoid.Skip` to skip the step for that item; `after_<step>` gets the result and can return
 a replacement, or `None` to keep it. Overriding an outcome such as `supersede`, or defining `after_supersede`, is how a
 project reacts to a change. `factoid steps show CounselEmail` lists the steps and where each is defined.
+
+A class is stored under its Python name. When two classes in one app share a name, the app refuses to start; set
+`class_name = "DealRisk"` on one of them to store it under another name. Two apps in one process can each have their
+own `Risk`: pass each app its own lists (`Factoid(facts=[...], entities=[...], documents=[...])`).
 
 Every class supports incremental levels of customization, and every level is optional:
 

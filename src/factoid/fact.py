@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from .dates import format_datetime, now, parse_datetime
 from .fact_evals import DecisionFloors, EvalResult, FactEval, Nli
 from .judge import Choice, Judgments, Noul, Question
-from .runtime import ModelCalls, Registered, current
+from .runtime import ModelCalls, Registered, current, stored_name
 from .steps import run_step
 from .templates import Template, builtin, render
 from .trait import FactTrait
@@ -91,7 +91,7 @@ MODEL_RESOLVE: dict[str, dict[str, Any]] = {
 class Fact(Registered, ModelCalls):
     """A self-contained fact."""
 
-    _registry: ClassVar[dict[str, type]] = {}
+    _registry: ClassVar[list[type]] = []
 
     STEPS: ClassVar[tuple[str, ...]] = (
         "classify", "validate", "evaluate", "repair", "assess", "expiration", "link", "resolve", "save",
@@ -272,11 +272,11 @@ class Fact(Registered, ModelCalls):
     @classmethod
     def classify(cls, fact: Fact, judgments: Judgments) -> bool | float | None:
         """How well `fact` fits this class. The default reads this class's share of one shared choice."""
-        return judgments["fact_class"].get(cls.__qualname__, 0.0)
+        return judgments["fact_class"].get(stored_name(cls), 0.0)
 
     @classmethod
     def class_question(cls, candidates: list[type[Fact]]) -> dict[str, Question]:
-        options = {klass.__qualname__: klass.description() for klass in candidates}
+        options = {stored_name(klass): klass.description() for klass in candidates}
         return {"fact_class": Choice("Which kind of evidence is this fact?", options)}
 
     # -- steps ----------------------------------------------------------------------------------------------

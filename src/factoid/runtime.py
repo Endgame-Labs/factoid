@@ -10,14 +10,14 @@ import contextvars
 import functools
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from .judge import Choice, Judgments, Noul, Question, Score
 
 if TYPE_CHECKING:
     from .app import Factoid
 
-__all__ = ["ModelCalls", "NoApp", "Registered", "active", "current", "use"]
+__all__ = ["ModelCalls", "NoApp", "Registered", "active", "current", "stored_name", "use"]
 
 _current: contextvars.ContextVar[Factoid | None] = contextvars.ContextVar("factoid_app", default=None)
 _global: list[Factoid] = []
@@ -61,10 +61,18 @@ def activates(method: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
-class Registered:
-    """Keeps a registry of subclasses defined outside the factoid package."""
+def stored_name(klass: type) -> str:
+    """The name a class is stored under: its own `class_name`, or its Python name."""
+    return klass.__dict__.get("class_name") or klass.__qualname__
 
-    _registry: dict[str, type]
+
+class Registered:
+    """Keeps a registry of subclasses defined outside the factoid package. Two classes may share a name in one
+    process (two projects can each define `Risk`); an app refuses two of the same name among its own classes."""
+
+    _registry: list[type]
+    #: The name this class is stored under, when its Python name will not do (two classes named alike in one app).
+    class_name: ClassVar[str | None] = None
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -72,11 +80,13 @@ class Registered:
             return
         if cls.__module__.split(".")[0] == "factoid":
             return
-        cls._registry[cls.__qualname__] = cls
+        same = (cls.__module__, cls.__qualname__)  # the same class defined again, as on a reload, replaces itself
+        cls._registry[:] = [k for k in cls._registry if (k.__module__, k.__qualname__) != same]
+        cls._registry.append(cls)
 
     @classmethod
     def registered(cls) -> list[type]:
-        return [klass for klass in cls._registry.values() if issubclass(klass, cls)]
+        return [klass for klass in cls._registry if issubclass(klass, cls)]
 
     @classmethod
     def description(cls) -> str:

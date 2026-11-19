@@ -19,7 +19,7 @@ from .dates import DateError, format_datetime, parse_datetime
 from .fact import Fact, Mention, Quote
 from .fact_evals import FactEval
 from .judge import Choice, Judgments, Noul, Question, questions_of
-from .runtime import ModelCalls, Registered, current
+from .runtime import ModelCalls, Registered, current, stored_name
 from .steps import SKIPPED, run_step
 from .templates import Template, builtin, render
 
@@ -106,7 +106,7 @@ class ExtractionError(ValueError):
 class Document(Registered, ModelCalls):
     """Base class for documents. Subclass `ProseDocument` or `StructuredDocument`."""
 
-    _registry: ClassVar[dict[str, type]] = {}
+    _registry: ClassVar[list[type]] = []
 
     STEPS: ClassVar[tuple[str, ...]] = ("classify", "discover", "context", "source_datetime", "ingest")
 
@@ -199,7 +199,7 @@ class Document(Registered, ModelCalls):
         """True, False, None (not sure), or a score. The default reads one shared choice."""
         if judgments["any_document_class"] < 0.3:
             return False
-        p = judgments["document_class"].get(cls.__qualname__, 0.0)
+        p = judgments["document_class"].get(stored_name(cls), 0.0)
         if p >= cls.classify_threshold:
             return True
         if p <= cls.reject_threshold:
@@ -218,7 +218,7 @@ class Document(Registered, ModelCalls):
     def record(self, passages: list[Passage], chunks: list[Chunk]) -> tuple[dict[str, Any], list[dict[str, Any]],
                                                                             list[dict[str, Any]]]:
         dated = self.dated()
-        doc = {"id": self.id, "class": type(self).__qualname__, "uri": self.uri, "title": self.title,
+        doc = {"id": self.id, "class": stored_name(type(self)), "uri": self.uri, "title": self.title,
                "source_datetime": format_datetime(dated) if dated else None, "metadata": self.metadata,
                "text": self.text, "content_hash": None}  # set when the ingest finishes (Store.finish_document)
         rows = [{"n": p.n, "start": p.start, "end": p.end, "speaker": p.speaker, "said_at": p.said_at}
@@ -531,14 +531,14 @@ def classify_raw(raw: Raw, classes: list[type[Document]], ask: Callable[[Any, di
     if not classes:
         return None, {}
     if len(classes) == 1:
-        options = {classes[0].__qualname__: classes[0].description(), "_other": "Something else."}
+        options = {stored_name(classes[0]): classes[0].description(), "_other": "Something else."}
     else:
         options = {}
         for klass in classes:
             label = klass.description()
             if klass.not_for:
                 label += f" Not: {klass.not_for}"
-            options[klass.__qualname__] = label
+            options[stored_name(klass)] = label
     questions: dict[str, Question] = {
         "document_class": Choice("Which kind of document is this?", options),
         "any_document_class": Noul("Is this document one of these kinds: "
