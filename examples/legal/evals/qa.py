@@ -8,6 +8,8 @@ reader, with the same prompt and the same source budget. Only the sources differ
   date, each shown with its source and signing date. This is the baseline: a common RAG setup with date metadata,
   and no facts, resolve, or supersession. It has its own windows, not Factoid's 6,000-character extraction chunks,
   which would leave room for one chunk at the small budget.
+- reranked: the same windows, with the best `POOL` hybrid matches reranked by the app's reranker before the top 40
+  are kept. Facts are reranked the same way, so this is the fair comparison; plain chunks show a common setup.
 
 Both arms are scored at two source budgets: about 2,000 and 8,000 tokens.
 
@@ -26,6 +28,7 @@ READER = Model("fireworks/glm-5p3-flash", reasoning_effort="low")  # the ISC-RAG
 JUDGE = Model("fireworks/kimi-k3p1-pro", reasoning_effort="none")
 BUDGETS = (8000, 32000)  # characters of sources per question, about 2,000 and 8,000 tokens, for both arms
 TOP_K = 40
+POOL = 150  # the hybrid matches the reranker sees, as for facts (`search_candidates`)
 WINDOW, STEP = 2000, 1800
 
 ANSWER_SYSTEM = (
@@ -96,14 +99,20 @@ def qa_scores(suite: Any, app: Any) -> dict[str, Any]:
     app.index.upsert(namespace, [{**w, "vector": v} for w, v in zip(windows, vectors)])
     by_id = {w["id"]: w for w in windows}
 
-    def chunks_for(q: dict[str, Any]) -> list[str]:
+    def chunks_for(q: dict[str, Any], rerank: bool = False) -> list[str]:
         if not q["documents"]:
             return []
         vector = app.client.embed([q["query"]])[0]
-        hits = app.index.hybrid(namespace, q["query"], vector, TOP_K, {"document_id": q["documents"]})
+        hits = [w for w, _ in app.index.hybrid(namespace, q["query"], vector, POOL if rerank else TOP_K,
+                                                {"document_id": q["documents"]}) if w in by_id]
+        if rerank and hits:
+            scores = app.client.rerank(q["query"], [by_id[w]["text"] for w in hits])
+            if scores is None:
+                raise RuntimeError("the reranked arm needs a rerank model")
+            hits = [w for _, w in sorted(zip(scores, hits), key=lambda pair: -pair[0])]
         return [f"[{i + 1}] {titles.get(by_id[w]['document_id'], '')}, signed "
                 f"{signed.get(by_id[w]['document_id'], '')[:10]}: {by_id[w]['text']}"
-                for i, (w, _) in enumerate(hits) if w in by_id]
+                for i, w in enumerate(hits[:TOP_K])]
 
     def answer(q: dict[str, Any], context: str) -> str:
         raw = reader.generate(f"Date: {q['as_of'][:10]}\nQuestion: {q['query']}\n\nSources:\n{context}",
@@ -125,7 +134,8 @@ def qa_scores(suite: Any, app: Any) -> dict[str, Any]:
 
     out: dict[str, Any] = {}
     rows = [{"as_of": q["as_of"][:10], "query": q["query"][:80]} for q in questions]
-    for arm, sources in (("facts", facts_for), ("chunks", chunks_for)):
+    arms = (("facts", facts_for), ("chunks", chunks_for), ("reranked", lambda q: chunks_for(q, rerank=True)))
+    for arm, sources in arms:
         retrieved = app.map(sources, questions)
         for budget in BUDGETS:
             cell = f"{arm}@{budget // 4}"

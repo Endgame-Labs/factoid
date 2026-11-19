@@ -1,0 +1,309 @@
+{
+  "suite": "cuad",
+  "variant": "default",
+  "overrides": {},
+  "documents": 20,
+  "facts": 4291,
+  "rejected": 157,
+  "rejected_by_reason": {
+    "decision_floors.grounded": 55,
+    "decision_floors.useful": 40,
+    "validate: cites no passage": 38,
+    "validate: too long for one fact": 24,
+    "decision_floors.attribution": 18,
+    "decision_floors.atomic": 5
+  },
+  "metrics": {
+    "overall": {
+      "precision": 0.6788,
+      "recall": 1.0,
+      "f1": 0.8087,
+      "tp": 112,
+      "fp": 53,
+      "fn": 0,
+      "mean_aupr": 0.9698,
+      "span_recall": 0.8423,
+      "span_jaccard_recall": 0.7814,
+      "span_precision": 0.2701,
+      "coverage": 0.9713
+    },
+    "time": {
+      "Agreement Date": {
+        "field": "valid_from",
+        "contracts": 18,
+        "captured": 0.889
+      },
+      "Effective Date": {
+        "field": "valid_from",
+        "contracts": 14,
+        "captured": 0.929
+      },
+      "Expiration Date": {
+        "field": "valid_until",
+        "contracts": 9,
+        "captured": 0.889
+      }
+    },
+    "traits": {
+      "change_of_control": {
+        "precision": 0.2308,
+        "recall": 1.0,
+        "f1": 0.375,
+        "aupr": 0.8095,
+        "p_at_r80": 0.4286,
+        "span_recall": 0.818,
+        "span_precision": 0.098,
+        "coverage": 0.818,
+        "positives": 3
+      },
+      "assignment_restriction": {
+        "precision": 0.8824,
+        "recall": 1.0,
+        "f1": 0.9375,
+        "aupr": 1.0,
+        "p_at_r80": 1.0,
+        "span_recall": 0.718,
+        "span_precision": 0.527,
+        "coverage": 0.923,
+        "positives": 15
+      },
+      "liability_cap": {
+        "precision": 0.4706,
+        "recall": 1.0,
+        "f1": 0.64,
+        "aupr": 0.9125,
+        "p_at_r80": 0.875,
+        "span_recall": 0.722,
+        "span_precision": 0.181,
+        "coverage": 1.0,
+        "positives": 8
+      },
+      "exclusivity": {
+        "precision": 0.875,
+        "recall": 1.0,
+        "f1": 0.9333,
+        "aupr": 1.0,
+        "p_at_r80": 1.0,
+        "span_recall": 1.0,
+        "span_precision": 0.15,
+        "coverage": 1.0,
+        "positives": 7
+      },
+      "non_compete": {
+        "precision": 0.25,
+        "recall": 1.0,
+        "f1": 0.4,
+        "aupr": 1.0,
+        "p_at_r80": 1.0,
+        "span_recall": 1.0,
+        "span_precision": 0.2,
+        "coverage": 1.0,
+        "positives": 2
+      },
+      "termination_for_convenience": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6667,
+        "aupr": 1.0,
+        "p_at_r80": 1.0,
+        "span_recall": 1.0,
+        "span_precision": 0.304,
+        "coverage": 1.0,
+        "positives": 6
+      },
+      "governing_law": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "aupr": 1.0,
+        "p_at_r80": 1.0,
+        "span_recall": 1.0,
+        "span_precision": 0.72,
+        "coverage": 1.0,
+        "positives": 18
+      },
+      "audit_rights": {
+        "precision": 0.7778,
+        "recall": 1.0,
+        "f1": 0.875,
+        "aupr": 0.9821,
+        "p_at_r80": 1.0,
+        "span_recall": 0.852,
+        "span_precision": 0.556,
+        "coverage": 1.0,
+        "positives": 7
+      },
+      "insurance": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "aupr": 1.0,
+        "p_at_r80": 1.0,
+        "span_recall": 0.974,
+        "span_precision": 0.342,
+        "coverage": 0.974,
+        "positives": 9
+      },
+      "minimum_commitment": {
+        "precision": 0.6429,
+        "recall": 1.0,
+        "f1": 0.7826,
+        "aupr": 0.9535,
+        "p_at_r80": 0.8889,
+        "span_recall": 0.6,
+        "span_precision": 0.307,
+        "coverage": 0.971,
+        "positives": 9
+      },
+      "license_grant": {
+        "precision": 0.8333,
+        "recall": 1.0,
+        "f1": 0.9091,
+        "aupr": 0.9909,
+        "p_at_r80": 1.0,
+        "span_recall": 1.0,
+        "span_precision": 0.216,
+        "coverage": 1.0,
+        "positives": 10
+      },
+      "ip_ownership_assignment": {
+        "precision": 0.6667,
+        "recall": 1.0,
+        "f1": 0.8,
+        "aupr": 0.9286,
+        "p_at_r80": 0.8571,
+        "span_recall": 0.722,
+        "span_precision": 0.264,
+        "coverage": 1.0,
+        "positives": 6
+      },
+      "renewal_term": {
+        "precision": 0.4444,
+        "recall": 1.0,
+        "f1": 0.6154,
+        "aupr": 1.0,
+        "p_at_r80": 1.0,
+        "span_recall": 1.0,
+        "span_precision": 0.423,
+        "coverage": 1.0,
+        "positives": 4
+      },
+      "revenue_sharing": {
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.8889,
+        "aupr": 1.0,
+        "p_at_r80": 1.0,
+        "span_recall": 0.889,
+        "span_precision": 0.198,
+        "coverage": 0.944,
+        "positives": 8
+      }
+    }
+  },
+  "latency": {
+    "p50_doc_s": 78.48,
+    "p95_doc_s": 666.37
+  },
+  "usage": {
+    "by_workload": {
+      "embed": {
+        "calls": 1032,
+        "cache_hits": 710,
+        "older_hits": 694,
+        "input_tokens": 31458,
+        "output_tokens": 0,
+        "seconds": 68.54851858108304,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "extract": {
+        "calls": 214,
+        "cache_hits": 214,
+        "older_hits": 214,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "choose": {
+        "calls": 15771,
+        "cache_hits": 6316,
+        "older_hits": 6221,
+        "input_tokens": 17127091,
+        "output_tokens": 2492868,
+        "seconds": 852.8914136514068,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "repair": {
+        "calls": 988,
+        "cache_hits": 532,
+        "older_hits": 532,
+        "input_tokens": 324060,
+        "output_tokens": 89345,
+        "seconds": 1840.7492269205395,
+        "cost": 0.0,
+        "priced": 0
+      }
+    },
+    "total": {
+      "calls": 18005,
+      "cache_hits": 7772,
+      "older_hits": 7661,
+      "input_tokens": 17482609,
+      "output_tokens": 2582213,
+      "seconds": 2762.1891591530293,
+      "cost": 0.0
+    },
+    "wall_seconds": 1115.66
+  },
+  "rejected_samples": {
+    "validate: cites no passage": [
+      "Under the Cooperation Agreement between Sp\u014dk Holdings, Inc. and the White Hat Parties, the agreement may be executed in any number of counterparts and by the Parties in separate counterparts, each of which when so executed is deemed an original and all of which together constitute one and the same agreement.",
+      "Under the Cooperation Agreement between Sp\u014dk Holdings, Inc. and the White Hat Parties, the agreement is for the sole and exclusive benefit of the parties and their respective successors and assigns, and for the benefit of no other person or entity.",
+      "Under the Master Services Agreement between MeritLife Insurance Co. and the Contractor, to the extent the Contractor provides any third party materials and products, the Contractor acknowledges that it is solely responsible for ensuring the functionality and specifications of such third party materials and products used in performing the Services.",
+      "Under the Master Services Agreement between RadialSpark, LLC and Clear Capital, neither party shall assign, transfer, or subcontract the agreement or any of its obligations without the other party's express, prior written consent, which will not be unreasonably withheld.",
+      "Under the Intellectual Property Agreement between Ingevity Corp. (SpinCo) and WestRock (Parent), Licensed SpinCo IP means the SpinCo Intellectual Property (excluding Trademark-Related IP), the SpinCo Software and the SpinCo Technology, and all rights, interests and claims of either Party or any member of its Group as of the Effective Time with respect to Information exclusively related to those items, subject to the limitations in the agreement and to the extent Controlled by SpinCo or any member of the SpinCo Group as of the Effective Time, including as a result of the assignments made by the agreement."
+    ],
+    "decision_floors.useful": [
+      "Under the Cooperation Agreement between Spok Holdings, Inc. and the White Hat Parties, the Agreement may be executed in any number of counterparts and by the Parties in separate counterparts, each of which when executed is deemed an original and all of which together constitute one and the same agreement.",
+      "Under the Cooperation Agreement between Sp\u014dk Holdings, Inc. and the White Hat Parties, the headings are for convenience of reference only and do not limit or affect the agreement's meaning.",
+      "Under the Master Services Agreement between RadialSpark, LLC and Clear Capital, the agreement may be signed in any number of counterparts, each of which is an original with the same effect as if the signatures were on the same instrument.",
+      "Under the Sponsorship Agreement, the agreement may be executed in one or more counterparts and by different parties in separate counterparts, each of which when executed is deemed an original but all of which together constitute one and the same agreement.",
+      "Under the Joint Venture Agreement between Collectible Concepts Group, Inc. and Pivotal Self Service Tech, Inc., the Agreement may be signed in counterparts and shall be deemed one original instrument."
+    ],
+    "decision_floors.grounded": [
+      "The Endorsement Agreement is dated August 24, 1995, among Kathy Ireland, Inc., The Sterling/Winters Co., and Diplomat Ambassador Eyewear Group.",
+      "Under the Master Services Agreement between Clear Capital and RadialSpark, LLC, RadialSpark, LLC shall provide sufficient qualified personnel to perform the Services in a professional and workmanlike manner in accordance with industry standards, unless otherwise provided in a Statement of Work.",
+      "Under the Master Services Agreement between Clear Capital and RadialSpark, LLC, the obligations of Clear Capital in connection with a particular engagement shall be set forth in the applicable Statement of Work, and Clear Capital agrees to perform such obligations in accordance with and subject to such Statement of Work.",
+      "Under the Intellectual Property Agreement, \"Control\" or \"Controlled\" with respect to Intellectual Property means that Ingevity Corporation or a member of the SpinCo Group owns such Intellectual Property, in whole or in part, and/or has the right to grant a license to WestRock Company with respect to such Intellectual Property without incurring any financial or other obligations to any other Person, subject in each case to the terms of any license or other agreement to which Ingevity Corporation or any of the SpinCo Group is a party that relates to such Intellectual Property.",
+      "Under the Intellectual Property Agreement, \"Licensed SpinCo IP\" means (i) the SpinCo Intellectual Property (excluding Trademark-Related IP), the SpinCo Software, and the SpinCo Technology, and (ii) all rights, interests and claims of either Party or any member of its Group as of the Effective Time with respect to Information exclusively related to those items, in each case subject to the limitations set forth in the Agreement and to the extent Controlled by Ingevity Corporation or any member of the SpinCo Group as of the Effective Time, including as a result of the assignments made by the Agreement."
+    ],
+    "decision_floors.attribution": [
+      "Under the Master Services Agreement between Clear Capital and RadialSpark, LLC, RadialSpark, LLC shall provide sufficient qualified personnel to perform the Services in a professional and workmanlike manner in accordance with industry standards, unless otherwise provided in a Statement of Work.",
+      "Under the Intellectual Property Agreement, \"Control\" or \"Controlled\" with respect to Intellectual Property means that Ingevity Corporation or a member of the SpinCo Group owns such Intellectual Property, in whole or in part, and/or has the right to grant a license to WestRock Company with respect to such Intellectual Property without incurring any financial or other obligations to any other Person, subject in each case to the terms of any license or other agreement to which Ingevity Corporation or any of the SpinCo Group is a party that relates to such Intellectual Property.",
+      "Under the Intellectual Property Agreement, \"Licensed SpinCo IP\" means (i) the SpinCo Intellectual Property (excluding Trademark-Related IP), the SpinCo Software, and the SpinCo Technology, and (ii) all rights, interests and claims of either Party or any member of its Group as of the Effective Time with respect to Information exclusively related to those items, in each case subject to the limitations set forth in the Agreement and to the extent Controlled by Ingevity Corporation or any member of the SpinCo Group as of the Effective Time, including as a result of the assignments made by the Agreement.",
+      "Under the Transportation Contract between Gran Tierra Energy Inc. (the SENDER) and ECOPETROL, ECOPETROL must ship and decant through the Pipeline the Crude delivered by the SENDER from the Point of Entrance until the Exit Point.",
+      "Under the Transportation Contract between the SENDER and ECOPETROL, ECOPETROL may declare the termination in advance of the contract at any time without any indemnity in favor of the SENDER."
+    ],
+    "validate: too long for one fact": [
+      "Under the Sponsorship Agreement between PEEK Investments LLC and the Sponsors, decisions requiring unanimous Sponsor consent during the Pre-Acceptance Period also include any waiver of any condition to or of the Offer or determination whether any such condition has been, is, or will be satisfied; any filing, dissemination, or disclosure requirement or offering document or tender offer material; any agreement, instrument, document, or matter related to any borrowing, incurrence of indebtedness, or equity, debt, or other financing; any litigation or other legal proceeding, including with respect to any stockholder list or security holder listing or poison pill, rights plan, or similar right, or derivative or other litigation related to the Company's capitalization; any designation, nomination, appointment, or election of any person as a member of the board of directors of the Company; and any agreement, arrangement, or understanding with the Company or any manager, director, officer, employee, stockholder, partner, affiliate, associate, or related party of the Company.",
+      "Under the Sponsorship Agreement, during the Pre-Acceptance Period no Sponsor may transfer any portion of the Commitment or any Unit (an interest in Purchaser) other than to an investment fund affiliated with that Sponsor, and no such transfer relieves the Sponsor of its obligations under the Equity Commitment Letter or the Sponsorship Agreement unless and until the fund: (a) has committed equity or similar available capital sufficient to satisfy the obligation; (b) executes and delivers to Purchaser an appropriate equity commitment letter, a joinder signature page to the Sponsorship Agreement, and each other document reasonably requested by Purchaser (the New Sponsor Documents) and agrees to be bound as a Sponsor; (c) certifies to each Party that it is capable of performing its obligations under each New Sponsor Document; and (d) is approved by each non-transferring Participating Sponsor, which approval may not be unreasonably withheld, conditioned, or delayed.",
+      "Under the Intellectual Property Agreement, effective as of the Effective Time and except as provided in Sections 4.1(c) and 4.1(d), SpinCo (Ingevity), for itself and each member of the SpinCo Group, their successors and assigns, and to the extent permitted by Law all Persons who were shareholders, directors, officers, agents, or employees of any member of the SpinCo Group prior to the Effective Time, releases Parent (WestRock), the members of the Parent Group, their successors and assigns, and all Persons who were shareholders, directors, officers, agents, or employees of any member of the Parent Group or of a Transferred Entity prior to the Effective Time (in each case in their capacities as such, and who are not, immediately after the Effective Time, directors, officers, or employees of SpinCo or the SpinCo Group in the Transferred Entity case), from all SpinCo IP Liabilities and all Liabilities arising from actions, inactions, events, omissions, conditions, facts, or circumstances occurring or existing prior to the Effective Time to the extent relating to, arising out of, or resulting from the SpinCo IP Assets or the SpinCo IP Liabilities.",
+      "Under the Intellectual Property Agreement between Parent and SpinCo, effective as of the Effective Time and except as provided in Sections 4.1(c) and 4.1(d), Parent, for itself and each other member of the Parent Group and their successors and assigns, and to the extent permitted by Law all Persons who prior to the Effective Time were shareholders, directors, officers, agents or employees of any member of the SpinCo Group, releases SpinCo, the members of the SpinCo Group and their successors and assigns, all Persons who prior to the Effective Time are or have been shareholders, directors, officers, agents or employees of any member of the SpinCo Group and their heirs, executors, administrators, successors and assigns, and all Persons who prior to the Effective Time were shareholders, directors, officers or employees of a Transferred Entity and who are not, immediately following the Effective Time, directors, officers or employees of SpinCo or a member of the SpinCo Group.",
+      "Under the Intellectual Property Agreement between Ingevity Corp. (Parent) and SpinCo, subject to the applicable confidentiality obligations of the Separation Agreement, each Party agrees to use commercially reasonable efforts to provide or make available to the other Party and its Group, as soon as reasonably practicable after written request, any Information in its possession or control which the requesting Party requests in good faith to evaluate or use such Information for commercial purposes within the Parent Field or SpinCo Field, to the extent that (i) such Information relates to any SpinCo IP Asset or SpinCo IP Liability if SpinCo is the requesting Party; (ii) such Information is necessary for Parent or any member of Parent Group to exercise its rights under the license granted in Section 3.1 of the Intellectual Property Agreement if Parent is the requesting Party; (iii) such Information is required by the requesting Party to comply with its obligations under the Intellectual Property Agreement; or (iv) such Information is required by the requesting Party to comply with any obligation imposed by any Governmental Authority."
+    ],
+    "decision_floors.atomic": [
+      "The Insurance Only Policy of Performance for State Contracts in Favor of Ecopetrol S.A. excludes force majeure or acts of nature, amendments to the original contract, injuries to persons or damage to property, and impairment by the passing of time.",
+      "The Master Franchise Agreement between Kiosk Concepts, Inc. and The Grilled Cheese Truck, Inc. includes acknowledgments that the Master Franchisee recognizes business risks, received the franchise disclosure document, and agrees to a waiver of trial by jury and limitations on punitive or exemplary damages and adjudicative proceedings.",
+      "Under the Master Franchise Agreement between Kiosk Concepts, Inc. and The Grilled Cheese Truck, Inc., The Grilled Cheese Truck, Inc. represents and warrants, as an inducement to Kiosk Concepts, Inc.'s execution of the Agreement, that all statements made by The Grilled Cheese Truck, Inc. and all materials it provided to Kiosk Concepts, Inc. in connection with the grant of the franchise are true, accurate and complete and that it made no misrepresentations or material omissions in connection with obtaining the franchise.",
+      "Under the Franchise Agreement between Soupman, Inc. and the franchisee, Soupman, Inc. will continue to collect royalties from franchisees and service existing franchisees in the Master Territory.",
+      "Under the Development Agreement's Development Plan, the criteria for the May 1, 2016 payment include execution of the Definitive Agreement, FP2.0 Analyzer Validated Software (projected 8/15), Vitamin D Clinical Studies (projected 11/18), delivery of first 5 FP2.0 Analyzer Prototypes (projected 8/8), Vitamin D 510k Submission (projected 12/16), Vitamin D Design Verification (projected 8/12), Testosterone Feasibility (projected 12/16), and FP2.0 Analyzer Production - Order Production Tooling (projected 10/24)."
+    ]
+  },
+  "skipped_fact_evals": {
+    "nli: no nli model is set; skipped": 4291
+  }
+}

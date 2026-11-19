@@ -7,7 +7,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
 
-> **Status: Version 0.1.5.** Factoid runs end to end, and three example apps publish their eval results. It covers
+> **Status: Version 0.1.6.** Factoid runs end to end, and three example apps publish their eval results. It covers
 > ingest, fact extraction with evals, entities, supersession and as-of search, settling contradictions, eval suites,
 > exports, an HTTP API, and an MCP server. [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) section 17 lists what is built.
 > [CHANGELOG.md](https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md) lists what changed in each version.
@@ -926,10 +926,12 @@ recent = orion.facts(since="30d")      # every recent fact linked to Orion
 
 ## Design
 
-- **Fact-level retrieval.** Search returns short, self-contained sentences within a token budget. On dialogue, fact
-  retrieval outperformed chunk retrieval while using about one-seventh of the read tokens
-  ([examples/iscrag](https://github.com/Endgame-Labs/factoid/blob/main/examples/iscrag/README.md) measures it, after
-  [RAG Deserves an Index](https://arxiv.org/abs/2608.20845)).
+- **Fact-level retrieval.** Search returns short, self-contained sentences within a token budget. On 200 questions about
+  news transcripts, facts read at 512 tokens score 0.92, and chunks read at 2,048 tokens score 0.87. At 8,192 tokens,
+  the two are even ([examples/iscrag](https://github.com/Endgame-Labs/factoid/blob/main/examples/iscrag/README.md),
+  after [RAG Deserves an Index](https://arxiv.org/abs/2608.20845)). On contract questions about the terms in force on a
+  date, facts and reranked chunks tie at 2,000 tokens
+  ([examples/legal](https://github.com/Endgame-Labs/factoid/blob/main/examples/legal/README.md)).
 - **Deterministic provenance.** Prose extraction cites numbered passages and structured extraction cites the file, row,
   and column; Factoid's code attaches the exact quote or cell, speaker, and timestamp.
 - **Event log for history.** Current state in SQLite is the source of truth. Each change also writes a fact event

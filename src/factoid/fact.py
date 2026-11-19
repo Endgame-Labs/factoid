@@ -116,6 +116,10 @@ class Fact(Registered, ModelCalls):
     #: Below these, the next best answer is used.
     duplicate_threshold: ClassVar[float] = 0.8
     contradiction_threshold: ClassVar[float] = 0.75
+    #: When the model is sure two facts state the same claim but not whether the value changed, a later fact from
+    #: another document supersedes, but only if "supersedes" got at least this much. A restatement the model calls a
+    #: duplicate at 0.78 and a change at 0 is not a change.
+    resolve_split_floor: ClassVar[float] = 0.2
     #: How sure the decision model must be that a new fact replaces an older one in a section replaced as a whole.
     replace_threshold: ClassVar[float] = 0.6
     #: Run one repair (a rewording) on a near miss.
@@ -443,6 +447,7 @@ class Fact(Registered, ModelCalls):
             if (max(answer, key=answer.get) in ("duplicate", "supersedes")
                     and answer[max(answer, key=answer.get)] < bars.get("duplicate", 1)
                     and same_subject >= klass.resolve_threshold and other.document_id != self.document_id
+                    and answer.get("supersedes", 0) >= klass.resolve_split_floor
                     and mine is not None and theirs is not None and mine > theirs):
                 # Sure it is the same claim, unsure whether the value changed, and newer from another source:
                 # the newer version supersedes. Superseding a true duplicate only ends the old one at the new date.

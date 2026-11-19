@@ -2,6 +2,14 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.6 (2026-11-19)
+
+- **Resolve fix.** A later restatement of a fact no longer supersedes it when the decision model gives a change no
+  weight. Resolve's split rule now needs `resolve_split_floor` (0.2) on "supersedes" (issue #4).
+- **Eval rerun.** Every example suite was run again. The legal as-of questions add a reranked-chunks arm. Amendment
+  recall counts only facts quoting the labeled new clause, and false changes cover every document. iscrag scores its
+  tuning and unseen transcripts apart. Scorecards are committed under each example's `scorecards/`.
+
 ## 0.1.5 (2026-11-19)
 
 - **Eval fixes.** AUPR and precision at recall treat tied scores as one threshold, so they no longer depend on input

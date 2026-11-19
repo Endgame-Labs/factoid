@@ -1,0 +1,130 @@
+{
+  "suite": "playoffs",
+  "variant": "default",
+  "overrides": {},
+  "documents": 73,
+  "facts": 4256,
+  "rejected": 119,
+  "rejected_by_reason": {
+    "decision_floors.distinct": 52,
+    "decision_floors.atomic": 46,
+    "decision_floors.grounded": 35,
+    "decision_floors.useful": 12,
+    "validate: cites no passage": 8,
+    "decision_floors.attribution": 4
+  },
+  "metrics": {
+    "passed": "11/11",
+    "score": 1.0,
+    "checks": {
+      "game log: Game 6 of the Finals, 103-90 over Boston": "ok",
+      "game log: earlier Finals standings replaced, the 4-2 title current": "ok",
+      "search: after Game 3 of the Finals, the Celtics lead 2-1": "ok",
+      "box score: Curry's 34 points in Finals Game 6, linked to the game": "ok",
+      "totals: Curry averaged 27.4 points": "ok",
+      "entities: Curry links stats, recaps, interviews, and articles": "ok",
+      "entities: one Stephen Curry": "ok",
+      "recaps: Curry was Finals MVP, a milestone": "ok",
+      "interviews: a remark by Curry, quoted with him as the speaker": "ok",
+      "injury: a fact about an injury to Curry or Klay Thompson": "ok",
+      "entities: the Celtics link games and recaps": "ok"
+    },
+    "facts": {
+      "superseded": 167,
+      "current": 4023,
+      "contradicted": 62,
+      "ended": 4
+    },
+    "fact_classes": {
+      "Reported": 3017,
+      "Remark": 1239
+    },
+    "facts_by_document": {
+      "GameLog": 44,
+      "BoxScore": 982,
+      "PlayerTotals": 28,
+      "Recap": 1145,
+      "Interview": 1239,
+      "Article": 818
+    },
+    "entities": {
+      "Game": 27,
+      "Series": 9,
+      "Team": 32,
+      "Player": 141,
+      "Person": 55,
+      "Entity": 48
+    }
+  },
+  "latency": {
+    "p50_doc_s": 19.47,
+    "p95_doc_s": 40.02
+  },
+  "usage": {
+    "by_workload": {
+      "embed": {
+        "calls": 2326,
+        "cache_hits": 1637,
+        "older_hits": 1631,
+        "input_tokens": 52575,
+        "output_tokens": 0,
+        "seconds": 220.57613351452164,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "choose": {
+        "calls": 13848,
+        "cache_hits": 4756,
+        "older_hits": 4753,
+        "input_tokens": 18961730,
+        "output_tokens": 3122722,
+        "seconds": 831.1564157961402,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "extract": {
+        "calls": 109,
+        "cache_hits": 109,
+        "older_hits": 109,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "repair": {
+        "calls": 1017,
+        "cache_hits": 0,
+        "older_hits": 0,
+        "input_tokens": 684738,
+        "output_tokens": 163201,
+        "seconds": 3448.1877131904475,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "rerank": {
+        "calls": 1,
+        "cache_hits": 0,
+        "older_hits": 0,
+        "input_tokens": 17250,
+        "output_tokens": 0,
+        "seconds": 0.6944396919570863,
+        "cost": 0.0,
+        "priced": 0
+      }
+    },
+    "total": {
+      "calls": 17301,
+      "cache_hits": 6502,
+      "older_hits": 6493,
+      "input_tokens": 19716293,
+      "output_tokens": 3285923,
+      "seconds": 4500.6147021930665,
+      "cost": 0.0
+    },
+    "wall_seconds": 1846.67
+  },
+  "skipped_fact_evals": {
+    "nli: no nli model is set; skipped": 3202
+  }
+}

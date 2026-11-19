@@ -1,0 +1,472 @@
+{
+  "suite": "amendments_fresh",
+  "variant": "default",
+  "overrides": {},
+  "documents": 9,
+  "facts": 954,
+  "rejected": 39,
+  "rejected_by_reason": {
+    "decision_floors.grounded": 22,
+    "decision_floors.useful": 8,
+    "validate: too long for one fact": 4,
+    "validate: cites no passage": 4,
+    "decision_floors.attribution": 2,
+    "decision_floors.atomic": 1,
+    "decision_floors.distinct": 1
+  },
+  "metrics": {
+    "supersede_recall": 0.75,
+    "supersede_recall_any": 0.75,
+    "unchanged_kept": 1.0,
+    "false_change_rate": 0.029,
+    "false_changes": [
+      "ended: Under the Co-Branding Agreement between PC Quote, Inc. and AB Watley, Inc., the effective date for purposes of the agreement is the contract date as specified o",
+      "ended: Under the Co-Branding Agreement between PC Quote, Inc. and AB Watley, Inc., neither PC Quote, Inc. nor AB Watley, Inc. shall terminate or alter the agreement ex",
+      "ended: Under the Co-Branding Agreement between PC Quote, Inc. and AB Watley, Inc., if a party is in material breach of the agreement, the other party may terminate the",
+      "ended: Under the Co-Branding Agreement between PC Quote and A.B. Watley, ABW's indemnification of PCQ covers any claims, liabilities, or obligations resulting from ABW",
+      "ended: Under the Co-Branding Agreement between PC Quote and A.B. Watley, ABW's indemnification of PCQ also covers any claims, liabilities, or obligations resulting fro",
+      "ended: Under the Co-Branding Agreement between PC Quote and A.B. Watley, ABW's indemnification of PCQ is only effective if the third-party claim, liability, or obligat",
+      "ended: Under the Co-Branding Agreement between PC Quote and A.B. Watley, PCQ agrees to defend, indemnify, and hold ABW harmless, including reasonable attorney's fees, ",
+      "ended: Under the Co-Branding Agreement between PC Quote and A.B. Watley, PCQ's indemnification of ABW is only effective if the third-party claim, liability, or obligat"
+    ],
+    "false_change_rate_base": 0.033,
+    "as_of_accuracy": 0.818,
+    "qa_facts@2000": 0.909,
+    "qa_facts@2000_outdated": 0.091,
+    "qa_facts@8000": 1.0,
+    "qa_facts@8000_outdated": 0.0,
+    "qa_chunks@2000": 0.545,
+    "qa_chunks@2000_outdated": 0.0,
+    "qa_chunks@8000": 0.909,
+    "qa_chunks@8000_outdated": 0.091,
+    "qa_reranked@2000": 1.0,
+    "qa_reranked@2000_outdated": 0.0,
+    "qa_reranked@8000": 0.909,
+    "qa_reranked@8000_outdated": 0.0,
+    "qa_questions": 11,
+    "qa_details": [
+      {
+        "as_of": "2006-06-01",
+        "query": "How long do the licenses for each Property last under the Fox and Glu Mobile lic",
+        "facts@2000": "current",
+        "facts@2000 answer": "The rights and licenses for each Property continue in full force and effect for a period of eighteen months after the initial theatrical release of that Propert",
+        "facts@8000": "current",
+        "facts@8000 answer": "As of June 1, 2006, the licenses for each Property last for a period of eighteen months after the initial theatrical release of that Property (with the overall ",
+        "chunks@2000": "neither",
+        "chunks@2000 answer": "Insufficient source evidence.",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "The rights and licenses expire on December 31, 2006 (the Term); however, for each Property, all rights and licenses continue in full force and effect for eighte",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "For each Property, the license lasts eighteen (18) months after the initial theatrical release of that Property (with the overall agreement expiring December 31",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "For each Property, the rights and licenses continue for eighteen (18) months after the initial theatrical release of that Property (with the overall Term expiri"
+      },
+      {
+        "as_of": "2007-06-01",
+        "query": "How long do the licenses for each Property last under the Fox and Glu Mobile lic",
+        "facts@2000": "current",
+        "facts@2000 answer": "As of June 1, 2007, under Amendment No. 3 (in force from February 19, 2007), the rights and licenses for each Property (including Robots, Kingdom of Heaven, Mr.",
+        "facts@8000": "current",
+        "facts@8000 answer": "As of June 1, 2007, under Amendment No. 3 (in force from 2007-02-19), the licenses for each Property (including Robots, Kingdom of Heaven, Mr. and Mrs. Smith, I",
+        "chunks@2000": "current",
+        "chunks@2000 answer": "Per Amendment No. 3 (in force on 2007-06-01), the rights and licenses for each Property (including Robots, Kingdom of Heaven, Mr. and Mrs. Smith, In Her Shoes, ",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "As amended by Amendment No. 3 (February 19, 2007), the rights and licenses for each Property (including Robots, Kingdom of Heaven, Mr. and Mrs. Smith, In Her Sh",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "As amended by Amendment No. 3 (Feb. 19, 2007), the rights and licenses for each Property (including Robots, Kingdom of Heaven, Mr. and Mrs. Smith, In Her Shoes,",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "As amended by Amendment No. 3 (Feb. 19, 2007), the rights and licenses for each Property (including Robots, Kingdom of Heaven, Mr. and Mrs. Smith, In Her Shoes,"
+      },
+      {
+        "as_of": "2006-06-01",
+        "query": "To whose attention must notices to Glu Mobile be sent under the Fox license agre",
+        "facts@2000": "current",
+        "facts@2000 answer": "Paul Zuzelo",
+        "facts@8000": "current",
+        "facts@8000 answer": "Paul Zuzelo",
+        "chunks@2000": "current",
+        "chunks@2000 answer": "Paul Zuzelo",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "Notices to Glu Mobile (Licensee) must be sent to the attention of Paul Zuzelo (with copies to Greg Suarez), at 1800 Gateway Drive, Suite 200, San Mateo, CA 9440",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "Paul Zuzelo",
+        "reranked@8000": "neither",
+        "reranked@8000 answer": "Notices to Fox must be sent to the attention of the Vice President, Wireless Development (per the notice provision of the December 16, 2004 Wireless Content Lic"
+      },
+      {
+        "as_of": "2007-06-01",
+        "query": "To whose attention must notices to Glu Mobile be sent under the Fox license agre",
+        "facts@2000": "current",
+        "facts@2000 answer": "General Counsel",
+        "facts@8000": "current",
+        "facts@8000 answer": "General Counsel (replacing Paul Zuzelo), per Amendment No. 3 to the agreement.",
+        "chunks@2000": "current",
+        "chunks@2000 answer": "General Counsel",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "General Counsel (per Amendment No. 3, which replaced Paul Zuzelo with General Counsel in the notice provision)",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "General Counsel (per Amendment No. 3, which replaced Paul Zuzelo with General Counsel in the notice provision)",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "General Counsel (notices to Glu Mobile, at 1800 Gateway Drive, Suite 200, San Mateo, CA 94404, must be directed to the attention of \"General Counsel\", per Amend"
+      },
+      {
+        "as_of": "2005-06-01",
+        "query": "Which company acts as \"Fox\" in the Glu Mobile wireless content license agreement",
+        "facts@2000": "outdated",
+        "facts@2000 answer": "Fox Mobile Entertainment, Inc., as Administrator for Twentieth Century Fox Film Corporation",
+        "facts@8000": "current",
+        "facts@8000 answer": "Twentieth Century Fox Licensing & Merchandising, a division of Fox Entertainment Group, Inc., acting as Administrator for Twentieth Century Fox Film Corporation",
+        "chunks@2000": "neither",
+        "chunks@2000 answer": "Insufficient source evidence.",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "Twentieth Century Fox Licensing & Merchandising, a division of Fox Entertainment Group, Inc., as Administrator for Twentieth Century Fox Film Corporation.",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "Twentieth Century Fox Licensing & Merchandising, a division of Fox Entertainment Group, Inc.",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "Twentieth Century Fox Licensing & Merchandising, a division of Fox Entertainment Group, Inc."
+      },
+      {
+        "as_of": "2006-06-01",
+        "query": "Which company acts as \"Fox\" in the Glu Mobile wireless content license agreement",
+        "facts@2000": "current",
+        "facts@2000 answer": "Fox Mobile Entertainment, Inc., as Administrator for Twentieth Century Fox Film Corporation.",
+        "facts@8000": "current",
+        "facts@8000 answer": "Fox Mobile Entertainment, Inc., as Administrator for Twentieth Century Fox Film Corporation.",
+        "chunks@2000": "neither",
+        "chunks@2000 answer": "Insufficient source evidence.",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "Fox Mobile Entertainment, Inc. (substituted for Twentieth Century Fox Licensing & Merchandising as of October 1, 2005 per Amendment No. 1)",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "Fox Mobile Entertainment, Inc. (substituted for Twentieth Century Fox Licensing and Merchandising as of October 1, 2005)",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "Fox Mobile Entertainment, Inc. (substituted for Twentieth Century Fox Licensing & Merchandising as of October 1, 2005)"
+      },
+      {
+        "as_of": "2008-01-01",
+        "query": "When does the Cisco and ScanSource distributor agreement end?",
+        "facts@2000": "current",
+        "facts@2000 answer": "The Agreement commences on the Effective Date (2007-01-22) and continues for two (2) years, so it ends on 2009-01-22, unless extended by written agreement (Cisc",
+        "facts@8000": "current",
+        "facts@8000 answer": "The Agreement commences on the Effective Date (2007-01-22) and continues for two (2) years, i.e., until 2009-01-22, unless extended by written agreement or soon",
+        "chunks@2000": "neither",
+        "chunks@2000 answer": "Insufficient source evidence.",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "The agreement commenced on the Effective Date (January 22, 2007) and continues for two (2) years, so it would end on January 22, 2009, unless extended by writte",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "The agreement commenced on the Effective Date (signed 2007-01-22) and continues for two years, so absent extension or earlier termination it ends on 2009-01-22;",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "Under Section 18.1, the agreement commences on the Effective Date and continues for two (2) years \u2014 i.e., through January 22, 2009, based on the January 22, 200"
+      },
+      {
+        "as_of": "2011-01-01",
+        "query": "When does the Cisco and ScanSource distributor agreement end?",
+        "facts@2000": "current",
+        "facts@2000 answer": "January 20, 2012, unless sooner terminated as provided for in the Agreement.",
+        "facts@8000": "current",
+        "facts@8000 answer": "January 20, 2012, unless sooner terminated as provided for in the Agreement.",
+        "chunks@2000": "neither",
+        "chunks@2000 answer": "Insufficient source evidence.",
+        "chunks@8000": "outdated",
+        "chunks@8000 answer": "The agreement commenced on the Effective Date (January 22, 2007) and had an initial term of two (2) years, so it would end on January 22, 2009, unless extended ",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "January 20, 2012 (as extended by Amendment No. 3, effective 2010-08-04), unless sooner terminated as provided in the Agreement.",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "January 20, 2012 (as extended by Amendment No. 3, signed 2010-08-04), unless sooner terminated as provided in the Agreement."
+      },
+      {
+        "as_of": "2008-01-01",
+        "query": "How often may ScanSource return inventory to Cisco for credit?",
+        "facts@2000": "current",
+        "facts@2000 answer": "Once per Cisco Quarter: for a [*****] period beginning on the agreement's effective date, ScanSource may return, for credit, up to [*****] of the dollar value o",
+        "facts@8000": "current",
+        "facts@8000 answer": "Quarterly \u2014 under the agreement in force on 2008-01-22, ScanSource may return Product for credit up to a capped percentage of the dollar value of Product shippe",
+        "chunks@2000": "current",
+        "chunks@2000 answer": "Quarterly \u2014 Distributor may submit an inventory balance return claim between the first and [*****] calendar days of February, May, August, and November (Section",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "Quarterly \u2014 under Section 12.2, ScanSource may submit an inventory balance return claim between the first and [*****] calendar days of February, May, August, an",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "Quarterly \u2014 Distributor may submit an inventory balance return claim between the first and [*****] calendar days of February, May, August, and November (Section",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "Quarterly \u2014 under Section 12.2, Distributor may submit an inventory balance return claim in February, May, August, and November (i.e., four times per year), sub"
+      },
+      {
+        "as_of": "2011-01-01",
+        "query": "How often may ScanSource return inventory to Cisco for credit?",
+        "facts@2000": "current",
+        "facts@2000 answer": "Once per quarter, subject to the Balancing Cap.",
+        "facts@8000": "current",
+        "facts@8000 answer": "Once per quarter, subject to the Balancing Cap.",
+        "chunks@2000": "current",
+        "chunks@2000 answer": "Once per quarter. Under Amendment No. 3 (signed 2010-08-04), which replaced Section 12, ScanSource is entitled to return Product for credit once per quarter, pr",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "Once per quarter. Under Amendment No. 3 (signed 2010-08-04, in force on 2011-01-01), Section 12.0 provides that Distributor is entitled to return Product to Cis",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "Once per quarter \u2014 under Amendment No. 3 (in force on 2011-01-01), Distributor is entitled to return Product for credit once per quarter, provided such returns ",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "Once per quarter, subject to the Balancing Cap (per Amendment No. 3, in force on 2011-01-01, Distributor is entitled to return Product once per quarter, provide"
+      },
+      {
+        "as_of": "2011-01-01",
+        "query": "Until what date is ScanSource appointed as a Cisco distributor?",
+        "facts@2000": "current",
+        "facts@2000 answer": "January 20, 2012",
+        "facts@8000": "current",
+        "facts@8000 answer": "January 20, 2012",
+        "chunks@2000": "current",
+        "chunks@2000 answer": "January 20, 2012",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "January 20, 2012",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "January 20, 2012",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "January 20, 2012"
+      }
+    ],
+    "time_captured": 1.0,
+    "details": [
+      {
+        "supersedes": "continue in full force and effect for a period of eighteen (18) months after the initial theatrical release",
+        "ok": true,
+        "any_fact": true,
+        "old_facts": 1,
+        "new_facts": 1
+      },
+      {
+        "supersedes": "Distributor may submit the inventory balance claim between the first and",
+        "ok": false,
+        "any_fact": false,
+        "old_facts": 0,
+        "new_facts": 1
+      },
+      {
+        "supersedes": "continue thereafter for a period of two (2) years",
+        "ok": true,
+        "any_fact": true,
+        "old_facts": 1,
+        "new_facts": 1
+      },
+      {
+        "supersedes": "Notice expressing a desire to terminate this Agreement will be sent by certified mail",
+        "ok": true,
+        "any_fact": true,
+        "old_facts": 2,
+        "new_facts": 1
+      },
+      {
+        "unchanged": "Distributor's use of Software is governed by the terms contained in Exhibit C",
+        "ok": true,
+        "facts": 1,
+        "statuses": [
+          "current"
+        ]
+      },
+      {
+        "unchanged": "enforced in all respects in accordance with the laws of the State of Illinois",
+        "ok": true,
+        "facts": 1,
+        "statuses": [
+          "current"
+        ]
+      },
+      {
+        "as_of": "2006-06-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "as_of": "2007-06-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "as_of": "2006-06-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "as_of": "2007-06-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "as_of": "2005-06-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "as_of": "2006-06-01T00:00:00Z",
+        "ok": false,
+        "want_rank": null,
+        "stale_rank": null
+      },
+      {
+        "as_of": "2008-01-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "as_of": "2011-01-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "as_of": "2008-01-01T00:00:00Z",
+        "ok": false,
+        "want_rank": null,
+        "stale_rank": null
+      },
+      {
+        "as_of": "2011-01-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "as_of": "2011-01-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "time": "continue in full force and effect until March 31, 2008",
+        "ok": true,
+        "values": [
+          "2008-03-31 00:00:00+00:00"
+        ]
+      },
+      {
+        "time": "The Term of the Agreement is hereby extended to January 20, 2012",
+        "ok": true,
+        "values": [
+          "2012-01-20 00:00:00+00:00"
+        ]
+      }
+    ]
+  },
+  "latency": {
+    "p50_doc_s": 3.11,
+    "p95_doc_s": 27.31
+  },
+  "usage": {
+    "by_workload": {
+      "embed": {
+        "calls": 314,
+        "cache_hits": 314,
+        "older_hits": 223,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "extract": {
+        "calls": 48,
+        "cache_hits": 48,
+        "older_hits": 48,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "choose": {
+        "calls": 3485,
+        "cache_hits": 3485,
+        "older_hits": 1360,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "repair": {
+        "calls": 188,
+        "cache_hits": 188,
+        "older_hits": 81,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "rerank": {
+        "calls": 33,
+        "cache_hits": 33,
+        "older_hits": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "generate": {
+        "calls": 132,
+        "cache_hits": 132,
+        "older_hits": 60,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      }
+    },
+    "total": {
+      "calls": 4200,
+      "cache_hits": 4200,
+      "older_hits": 1772,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "seconds": 0.0,
+      "cost": 0.0
+    },
+    "wall_seconds": 64.0
+  },
+  "rejected_samples": {
+    "validate: too long for one fact": [
+      "Under the Wireless Content License Agreement between Fox and Glu Mobile, the rights granted to Licensee are specifically limited to Wireless Products for the Wireless Platform and do not extend to any other device, platform, operating system or distribution method, including traditional entertainment software console platforms (such as Sony PlayStation, PlayStation 2, Microsoft Xbox, and Nintendo GameCube and successors), desktop or laptop computer systems (such as PC Windows and Macintosh), hand-held dedicated gaming devices (such as Nintendo's GameBoy Color and GameBoy Advance, Sony's PSX handheld device, and Tiger Electronic hand-held devices), pay-per-play arcade systems and other location-based entertainment, interactive toys, television (via cable, satellite, set-top boxes or on-demand service), massively multiplayer games, internet gaming, and any other technology now known or hereafter devised.",
+      "Under the Wireless Content License Agreement between Fox and Glu Mobile, \"Intellectual Property Rights\" is defined to include know-how, inventions, patents, patent rights, registrations and applications with renewals, continuations and extensions, works of authorship and art, copyrightable materials and copyrights (including titles, computer code, designs, themes, objects, characters, character names, stories, dialog, catch phrases, concepts, artwork, animation, sounds, musical compositions, graphics, visual elements, audio-visual effects, methods of operation, and related documentation), copyright registrations and applications with renewals and extensions, mask works, industrial rights, trademarks, service marks, trade names, logos, trademark registrations and applications with renewals and extensions, trade secrets, rights in trade dress and packaging, publicity, personality and privacy rights, moral rights, and all other forms of intellectual property and proprietary rights recognized by U.S. laws and other applicable foreign and international laws, treaties and conventions.",
+      "Under the Wireless Content License Agreement between Fox and Glu Mobile, Licensee agrees to indemnify, defend and hold harmless Fox, Trademark Licensor and their respective successors, assigns, parents, subsidiaries, affiliates and co-venturers, and their respective directors, officers, employees and agents from all third party claims, damages, losses, liabilities, suits and expenses (including reasonable attorneys' fees) arising out of allegations that the Licensee Materials or the manufacture, packaging, distribution, promotion, sale, or exploitation thereof (except with respect to matters against which Fox has agreed to indemnify Licensee) infringes or misappropriates the Intellectual Property Rights of any third party, provided that Fox promptly notifies Licensee in writing of the claim, grants Licensee sole control of the defense subject to Fox's approval of counsel to avoid conflicts of interest and of the terms of any settlement that affect Fox, and provides Licensee at Licensee's expense with all assistance, information and authority reasonably required for the defense and settlement of the claim.",
+      "Under the Amendment No. 3 to the Cisco and ScanSource Distributor Agreement between Cisco Systems, Inc. and ScanSource, Inc., the Distributor (ScanSource, Inc.) will not use money or other consideration paid by Cisco, or its own money on Cisco's behalf, for unlawful purposes, including direct or indirect payments to government officials (including persons holding executive, legislative, judicial or administrative offices, whether elected or appointed, or of any public international organization such as the United Nations or World Bank, or persons acting in an official capacity for such government, public enterprise or state-owned business), political parties or party officials, candidates for political office, or any person known to be offering, giving or promising such money or value directly or indirectly to those persons or organizations, for the purpose of assisting Cisco in obtaining or retaining business."
+    ],
+    "validate: cites no passage": [
+      "Consumers may contact a privacy officer at each News America Group business unit regarding privacy complaints and disputes.",
+      "Whenever possible, each News America Group business unit permits consumers to have a right to see the personally identifiable information that it has collected from them, to correct any incorrect information, and to instruct the business unit to delete the information from its files.",
+      "Under the Co-Branding Agreement between PC Quote, Inc. and A.B. Watley, Inc., notices delivered to ABW are to be delivered to the address in the Agreement, attention: Harry Simpson, AB Watley.",
+      "Under the Co-Branding Agreement between PC Quote, Inc. and A.B. Watley, Inc., the failure of either party to insist upon or enforce strict performance of any provision or to exercise any right under the Agreement is not a waiver or relinquishment of that party's right to assert or rely upon that provision or right in that or any other instance, and the provision remains in full force and effect."
+    ],
+    "decision_floors.grounded": [
+      "Under the Wireless Content License Agreement between Fox and Sorrent, Inc., Fox and Vodafone Group Services Limited (VGSL) have entered into a wireless content distribution agreement (the VGSL Agreement) whereby Fox is to be the content provider for VGSL wireless products relating to various Properties, and Fox desires a license to distribute Wireless Products to VGSL pursuant to the VGSL Agreement.",
+      "Under the Wireless Content License Agreement between Fox and Sorrent, Inc., Fox grants Sorrent, Inc. (Licensee) a limited, exclusive (except as otherwise provided in the agreement), non-transferable (except as permitted in Paragraph 17(d)) right and license to use, make, have made (as set forth in Paragraph 1(a)(i)), reproduce, modify, and create derivative works of the PSM in each Property, solely for the purpose of developing the wireless applications specifically set forth for each of the Properties on Exhibits B through M (the Wireless Products), some of which are defined in the Glossary attached as Exhibit N.",
+      "Under the Wireless Content License Agreement between Fox and Glu Mobile, Glu Mobile expressly acknowledges and agrees that Fox has entered into the VGSL Agreement with VGSL for the development of certain Wireless Products set forth on Exhibits B, C, D and G, in connection with the Properties \"Robots,\" Untitled Ridley Scott Film, \"Ice Age 2,\" and \"Mr & Mrs. Smith.\"",
+      "Under the Wireless Content License Agreement between Fox and Glu Mobile (Licensee), Fox will remit all VGSL Revenue to Licensee and such VGSL Revenue shall be treated as Gross Receipts for the purpose of the Wireless Content License Agreement.",
+      "Under the Wireless Content License Agreement between Fox and Glu Mobile, copies of notices to Fox are to be sent to its Legal Department (facsimile (310) 369-4241) and its Finance Department (facsimile (310) 369-8531) at Twentieth Century Fox Licensing & Merchandising, P.O. Box 900, Beverly Hills, California 90213, and 2121 Avenue of the Stars, Los Angeles, California 90067."
+    ],
+    "decision_floors.atomic": [
+      "Under the Wireless Content License Agreement between Fox and Sorrent, Inc., Fox and Vodafone Group Services Limited (VGSL) have entered into a wireless content distribution agreement (the VGSL Agreement) whereby Fox is to be the content provider for VGSL wireless products relating to various Properties, and Fox desires a license to distribute Wireless Products to VGSL pursuant to the VGSL Agreement."
+    ],
+    "decision_floors.attribution": [
+      "Under the Wireless Content License Agreement between Fox and Glu Mobile, copies of notices to Licensee are to be sent to Sorrent Inc., 1800 Gateway Drive, Suite 200, San Mateo, CA 94404, Attention: Greg Suarez, e-mail greg.suarez@sorrent.com, facsimile (650) 571-5698.",
+      "Under Amendment No. 3 to the Wireless Content License Agreement Number 12965 between Fox Mobile Entertainment, Inc. and Glu Mobile Inc., the term of the rights and licenses granted under the Agreement expires on December 31, 2006."
+    ],
+    "decision_floors.useful": [
+      "Under the Wireless Content License Agreement between Sorrent, Inc. and Twentieth Century Fox Licensing & Merchandising, the headings of the paragraphs are for convenience only and have no effect in construing the meanings of the paragraphs.",
+      "Certain identified information in Exhibit 10.38 to the Nonexclusive Value Added Distributor Agreement between Cisco Systems, Inc. and ScanSource, Inc. has been excluded because it is both not material and would likely cause competitive harm if publicly disclosed, and is denoted by [*****].",
+      "Under the Nonexclusive Value Added Distributor Agreement between Cisco and ScanSource, capitalized terms used in Exhibit B have the meanings assigned in Section 1.0 of the Nonexclusive Value Added Distributor Agreement Terms and Conditions.",
+      "Under the Nonexclusive Value Added Distributor Agreement between Cisco and ScanSource, headings of sections have been added solely for convenience of reference and are not part of the agreement.",
+      "Certain identified information (the \"Confidential Information\") has been excluded from Exhibit 10.39 to ScanSource, Inc.'s 10-K because it is both not material and would likely cause competitive harm if publicly disclosed."
+    ],
+    "decision_floors.distinct": [
+      "Under Section 12.1 of the Nonexclusive Value Added Distributor Agreement between Cisco Systems, Inc. and ScanSource, Inc., Cisco Systems, Inc. shall credit ScanSource, Inc.'s account in the amount of the price paid by ScanSource, Inc. for returned Product, less any price protection credits issued to ScanSource, Inc. related to the Product returned (the \"Return Credit\")."
+    ]
+  },
+  "skipped_fact_evals": {
+    "nli: no nli model is set; skipped": 954
+  }
+}

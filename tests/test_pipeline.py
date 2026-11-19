@@ -701,3 +701,22 @@ def test_an_end_closes_the_old_fact_at_the_new_one(make_app, fake):
     old = Fact.get(old.id)
     assert old.status == "ended" and old.valid_until.date().isoformat() == "2027-01-01"
     assert old.id in {h.fact.id for h in Fact.search("liability cap", as_of="2026-06-01T00:00:00Z")}
+
+
+def test_a_later_restatement_does_not_supersede(make_app, fake):
+    # A counsel email restating a contract clause: duplicate 0.78, just under the bar, and no weight on a change.
+    app = build(make_app, fake)
+    inner = fake.choice
+
+    def choice(question, state, name):
+        if name.startswith("F"):
+            probs = {"duplicate": 0.78, "unrelated": 0.22}
+            return {k: probs.get(k, 0.0) for k, _ in question.options}
+        return inner(question, state, name)
+
+    fake.choice = choice
+    first = app.ingest_text("The territory is the United States and [*].", document_type=Contract,
+                            metadata={"signed_at": "1996-10-01T00:00:00Z"}, uri="i.txt")
+    app.ingest_text("Counsel says the territory is the United States and [*].", document_type=Contract,
+                    metadata={"signed_at": "1998-07-15T00:00:00Z"}, uri="j.txt")
+    assert Fact.get(first.facts[0].id).status == "current"

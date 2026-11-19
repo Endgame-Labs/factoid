@@ -67,8 +67,8 @@ class Diligence(Suite):
         others = [app.load_fact(f.id) for f in contract if not f.has(LiabilityCap)]
         checks["amendment: no other contract fact changed"] = bool(others) and all(f.status == "current" for f in others)
         checks["email: a CounselFact with ClosingRisk"] = has(email, ClosingRisk, cls=CounselFact)
-        checks["email: Vega's 15-day answer period is a SourceFact"] = any(
-            isinstance(f, SourceFact) and "15" in f.text for f in email)
+        # The email states the 15-day period only inside counsel's recommendation, so any fact class will do.
+        checks["email: the recommendation keeps Vega's 15-day answer period"] = any("15" in f.text for f in email)
 
         before = app.search_facts("Vega liability cap", as_of="2026-06-01T00:00:00Z", top_k=3)
         after = app.search_facts("Vega liability cap", as_of="2027-02-01T00:00:00Z", top_k=3)

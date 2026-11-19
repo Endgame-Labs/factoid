@@ -1275,6 +1275,11 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   from the amending document and its false-change rate reads only base documents; the suites called scored once have
   been rescored; iscrag's dev scores pool its 30 tuning transcripts with the 70 unseen ones, and the README's
   one-seventh figure is the paper's; and scorecards are not committed.
+- **Eval rerun (0.1.6, 2026-11-19).** Every example suite was rerun with the review's scoring changes (decision 108).
+  Legal: facts and reranked chunks tie on the 32 as-of questions at 2k tokens, 30 each, and facts lead at 8k, 32
+  against 30; plain chunks score 19 and 31. CUAD mean AUPR fell 0.02 on the held-out and fresh contracts with the tie
+  fix. iscrag: the 70 unseen dev transcripts score as well as the 30 tuning ones (facts 0.93, 0.95, and 0.96). NBA
+  passes 11 of 11. The rerun found the resolve split-rule bug (decision 109). Numbers are in each example's README.
 - **Not built yet:** sources (`imap`, `mcp`), `factoid setup`, fact-class trust and visibility, entity
   `merge`, `split`, and `retype` commands, and fingerprint-driven `rebuild`.
 - **`situate`:** the setting `situate = True` runs the built-in step (`situate_chunk`); a method named `situate` on a
@@ -1619,3 +1624,27 @@ All dates are 2026-11-13 unless noted.
      model floors under a `DecisionFloors` subclass, the open-contradiction count, the sample eval, the CUAD held-out
      slices, and the diligence checks. Changes to how the example evals compare and report (reranking both arms, held-
      out reuse, and iscrag's split) wait for Kyle. (Kyle, 2026-11-19)
+108. 0.1.6 reruns every example eval after Neon's review (Kyle: "rerun the evals"). The legal as-of questions gain a
+     reranked-chunks arm, the fair comparison, since facts are reranked: facts and reranked chunks tie at 2k tokens
+     (30 of 32 each), and facts lead at 8k (32 against 30). Amendment recall counts only a fact quoting the labeled new
+     clause, false changes read every document, the fresh and SEC chains are called held out from tuning rather than
+     unseen, iscrag's dev scores its 30 tuning and 70 unseen transcripts apart, and scorecards are committed under
+     each example's `scorecards/`, without rejected-fact samples where those quote data that cannot be shared.
+     (Kyle, 2026-11-19)
+109. Resolve's split rule (sure of the same claim, unsure of the change, later and from another document: supersede)
+     needs at least `resolve_split_floor` (0.2) on "supersedes". A counsel email's restatement scored duplicate 0.78
+     and supersedes 0.00, and ended a contract clause still in force. The case the rule was written for scored 0.32.
+     No amendment supersession was lost. (Issue #4, 2026-11-19)
+110. Decisions on a downstream app's findings (issues #2 to #21, filed 2026-11-19):
+     - Re-saving a changed document retires old facts only after the new extraction succeeds. A fact the new revision
+       no longer states gets a new status, `replaced`, apart from a person's `retracted`, and the old text is kept as a
+       revision so old quotes still resolve. The decision model judges which old facts the new revision still states,
+       changes, or drops; an exact match is the free first pass. (Kyle, issue #3)
+     - Factoid can follow an outside system of record for entities: upsert by key, and merge and split that update
+       mentions and the index, after a near-miss linking eval. Factoid's entities stay optional: an app may run its
+       own linking and never use them, and the docs say so. (Kyle, issue #11)
+     - A `context` mention role carries what a document is about (an account, a deal, a case) onto each of its facts,
+       from a document hook, by key, with no model call. (Kyle, issue #9)
+     - Many apps in one process are supported, with lookups scoped to each app (issue #2). The call log gets a setting
+       to keep no bodies now; a mode with no stored document text comes later (issue #10). Passages and quotes get a
+       general `attrs` dict, and decision 36 (no sides in v1) stands (issue #18).

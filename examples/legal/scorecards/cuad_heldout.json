@@ -1,0 +1,307 @@
+{
+  "suite": "cuad_heldout",
+  "variant": "default",
+  "overrides": {},
+  "documents": 20,
+  "facts": 2500,
+  "rejected": 110,
+  "rejected_by_reason": {
+    "decision_floors.grounded": 35,
+    "decision_floors.useful": 29,
+    "validate: cites no passage": 27,
+    "decision_floors.attribution": 15,
+    "validate: too long for one fact": 15,
+    "decision_floors.atomic": 3
+  },
+  "metrics": {
+    "overall": {
+      "precision": 0.72,
+      "recall": 0.973,
+      "f1": 0.8276,
+      "tp": 108,
+      "fp": 42,
+      "fn": 3,
+      "mean_aupr": 0.9497,
+      "span_recall": 0.8648,
+      "span_jaccard_recall": 0.8197,
+      "span_precision": 0.404,
+      "coverage": 0.9672
+    },
+    "time": {
+      "Agreement Date": {
+        "field": "valid_from",
+        "contracts": 18,
+        "captured": 0.833
+      },
+      "Effective Date": {
+        "field": "valid_from",
+        "contracts": 12,
+        "captured": 0.833
+      },
+      "Expiration Date": {
+        "field": "valid_until",
+        "contracts": 5,
+        "captured": 1.0
+      }
+    },
+    "traits": {
+      "change_of_control": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6667,
+        "aupr": 0.9464,
+        "p_at_r80": 0.875,
+        "span_recall": 1.0,
+        "span_precision": 0.36,
+        "coverage": 1.0,
+        "positives": 7
+      },
+      "assignment_restriction": {
+        "precision": 0.9286,
+        "recall": 0.8667,
+        "f1": 0.8966,
+        "aupr": 0.9843,
+        "p_at_r80": 1.0,
+        "span_recall": 0.828,
+        "span_precision": 0.575,
+        "coverage": 1.0,
+        "positives": 15
+      },
+      "liability_cap": {
+        "precision": 0.5625,
+        "recall": 1.0,
+        "f1": 0.72,
+        "aupr": 0.9292,
+        "p_at_r80": 0.8,
+        "span_recall": 0.75,
+        "span_precision": 0.294,
+        "coverage": 1.0,
+        "positives": 9
+      },
+      "exclusivity": {
+        "precision": 0.7,
+        "recall": 1.0,
+        "f1": 0.8235,
+        "aupr": 0.9286,
+        "p_at_r80": 0.875,
+        "span_recall": 0.824,
+        "span_precision": 0.308,
+        "coverage": 0.882,
+        "positives": 7
+      },
+      "non_compete": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6667,
+        "aupr": 0.9,
+        "p_at_r80": 1.0,
+        "span_recall": 0.722,
+        "span_precision": 0.513,
+        "coverage": 1.0,
+        "positives": 5
+      },
+      "termination_for_convenience": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6667,
+        "aupr": 0.8333,
+        "p_at_r80": 0.6667,
+        "span_recall": 1.0,
+        "span_precision": 0.364,
+        "coverage": 1.0,
+        "positives": 4
+      },
+      "governing_law": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "aupr": 1.0,
+        "p_at_r80": 1.0,
+        "span_recall": 1.0,
+        "span_precision": 0.905,
+        "coverage": 1.0,
+        "positives": 18
+      },
+      "audit_rights": {
+        "precision": 0.875,
+        "recall": 0.875,
+        "f1": 0.875,
+        "aupr": 0.9519,
+        "p_at_r80": 1.0,
+        "span_recall": 0.857,
+        "span_precision": 0.5,
+        "coverage": 0.857,
+        "positives": 8
+      },
+      "insurance": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "aupr": 1.0,
+        "p_at_r80": 1.0,
+        "span_recall": 0.929,
+        "span_precision": 0.824,
+        "coverage": 1.0,
+        "positives": 6
+      },
+      "minimum_commitment": {
+        "precision": 0.8571,
+        "recall": 1.0,
+        "f1": 0.9231,
+        "aupr": 0.9524,
+        "p_at_r80": 0.8571,
+        "span_recall": 0.8,
+        "span_precision": 0.405,
+        "coverage": 0.933,
+        "positives": 6
+      },
+      "license_grant": {
+        "precision": 0.7857,
+        "recall": 1.0,
+        "f1": 0.88,
+        "aupr": 0.986,
+        "p_at_r80": 1.0,
+        "span_recall": 0.886,
+        "span_precision": 0.281,
+        "coverage": 0.943,
+        "positives": 11
+      },
+      "ip_ownership_assignment": {
+        "precision": 0.3846,
+        "recall": 1.0,
+        "f1": 0.5556,
+        "aupr": 0.8833,
+        "p_at_r80": 1.0,
+        "span_recall": 1.0,
+        "span_precision": 0.372,
+        "coverage": 1.0,
+        "positives": 5
+      },
+      "renewal_term": {
+        "precision": 0.7143,
+        "recall": 1.0,
+        "f1": 0.8333,
+        "aupr": 1.0,
+        "p_at_r80": 1.0,
+        "span_recall": 1.0,
+        "span_precision": 0.3,
+        "coverage": 1.0,
+        "positives": 5
+      },
+      "revenue_sharing": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "aupr": 1.0,
+        "p_at_r80": 1.0,
+        "span_recall": 0.826,
+        "span_precision": 0.41,
+        "coverage": 1.0,
+        "positives": 5
+      }
+    }
+  },
+  "latency": {
+    "p50_doc_s": 53.82,
+    "p95_doc_s": 213.93
+  },
+  "usage": {
+    "by_workload": {
+      "embed": {
+        "calls": 791,
+        "cache_hits": 474,
+        "older_hits": 464,
+        "input_tokens": 27386,
+        "output_tokens": 0,
+        "seconds": 76.47439139196649,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "extract": {
+        "calls": 134,
+        "cache_hits": 134,
+        "older_hits": 134,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "choose": {
+        "calls": 9539,
+        "cache_hits": 468,
+        "older_hits": 396,
+        "input_tokens": 16008427,
+        "output_tokens": 3035638,
+        "seconds": 931.311182636302,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "repair": {
+        "calls": 822,
+        "cache_hits": 467,
+        "older_hits": 467,
+        "input_tokens": 255966,
+        "output_tokens": 69756,
+        "seconds": 997.5330753396265,
+        "cost": 0.0,
+        "priced": 0
+      }
+    },
+    "total": {
+      "calls": 11286,
+      "cache_hits": 1543,
+      "older_hits": 1461,
+      "input_tokens": 16291779,
+      "output_tokens": 3105394,
+      "seconds": 2005.318649367895,
+      "cost": 0.0
+    },
+    "wall_seconds": 412.51
+  },
+  "rejected_samples": {
+    "validate: cites no passage": [
+      "Under the Cooperation Agreement between HPIL ET and GINARES, the term of the agreement is one year unless terminated earlier in accordance with its terms.",
+      "Under the Cooperation Agreement between HPIL ET and GINARES, the parties are working cooperatively to develop and expand the GINARES projects.",
+      "Under the Cooperation Agreement between HPIL ET and GINARES, the parties agree to develop a list of target cooperation projects and common goals, and consequent agreements if required, within six months of signing the agreement.",
+      "Under the Cooperation Agreement between HPIL ET and GINARES, GINARES agrees that the sole and exclusive remedy for money damages related to the Cooperation Agreement and the transactions contemplated by it shall be the rights to indemnification set forth in Section 9 of the Cooperation Agreement.",
+      "Under the Cooperation Agreement between GINARES GROUP AG and HPIL ENERGYTECH Inc., all terms and provisions of the agreement by or for the benefit of the parties are binding upon and inure to the benefit of their successors, assigns, heirs and personal representatives."
+    ],
+    "decision_floors.grounded": [
+      "Under the Cooperation Agreement, HPIL ENERGYTECH Inc. and GINARES GROUP AG agree to develop a list of target cooperation projects and common goals, and consequent agreements if required, within six (6) months of signing the agreement, i.e. by July 5, 2015.",
+      "Under the Cooperation Agreement between HPIL ET and GINARES, the Parties represent regarding the antiboycott prohibitions contained in 50 U.S.C. Sections 2401 et seq. and Section 999 of the Internal Revenue Code of 1986, as amended.",
+      "Under the Promotion Agreement between Dova Pharmaceuticals Inc. and Valeant, [***], neither Dova nor its Affiliates shall, directly or indirectly, [***].",
+      "Under the Promotion Agreement between Dova Pharmaceuticals Inc. and Valeant, the non-competition restriction in Section 2.3.1(b) does not apply to any products marketed, promoted, detailed, offered for sale, or sold by any business (or any portion thereof), other Person, or group of Persons, [***].",
+      "Under the Promotion Agreement between Dova and Valeant, a copy of notices to Valeant must be sent to a recipient whose details are redacted as XXXXXXXX, Attention: XXXXXXXX, Fax: XXXXXXXX, Email: XXXXXXXX."
+    ],
+    "decision_floors.attribution": [
+      "Under the Cooperation Agreement between HPIL ET and GINARES, the Parties represent regarding the antiboycott prohibitions contained in 50 U.S.C. Sections 2401 et seq. and Section 999 of the Internal Revenue Code of 1986, as amended.",
+      "Under the Promotion Agreement between Dova Pharmaceuticals Inc. and Valeant, [***], neither Dova nor its Affiliates shall, directly or indirectly, [***].",
+      "Under the Endorsement Agreement between Square Two Golf Inc. and Kathy Whitworth, Kathy Whitworth grants Square Two Golf Inc. the exclusive and worldwide right to use her name, likeness, image and personal identification during the Term and for six months after the Term, in the creation of two print advertisements per year and one television advertisement per year for any golf equipment, along with all rights in any images, videos, advertisement copy or other materials created by her or others.",
+      "Under new Section 2.1(d) of the Manufacturing and Supply Agreement, Columbia may subcontract all or any part of its activities under the agreement to any subcontractor without the consent of Fleet.",
+      "Under the Amend No. 2 to Manufacturing and Supply Agreement between Columbia Laboratories (Bermuda) Ltd. and Fleet, Section 13.2 (Assignment) of the Existing Agreement is deleted and replaced with a provision that neither party shall, without the prior written consent (not to be unreasonably withheld or delayed) of the other party, assign or transfer the agreement to any person or entity, in whole or in part, and any attempt to do so shall be void."
+    ],
+    "decision_floors.useful": [
+      "Under the Cooperation Agreement between GINARES GROUP AG and HPIL ENERGYTECH Inc., captions to sections and subsections have been included solely for convenient reference and are entirely without substantive effect.",
+      "Portions of the Promotion Agreement exhibit filed by Dova Pharmaceuticals Inc. are subject to a confidential treatment request, and omissions in the filed copy are designated [***].",
+      "Under the Co-Promotion Agreement between Dova and Valeant, the captions to Articles, Sections and subsections are not part of the Agreement and are only for convenience.",
+      "Under the Co-Promotion Agreement between Dova and Valeant, each party has had the opportunity to consult with counsel in connection with the review, drafting and negotiation of the Agreement.",
+      "Under the Co-Promotion Agreement between Dova and Valeant, references to an Article, Section, subsection, paragraph, clause or Exhibit are references to those of the Agreement unless otherwise indicated."
+    ],
+    "validate: too long for one fact": [
+      "Under the Promotion Agreement between Dova Pharmaceuticals Inc. and Valeant, \"Applicable Laws\" means all applicable statutes, ordinances, regulations, codes, rules, or orders of any Governmental Authority in the Territory pertaining to the activities and obligations contemplated by the Promotion Agreement, including as applicable the Act, the Generic Drug Enforcement Act of 1992 (21 U.S.C. \u00a7 335a et seq.), the Anti-Kickback Statute (42 U.S.C. \u00a7 1320a-7b et seq.), the Health Insurance Portability and Accountability Act of 1996, the Federal False Claims Act (31 U.S.C. \u00a7\u00a7 3729-3733) and applicable state false claims acts, the Physician Payments Sunshine Act, the Code, the Department of Health and Human Services Office of Inspector General Compliance Program Guidance for Pharmaceutical Manufacturers released April 2003, the Antifraud and Abuse Amendment to the Social Security Act, the American Medical Association guidelines on gifts to physicians, generally accepted standards of good clinical practices adopted by current FDA regulations, and any state laws and regulations impacting the promotion of pharmaceutical products, governing the provision of meals and other gifts to medical professionals including pharmacists, or governing consumer protection and deceptive trade practices including state anti-kickback/fraud and abuse related laws, all as amended from time to time.",
+      "Under the Promotion Agreement between Dova Pharmaceuticals Inc. and Valeant, Valeant has the right, at its own expense, during normal business hours and upon reasonable prior notice, through a certified public accounting firm or other auditor selected by Valeant and reasonably acceptable to Dova and upon execution of a confidentiality agreement reasonably satisfactory to Dova, to inspect and audit Dova's records and books, including records of Net Sales of Dova or any Affiliate, to verify Dova's payment obligations and confirm the accuracy and completeness of such records and all payments, provided that such examination shall not occur more often than once per every twelve months during the Term and once during the one-year period following the end of the Term, shall not cover a previously audited period, and Valeant may conduct additional for-cause audits to address significant problems relating to Dova's payment obligations.",
+      "Under the Promotion Agreement between Dova Pharmaceuticals Inc. and Valeant, Dova has the right, at its own expense, during normal business hours and upon reasonable prior notice, through a certified public accounting firm or other auditor selected by Dova and reasonably acceptable to Valeant and upon execution of a confidentiality agreement reasonably satisfactory to Valeant, to inspect and audit Valeant's records and books relating to the Valeant Activities to verify Valeant's compliance with the Agreement, provided that such examination shall not occur more often than once per every twelve months during the Term and once during the one-year period following the end of the Term, shall not cover a previously audited period, and Dova may conduct additional for-cause audits to address significant compliance problems relating to Valeant's obligations or in response to any inquiry, inspection, investigation or other requirements of a Government Authority in the Territory relating to the Valeant Activities.",
+      "Under the Promotion Agreement between Dova Pharmaceuticals Inc. and Valeant, Dova shall defend, indemnify and hold harmless Valeant and its Affiliates and its and their respective officers, directors, employees, agents, representatives, successors and assigns from and against all Claims and associated Losses to the extent resulting from or arising out of (a) any misrepresentation or breach of any representations, warranties, agreements or covenants of Dova under the Promotion Agreement, (b) the negligence, willful misconduct or violation of Applicable Laws by Dova or its Affiliates or their respective officers, directors, employees, agents or representatives, (c) the infringement of the intellectual property rights of any Third Party in connection with the Product, including from the use of the Dova Trademarks and Copyrights on Product Labeling or Product Materials in accordance with the Promotion Agreement, (d) death or personal injury to any person related to use of the Product, or (e) the failure to comply with Applicable Laws by the Specialty Pharmacies, applicable reimbursement hub or any 501(c)(3) charitable foundation used in connection with the Product, except to the extent such Claims and Losses are caused by an item for which Valeant is obligated to indemnify Dova pursuant to Section 11.2.",
+      "Under the Amend No. 2 to Manufacturing and Supply Agreement between Fleet and Columbia, Fleet shall defend, indemnify and hold harmless Columbia, its Affiliates and their successors and permitted assigns (and their officers, directors, stockholders, partners and employees) from Damages arising from (i) any breach by Fleet or its Affiliates of its representations, warranties, covenants, agreements or obligations under the agreement, including failure to timely deliver Product ordered, failure of the Product to meet the Fleet Warranty and/or Product Specifications, or failure to manufacture or warehouse the Product in accordance with the Product Specifications and Applicable Law (including cGMP); (ii) claims of infringement or misappropriation with respect to the manufacture of the Product, except to the extent such claim relates to the use of the Intellectual Property; and (iii) personal injury or property damage to the extent directly resulting from a failure by Fleet, its Affiliates or subcontractors to manufacture, package, or label the Product in accordance with the Specifications, GMP or Applicable Law."
+    ],
+    "decision_floors.atomic": [
+      "Certain confidential portions of the exhibit to the Manufacturing and Supply Agreement between Columbia and Fleet were omitted and replaced with \"[***]\", and a complete version of the exhibit has been filed separately with the Secretary of the Securities and Exchange Commission pursuant to an application requesting confidential treatment pursuant to Rule 24b-2 promulgated under the Securities Exchange Act of 1934, as amended.",
+      "Under the Trademark License Agreement, Arconic Inc. shall execute any documents Arconic Rolled Products Corp. reasonably requests in support of registrations of the Licensed Mark, and at Arconic Rolled Products Corp.'s request shall provide use evidence, testimony, and documentation required in administrative proceedings, maintenance, and renewals involving registrations of the Licensed Mark, at Arconic Inc.'s sole expense.",
+      "Under the Sponsorship and Development Agreement between Smith and TDA, Smith acknowledges that TDA may adapt and use, and protect by any means including registration with the appropriate authorities, a trademark or trade name incorporating Smith's Likeness, and that Smith shall, until after the Term, have no right, title or interest in or to any such trademark, trade name or related goodwill."
+    ]
+  },
+  "skipped_fact_evals": {
+    "nli: no nli model is set; skipped": 2500
+  }
+}

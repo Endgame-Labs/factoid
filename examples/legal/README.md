@@ -40,6 +40,52 @@ Runs replay model calls from `.factoid/calls.db`, so a re-run of the same pipeli
 CUAD, the Contract Understanding Atticus Dataset, is CC BY 4.0: https://www.atticusprojectai.org/cuad. The scorers in
 `evals/` are our own. The documents in `sample_docs/` are made up.
 
+## Rerun (2026-11-19)
+
+Every suite ran again on 0.1.6 after a review of the evals. Three scoring rules changed:
+
+- The as-of questions are now also answered from reranked chunks. This setup uses the same 2,000-character windows,
+  reranks the best 150 hybrid matches with the app's reranker (Qwen3), and keeps the top 40. Facts were already
+  reranked this way, so reranked chunks are the fair comparison. Plain chunks stay as the common setup.
+- A supersession counts only when the fact replacing the old clause quotes the labeled new clause. The earlier count
+  also accepted any fact from the amending document. It appears in brackets where it differs.
+- False changes are counted over every document in a chain, not only the base agreement.
+
+The NEON, fresh, and SEC chains were labeled before any run. Since then, they have been scored after several changes,
+and their misses were read to find bugs. They are held out from tuning, not unseen.
+
+| Questions answered with the terms in force (32) | 2k tokens | 8k tokens |
+| --- | --- | --- |
+| Facts | 30 | 32 |
+| Chunks, reranked | 30 | 30 |
+| Chunks | 19 | 31 |
+| Answered with outdated terms: facts, reranked chunks, chunks | 2, 0, 2 | 0, 0, 1 |
+
+Against reranked chunks, facts tie at 2k tokens and lead by two at 8k. The earlier claim that facts win at the small
+budget holds only against plain chunks. Reranking moves chunks from 19 to 30 at 2k.
+
+| Amendment chains | Tuning | NEON | Fresh | SEC |
+| --- | --- | --- | --- | --- |
+| Supersessions found | 2/2 | 1/2 (2/2) | 3/4 | 3/4 |
+| Untouched clauses kept | 4/4 | 1/1 | 2/2 | 2/2 |
+| As-of search | 4/4 | 6/6 | 9/11 | 10/11 |
+| False changes, all documents | 1.4% | 5.4% | 2.9% | 0.8% |
+
+| CUAD | 1 to 20 (tuning) | 21 to 40 (held out) | 41 to 60 (fresh) |
+| --- | --- | --- | --- |
+| Clause detection (F1, mean AUPR) | 0.81, 0.97 | 0.83, 0.95 | 0.81, 0.93 |
+| Gold clauses quoted by a kept fact | 0.97 | 0.97 | 0.98 |
+| Gold clauses quoted by a fact with the right trait | 0.84 | 0.86 | 0.82 |
+| Dates: agreement, effective, expiration | 16/18, 13/14, 8/9 | 15/18, 10/12, 5/5 | 15/18, 7/7, 2/2 |
+
+Mean AUPR fell by 0.02 on the held-out and fresh contracts because tied scores now make one point on the curve. The
+earlier figures were a little high.
+
+The sample deal passes 15 of 15. The rerun found a bug there: a counsel email's restatement of the change-of-control
+clause superseded the contract's own clause. The decision model scored the pair as a duplicate at 0.78, just under the
+0.8 bar, and put no weight on a change. A fallback rule turned that into a supersession. The rule now needs some weight
+on "supersedes" ([issue #4](https://github.com/Endgame-Labs/factoid/issues/4)). The scorecards are in `scorecards/`.
+
 ## Results (2026-11-15)
 
 Jev for decisions, GLM 5.3 Flash for extraction, Qwen3 embeddings, and the Qwen3 reranker. Floors, thresholds, and
@@ -66,7 +112,7 @@ no longer a clean held-out set.
 The sample deal (diligence suite) passes 15 of 15, including the data room's contract register, a CSV read as a
 structured document.
 
-| SEC chains (Tyson, Furniture Brands, Life Sciences Research) | Result, scored once |
+| SEC chains (Tyson, Furniture Brands, Life Sciences Research) | Result |
 | --- | --- |
 | Supersessions found | 4/4 |
 | Untouched clauses kept | 2/2 |
@@ -77,8 +123,9 @@ structured document.
 The SEC chains are credit agreements from public EDGAR exhibits (the MIT-licensed SEC_Exhibit_10 dataset), labeled
 from the text in commit cfd823f before any run, and kept out of every tuning step.
 
-The fresh chains were labeled from the contract text before any run (commit "Fresh amendment suite") and scored
-once. They are the honest measure for amendments. Their misses: a base clause never kept as a fact (ScanSource's
+The fresh chains were labeled from the contract text before any run (commit "Fresh amendment suite") and first
+scored here. They have been rescored after later changes since, so they are held out from tuning, not unseen. Their
+misses: a base clause never kept as a fact (ScanSource's
 inventory claim window), a section deleted and replaced with fully redacted text (PC Quote), and one as-of question.
 
 Two choices made while looking at NEON were tested on the fresh chains and turned off: retiring the facts of a section
@@ -103,7 +150,8 @@ text before any run, including five paraphrases that avoid the contract's own wo
 | All (36) | 33 | 34 | 20 | 33 |
 | Answered with the outdated terms | 1 | 1 | 4 | 2 |
 
-Facts win at the small budget, where chunks have room for about four windows and often miss the clause. At 8k tokens
+Facts win at the small budget against plain chunks, which have room for about four windows and often miss the
+clause. Reranked chunks, added in the 2026-11-19 rerun, tie facts there. At 8k tokens
 chunks catch up, 33 against 34, and still give outdated terms more often. The 17 first questions overstated the 8k gap
 (16 against 15). These numbers are after two search changes of 2026-11-16 (a wider rerank pool, and full validity for a
 replaced fact until it was replaced; see SPEC section 17).

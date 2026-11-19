@@ -1,0 +1,196 @@
+{
+  "suite": "dev",
+  "variant": "default",
+  "overrides": {},
+  "documents": 100,
+  "facts": 6646,
+  "rejected": 234,
+  "rejected_by_reason": {
+    "decision_floors.useful": 148,
+    "decision_floors.grounded": 76,
+    "decision_floors.attribution": 36,
+    "decision_floors.atomic": 24,
+    "decision_floors.self_contained": 3,
+    "validate: cites no passage": 1
+  },
+  "metrics": {
+    "splits": {
+      "tuning": {
+        "questions": 60,
+        "facts@512": 0.9,
+        "facts@2048": 0.95,
+        "facts@8192": 0.95,
+        "chunks@512": 0.55,
+        "chunks@2048": 0.8833,
+        "chunks@8192": 0.95
+      },
+      "unseen": {
+        "questions": 140,
+        "facts@512": 0.9286,
+        "facts@2048": 0.95,
+        "facts@8192": 0.9571,
+        "chunks@512": 0.5786,
+        "chunks@2048": 0.8643,
+        "chunks@8192": 0.9429
+      }
+    },
+    "surname_only_facts": 0.0646,
+    "facts_per_document": 66.5,
+    "cells": {
+      "facts@512": {
+        "accuracy": 0.92,
+        "correct": 184,
+        "questions": 200,
+        "mean_read_tokens": 470
+      },
+      "facts@2048": {
+        "accuracy": 0.95,
+        "correct": 190,
+        "questions": 200,
+        "mean_read_tokens": 2002
+      },
+      "facts@8192": {
+        "accuracy": 0.955,
+        "correct": 191,
+        "questions": 200,
+        "mean_read_tokens": 8144
+      },
+      "chunks@512": {
+        "accuracy": 0.57,
+        "correct": 114,
+        "questions": 200,
+        "mean_read_tokens": 483
+      },
+      "chunks@2048": {
+        "accuracy": 0.87,
+        "correct": 174,
+        "questions": 200,
+        "mean_read_tokens": 1672
+      },
+      "chunks@8192": {
+        "accuracy": 0.945,
+        "correct": 189,
+        "questions": 200,
+        "mean_read_tokens": 7774
+      }
+    },
+    "mcnemar_facts_vs_chunks": {
+      "512": {
+        "facts_only": 75,
+        "chunks_only": 5,
+        "p": 0.0
+      },
+      "2048": {
+        "facts_only": 25,
+        "chunks_only": 9,
+        "p": 0.009041
+      },
+      "8192": {
+        "facts_only": 10,
+        "chunks_only": 8,
+        "p": 0.814529
+      }
+    },
+    "by_question_type_at_2048": {
+      "direct_control": {
+        "facts@2048": 0.975,
+        "chunks@2048": 0.85
+      },
+      "pronoun_coreference": {
+        "facts@2048": 0.975,
+        "chunks@2048": 0.775
+      },
+      "attribution": {
+        "facts@2048": 0.925,
+        "chunks@2048": 0.825
+      },
+      "decontextualization": {
+        "facts@2048": 0.95,
+        "chunks@2048": 0.95
+      },
+      "opinion_belief_judgment": {
+        "facts@2048": 0.925,
+        "chunks@2048": 0.95
+      }
+    },
+    "facts_stored": {
+      "contradicted": 63,
+      "corrected": 2,
+      "current": 6569,
+      "ended": 3,
+      "superseded": 9
+    },
+    "entities": 1575
+  },
+  "latency": {
+    "p50_doc_s": 54.14,
+    "p95_doc_s": 196.67
+  },
+  "usage": {
+    "by_workload": {
+      "embed": {
+        "calls": 3175,
+        "cache_hits": 3123,
+        "older_hits": 3119,
+        "input_tokens": 2092,
+        "output_tokens": 0,
+        "seconds": 14.046070602955297,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "extract": {
+        "calls": 260,
+        "cache_hits": 260,
+        "older_hits": 260,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "choose": {
+        "calls": 27255,
+        "cache_hits": 22607,
+        "older_hits": 22570,
+        "input_tokens": 9086053,
+        "output_tokens": 1407932,
+        "seconds": 442.3822389598936,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "repair": {
+        "calls": 2402,
+        "cache_hits": 2356,
+        "older_hits": 2356,
+        "input_tokens": 33134,
+        "output_tokens": 5258,
+        "seconds": 187.39159194473177,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "generate": {
+        "calls": 2400,
+        "cache_hits": 1958,
+        "older_hits": 1956,
+        "input_tokens": 2141961,
+        "output_tokens": 13558,
+        "seconds": 1296.1659418859053,
+        "cost": 0.0,
+        "priced": 0
+      }
+    },
+    "total": {
+      "calls": 35492,
+      "cache_hits": 30304,
+      "older_hits": 30261,
+      "input_tokens": 11263240,
+      "output_tokens": 1426748,
+      "seconds": 1939.985843393486,
+      "cost": 0.0
+    },
+    "wall_seconds": 913.14
+  },
+  "skipped_fact_evals": {
+    "nli: no nli model is set; skipped": 6646
+  }
+}

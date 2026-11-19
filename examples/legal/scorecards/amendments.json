@@ -1,0 +1,306 @@
+{
+  "suite": "amendments",
+  "variant": "default",
+  "overrides": {},
+  "documents": 8,
+  "facts": 435,
+  "rejected": 15,
+  "rejected_by_reason": {
+    "decision_floors.useful": 7,
+    "validate: cites no passage": 4,
+    "decision_floors.grounded": 2,
+    "decision_floors.distinct": 2,
+    "decision_floors.attribution": 1
+  },
+  "metrics": {
+    "supersede_recall": 1.0,
+    "supersede_recall_any": 1.0,
+    "unchanged_kept": 1.0,
+    "false_change_rate": 0.014,
+    "false_changes": [
+      "superseded: Under the Services Agreement between Federated Investment Management Company and Federated Advisory Services Company, employees of Federated Advisory Services C",
+      "superseded: Under the Distributor Agreement between Ingram Micro and NETGEAR, subject to the Distributor's performance of its obligations, the Distributor is appointed as a",
+      "superseded: Under the Distributor Agreement between Ingram Micro and NETGEAR, during the initial one (1) year term of the Agreement, Ingram Micro shall be the only distribu",
+      "superseded: Under the Distributor Agreement between Ingram Micro and NETGEAR, for the purposes of the exclusivity provision, a distributor means a company acquiring product",
+      "contradicted: Under the Distributor Agreement between Ingram Micro and NETGEAR, NETGEAR will ship freight collect, uninsured, if so instructed by Distributor's order.",
+      "contradicted: Under the Distributor Agreement between Ingram Micro and NETGEAR, NETGEAR will not accept collect shipments."
+    ],
+    "false_change_rate_base": 0.016,
+    "as_of_accuracy": 1.0,
+    "qa_facts@2000": 1.0,
+    "qa_facts@2000_outdated": 0.0,
+    "qa_facts@8000": 1.0,
+    "qa_facts@8000_outdated": 0.0,
+    "qa_chunks@2000": 0.75,
+    "qa_chunks@2000_outdated": 0.25,
+    "qa_chunks@8000": 1.0,
+    "qa_chunks@8000_outdated": 0.0,
+    "qa_reranked@2000": 1.0,
+    "qa_reranked@2000_outdated": 0.0,
+    "qa_reranked@8000": 0.75,
+    "qa_reranked@8000_outdated": 0.0,
+    "qa_questions": 4,
+    "qa_details": [
+      {
+        "as_of": "1996-06-01",
+        "query": "In what territory may Ingram Micro distribute NETGEAR products?",
+        "facts@2000": "current",
+        "facts@2000 answer": "The United States (as of 1996-06-01, the Territory was the United States; distribution or re-export outside the Territory required NETGEAR's specific written co",
+        "facts@8000": "current",
+        "facts@8000 answer": "As of 1996-06-01, the Territory is the United States; Ingram Micro may not distribute or re-export Products outside the United States without NETGEAR's specific",
+        "chunks@2000": "current",
+        "chunks@2000 answer": "The United States. Distributor may not distribute or re-export Products outside the Territory (identified as the United States) without NETGEAR's specific writt",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "The Territory is the United States; Ingram Micro may not distribute or re-export Products outside the United States without NETGEAR's specific written consent.",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "The United States.",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "The Territory is the United States; Ingram Micro may not distribute or re-export Products outside the United States without NETGEAR's specific written consent."
+      },
+      {
+        "as_of": "1997-06-01",
+        "query": "In what territory may Ingram Micro distribute NETGEAR products?",
+        "facts@2000": "current",
+        "facts@2000 answer": "The United States and [*].",
+        "facts@8000": "current",
+        "facts@8000 answer": "As of 1997-06-01, the Territory is the United States and [*], per the Amendment in force from 1996-10-01, which amended Section 2 of the Distributor Agreement t",
+        "chunks@2000": "current",
+        "chunks@2000 answer": "As of 1997-06-01, the Territory is the United States and [*] (the additional region added by the October 1, 1996 amendment; the specific additional territory is",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "As of 1997-06-01, the Territory is the United States and [*] (an additional territory redacted as confidential under the October 1, 1996 Amendment).",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "As of 1997-06-01, the Territory under the Agreement (as amended effective October 1, 1996) is the United States and [*] (an additional territory that is redacte",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "As amended effective October 1, 1996, the Territory is the United States and [*] (an additional territory redacted as confidential in the sources)."
+      },
+      {
+        "as_of": "2000-01-01",
+        "query": "In what territory may Ingram Micro distribute NETGEAR products?",
+        "facts@2000": "current",
+        "facts@2000 answer": "United States",
+        "facts@8000": "current",
+        "facts@8000 answer": "As of 2000-01-01, the Territory under Amendment #2 (in force from 1998-07-15) is the United States, [*].",
+        "chunks@2000": "outdated",
+        "chunks@2000 answer": "The Territory is the United States and [*] (an additional region redacted in the sources), as amended effective October 1, 1996. Distributor may not distribute ",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "As of 2000-01-01, the Territory is the United States plus an additional region added by Amendment #2 (1998-07-15), which is redacted in the sources ([*]); the o",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "The Territory is the United States and [*] (the redacted additional territory), per Amendment #2 (1998-07-15), which amended Section 2 to be 'United States, [*]",
+        "reranked@8000": "neither",
+        "reranked@8000 answer": "Insufficient source evidence."
+      },
+      {
+        "as_of": "1997-06-01",
+        "query": "Where is Ingram Micro allowed to resell NETGEAR gear?",
+        "facts@2000": "current",
+        "facts@2000 answer": "As of 1997-06-01, the Territory under the amended Distributor Agreement is the United States and [*].",
+        "facts@8000": "current",
+        "facts@8000 answer": "The Territory is the United States and [*] (per the Amendment in force from 1996-10-01, which amended Section 2 of the Distributor Agreement).",
+        "chunks@2000": "current",
+        "chunks@2000 answer": "Under the October 1, 1996 amendment, Ingram Micro may resell NETGEAR products within the Territory, which was amended to be the United States and Canada (the sp",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "As of June 1, 1997, Ingram Micro may resell NETGEAR products only within the Territory defined in the Agreement as amended effective October 1, 1996: the United",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "As of 1997-06-01, the Territory under the Agreement (as amended effective October 1, 1996) is the United States plus an additional territory that is redacted in",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "As of 1997-06-01, the Territory under the Agreement (as amended effective October 1, 1996) is the United States plus an additional territory that is redacted in"
+      }
+    ],
+    "time_captured": 1.0,
+    "details": [
+      {
+        "supersedes": "outside of the Territory identified herein as the United States",
+        "ok": true,
+        "any_fact": true,
+        "old_facts": 1,
+        "new_facts": 1
+      },
+      {
+        "supersedes": "is amended to be the United States and [*]",
+        "ok": true,
+        "any_fact": true,
+        "old_facts": 1,
+        "new_facts": 1
+      },
+      {
+        "unchanged": "governed by the laws of the State of California",
+        "ok": true,
+        "facts": 2,
+        "statuses": [
+          "current",
+          "current"
+        ]
+      },
+      {
+        "unchanged": "may be canceled at any time without cause, by either party upon ninety (90) days",
+        "ok": true,
+        "facts": 1,
+        "statuses": [
+          "current"
+        ]
+      },
+      {
+        "unchanged": "responsible for data integrity, creation of attribution reports",
+        "ok": true,
+        "facts": 1,
+        "statuses": [
+          "current"
+        ]
+      },
+      {
+        "unchanged": "Cargill will make available up to [***] FTE persons per year",
+        "ok": true,
+        "facts": 2,
+        "statuses": [
+          "current",
+          "current"
+        ]
+      },
+      {
+        "as_of": "1996-06-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "as_of": "1997-06-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "as_of": "2000-01-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "as_of": "1997-06-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "time": "During the initial one year period beginning on the Amendment Date",
+        "ok": true,
+        "values": [
+          "1997-10-01 00:00:00+00:00"
+        ]
+      },
+      {
+        "time": "during the period of July 5, 2011, through September 30, 2011",
+        "ok": true,
+        "values": [
+          "2011-09-30 00:00:00+00:00"
+        ]
+      }
+    ]
+  },
+  "latency": {
+    "p50_doc_s": 0.81,
+    "p95_doc_s": 8.28
+  },
+  "usage": {
+    "by_workload": {
+      "embed": {
+        "calls": 157,
+        "cache_hits": 157,
+        "older_hits": 137,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "extract": {
+        "calls": 21,
+        "cache_hits": 21,
+        "older_hits": 21,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "choose": {
+        "calls": 1580,
+        "cache_hits": 1574,
+        "older_hits": 706,
+        "input_tokens": 14316,
+        "output_tokens": 2002,
+        "seconds": 0.5096772906836122,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "repair": {
+        "calls": 69,
+        "cache_hits": 69,
+        "older_hits": 44,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "rerank": {
+        "calls": 12,
+        "cache_hits": 5,
+        "older_hits": 0,
+        "input_tokens": 141617,
+        "output_tokens": 0,
+        "seconds": 7.116868915967643,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "generate": {
+        "calls": 48,
+        "cache_hits": 37,
+        "older_hits": 23,
+        "input_tokens": 22155,
+        "output_tokens": 324,
+        "seconds": 22.634906168095767,
+        "cost": 0.0,
+        "priced": 0
+      }
+    },
+    "total": {
+      "calls": 1887,
+      "cache_hits": 1863,
+      "older_hits": 931,
+      "input_tokens": 178088,
+      "output_tokens": 2326,
+      "seconds": 30.261452374747023,
+      "cost": 0.0
+    },
+    "wall_seconds": 17.19
+  },
+  "rejected_samples": {
+    "decision_floors.useful": [
+      "Portions of the Distributor Agreement between Ingram Micro and NETGEAR denoted with an asterisk have been omitted and filed separately with the Securities and Exchange Commission pursuant to a request for confidential treatment.",
+      "Under the Distributor Agreement between Ingram Micro and NETGEAR, each party acknowledges that it has read the agreement together with the attached exhibit, understands it, and agrees to be bound by its terms and conditions.",
+      "Portions of the Amendment to the Distributor Agreement between NETGEAR, Inc. and Ingram Micro denoted with an asterisk have been omitted and filed separately with the Securities and Exchange Commission pursuant to a request for confidential treatment.",
+      "Under the Services Agreement between Federated Investment Management Company and Federated Advisory Services Company, the Agreement may be executed in one or more counterparts, each of which is deemed an original copy and all of which together constitute one and the same agreement.",
+      "Under the Services Agreement between Federated Investment Management Company and Federated Advisory Services Company, the underlined section headings are for convenience of reference only and do not affect the Agreement's construction or interpretation."
+    ],
+    "decision_floors.grounded": [
+      "Under the Distributor Agreement between Ingram Micro and NETGEAR, the monthly inventory report may be submitted via BBS and shall include, at a minimum, the part number and the number of units and purchase value of the inventory remaining by Product.",
+      "Under the Development Agreement between Cargill and BioAmber, the additional up-front fee for the Alternative Feedstock option is [***]."
+    ],
+    "decision_floors.attribution": [
+      "Under the Distributor Agreement between Ingram Micro and NETGEAR, the monthly inventory report may be submitted via BBS and shall include, at a minimum, the part number and the number of units and purchase value of the inventory remaining by Product."
+    ],
+    "decision_floors.distinct": [
+      "NETGEAR, Inc. is a wholly owned subsidiary of Bay Networks, Inc.",
+      "Federated Investment Management Company and Federated Advisory Services Company entered into an Amendment to the Services Agreement dated as of March 30, 2009, under which, solely with respect to Accounts that are not investment companies registered under the 1940 Act, Federated Advisory Services Company may provide coordination of client portfolios and related fixed income trade execution implementation and administration services to Federated Investment Management Company when Federated Investment Management Company is acting as adviser or sub-adviser with respect to such Accounts."
+    ],
+    "validate: cites no passage": [
+      "Under the Development Agreement between Cargill and BioAmber, Milestone 1 of the Work Plan has a time to achieve of Month 12.",
+      "Under the Development Agreement between Cargill and BioAmber, Milestone 2 of the Work Plan has a time to achieve of Month 30.",
+      "Under the Development Agreement between Cargill and BioAmber, Milestone 3 of the Work Plan has a time to achieve of Month 42.",
+      "The Development Agreement between Cargill and BioAmber was signed by Jack Staboch, VP BioTDC, for Cargill, Incorporated Bio Technology Development Center, dated April 16, 2010, and by Jean-Fran\u00e7ois Huc, Director General, for BioAmber S.A.S., dated April 15, 2010."
+    ]
+  },
+  "skipped_fact_evals": {
+    "nli: no nli model is set; skipped": 435
+  }
+}

@@ -1,0 +1,312 @@
+{
+  "suite": "amendments_heldout",
+  "variant": "default",
+  "overrides": {},
+  "documents": 2,
+  "facts": 241,
+  "rejected": 11,
+  "rejected_by_reason": {
+    "decision_floors.grounded": 6,
+    "decision_floors.attribution": 4,
+    "decision_floors.useful": 2,
+    "validate: too long for one fact": 1,
+    "decision_floors.distinct": 1
+  },
+  "metrics": {
+    "supersede_recall": 0.5,
+    "supersede_recall_any": 1.0,
+    "unchanged_kept": 1.0,
+    "false_change_rate": 0.054,
+    "false_changes": [
+      "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and Neon Systems, Inc., Peregrine/Bridge Transfer Corporation grants Neon Systems,",
+      "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, the Licensee shall pay the Licensor a fee equal to 50% of all re",
+      "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, all fees due to the Licensor shall be paid in U.S. Dollars.",
+      "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, fees due to NEON Systems from invoices rendered on or after the ",
+      "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, fees due to the Licensor from invoices rendered after the eighte",
+      "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, any amount not paid when due bears simple interest from the date",
+      "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, dated January 1, 1996, the agreement is effective until the earl",
+      "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, either party may terminate the agreement immediately upon writte"
+    ],
+    "false_change_rate_base": 0.06,
+    "as_of_accuracy": 1.0,
+    "qa_facts@2000": 0.833,
+    "qa_facts@2000_outdated": 0.167,
+    "qa_facts@8000": 1.0,
+    "qa_facts@8000_outdated": 0.0,
+    "qa_chunks@2000": 0.833,
+    "qa_chunks@2000_outdated": 0.0,
+    "qa_chunks@8000": 1.0,
+    "qa_chunks@8000_outdated": 0.0,
+    "qa_reranked@2000": 1.0,
+    "qa_reranked@2000_outdated": 0.0,
+    "qa_reranked@8000": 1.0,
+    "qa_reranked@8000_outdated": 0.0,
+    "qa_questions": 6,
+    "qa_details": [
+      {
+        "as_of": "1997-06-01",
+        "query": "How many days after the invoice must NEON Systems pay Peregrine/Bridge?",
+        "facts@2000": "outdated",
+        "facts@2000 answer": "60 days",
+        "facts@8000": "current",
+        "facts@8000 answer": "90 days. On June 1, 1997 (the first day of the 18th month of the term), fees due to NEON Systems from invoices rendered on or after the first day of the 13th mo",
+        "chunks@2000": "current",
+        "chunks@2000 answer": "90 days. As of June 1997 (the 18th month of the term), invoices were payable ninety (90) days after the invoice date under Section 3.2.",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "90 days. As of June 1, 1997 (the last day of the 18th month of the term), invoices rendered on or after the first day of the 13th month through the last day of ",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "90 days. As of June 1, 1997 (the last day of the 18th month of the term), invoices rendered during months 13 through 18 are payable 90 days after the invoice da",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "90 days. As of June 1, 1997 (the 18th month of the term), invoices were payable ninety (90) days after the invoice date under Section 3.2."
+      },
+      {
+        "as_of": "2000-01-01",
+        "query": "How many days after the invoice must NEON Systems pay Peregrine/Bridge?",
+        "facts@2000": "current",
+        "facts@2000 answer": "Sixty (60) days after the date of the applicable invoice (or, if later, five business days after NEON Systems' receipt of payment from the Redistributor or Cust",
+        "facts@8000": "current",
+        "facts@8000 answer": "Sixty (60) days after the date of the applicable invoice, or five (5) business days following NEON Systems' receipt of payment from that Redistributor or Custom",
+        "chunks@2000": "current",
+        "chunks@2000 answer": "Under the First Amendment (in force on 2000-01-01), royalty payments are due on the later of (i) sixty (60) days after the date of the applicable invoice to a R",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "Under the First Amendment (in force on 2000-01-01), royalty payments are due on the later of (i) sixty (60) days after the date of the applicable invoice to a R",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "Under the First Amendment (in force on 2000-01-01), royalty payments are due on the later of (i) sixty (60) days after the date of the applicable invoice to a R",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "Under the First Amendment (in force on 2000-01-01), royalty payments are due on the later of (i) sixty (60) days after the date of the applicable invoice to a R"
+      },
+      {
+        "as_of": "1997-06-01",
+        "query": "What royalty does NEON Systems owe Peregrine/Bridge on revenue from licensed pro",
+        "facts@2000": "current",
+        "facts@2000 answer": "On 1997-06-01, the original Distributor Agreement (in force from 1996-01-01) applied: NEON Systems owed Peregrine/Bridge a licensee fee equal to 50% of all reve",
+        "facts@8000": "current",
+        "facts@8000 answer": "On 1997-06-01, the original Distributor Agreement (in force from 1996-01-01) applied: NEON Systems owed Peregrine/Bridge a licensee fee equal to 50% of all reve",
+        "chunks@2000": "neither",
+        "chunks@2000 answer": "Insufficient source evidence.",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "50% of all revenues received (without deduction for value added tax, but excluding maintenance/support/upgrade revenues, which are also paid at 50%) under the a",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "50% of all revenues received (excluding value added tax; maintenance/support and upgrade revenues are also 50% under Section 3.1(b)).",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "50% of all revenues received (excluding value added tax; maintenance/support and upgrade revenues are also 50% under Section 3.1(b))."
+      },
+      {
+        "as_of": "2000-01-01",
+        "query": "What royalty does NEON Systems owe Peregrine/Bridge on revenue from licensed pro",
+        "facts@2000": "current",
+        "facts@2000 answer": "As of 2000-01-01, NEON Systems owes Peregrine/Bridge a royalty equal to the Specified Royalty Percentage (50%) of all revenues received for each Licensed Produc",
+        "facts@8000": "current",
+        "facts@8000 answer": "As of January 1, 2000 (during NEON Systems' fiscal year beginning April 1, 1999), NEON owes Peregrine/Bridge a royalty equal to the Specified Royalty Percentage",
+        "chunks@2000": "current",
+        "chunks@2000 answer": "Under the First Amendment (in force on 2000-01-01), NEON Systems pays Peregrine/Bridge a royalty equal to the Specified Royalty Percentage of all revenues recei",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "Under the First Amendment (in force on 2000-01-01), NEON Systems pays Peregrine/Bridge a royalty equal to the Specified Royalty Percentage of all revenues recei",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "As of 2000-01-01, NEON Systems pays Peregrine/Bridge a royalty equal to the Specified Royalty Percentage of all revenues from licensed products: 50% from the st",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "Under the First Amendment (in force on 2000-01-01), NEON pays Peregrine/Bridge a royalty equal to the Specified Royalty Percentage of all revenues from licensed"
+      },
+      {
+        "as_of": "1997-06-01",
+        "query": "When does the term of the NEON Systems distributor agreement end?",
+        "facts@2000": "current",
+        "facts@2000 answer": "The agreement runs until the earlier of termination under Article 14 or January 1, 1998 (two years after the January 1, 1996 agreement date), renewing automatic",
+        "facts@8000": "current",
+        "facts@8000 answer": "As of June 1, 1997, the original Distributor Agreement (dated January 1, 1996) was in force, under which the term runs until the earlier of termination under Ar",
+        "chunks@2000": "current",
+        "chunks@2000 answer": "The initial term ends two years after the January 1, 1996 signing date (i.e., January 1, 1998), unless earlier terminated; it renews automatically for successiv",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "Under Section 14.1, the initial term runs two years from the January 1, 1996 signing date, so it ends December 31, 1997, unless earlier terminated; it renews au",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "The initial term ends two years after the January 1, 1996 signing date (i.e., January 1, 1998), unless earlier terminated; it renews automatically for successiv",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "Under Section 14.1, the original two-year term ends January 1, 1998, but the agreement automatically renews for successive one-year terms unless a party gives 6"
+      },
+      {
+        "as_of": "2000-01-01",
+        "query": "When does the term of the NEON Systems distributor agreement end?",
+        "facts@2000": "current",
+        "facts@2000 answer": "March 31, 2004",
+        "facts@8000": "current",
+        "facts@8000 answer": "March 31, 2004",
+        "chunks@2000": "current",
+        "chunks@2000 answer": "As amended by the First Amendment (1999-01-01), the term runs through and including March 31, 2004, after which it renews automatically for successive one-year ",
+        "chunks@8000": "current",
+        "chunks@8000 answer": "As amended by the First Amendment (effective January 1, 1999), the term runs through and including March 31, 2004, renewing automatically for successive one-yea",
+        "reranked@2000": "current",
+        "reranked@2000 answer": "As amended, the term runs through and including March 31, 2004, and renews automatically for successive one-year terms unless either party gives written notice ",
+        "reranked@8000": "current",
+        "reranked@8000 answer": "As amended by the First Amendment (in force on 2000-01-01), the term runs through and including March 31, 2004, with automatic one-year renewals unless either p"
+      }
+    ],
+    "time_captured": null,
+    "details": [
+      {
+        "supersedes": "a licensee fee equal to 50% of all revenues received",
+        "ok": true,
+        "any_fact": true,
+        "old_facts": 1,
+        "new_facts": 1
+      },
+      {
+        "supersedes": "during the first year of the term hereof will be payable one hundred and twenty (120) days",
+        "ok": false,
+        "any_fact": true,
+        "old_facts": 1,
+        "new_facts": 1
+      },
+      {
+        "unchanged": "Licensee represents and warrants that it has all requisite power and authority to execute",
+        "ok": true,
+        "facts": 2,
+        "statuses": [
+          "current",
+          "current"
+        ]
+      },
+      {
+        "as_of": "1997-06-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 2,
+        "stale_rank": null
+      },
+      {
+        "as_of": "2000-01-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "as_of": "1997-06-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": 2
+      },
+      {
+        "as_of": "2000-01-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "as_of": "1997-06-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      },
+      {
+        "as_of": "2000-01-01T00:00:00Z",
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
+      }
+    ]
+  },
+  "latency": {
+    "p50_doc_s": 3.48,
+    "p95_doc_s": 3.89
+  },
+  "usage": {
+    "by_workload": {
+      "embed": {
+        "calls": 61,
+        "cache_hits": 61,
+        "older_hits": 42,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "extract": {
+        "calls": 14,
+        "cache_hits": 14,
+        "older_hits": 14,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "choose": {
+        "calls": 824,
+        "cache_hits": 824,
+        "older_hits": 310,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "repair": {
+        "calls": 37,
+        "cache_hits": 37,
+        "older_hits": 14,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "rerank": {
+        "calls": 18,
+        "cache_hits": 18,
+        "older_hits": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "generate": {
+        "calls": 72,
+        "cache_hits": 72,
+        "older_hits": 27,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      }
+    },
+    "total": {
+      "calls": 1026,
+      "cache_hits": 1026,
+      "older_hits": 407,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "seconds": 0.0,
+      "cost": 0.0
+    },
+    "wall_seconds": 7.09
+  },
+  "rejected_samples": {
+    "validate: too long for one fact": [
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, the indemnified party may employ separate counsel and participate in the defense, but the fees and expenses of that counsel are not at the indemnifying party's expense if the indemnifying party has assumed the defense with counsel reasonably satisfactory to the indemnified party; the fees are at the indemnifying party's expense if the employment of counsel was specifically authorized in writing by the indemnifying party or the indemnified party was advised by counsel of a conflict of interest or of legal defenses available to the indemnified party that are not available to the indemnifying party, in which case the indemnifying party may not assume the defense, and the indemnifying party is not liable for the reasonable fees of more than one separate firm of attorneys for the indemnified party per action or group of substantially similar related actions in the same jurisdiction, with the firm designated in writing by the indemnified party."
+    ],
+    "decision_floors.grounded": [
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and Neon Systems, Inc., a \"Redistributor\" means any individual or entity that is granted a license by Neon Systems, Inc. to copy and sublicense one or more Licensed Products to Customers.",
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and Neon Systems, Inc., an \"Upgrade\" means any revision, adaptation or new version of a Licensed Product which enhances a Licensed Product and which is offered by Peregrine/Bridge Transfer Corporation to registered users of that Licensed Product as an \"upgrade.\"",
+      "Under Section 3.2 of the Distributor Agreement as amended, the aggregate outstanding Royalty Advances shall be credited against royalties payable to Peregrine/Bridge Transfer Corporation as and when such royalties are recognized as earned in accordance with generally accepted accounting principles.",
+      "Under Section 3.2 of the Distributor Agreement as amended, upon expiration or termination of the Distributor Agreement, Peregrine/Bridge Transfer Corporation shall repay to NEON Systems, Inc. the aggregate amount of all outstanding Royalty Advances.",
+      "Under the First Amendment to the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, Inc., upon exercise of the Option, NEON Systems and Peregrine/Bridge Transfer Corporation or Skunkware shall diligently and in good faith negotiate and execute a definitive purchase and sale agreement for the acquisition of all of the assets of, or outstanding capital stock in, Peregrine/Bridge Transfer Corporation."
+    ],
+    "decision_floors.attribution": [
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and Neon Systems, Inc., a \"Redistributor\" means any individual or entity that is granted a license by Neon Systems, Inc. to copy and sublicense one or more Licensed Products to Customers.",
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation (Licensor) and NEON Systems (Licensee), during the term of the agreement and the five-year period immediately following its termination, the Licensee has the right, at its own expense, to audit and examine the Licensor's records concerning the Licensor's compliance with its confidentiality obligations under the agreement.",
+      "Under Section 3.2 of the Distributor Agreement as amended, upon expiration or termination of the Distributor Agreement, Peregrine/Bridge Transfer Corporation shall repay to NEON Systems, Inc. the aggregate amount of all outstanding Royalty Advances.",
+      "Under the First Amendment to the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, Inc., the definitive purchase and sale agreement shall provide that NEON Systems may pay the purchase price in cash, in shares of its Common Stock, or in some combination thereof."
+    ],
+    "decision_floors.useful": [
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, a reference in the agreement to an Article, Section, subsection or Exhibit refers to an Article, Section, subsection or Exhibit of the agreement unless otherwise indicated.",
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, the table of contents and headings are for reference purposes only and do not affect the meaning or interpretation of the agreement."
+    ],
+    "decision_floors.distinct": [
+      "Under the First Amendment to the Distributor Agreement, Peregrine/Bridge Transfer Corporation and NEON Systems, Inc. are parties to a Distributor Agreement dated as of January 1, 1996."
+    ]
+  },
+  "skipped_fact_evals": {
+    "nli: no nli model is set; skipped": 241
+  }
+}

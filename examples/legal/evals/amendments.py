@@ -3,10 +3,14 @@
 Each chain is a base agreement and its amendments, ingested in signing order. The gold labels are ours, written by
 reading the contracts:
 
-- supersedes: a base clause an amendment replaces. Scored when the fact quoting the old clause is no longer current
-  and a fact quoting the new clause superseded or ended it.
+- supersedes: a base clause an amendment replaces. Scored (`supersede_recall`) when a fact quoting the old clause is
+  no longer current and a fact quoting the new clause superseded or ended it. `supersede_recall_any` also counts a
+  fact replaced by any fact of the amending document, since an amendment that rewrites a whole section can replace
+  the old clause with a fact of that section other than the one the label names.
 - unchanged: a clause no amendment touches. Scored when the fact quoting it is still current. This catches false
   supersession, the failure that matters most in diligence.
+- false changes: of every fact in a chain's documents that no label expects to change, the share that is not current
+  (`false_change_rate`). `false_change_rate_base` reads only the base agreements, as the first runs did.
 - as of: a search with `as_of=` must rank a fact quoting the clause in force on that date above a fact quoting the
   clause that was not.
 - time: a clause with a dated window must give its fact `valid_from` or `valid_until` in the right year.
@@ -169,8 +173,9 @@ HELD_OUT: list[dict[str, Any]] = [
 ]
 
 
-# Fresh: labeled from the contract text before any run, and scored once, after the last change to the framework and
-# the app (2026-11-15). Nothing was tuned on these. Scored by `AmendmentsFresh`.
+# Fresh: labeled from the contract text before any run, and first scored after the last change to the framework and
+# the app (2026-11-15). They have been rescored since, after later changes, and their misses were read to find bugs,
+# so they are held out from tuning, not unseen. Scored by `AmendmentsFresh`.
 FRESH: list[dict[str, Any]] = [
     {
         "name": "glu-fox",
@@ -360,24 +365,25 @@ class Amendments(Suite):
 
     def score(self, app, results) -> dict[str, Any]:
         out: dict[str, Any] = {}
-        hits = total = 0
+        hits = loose = total = 0
         details = []
         for chain in self.chains:
             for old_key, old_snip, new_key, new_snip in chain["supersedes"]:
                 total += 1
                 old = self.quoting(app, self.locate(old_key, old_snip))
                 new_ids = {f.id for f in self.quoting(app, self.locate(new_key, new_snip))}
-                # Retired by a fact from the amending document. When an amendment rewrites a whole section, the
-                # old clause can be replaced by any fact of the new section, not only the one the gold pair names.
                 new_doc = self.locate(new_key, new_snip).doc_id
-                replaced = [f for f in old if f.status in ("superseded", "ended") and any(
-                    (r["fact_id"] in new_ids or (app.load_fact(r["fact_id"]) or f).document_id == new_doc)
-                    for r in app.store.relations(f.id)
-                    if r["relation"] in ("supersedes", "ends") and r["other_id"] == f.id)]
-                ok = bool(replaced)
+                replacers = [(f, r["fact_id"]) for f in old if f.status in ("superseded", "ended")
+                             for r in app.store.relations(f.id)
+                             if r["relation"] in ("supersedes", "ends") and r["other_id"] == f.id]
+                ok = any(by in new_ids for _, by in replacers)
+                any_fact = ok or any((app.load_fact(by) or f).document_id == new_doc for f, by in replacers)
                 hits += ok
-                details.append({"supersedes": old_snip, "ok": ok, "old_facts": len(old), "new_facts": len(new_ids)})
+                loose += any_fact
+                details.append({"supersedes": old_snip, "ok": ok, "any_fact": any_fact, "old_facts": len(old),
+                                "new_facts": len(new_ids)})
         out["supersede_recall"] = round(hits / total, 3) if total else None
+        out["supersede_recall_any"] = round(loose / total, 3) if total else None
 
         kept = total = 0
         for chain in self.chains:
@@ -390,15 +396,18 @@ class Amendments(Suite):
                                 "statuses": [f.status for f in facts]})
         out["unchanged_kept"] = round(kept / total, 3) if total else None
 
-        base_ids = {f"amend_{d['key'].replace('-', '_')}" for c in self.chains for d in c["documents"][:1]}
-        base_facts = [f for doc_id in base_ids for f in app.list_facts(document_id=doc_id)]
         expected_old = set()
         for chain in self.chains:
             for old_key, old_snip, _, _ in chain["supersedes"]:
                 expected_old |= {f.id for f in self.quoting(app, self.locate(old_key, old_snip))}
-        changed = [f for f in base_facts if f.status != "current" and f.id not in expected_old]
-        out["false_change_rate"] = round(len(changed) / len(base_facts), 3) if base_facts else None
-        out["false_changes"] = [f"{f.status}: {f.text[:160]}" for f in changed[:8]]
+        for key, documents in (("false_change_rate", None), ("false_change_rate_base", 1)):
+            doc_ids = {f"amend_{d['key'].replace('-', '_')}" for c in self.chains for d in c["documents"][:documents]}
+            facts = [f for f in (f for doc_id in doc_ids for f in app.list_facts(document_id=doc_id))
+                     if f.id not in expected_old]
+            changed = [f for f in facts if f.status != "current"]
+            out[key] = round(len(changed) / len(facts), 3) if facts else None
+            if documents is None:
+                out["false_changes"] = [f"{f.status}: {f.text[:160]}" for f in changed[:8]]
 
         good = total = 0
         for chain in self.chains:
@@ -438,7 +447,7 @@ class AmendmentsHeldOut(Amendments):
 
 class AmendmentsFresh(Amendments):
     name = "amendments_fresh"
-    description = "Three chains labeled before any run and scored once: Glu and Fox, ScanSource and Cisco, PC Quote."
+    description = "Three chains labeled before any run: Glu and Fox, ScanSource and Cisco, PC Quote."
     fresh = True
 
 

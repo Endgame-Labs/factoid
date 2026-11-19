@@ -1,0 +1,108 @@
+{
+  "suite": "diligence",
+  "variant": "default",
+  "overrides": {},
+  "documents": 4,
+  "facts": 24,
+  "rejected": 1,
+  "rejected_by_reason": {
+    "decision_floors.useful": 1
+  },
+  "metrics": {
+    "passed": "15/15",
+    "score": 1.0,
+    "checks": {
+      "contract: change of control": "ok",
+      "contract: assignment restriction": "ok",
+      "contract: liability cap": "ok",
+      "contract: every fact is a SourceFact": "ok",
+      "amendment: cap fact valid from 2027-01-01": "ok",
+      "amendment: old cap superseded": "ok",
+      "amendment: no other contract fact changed": "ok",
+      "email: a CounselFact with ClosingRisk": "ok",
+      "email: the recommendation keeps Vega's 15-day answer period": "ok",
+      "search: cap as of 2026-06-01 is $1M": "ok",
+      "search: cap as of 2027-02-01 is $2M": "ok",
+      "entities: Vega links all four documents": "ok",
+      "register: a fact per value, linked to the contract's Vega": "ok",
+      "register: governing law set on the agreement": "ok",
+      "register: the notes cell becomes a fact": "ok"
+    }
+  },
+  "latency": {
+    "p50_doc_s": 0.08,
+    "p95_doc_s": 0.57
+  },
+  "usage": {
+    "by_workload": {
+      "embed": {
+        "calls": 16,
+        "cache_hits": 16,
+        "older_hits": 13,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "extract": {
+        "calls": 4,
+        "cache_hits": 4,
+        "older_hits": 4,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "choose": {
+        "calls": 108,
+        "cache_hits": 103,
+        "older_hits": 30,
+        "input_tokens": 15143,
+        "output_tokens": 3158,
+        "seconds": 0.4725865521468222,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "repair": {
+        "calls": 5,
+        "cache_hits": 5,
+        "older_hits": 3,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "seconds": 0.0,
+        "cost": 0.0,
+        "priced": 1
+      },
+      "rerank": {
+        "calls": 2,
+        "cache_hits": 0,
+        "older_hits": 0,
+        "input_tokens": 5576,
+        "output_tokens": 0,
+        "seconds": 0.49393424508161843,
+        "cost": 0.0,
+        "priced": 0
+      }
+    },
+    "total": {
+      "calls": 135,
+      "cache_hits": 128,
+      "older_hits": 50,
+      "input_tokens": 20719,
+      "output_tokens": 3158,
+      "seconds": 0.9665207972284406,
+      "cost": 0.0
+    },
+    "wall_seconds": 0.79
+  },
+  "rejected_samples": {
+    "decision_floors.useful": [
+      "Dana Whitfield stated that two points about the Supply Agreement matter for the Acme deal."
+    ]
+  },
+  "skipped_fact_evals": {
+    "nli: no nli model is set; skipped": 22
+  }
+}

@@ -113,6 +113,10 @@ class HeldOut(Suite):
                              metadata={"date": row.get("date"), "program": row.get("program"),
                                        "title": row.get("title")})
 
+    def splits(self) -> dict[str, set[str]]:
+        """Groups of transcripts scored on their own as well as together. The held-out 500 has none."""
+        return {}
+
     def questions(self) -> list[dict[str, Any]]:
         rows = [json.loads(line) for line in open(DATA / "heldout-500-questions.jsonl")]
         ids = set(self.ids)
@@ -199,8 +203,17 @@ class HeldOut(Suite):
                         break
         stats = app.stats()
         (Path(app.data_dir or ".") / "per_question.json").write_text(json.dumps(per_question))
-        return {"surname_only_facts": round(surname_only / total, 4) if total else None,
-                "facts_per_document": round(total / len(results), 1) if results else None, "cells": cells, "mcnemar_facts_vs_chunks": mcnemar, "by_question_type_at_2048": by_type,
+        splits = {}
+        for split, ids in self.splits().items():
+            chosen = [q for q in questions if q["transcript_id"] in ids]
+            row: dict[str, Any] = {"questions": len(chosen)}
+            for key in cells if chosen else ():
+                row[key] = round(sum(per_question[q["external_id"]][key] for q in chosen) / len(chosen), 4)
+            splits[split] = row
+        return {"splits": splits,
+                "surname_only_facts": round(surname_only / total, 4) if total else None,
+                "facts_per_document": round(total / len(results), 1) if results else None, "cells": cells,
+                "mcnemar_facts_vs_chunks": mcnemar, "by_question_type_at_2048": by_type,
                 "facts_stored": stats["facts"], "entities": stats["entities"]}
 
 
@@ -224,6 +237,10 @@ class DevSample(HeldOut):
     description = "ISC-RAG fact-development sample: 100 transcripts, 200 questions, for tuning."
     sample = "fact-development-sample-100-20260725.txt"
     budgets = [512, 2048, 8192]
+    tuned_on = 30  # the fact evals and prompts were tuned on the first 30 transcripts (2026-11-17)
+
+    def splits(self) -> dict[str, set[str]]:
+        return {"tuning": set(self.ids[:self.tuned_on]), "unseen": set(self.ids[self.tuned_on:])}
 
     def questions(self) -> list[dict[str, Any]]:
         rows = []

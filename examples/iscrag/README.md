@@ -46,6 +46,22 @@ The run took 16 minutes and used 35,644 model calls (16,538 replayed from cache)
 million tokens before tuning. A run with nothing replayed uses about 40 million. The repairs account for most of the increase. These are still development numbers; the
 held-out 500 has not been run.
 
+## Tuning and unseen transcripts (2026-11-19)
+
+The development numbers above pool two groups: the first 30 transcripts, used to tune the fact evals and prompts, and
+the other 70, which were not looked at. The rerun on 0.1.6 scores them separately.
+
+| Read budget | Facts, 30 tuning | Facts, 70 unseen | Chunks, 30 tuning | Chunks, 70 unseen |
+| --- | --- | --- | --- | --- |
+| 512 tokens | 0.90 | 0.93 | 0.55 | 0.58 |
+| 2,048 tokens | 0.95 | 0.95 | 0.88 | 0.86 |
+| 8,192 tokens | 0.95 | 0.96 | 0.95 | 0.94 |
+
+The unseen transcripts score as well as the tuning set, so the tuning did not fit itself to the 30. Across all 200
+questions, facts score 0.92, 0.95, and 0.955; chunks score 0.57, 0.87, and 0.945. Neither arm uses a reranker here. The
+held-out 500 has not been run yet. The scorecard is in `scorecards/`. It leaves out the rejected fact samples, which
+quote MediaSum.
+
 ## Facts and entities
 
 The run above (`factoid stats --examples 3`) produced 6,676 facts (6,611 current, 56 contradicted, 6 superseded, 2
