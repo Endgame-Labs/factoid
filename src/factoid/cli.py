@@ -1101,6 +1101,8 @@ def models() -> None:
         provider = PROVIDERS.get(model.provider_name)
         if provider is None:
             status = f"unknown provider {model.provider_name!r}"
+        elif getattr(model, "_api_key", None) or getattr(model, "_base_url", None):
+            status = "key or base URL given in code" + (f"; calls {model.base_url()}" if model._base_url else "")
         elif provider.api_key():
             status = _key_status(provider.name)
         elif provider.ready():

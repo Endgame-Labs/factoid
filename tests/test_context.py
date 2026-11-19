@@ -44,3 +44,24 @@ def test_a_document_without_context_changes_nothing(make_app, fake):
                              metadata={"signed_at": "2025-03-01T00:00:00Z"}, uri="a.txt")
     assert "is about" not in prompts[0]
     assert all(m.role != "context" for f in result.facts for m in Fact.get(f.id).mentions)
+
+
+class SidedCall(Contract):
+    """A call transcript where the project knows which side each speaker is on."""
+
+    def segment(self):
+        passages = super().segment()
+        for passage in passages:
+            passage.attrs["side"] = "customer" if "Orion" in passage.text.split()[0] else "ours"
+        return passages
+
+
+def test_passage_attrs_reach_each_quote(make_app, fake):
+    from factoid import api
+
+    app = build(make_app, fake)
+    result = app.ingest_text("Orion's team said the cap is $1M.\n\nVega's rep said consent is needed.",
+                             document_type=SidedCall, metadata={"signed_at": "2025-03-01T00:00:00Z"}, uri="call.txt")
+    sides = {f.text: Fact.get(f.id).quotes[0].attrs["side"] for f in result.facts}
+    assert sides == {"Orion's team said the cap is $1M.": "customer", "Vega's rep said consent is needed.": "ours"}
+    assert api.fact(app, result.facts[0].id)["quotes"][0]["attrs"]["side"] in ("customer", "ours")

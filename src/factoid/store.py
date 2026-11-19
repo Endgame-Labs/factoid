@@ -98,6 +98,8 @@ class Store:
         columns = {row[1] for row in self.db.execute("pragma table_info(quotes)")}
         if "section" not in columns:  # stores made before quotes carried sections
             self.db.execute("alter table quotes add column section text")
+        if "attrs" not in columns:  # stores made before quotes carried attrs
+            self.db.execute("alter table quotes add column attrs text")
         if "revision" not in {row[1] for row in self.db.execute("pragma table_info(facts)")}:
             self.db.execute("alter table facts add column revision integer")  # stores made before revisions
         self.db.commit()
@@ -222,9 +224,11 @@ class Store:
             db.execute("delete from quotes where fact_id = ?", (row["id"],))
             db.execute("delete from mentions where fact_id = ?", (row["id"],))
             db.executemany(
-                "insert into quotes values (?,?,?,?,?,?,?,?,?)",
+                "insert into quotes (fact_id, document_id, passage_n, start, \"end\", text, speaker, said_at, section, "
+                "attrs) values (?,?,?,?,?,?,?,?,?,?)",
                 [(row["id"], q["document_id"], q["passage_n"], q["start"], q["end"], q["text"], q.get("speaker"),
-                  q.get("said_at"), q.get("section")) for q in quotes],
+                  q.get("said_at"), q.get("section"), json.dumps(q["attrs"]) if q.get("attrs") else None)
+                 for q in quotes],
             )
             db.executemany(
                 "insert into mentions values (?,?,?,?,?,?,?)",

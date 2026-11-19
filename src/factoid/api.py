@@ -179,7 +179,8 @@ def _fact(app: Any, f: Any) -> dict[str, Any]:
         "document": {"id": f.document_id, "title": app.document_title(f.document_id),
                      **({k: doc[k] for k in ("uri", "source_datetime", "metadata")} if doc else {})},
         "quotes": [{"document_id": q.document_id, "passage": q.passage_n, "section": q.section, "text": q.text,
-                    "speaker": q.speaker, "said_at": q.said_at} for q in f.quotes],
+                    "speaker": q.speaker, "said_at": q.said_at, **({"attrs": q.attrs} if q.attrs else {})}
+                   for q in f.quotes],
         "mentions": [{"text": m.text, "role": m.role, "entity_id": m.entity_id} for m in f.mentions],
     }
 

@@ -52,6 +52,7 @@ class Quote:
     speaker: str | None = None
     said_at: str | None = None
     section: str | None = None
+    attrs: dict[str, Any] = field(default_factory=dict)  # copied from the passage
 
 
 @dataclass

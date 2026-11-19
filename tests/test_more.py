@@ -482,3 +482,29 @@ def test_the_call_log_can_keep_no_text(monkeypatch, tmp_path):
     assert len(sent) == 4
     with pytest.raises(ValueError, match="call_log must be one of"):
         CallLog(None, mode="bodies")
+
+
+def test_a_key_given_in_code_is_sent_and_never_stored(monkeypatch, tmp_path):
+    import httpx
+
+    from factoid.models import CallLog, Model, ModelClient
+
+    monkeypatch.setenv("FACTOID_HOME", str(tmp_path))
+    monkeypatch.delenv("FIREWORKS_API_KEY", raising=False)
+    monkeypatch.delenv("FIREWORKS_BASE_URL", raising=False)
+    seen = []
+
+    def handler(request):
+        seen.append((str(request.url), request.headers.get("authorization"), request.content))
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}]})
+
+    rotating = iter(["k-one", "k-two"])
+    model = Model("fireworks/glm-5p3-flash", api_key=lambda: next(rotating), base_url="http://vault.test/v1/")
+    log = CallLog(tmp_path / "calls.db")
+    client = ModelClient({"generate": model}, log, replay=False)
+    client._http = httpx.Client(transport=httpx.MockTransport(handler))
+    assert client.generate("hi") == "ok" and client.generate("hi again") == "ok"
+    assert [s[1] for s in seen] == ["Bearer k-one", "Bearer k-two"]
+    assert seen[0][0].startswith("http://vault.test/v1/") and all(b"k-one" not in s[2] for s in seen)
+    assert "k-one" not in repr(model) and b"k-one" not in (tmp_path / "calls.db").read_bytes()
+    assert Model("fireworks/glm-5p3-flash", api_key="x") == Model("fireworks/glm-5p3-flash")

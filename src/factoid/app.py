@@ -551,9 +551,10 @@ class Factoid:
         """A duplicate confirms a stored fact: its quotes are added, which restarts the clock."""
         with self.store.tx() as db:
             for q in new.quotes:
-                db.execute("insert into quotes values (?,?,?,?,?,?,?,?,?)",
+                db.execute("insert into quotes (fact_id, document_id, passage_n, start, \"end\", text, speaker, "
+                           "said_at, section, attrs) values (?,?,?,?,?,?,?,?,?,?)",
                            (existing.id, q.document_id, q.passage_n, q.start, q.end, q.text, q.speaker, q.said_at,
-                            q.section))
+                            q.section, json.dumps(q.attrs) if q.attrs else None))
 
     # -- saving and loading ---------------------------------------------------------------------------------
 
@@ -687,7 +688,8 @@ class Factoid:
             source_datetime=_parse(row["source_datetime"]), extracted_at=_parse(row["extracted_at"]),
             scores=json.loads(row["scores"]),
             quotes=[Quote(r["document_id"], r["passage_n"], r["start"], r["end"], r["text"], r["speaker"],
-                          r["said_at"], r["section"]) for r in self.store.quotes(fact_id)],
+                          r["said_at"], r["section"], json.loads(r["attrs"]) if r["attrs"] else {})
+                    for r in self.store.quotes(fact_id)],
             mentions=[Mention(r["text"], r["kind"], r["role"], r["entity_id"], r["method"], r["confidence"])
                       for r in self.store.mentions(fact_id)],
         )

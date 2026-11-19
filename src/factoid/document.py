@@ -66,6 +66,9 @@ class Passage:
     speaker: str | None = None
     said_at: str | None = None
     section: str | None = None  # the numbered section the passage falls under, such as "3.2"
+    #: Anything else a project knows about the passage, such as which side of a call spoke ({"side": "customer"}).
+    #: Set it in `segment`; each quote of the passage keeps a copy.
+    attrs: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -455,7 +458,7 @@ class ProseDocument(Document):
             quotes = [Quote(document_id=self.id, passage_n=n, start=owned[n].start, end=owned[n].end,
                             text=owned[n].text, speaker=owned[n].speaker,
                             said_at=owned[n].said_at or (format_datetime(dated) if dated else None),
-                            section=owned[n].section)
+                            section=owned[n].section, attrs=dict(owned[n].attrs))
                       for n in dict.fromkeys(cited)]
             mentions = []
             for m in item.get("mentions") or []:

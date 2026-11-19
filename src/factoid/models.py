@@ -18,6 +18,7 @@ import random
 import sqlite3
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -213,13 +214,37 @@ class Model:
     price_in: float | None = None  # dollars per million input tokens, when known
     price_out: float | None = None
 
-    def __init__(self, name: str, price_in: float | None = None, price_out: float | None = None, **params: Any):
+    def __init__(self, name: str, price_in: float | None = None, price_out: float | None = None, *,
+                 api_key: str | Callable[[], str] | None = None, base_url: str | None = None, **params: Any):
+        """`params` go into each request body. `api_key` (a string, or a function that returns one, called for each
+        request) and `base_url` replace the provider's key and address from the environment; they never enter a
+        request body, the call cache key, or this model's repr."""
         if "/" not in name:
             raise ValueError(f"model {name!r} must be named provider/model")
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "params", params)
         object.__setattr__(self, "price_in", price_in)
         object.__setattr__(self, "price_out", price_out)
+        object.__setattr__(self, "_api_key", api_key)
+        object.__setattr__(self, "_base_url", base_url.rstrip("/") if base_url else None)
+
+    def api_key(self) -> str | None:
+        """The key given in code, else the provider's key from the environment."""
+        given = self._api_key() if callable(self._api_key) else self._api_key
+        return (given or "").strip() or self.provider.api_key()
+
+    def base_url(self) -> str:
+        return self._base_url or self.provider.base_url()
+
+    def headers(self) -> dict[str, str]:
+        headers = {"content-type": "application/json"}
+        key = self.api_key()
+        if key:
+            headers["authorization"] = f"Bearer {key}"
+        return headers
+
+    def ready(self) -> bool:
+        return bool(self._api_key or self._base_url or self.provider.ready())
 
     @property
     def provider_name(self) -> str:
@@ -411,9 +436,9 @@ class ModelClient:
                                older=saved_by != self.log.factoid, step=current_step())
                 return cached, True
         provider = model.provider
-        if not provider.ready():
+        if not model.ready():
             raise ModelError(f"{model.name}: {provider.missing_key()}")
-        url = provider.base_url() + url_path
+        url = model.base_url() + url_path
         started = time.monotonic()
         response = None
         attempts = self.attempts
@@ -429,14 +454,14 @@ class ModelClient:
 
         for attempt in range(attempts):
             try:
-                response = self._http.post(url, headers=provider.headers(), json=body,
+                response = self._http.post(url, headers=model.headers(), json=body,
                                            timeout=httpx.Timeout(max(0.1, min(self.timeout, left())), connect=10.0))
             except httpx.TransportError as err:
                 # A host that has never answered is probably a wrong base URL: say so at once. A connect error
                 # from a host that has answered before is a blip, and is retried.
                 if provider.name not in self._reachable and isinstance(err, (httpx.ConnectError,
                                                                              httpx.ConnectTimeout)):
-                    raise ModelError(f"{model.name}: could not connect to {provider.base_url()} ({err})") from err
+                    raise ModelError(f"{model.name}: could not connect to {model.base_url()} ({err})") from err
                 if attempt == attempts - 1:
                     raise ModelError(f"{model.name}: {err}") from err
                 wait(min(60, 2 ** attempt), str(err))
@@ -450,8 +475,10 @@ class ModelClient:
         self._reachable.add(provider.name)
         if response.status_code >= 400:
             hint = ""
-            if response.status_code in (401, 403) and not provider.api_key():
+            if response.status_code in (401, 403) and not model.api_key():
                 hint = f" ({provider.base_url_env} is set and no key is; {provider.missing_key()})"
+            elif response.status_code in (400, 401, 403) and model._api_key:
+                hint = " (check the api_key given to this Model in code)"
             elif response.status_code in (400, 401, 403) and provider.api_key():
                 hint = f" (check the key in {provider.key_env}: `factoid keys set {provider.name}` replaces it)"
             raise ModelError(f"{model.name}: HTTP {response.status_code}: {response.text[:500]}{hint}")

@@ -2,6 +2,13 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.16 (2026-11-19)
+
+- **Keys in code.** `Model(..., api_key=..., base_url=...)` takes a key, or a function that returns one, for apps that
+  keep keys in a secrets store. It never enters a request body, the call cache, or a repr (issue #14).
+- **Passage attrs.** A `segment` override can set `passage.attrs`, such as which side of a call spoke, and each quote
+  keeps a copy (issue #18).
+
 ## 0.1.15 (2026-11-19)
 
 - **Reads for apps.** A fact's document comes with its uri, date, and metadata, and `GET /documents/<id>` reads one

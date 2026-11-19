@@ -1691,3 +1691,7 @@ All dates are 2026-11-13 unless noted.
      hits the reranker scores below it, and refuses without a reranker, since a fused rank means nothing across
      queries (issue #16). `Factoid.events(after, limit)`, `GET /events`, and the MCP tool `read_events` read the event
      log from a cursor (issue #17). (2026-11-19)
+120. 0.1.16: `Model` takes `api_key` (a string or a function called per request) and `base_url` in code, kept out of
+     request bodies, the cache key, equality, and repr (issue #14). Passages and quotes carry an `attrs` dict that a
+     `segment` override fills and quotes copy, stored with each quote; decision 36 (no sides in v1) stands, and a side
+     is one thing an app can put there (issue #18). (2026-11-19)

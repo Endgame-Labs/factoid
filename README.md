@@ -7,7 +7,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
 
-> **Status: Version 0.1.15.** Factoid runs end to end, and three example apps publish their eval results. It covers
+> **Status: Version 0.1.16.** Factoid runs end to end, and three example apps publish their eval results. It covers
 > ingest, fact extraction with evals, entities, supersession and as-of search, settling contradictions, eval suites,
 > exports, an HTTP API, and an MCP server. [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) section 17 lists what is built.
 > [CHANGELOG.md](https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md) lists what changed in each version.
@@ -118,6 +118,11 @@ Each provider has a base URL variable, like `FIREWORKS_BASE_URL`. Base URLs can 
 Setting one sends that provider's calls to another address, like a gateway or proxy that adds credentials itself. With a
 base URL set, a key is optional; if set, it is still sent. Calls without a key or base URL fail at once with an error
 naming the missing key and `factoid keys set`.
+
+An app that keeps keys in a secrets store can pass one to a model in code instead:
+`Model("fireworks/glm-5p3-flash", api_key=lambda: vault.read("fireworks"))`. The key can be a string or a function.
+A function is called for each request, so a rotated key is picked up. `base_url=` sets the address the same way.
+Neither one goes into a request body, the call cache, or the model's repr.
 
 Here is `factoid doctor` for a project made with `--models openai`, with its key set:
 
@@ -273,6 +278,10 @@ Two settings on a prose document class control chunking:
 - `chunk_overlap`: how much of the previous chunk is repeated at the start of the next chunk. This setting takes a
   number of characters (`400`) or a share of `chunk_size` as a string (`"15%"`). Because `chunk_overlap` is one setting
   with two forms, the two forms can never disagree. Overlap is rounded to whole passages.
+
+A `segment` override can put other details about a passage in `passage.attrs`. For example, it can note which side of
+a call spoke (`{"side": "customer"}`). Each quote of that passage keeps a copy in Python, the HTTP results, and the
+MCP results.
 
 Overlap text is context only. A fact can cite a passage only from the chunk that owns that passage, so a passage in the
 overlap does not yield the same fact twice.
