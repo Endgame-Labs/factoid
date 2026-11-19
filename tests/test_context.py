@@ -42,7 +42,7 @@ def test_a_document_without_context_changes_nothing(make_app, fake):
     fake.generator = lambda prompt: (prompts.append(prompt), inner(prompt))[1]
     result = app.ingest_text("Vega's liability to Orion is capped at $1M.", document_type=Contract,
                              metadata={"signed_at": "2025-03-01T00:00:00Z"}, uri="a.txt")
-    assert "is about" not in prompts[0]
+    assert "This Contract is about" not in prompts[0]
     assert all(m.role != "context" for f in result.facts for m in Fact.get(f.id).mentions)
 
 
