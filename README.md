@@ -1,15 +1,16 @@
 # Factoid 📚
 
-[![version](https://img.shields.io/badge/version-0.1.2-blue.svg)](pyproject.toml)
+[![version](https://img.shields.io/badge/version-0.1.3-blue.svg)](pyproject.toml)
 [![tests](https://github.com/Endgame-Labs/factoid/actions/workflows/test.yml/badge.svg)](https://github.com/Endgame-Labs/factoid/actions/workflows/test.yml)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
 
-> **Status: Version 0.1.2.** Factoid runs end to end, and three example apps publish their eval results. It covers
-> ingest, fact extraction with evals, entities, supersession and as-of search, eval suites, exports, and an HTTP API.
-> [SPEC.md](SPEC.md) section 17 lists what is built. [CHANGELOG.md](CHANGELOG.md) lists what changed in each version.
+> **Status: Version 0.1.3.** Factoid runs end to end, and three example apps publish their eval results. It covers
+> ingest, fact extraction with evals, entities, supersession and as-of search, eval suites, exports, an HTTP API, and
+> an MCP server. [SPEC.md](SPEC.md) section 17 lists what is built. [CHANGELOG.md](CHANGELOG.md) lists what changed in
+> each version.
 
 Factoid turns `Documents` into `Facts`.  A fact is a short, self-contained sentence, devoid of filler and explicit in its language (no pronouns, etc).
 Each fact is tied to an exact location in the source document.
@@ -165,11 +166,10 @@ answers. Those results can differ from the facts `ingest` stored in the project.
 ### Commands
 
 Built today: `init`, `keys set`, `keys list`, `models`, `doctor`, `ingest`, `facts list`, `search`, `read`,
-`stats`, `entities list`, `entities kinds`, `eval`, `export`, `serve`, `steps show`, `classifiers show`, `prompts show`, and
+`stats`, `entities list`, `entities kinds`, `eval`, `export`, `serve`, `mcp`, `steps show`, `classifiers show`, `prompts show`, and
 `struct`.
 
-The rest of this README also describes commands that are planned and not built yet: `mcp`, `rebuild`, and
-`contradictions`. Each is marked "(planned)" where it appears. A guided terminal UI, `factoid setup`, is planned too.
+The rest of this README also describes commands that are planned and not built yet: `rebuild` and `contradictions`. Each is marked "(planned)" where it appears. A guided terminal UI, `factoid setup`, is planned too.
 `SPEC.md` section 17 lists what is built.
 
 ## Documents, facts, and entities
@@ -854,12 +854,35 @@ The server listens on 127.0.0.1 by default. To serve other machines, set `FACTOI
 request then requires `Authorization: Bearer <token>`. Requests run one at a time against the store, so a long ingest
 blocks reads until it finishes. The server uses only the standard library.
 
+## MCP
+
+`factoid mcp` serves a project's facts to an agent as MCP tools over stdio. To add it to Claude Code, run this in the
+project folder:
+
+```sh
+claude mcp add factoid -- factoid mcp                # or: factoid mcp --read-only
+```
+
+| Tool | What it does |
+|---|---|
+| `search_facts` | Searches facts, with `about` (an entity), `as_of` (a date), and `top_k`. |
+| `read_fact` | One fact with its quotes, mentions, relations, and history. |
+| `list_facts` | Facts from one document, with one trait, or with one status. |
+| `find_entities` | Entities by part of a name or by class, with their fact counts. |
+| `read_entity` | One entity, its current facts, and the entities it appears with most. |
+| `stats` | Counts by class and status. |
+| `ingest_text` | Adds a document's text and returns the facts kept and rejected. `--read-only` leaves it out. |
+
+The tools return the same JSON as the HTTP API. A failed call returns an error the agent can read, and the server keeps
+running. Pass `--data-dir` to serve another store, such as an eval run's folder. The server uses only the standard
+library.
+
 ## Usage
 
 - **Standalone CLI project.** Manage a RAG corpus in its own directory, tune chunking and extraction, and evaluate
   prompt, extractor, and fact eval choices with `factoid ingest`, `factoid search`, and `factoid eval`.
 - **Agent memory over MCP.** Connect `imap`, `folder`, `jsonl`, and `mcp` sources for mail, calls, notes, and chats,
-  then expose fact search and writes to an agent through `factoid mcp` (planned) or the CLI.
+  then expose fact search and writes to an agent through `factoid mcp` ([MCP](#mcp)) or the CLI.
 - **Python library or HTTP service.** Run `factoid serve` as an HTTP sidecar ([HTTP API](#http-api)), or use Factoid
   as a library inside an application and pass classes to `Factoid(...)`:
 

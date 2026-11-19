@@ -1239,7 +1239,14 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   send as a bearer token; errors are `{"error": ...}` with a 400, 401, 404, or 500 status; and a bare `as_of` date
   means midnight UTC. Checked on 2026-11-19 against a CUAD run's store: search in 1.6 seconds, with entities, facts,
   and related entities as expected. Versions and their features are in `CHANGELOG.md`.
-- **Not built yet:** sources (`imap`, `mcp`), MCP serving, `factoid setup`, fact-class trust and visibility, entity
+- **MCP server (0.1.3).** `factoid mcp` serves the tools `search_facts`, `read_fact`, `list_facts`, `find_entities`,
+  `read_entity`, `stats`, and `ingest_text` over stdio, from `src/factoid/mcp_server.py`, sharing `api.py` with
+  `factoid serve`. Choices made while building, not decided by Kyle: JSON-RPC written by hand with only the standard
+  library, not the `mcp` SDK; protocol versions 2025-06-18, 2025-03-26, and 2024-11-05, answering an unknown request
+  with the newest; `--read-only` drops `ingest_text`; a failed tool call is a tool result with `isError`, so the agent
+  reads why; and anything printed while a tool runs goes to stderr. Checked on 2026-11-19 against a CUAD run's store,
+  over raw stdio and with the official `mcp` Python SDK as the client.
+- **Not built yet:** sources (`imap`, `mcp`), `factoid setup`, fact-class trust and visibility, entity
   `merge`, `split`, and `retype` commands, and fingerprint-driven `rebuild`.
 - **`situate`:** the setting `situate = True` runs the built-in step (`situate_chunk`); a method named `situate` on a
   class replaces it.

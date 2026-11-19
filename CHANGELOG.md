@@ -2,6 +2,12 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.3 (2026-11-19)
+
+- **MCP server.** `factoid mcp` gives an agent the project's facts as MCP tools over stdio: search, read a fact, list
+  facts, find and read entities, stats, and ingest. `--read-only` leaves out ingest. Add it to Claude Code with
+  `claude mcp add factoid -- factoid mcp`.
+
 ## 0.1.2 (2026-11-19)
 
 - **HTTP API.** `factoid serve` serves search, facts, entities, stats, and ingest as JSON. It listens on 127.0.0.1

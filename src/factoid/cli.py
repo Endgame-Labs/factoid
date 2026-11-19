@@ -265,6 +265,25 @@ def serve(host: str, port: int, data_dir: Path | None) -> None:
         app.close()
 
 
+@cli.command()
+@click.option("--read-only", is_flag=True, help="Leave out ingest_text, so the agent can only read.")
+@_data_dir_option
+def mcp(read_only: bool, data_dir: Path | None) -> None:
+    """Serve the project's facts to an agent over MCP (stdio). Add it to Claude Code with
+    `claude mcp add factoid -- factoid mcp`, run in the project folder."""
+    from .mcp_server import Server
+
+    protocol, sys.stdout = sys.stdout, sys.stderr  # only JSON-RPC goes to the real stdout
+    app = _app_for(data_dir)
+    try:
+        Server(app, read_only=read_only, out=protocol).run(sys.stdin)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        sys.stdout = protocol
+        app.close()
+
+
 def _run_export(app: Any, exports: dict[str, Any], names: list[str] | None, full: bool) -> list[Any]:
     from .exports import export as run
 

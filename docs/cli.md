@@ -97,6 +97,16 @@ factoid serve [--host 127.0.0.1] [--port 8765] [--data-dir DIR]  # the project's
 - With `FACTOID_API_TOKEN` set, every request needs `Authorization: Bearer <token>`. A host other than 127.0.0.1
   needs the token.
 
+## MCP
+
+```sh
+factoid mcp [--read-only] [--data-dir DIR]  # the project's facts as MCP tools, over stdio
+```
+
+- Tools: `search_facts`, `read_fact`, `list_facts`, `find_entities`, `read_entity`, `stats`, and `ingest_text`.
+  `--read-only` leaves out `ingest_text`.
+- Add it to Claude Code from the project folder: `claude mcp add factoid -- factoid mcp`.
+
 ## Inspect
 
 ```sh
@@ -116,4 +126,4 @@ factoid struct try FILE [--rows 20] [--as CLASS]             # dry-run a parser 
 
 ## Planned
 
-Planned and not built: `setup` (a guided terminal UI), `mcp`, `rebuild`, and `contradictions`.
+Planned and not built: `setup` (a guided terminal UI), `rebuild`, and `contradictions`.

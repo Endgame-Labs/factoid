@@ -56,6 +56,7 @@ To try a change end to end, make a project in a scratch folder with `uv run --pr
 - `exports.py`: `Parquet` and `Turbopuffer` exports, and `export`, which sends each export what changed since its cursor
 - `api.py`: reads and ingest as JSON-ready dicts, shared by `serve` and `mcp`
 - `serve.py`: `factoid serve`, the HTTP API (standard library only)
+- `mcp_server.py`: `factoid mcp`, the MCP tools over stdio (standard library only)
 - `evals.py`: `Suite`, `--vary`, and scorecards
 - `cli.py`: the `factoid` command
 - `scaffold.py`: what `factoid init` writes
