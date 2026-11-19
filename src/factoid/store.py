@@ -345,12 +345,36 @@ class Store:
         with self.tx() as db:
             db.execute("insert or ignore into entity_keys values (?,?,?)", (key, _norm(value), entity_id))
 
-    def merge_entities(self, keep: str, gone: str, reason: str) -> None:
+    def merge_entities(self, keep: str, gone: str, reason: str) -> list[str]:
+        """Fold `gone` into `keep`: its mentions, keys, and names. Returns the ids of the facts that moved."""
         with self.tx() as db:
+            facts = [r["fact_id"] for r in db.execute("select distinct fact_id from mentions where entity_id = ?",
+                                                      (gone,))]
             db.execute("update entities set merged_into = ? where id = ?", (keep, gone))
             db.execute("update mentions set entity_id = ? where entity_id = ?", (keep, gone))
-            db.execute("update entity_keys set entity_id = ? where entity_id = ?", (keep, gone))
+            db.execute("update or ignore entity_keys set entity_id = ? where entity_id = ?", (keep, gone))
             self.event(db, "entity.merged", keep, merged=gone, reason=reason)
+            return facts
+
+    def update_entity(self, entity_id: str, *, name: str, aliases: list[str], props: dict[str, Any],
+                      reason: str = "") -> None:
+        with self.tx() as db:
+            db.execute("update entities set name = ?, aliases = ?, props = ? where id = ?",
+                       (name, json.dumps(aliases), json.dumps(props, default=str), entity_id))
+            self.event(db, "entity.updated", entity_id, name=name, aliases=aliases, props=props,
+                       **({"reason": reason} if reason else {}))
+
+    def move_mentions(self, source: str, target: str, fact_ids: list[str], reason: str) -> list[str]:
+        """Move the links from `source` to `target` on the given facts (a split). Returns the facts that moved."""
+        with self.tx() as db:
+            moved = [r["fact_id"] for r in db.execute(
+                f"select distinct fact_id from mentions where entity_id = ? and fact_id in "
+                f"({','.join('?' * len(fact_ids))})", (source, *fact_ids))] if fact_ids else []
+            for fact_id in moved:
+                db.execute("update mentions set entity_id = ? where entity_id = ? and fact_id = ?",
+                           (target, source, fact_id))
+            self.event(db, "entity.split", source, into=target, facts=moved, reason=reason)
+            return moved
 
 
     # -- export cursors ---------------------------------------------------------------------------------------

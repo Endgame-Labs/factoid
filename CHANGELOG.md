@@ -2,6 +2,13 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.14 (2026-11-19)
+
+- **Following another system's records.** `Entity.upsert(name, keys=...)` finds an entity by key and renames or
+  updates it, or creates it, with no model call. `entity.merge(other)` and `entity.split(facts, name)`, and
+  `factoid entities merge` and `split`, move facts' links and keep search right. Factoid's entities stay optional: an
+  app with its own linking can ignore them (issue #11).
+
 ## 0.1.13 (2026-11-19)
 
 - **What a document is about.** A document class can return `context_entities()`: the account, deal, or case it is

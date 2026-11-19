@@ -7,7 +7,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
 
-> **Status: Version 0.1.13.** Factoid runs end to end, and three example apps publish their eval results. It covers
+> **Status: Version 0.1.14.** Factoid runs end to end, and three example apps publish their eval results. It covers
 > ingest, fact extraction with evals, entities, supersession and as-of search, settling contradictions, eval suites,
 > exports, an HTTP API, and an MCP server. [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) section 17 lists what is built.
 > [CHANGELOG.md](https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md) lists what changed in each version.
@@ -502,7 +502,9 @@ then by exact name, or created. No model call is made. Every fact from the docum
 link. The extractor is asked to name the entity in facts about it.
 
 Untyped entities are kept, linked, and searchable. `factoid entities kinds` lists untyped kinds by entity and fact
-count. Editing, merging, and deleting entities through the CLI, the API, and MCP are planned and not built yet.
+count. `factoid entities merge KEEP GONE` folds one entity into another. `factoid entities split` moves chosen facts to
+a new entity. `entity.merge(other)` and `entity.split(facts, name)` do the same in Python. Editing entities, deleting
+entities, and merging over HTTP and MCP are planned.
 `factoid entities retype --kind "court" Court` is also planned: it will promote matching entities to a declared class
 with the decision model confirming each one and without re-extracting.
 
@@ -510,6 +512,13 @@ When a new entity is stored, Factoid runs a claiming step across existing facts,
 names and asking the decision model to confirm each hit. Two entities that share a unique key merge by rule, while two
 entities that share only a weak name go to a yes-or-no question with a high floor. Merges and splits are logged as
 events.
+
+Entities are optional. An app may already keep its own records (accounts, people, and projects) and link names to them
+itself. It can ignore Factoid's entities and read each fact's mentions as plain text, with their roles. An app that
+wants Factoid's links to follow its records can keep them in step with
+`Account.upsert(name, keys={"crm_id": "001A"}, aliases=[...])`. This finds the entity by key and renames or updates it,
+or creates it, with no model call. A renamed entity keeps its old name as an alias. Merges and splits made in the app's
+own system map to `merge` and `split`.
 
 Relations between entities require no schema or relation class. Factoid counts co-mentions across shared facts and
 identifies relation facts: current facts that never expire or last months or longer and link two or more entities.

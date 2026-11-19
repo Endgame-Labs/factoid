@@ -113,14 +113,30 @@ class Entity(Registered, ModelCalls):
 
     @classmethod
     def create(cls, name: str, *, kind: str | None = None, props: dict[str, Any] | None = None,
-               keys: dict[str, str] | None = None) -> Entity:
-        entity = cls(name, kind=kind, props=props)
+               keys: dict[str, str] | None = None, aliases: list[str] | None = None) -> Entity:
+        entity = cls(name, kind=kind, props=props, aliases=aliases)
         all_keys = dict(keys or {})
         for key in cls.unique_keys:
             if entity.props.get(key):
                 all_keys[key] = str(entity.props[key])
         current().save_entity(entity, all_keys)
         return entity
+
+    @classmethod
+    def upsert(cls, name: str, *, keys: dict[str, Any], aliases: list[str] | None = None,
+               props: dict[str, Any] | None = None) -> Entity:
+        """For an app that keeps its own records: the entity with any of these keys, renamed and updated to match,
+        or a new one. A renamed entity keeps its old name as an alias. No model call."""
+        return current().upsert_entity(cls, name, keys=keys, aliases=aliases, props=props)
+
+    def merge(self, other: Entity, reason: str = "") -> Entity:
+        """Fold `other` into this entity: its facts' links, keys, names, and properties this one lacks."""
+        return current().merge_entities(self, other, reason)
+
+    def split(self, facts: list[Any], name: str, *, keys: dict[str, Any] | None = None,
+              props: dict[str, Any] | None = None, reason: str = "") -> Entity:
+        """A new entity named `name` takes this entity's links on the given facts (or fact ids)."""
+        return current().split_entity(self, facts, name, keys=keys, props=props, reason=reason)
 
     # -- reads ----------------------------------------------------------------------------------------------
 

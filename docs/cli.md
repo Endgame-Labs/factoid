@@ -37,6 +37,8 @@ factoid stats [--examples N] [--json]                                 # show cou
 factoid calls [--last N] [--step NAME] [--json]                       # recent model calls, by step
 factoid entities list [--class NAME]                                  # list entities and aliases
 factoid entities kinds                                                # count untyped entity kinds
+factoid entities merge KEEP GONE [--reason TEXT]                      # fold one entity into another
+factoid entities split ENTITY --facts IDS --name NAME [--key k=v]     # move chosen facts to a new entity
 ```
 
 - `ingest` classifies each document unless `--as` names the class. `--dry-run` runs everything, writes nothing, and

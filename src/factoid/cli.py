@@ -511,7 +511,7 @@ def stats(as_json: bool, examples: int, data_dir: Path | None) -> None:
 
 @cli.group()
 def entities() -> None:
-    """Entities: list them and their untyped kinds."""
+    """Entities: list them and their untyped kinds, and merge or split them."""
 
 
 @entities.command("list")
@@ -633,6 +633,46 @@ def entities_kinds() -> None:
         "group by e.kind order by facts desc")
     for row in rows:
         click.echo(f"{row['kind'] or '(none)':<24} {row['entities']:>6} entities {row['facts']:>7} facts")
+
+
+
+def _entity(app: Any, name_or_id: str) -> Any:
+    from .entity import Entity
+
+    found = app.load_entity(name_or_id) if name_or_id.startswith("ent_") else None
+    with app.active():
+        found = found or Entity.find(name_or_id)
+    if found is None:
+        raise click.ClickException(f"no entity {name_or_id!r}")
+    return found
+
+
+@entities.command("merge")
+@click.argument("keep")
+@click.argument("gone")
+@click.option("--reason", default="", help="Why, for the event log.")
+def entities_merge(keep: str, gone: str, reason: str) -> None:
+    """Fold entity GONE into KEEP (an id or a name): its facts' links, keys, and names move to KEEP."""
+    _, app = _project()
+    kept = app.merge_entities(_entity(app, keep), _entity(app, gone), reason)
+    click.echo(f"merged into {kept.name} ({kept.id}); also known as {', '.join(kept.aliases) or 'nothing else'}")
+
+
+@entities.command("split")
+@click.argument("entity")
+@click.option("--facts", "fact_ids", required=True, help="Comma-separated fact ids that move to the new entity.")
+@click.option("--name", required=True, help="The new entity's name.")
+@click.option("--key", "keys", multiple=True, help="A key for the new entity, as name=value. Repeatable.")
+@click.option("--reason", default="", help="Why, for the event log.")
+def entities_split(entity: str, fact_ids: str, name: str, keys: tuple[str, ...], reason: str) -> None:
+    """A new entity NAME takes ENTITY's links on the given facts."""
+    _, app = _project()
+    parsed = dict(k.split("=", 1) for k in keys)
+    new = app.split_entity(_entity(app, entity), [f.strip() for f in fact_ids.split(",") if f.strip()], name,
+                           keys=parsed, reason=reason)
+    with app.active():
+        count = len(new.facts())
+    click.echo(f"{new.name} ({new.id}) now has {count} fact{'s' if count != 1 else ''}")
 
 
 # -- structured documents ---------------------------------------------------------------------------------

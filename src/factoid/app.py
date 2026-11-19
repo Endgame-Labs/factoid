@@ -722,6 +722,65 @@ class Factoid:
             self._name_checks[key] = answer >= self.placeholder_floor
         return self._name_checks[key]
 
+    # -- following an outside system of record --------------------------------------------------------------
+
+    @activates
+    def upsert_entity(self, klass: type[Entity], name: str, *, keys: dict[str, Any], aliases: list[str] | None = None,
+                      props: dict[str, Any] | None = None) -> Entity:
+        """The entity with any of these keys, renamed and updated to match; or a new one. No model call."""
+        if not keys:
+            raise ValueError("upsert needs at least one key, such as keys={'crm_id': '001A'}")
+        found = next((i for k, v in keys.items() if (i := self.store.entity_by_key(k, str(v)))), None)
+        entity = self.load_entity(found) if found else None
+        if entity is None:
+            return klass.create(name, aliases=aliases, props=props, keys={k: str(v) for k, v in keys.items()})
+        names = [a for a in [*(aliases or []), *entity.aliases, entity.name] if a.lower() != name.lower()]
+        merged_aliases = list(dict.fromkeys(names))  # a renamed entity keeps its old name as an alias
+        for key, value in (props or {}).items():
+            entity.set(key, value)
+        entity.name, entity.aliases = name, merged_aliases
+        self.store.update_entity(entity.id, name=name, aliases=merged_aliases, props=entity.props, reason="upsert")
+        for key, value in keys.items():
+            self.store.save_entity_key(key, str(value), entity.id)
+        self.index.upsert(self.ns("entities"), [{"id": entity.id, "text": " ".join([name, *merged_aliases]),
+                                                 "class": stored_name(type(entity))}])
+        return entity
+
+    @activates
+    def merge_entities(self, keep: Entity, gone: Entity, reason: str = "") -> Entity:
+        """Fold `gone` into `keep`: mentions, keys, and names move; facts are indexed under `keep`."""
+        if keep.id == gone.id:
+            return keep
+        moved = self.store.merge_entities(keep.id, gone.id, reason)
+        aliases = list(dict.fromkeys(a for a in [*keep.aliases, gone.name, *gone.aliases]
+                                     if a.lower() != keep.name.lower()))
+        props = {**gone.props, **keep.props}
+        self.store.update_entity(keep.id, name=keep.name, aliases=aliases, props=props, reason=f"merged {gone.id}")
+        keep.aliases, keep.props = aliases, props
+        self.index.upsert(self.ns("entities"), [{"id": keep.id, "text": " ".join([keep.name, *aliases]),
+                                                 "class": stored_name(type(keep))}])
+        self.index.delete(self.ns("entities"), [gone.id])
+        self._reindex(moved)
+        return keep
+
+    @activates
+    def split_entity(self, entity: Entity, facts: list[Fact | str], name: str, *, keys: dict[str, Any] | None = None,
+                     props: dict[str, Any] | None = None, reason: str = "") -> Entity:
+        """A new entity of the same class takes the given facts' links from `entity`."""
+        klass = type(entity)
+        new = klass.create(name, kind=entity.kind if klass is Entity else None, props=props,
+                           keys={k: str(v) for k, v in (keys or {}).items()})
+        moved = self.store.move_mentions(entity.id, new.id, [f if isinstance(f, str) else f.id for f in facts],
+                                         reason)
+        self._reindex(moved)
+        return new
+
+    def _reindex(self, fact_ids: list[str]) -> None:
+        """Index facts again after their entity links changed, so search filters by entity stay right."""
+        for fact in (self.load_fact(i) for i in fact_ids):
+            if fact is not None:
+                self._index_fact(fact)
+
     @activates
     def load_entity(self, entity_id: str) -> Entity | None:
         row = self.store.entity_row(entity_id)

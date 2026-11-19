@@ -1679,3 +1679,9 @@ All dates are 2026-11-13 unless noted.
      by key, then exact name, or is created, with no model call; every fact from the document gets a `context`
      mention unless it already links that entity; and the extract prompt names them only when there are any, so
      documents without them see the same prompt as before. (2026-11-19)
+118. 0.1.14 builds decision 110's outside identity (issue #11): `Entity.upsert` matches by key with no model call
+     and keeps an old name as an alias on a rename; `merge` moves mentions, keys, names, and missing properties, drops
+     the merged entity from the name index, and indexes the moved facts again; `split` moves chosen facts' links to a
+     new entity of the same class. Each writes an event (`entity.updated`, `merged`, or `split`). The CLI has `merge`
+     and `split`; HTTP, MCP, editing, deleting, and `retype` are later. The near-miss linking eval is still owed.
+     Entities stay optional, and the README says so. (2026-11-19)
