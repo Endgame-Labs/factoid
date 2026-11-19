@@ -1,8 +1,8 @@
 """The system of record: current state in SQLite, plus an event log in the same database.
 
 Current state is the source of truth. Each change also writes an event (`added`, `superseded`, `ended`, `corrected`,
-`contradicted`, `retracted`, `restored`, `linked`, `merged`, or `split`), so a reader can see where a fact came from
-and how it changed. The log is not replayed.
+`contradicted`, `settled`, `retracted`, `restored`, `linked`, `merged`, or `split`), so a reader can see where a fact
+came from and how it changed. The log is not replayed.
 """
 
 from __future__ import annotations
@@ -218,6 +218,33 @@ class Store:
     def relate(self, fact_id: str, other_id: str, relation: str) -> None:
         with self.tx() as db:
             db.execute("insert or ignore into relations values (?,?,?,?)", (fact_id, other_id, relation, _now()))
+
+    def settle(self, fact_id: str, other_id: str, *, dropped: str | None = None, **data: Any) -> bool:
+        """Settle the open contradiction between two facts: its `contradicts` relation becomes `settled`, `dropped`
+        (if any) is retracted, and a side still marked `contradicted` goes back to `current` unless another open
+        contradiction holds it. Each side gets a `fact.settled` event. False when the pair has no open contradiction."""
+        pair = "((fact_id = ? and other_id = ?) or (fact_id = ? and other_id = ?))"
+        ids = (fact_id, other_id, other_id, fact_id)
+        with self.tx() as db:
+            found = db.execute(f"select 1 from relations where relation = 'contradicts' and {pair}", ids).fetchone()
+            if found is None:
+                return False
+            db.execute(f"update or replace relations set relation = 'settled', at = ? "
+                       f"where relation = 'contradicts' and {pair}", (_now(), *ids))
+            for side in (fact_id, other_id):
+                row = db.execute("select status from facts where id = ?", (side,)).fetchone()
+                status = row["status"] if row else None
+                if side == dropped:
+                    status = "retracted"
+                elif status == "contradicted":
+                    still = db.execute("select 1 from relations where relation = 'contradicts' and "
+                                       "(fact_id = ? or other_id = ?)", (side, side)).fetchone()
+                    status = "contradicted" if still else "current"
+                if row is not None:
+                    db.execute("update facts set status = ?, updated_at = ? where id = ?", (status, _now(), side))
+                self.event(db, "fact.settled", side, status=status,
+                           other=other_id if side == fact_id else fact_id, **data)
+        return True
 
     def fact_row(self, fact_id: str) -> sqlite3.Row | None:
         return self.one("select * from facts where id = ?", (fact_id,))

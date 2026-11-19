@@ -2,6 +2,14 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.4 (2026-11-19)
+
+- **Settling contradictions.** `factoid contradictions` lists pairs of facts that disagree, and `factoid contradictions
+  settle` keeps one side (retracting the other) or both, with a reason. New evidence settles a pair too: when a newer
+  fact supersedes, ends, or corrects one side, the other stands. Every settlement is a `fact.settled` event. The HTTP
+  API (`GET /contradictions`, `POST /contradictions/settle`) and the MCP server (`list_contradictions`,
+  `settle_contradiction`) do the same.
+
 ## 0.1.3 (2026-11-19)
 
 - **MCP server.** `factoid mcp` gives an agent the project's facts as MCP tools over stdio: search, read a fact, list

@@ -266,7 +266,7 @@ def serve(host: str, port: int, data_dir: Path | None) -> None:
 
 
 @cli.command()
-@click.option("--read-only", is_flag=True, help="Leave out ingest_text, so the agent can only read.")
+@click.option("--read-only", is_flag=True, help="Leave out the tools that write (ingest_text, settle_contradiction).")
 @_data_dir_option
 def mcp(read_only: bool, data_dir: Path | None) -> None:
     """Serve the project's facts to an agent over MCP (stdio). Add it to Claude Code with
@@ -536,6 +536,52 @@ def facts_list(document: str | None, trait: str | None, status: str, limit: int,
         click.echo(f"{row['id']}  {row['text']}{tag}{state}")
     if not rows:
         click.echo("no facts match")
+
+
+@cli.group(invoke_without_command=True)
+@click.option("--fresh-only", is_flag=True, help="Leave out stale pairs (a fact past its valid_until).")
+@click.option("--limit", default=50, show_default=True, help="0 lists every pair.")
+@click.option("--json", "as_json", is_flag=True)
+@_data_dir_option
+@click.pass_context
+def contradictions(ctx: click.Context, fresh_only: bool, limit: int, as_json: bool, data_dir: Path | None) -> None:
+    """Open contradictions, newest first. Settle one with `factoid contradictions settle`."""
+    if ctx.invoked_subcommand is not None:
+        return
+    from . import api
+
+    pairs = api.contradictions(_app_for(data_dir), include_stale=not fresh_only, limit=limit)
+    if as_json:
+        return _echo_json(pairs)
+    for pair in pairs:
+        stale = "  (stale)" if pair["stale"] else ""
+        click.echo(f"{pair['at'][:10]}{stale}")
+        for side in (pair["fact"], pair["other"]):
+            source = (side["document"] or {}).get("title") or ""
+            click.echo(f"  {side['id']}  {side['text']}" + (f"  [{source}]" if source else ""))
+    if not pairs:
+        click.echo("no open contradictions")
+
+
+@contradictions.command("settle")
+@click.argument("fact_id")
+@click.argument("other_id")
+@click.option("--keep", required=True, help="The id of the fact that holds (the other is retracted), or both.")
+@click.option("--reason", default="", help="Why, in a sentence. Saved with the settlement.")
+@click.option("--by", help="Who settled it. Defaults to your user name.")
+@_data_dir_option
+def contradictions_settle(fact_id: str, other_id: str, keep: str, reason: str, by: str | None,
+                          data_dir: Path | None) -> None:
+    """Settle the contradiction between two facts by keeping one of them, or both."""
+    from . import api
+
+    try:
+        result = api.settle(_app_for(data_dir), fact_id, other_id, keep=keep, reason=reason,
+                            by=by or os.environ.get("USER") or None)
+    except (api.NotFound, ValueError) as err:
+        raise click.ClickException(str(err)) from err
+    for side in result["facts"]:
+        click.echo(f"{side['id']}  {side['status']:<12} {side['text']}")
 
 
 @entities.command("kinds")

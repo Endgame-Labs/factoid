@@ -86,14 +86,31 @@ factoid export [NAME...] [--full]  # send each export in settings.py what change
 - With `export_after_ingest = True` in `settings.py`, `factoid ingest` runs every export at the end, and a failed export
   only warns.
 
+## Contradictions
+
+```sh
+factoid contradictions [--fresh-only] [--limit 50] [--json] [--data-dir DIR]  # open pairs, newest first
+factoid contradictions settle FACT_A FACT_B --keep FACT_A|both [--reason TEXT] [--by NAME]
+```
+
+- A pair is open while both facts are current or contradicted. `(stale)` marks a pair where a fact is past its
+  `valid_until`, and `--fresh-only` leaves those out.
+- `--keep FACT_A` retracts the other fact. `--keep both` returns both to current, for facts that turn out not to
+  conflict. A fact in another open contradiction stays `contradicted`.
+- Both facts get a `fact.settled` event with `kept`, `reason`, and `by` (default: your user name). `factoid read`
+  shows it.
+- New evidence settles a pair too: when ingest supersedes, ends, or corrects one side, the event says `how:
+  evidence` and names the new fact.
+
 ## Serve
 
 ```sh
 factoid serve [--host 127.0.0.1] [--port 8765] [--data-dir DIR]  # the project's facts as JSON over HTTP
 ```
 
-- Routes: `GET /search`, `/facts`, `/facts/<id>`, `/entities`, `/entities/<name or id>`, `/stats`, and `/health`, and
-  `POST /ingest`. The README's "HTTP API" section lists their parameters.
+- Routes: `GET /search`, `/facts`, `/facts/<id>`, `/entities`, `/entities/<name or id>`, `/stats`, `/contradictions`,
+  and `/health`, and `POST /ingest` and `/contradictions/settle`. The README's "HTTP API" section lists their
+  parameters.
 - With `FACTOID_API_TOKEN` set, every request needs `Authorization: Bearer <token>`. A host other than 127.0.0.1
   needs the token.
 
@@ -103,8 +120,9 @@ factoid serve [--host 127.0.0.1] [--port 8765] [--data-dir DIR]  # the project's
 factoid mcp [--read-only] [--data-dir DIR]  # the project's facts as MCP tools, over stdio
 ```
 
-- Tools: `search_facts`, `read_fact`, `list_facts`, `find_entities`, `read_entity`, `stats`, and `ingest_text`.
-  `--read-only` leaves out `ingest_text`.
+- Tools: `search_facts`, `read_fact`, `list_facts`, `find_entities`, `read_entity`, `stats`, `list_contradictions`,
+  `settle_contradiction`, and `ingest_text`. `--read-only` leaves out the two that write: `ingest_text` and
+  `settle_contradiction`. A settlement records the client's name as who settled it.
 - Add it to Claude Code from the project folder: `claude mcp add factoid -- factoid mcp`.
 
 ## Inspect
@@ -126,4 +144,4 @@ factoid struct try FILE [--rows 20] [--as CLASS]             # dry-run a parser 
 
 ## Planned
 
-Planned and not built: `setup` (a guided terminal UI), `rebuild`, and `contradictions`.
+Planned and not built: `setup` (a guided terminal UI) and `rebuild`.

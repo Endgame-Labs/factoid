@@ -74,6 +74,28 @@ TOOLS: list[dict[str, Any]] = [
         "inputSchema": {"type": "object", "properties": {}},
     },
     {
+        "name": "list_contradictions",
+        "description": "Open contradictions: pairs of facts that cannot both be true and that nobody has settled yet, "
+                       "newest first, with both facts in full. stale is true when either fact has passed its end "
+                       "date.",
+        "inputSchema": {"type": "object", "properties": {
+            "include_stale": {"type": "boolean", "description": "Default true."},
+            "limit": {**_INT, "description": "Default 20."},
+        }},
+    },
+    {
+        "name": "settle_contradiction",
+        "description": "Settle an open contradiction by picking a side: keep one fact's id (the other is retracted) "
+                       "or keep both when they do not really conflict. Give the reason, such as the source that "
+                       "decides it. The settlement is recorded on both facts.",
+        "inputSchema": {"type": "object", "required": ["fact_id", "other_id", "keep", "reason"], "properties": {
+            "fact_id": _STR,
+            "other_id": _STR,
+            "keep": {**_STR, "description": "fact_id, other_id, or both."},
+            "reason": {**_STR, "description": "Why this side, in a sentence."},
+        }},
+    },
+    {
         "name": "ingest_text",
         "description": "Add a document's text to the project. Factoid extracts, checks, and links its facts, and "
                        "returns the facts it kept and rejected. This calls models and can take a minute.",
@@ -87,7 +109,8 @@ TOOLS: list[dict[str, Any]] = [
     },
 ]
 
-READ_ONLY = [t for t in TOOLS if t["name"] != "ingest_text"]
+WRITES = {"ingest_text", "settle_contradiction"}
+READ_ONLY = [t for t in TOOLS if t["name"] not in WRITES]
 
 
 class Server:
@@ -97,6 +120,7 @@ class Server:
         self.app = app
         self.tools = READ_ONLY if read_only else TOOLS
         self.out = out or sys.stdout
+        self.client = "mcp"  # who settles a contradiction, from the client's name at initialize
 
     def run(self, inp: TextIO) -> None:
         for line in inp:
@@ -132,12 +156,16 @@ class Server:
             from .version import version
 
             asked = params.get("protocolVersion")
+            client = (params.get("clientInfo") or {}).get("name")
+            if client:
+                self.client = f"mcp:{client}"
             return {"protocolVersion": asked if asked in PROTOCOL_VERSIONS else PROTOCOL_VERSIONS[0],
                     "capabilities": {"tools": {}},
                     "serverInfo": {"name": "factoid", "version": version()},
                     "instructions": "Facts extracted from this project's documents. Start with search_facts; each "
                                     "fact cites quotes from its source. Use read_entity for everything about one "
-                                    "company or person."}
+                                    "company or person. list_contradictions shows facts that "
+                                    "disagree."}
         if method == "ping":
             return {}
         if method == "tools/list":
@@ -178,6 +206,11 @@ class Server:
             return api.entity(app, a["name"], limit=int(a.get("limit", 50)))
         if name == "stats":
             return api.stats(app)
+        if name == "list_contradictions":
+            return api.contradictions(app, include_stale=bool(a.get("include_stale", True)),
+                                      limit=int(a.get("limit", 20)))
+        if name == "settle_contradiction":
+            return api.settle(app, a["fact_id"], a["other_id"], keep=a["keep"], reason=a["reason"], by=self.client)
         return api.ingest(app, a["text"], document_type=a.get("document_type"), uri=a.get("uri"),
                           title=a.get("title"), metadata=a.get("metadata"))
 

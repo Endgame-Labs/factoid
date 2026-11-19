@@ -7,6 +7,8 @@
     GET  /entities                    entities with their fact counts (class, name, limit)
     GET  /entities/<name or id>       one entity, its current facts, and the entities it appears with
     GET  /stats                       counts by class and status
+    GET  /contradictions              open contradictions, newest first (stale, limit)
+    POST /contradictions/settle       {"fact_id", "other_id", "keep": one id or "both", "reason", "by"}
     POST /ingest                      {"text": ..., "document_type", "uri", "title", "metadata"}: the facts kept
 
 It uses only the standard library. Requests run one at a time against the store, so a long ingest delays reads.
@@ -95,6 +97,16 @@ def make_server(app: Any, host: str = "127.0.0.1", port: int = 8765, token: str 
                     return api.entity(app, name, limit=int(q.get("limit", 50)))
                 case "GET", ["stats"]:
                     return api.stats(app)
+                case "GET", ["contradictions"]:
+                    return api.contradictions(app, include_stale=q.get("stale", "true") != "false",
+                                              limit=int(q.get("limit", 50)))
+                case "POST", ["contradictions", "settle"]:
+                    data = self._json()
+                    missing = [k for k in ("fact_id", "other_id", "keep") if not isinstance(data.get(k), str)]
+                    if missing:
+                        raise _Error(400, f"settle needs {', '.join(missing)}")
+                    return api.settle(app, data["fact_id"], data["other_id"], keep=data["keep"],
+                                      reason=data.get("reason") or "", by=data.get("by"))
                 case "POST", ["ingest"]:
                     data = self._json()
                     if not isinstance(data.get("text"), str) or not data["text"].strip():

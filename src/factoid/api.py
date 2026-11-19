@@ -10,7 +10,7 @@ import json
 from datetime import date, datetime
 from typing import Any
 
-__all__ = ["NotFound", "entities", "entity", "fact", "facts", "ingest", "search", "stats"]
+__all__ = ["NotFound", "contradictions", "entities", "entity", "fact", "facts", "ingest", "search", "settle", "stats"]
 
 
 class NotFound(LookupError):
@@ -100,6 +100,24 @@ def entity(app: Any, name_or_id: str, *, limit: int = 50) -> dict[str, Any]:
     out["related"] = [{"id": r["entity"].id, "name": r["entity"].name, "co_mentions": r["co_mentions"],
                        "weight": r["weight"]} for r in app.related_entities(found)[:20]]
     return out
+
+
+def contradictions(app: Any, *, include_stale: bool = True, limit: int = 50) -> list[dict[str, Any]]:
+    """Open contradictions, newest first: both facts in full, when the pair was found, and whether either fact has
+    passed its `valid_until` (stale)."""
+    return [{"fact": _fact(app, c.fact), "other": _fact(app, c.other), "at": c.at, "stale": c.stale}
+            for c in app.contradictions(include_stale=include_stale, limit=max(0, int(limit)))]
+
+
+def settle(app: Any, fact_id: str, other_id: str, *, keep: str, reason: str = "",
+           by: str | None = None) -> dict[str, Any]:
+    """Settle an open contradiction: `keep` is one of the two fact ids (the other is retracted) or `both`. Returns
+    both facts as they stand after."""
+    try:
+        app.settle_contradiction(fact_id, other_id, keep=keep, reason=reason or "", by=by)
+    except LookupError as err:
+        raise NotFound(str(err)) from err
+    return {"kept": keep, "facts": [fact(app, fact_id), fact(app, other_id)]}
 
 
 def stats(app: Any) -> dict[str, Any]:

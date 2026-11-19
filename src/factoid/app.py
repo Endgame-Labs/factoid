@@ -31,7 +31,7 @@ from .steps import SKIPPED, run_step
 from .structured import StructuredDocument, header_of
 from .validity import LIFETIME_RANGES
 
-__all__ = ["Factoid", "IngestResult", "Rejected", "SearchHit"]
+__all__ = ["Contradiction", "Factoid", "IngestResult", "Rejected", "SearchHit"]
 
 T = TypeVar("T")
 R = TypeVar("R")
@@ -66,6 +66,17 @@ class SearchHit:
 
     def __repr__(self) -> str:
         return f"<SearchHit {self.score:.3f} {self.fact.text!r}>"
+
+
+@dataclass
+class Contradiction:
+    """Two stored facts that cannot both be true, not yet settled. `stale` is true when either has passed its
+    `valid_until`."""
+
+    fact: Fact
+    other: Fact
+    at: str
+    stale: bool = False
 
 
 class Factoid:
@@ -265,7 +276,17 @@ class Factoid:
             step = {"supersedes": "supersede", "ends": "end", "corrects": "correct",
                     "contradicts": "contradict"}[answer]
             run_step(fact, step, other)
+            if answer != "contradicts":
+                self._settle_by_evidence(other, fact, answer)
         return True
+
+    def _settle_by_evidence(self, older: Fact, newer: Fact, answer: str) -> None:
+        """A new fact replaced, ended, or corrected one side of an open contradiction, so that contradiction is
+        settled by the evidence: the other side stands."""
+        for r in self.store.relations(older.id):
+            if r["relation"] == "contradicts":
+                other_id = r["other_id"] if r["fact_id"] == older.id else r["fact_id"]
+                self.store.settle(older.id, other_id, how="evidence", by=newer.id, answer=answer)
 
     def save_cell_facts(self, document: Document, facts: list[Fact]) -> list[Fact]:
         """Save facts from structured cells. They come from the data, not a model, so they skip the fact evals, and
@@ -824,6 +845,38 @@ class Factoid:
             sql += " and status = ?"
             params.append(status)
         return [f for f in (self.load_fact(r["id"]) for r in self.store.query(sql, params)) if f is not None]
+
+    # -- contradictions -------------------------------------------------------------------------------------
+
+    def contradictions(self, *, include_stale: bool = True, limit: int = 0) -> list[Contradiction]:
+        """Open contradictions, newest first: pairs related by `contradicts` whose facts are both still current or
+        contradicted."""
+        moment = now()
+        out = []
+        rows = self.store.query("select * from relations where relation = 'contradicts' order by at desc, rowid desc")
+        for r in rows:
+            fact, other = self.load_fact(r["fact_id"]), self.load_fact(r["other_id"])
+            if fact is None or other is None or not {fact.status, other.status} <= {"current", "contradicted"}:
+                continue
+            stale = any(f.valid_until is not None and f.valid_until < moment for f in (fact, other))
+            if stale and not include_stale:
+                continue
+            out.append(Contradiction(fact, other, r["at"], stale))
+            if limit and len(out) >= limit:
+                break
+        return out
+
+    def settle_contradiction(self, fact_id: str, other_id: str, *, keep: str, reason: str = "",
+                             by: str | None = None) -> None:
+        """Settle the open contradiction between two facts by picking a side. `keep` is one of the two ids, which
+        retracts the other, or `both`, when the facts turn out not to conflict. The settlement is an event on each
+        fact, with `reason` and `by` (who settled it)."""
+        if keep not in (fact_id, other_id, "both"):
+            raise ValueError(f"keep must be {fact_id}, {other_id}, or both")
+        dropped = None if keep == "both" else (other_id if keep == fact_id else fact_id)
+        data = {"how": "picked", "kept": keep, **({"reason": reason} if reason else {}), **({"by": by} if by else {})}
+        if not self.store.settle(fact_id, other_id, dropped=dropped, **data):
+            raise LookupError(f"no open contradiction between {fact_id} and {other_id}")
 
     def stats(self, examples: int = 0) -> dict[str, Any]:
         """Counts for the store. With `examples`, also that many sample facts per fact class and the most connected

@@ -7,9 +7,9 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
 
-> **Status: Version 0.1.3.** Factoid runs end to end, and three example apps publish their eval results. It covers
-> ingest, fact extraction with evals, entities, supersession and as-of search, eval suites, exports, an HTTP API, and an
-> MCP server. [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) section 17 lists what is built.
+> **Status: Version 0.1.4.** Factoid runs end to end, and three example apps publish their eval results. It covers
+> ingest, fact extraction with evals, entities, supersession and as-of search, settling contradictions, eval suites,
+> exports, an HTTP API, and an MCP server. [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) section 17 lists what is built.
 > [CHANGELOG.md](https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md) lists what changed in each version.
 
 Factoid turns `Documents` into `Facts`.  A fact is a short, self-contained sentence, devoid of filler and explicit in its language (no pronouns, etc).
@@ -172,7 +172,7 @@ Built today: `init`, `keys set`, `keys list`, `models`, `doctor`, `ingest`, `fac
 `stats`, `entities list`, `entities kinds`, `eval`, `export`, `serve`, `mcp`, `steps show`, `classifiers show`, `prompts show`, and
 `struct`.
 
-The rest of this README also describes commands that are planned and not built yet: `rebuild` and `contradictions`. Each is marked "(planned)" where it appears. A guided terminal UI, `factoid setup`, is planned too.
+The rest of this README also describes a command that is planned and not built yet: `rebuild`. It is marked "(planned)" where it appears. A guided terminal UI, `factoid setup`, is planned too.
 `SPEC.md` section 17 lists what is built.
 
 ## Documents, facts, and entities
@@ -509,11 +509,22 @@ model one question with six answers: `duplicate`, `supersedes`, `ends`, `correct
 `supersedes` replaces an older value that was true until then, `ends` marks that a state stopped without setting a new
 value, and `corrects` marks an older fact as wrong from the start.
 
-When two facts contradict, both are marked `contradicted` and point to each other. Reads show both, and search results
-include contradicting facts by default: `contradictions=3` returns up to three contradicting facts in full plus the IDs
-of any others, `contradictions=0` returns IDs only, and `contradictions=False` leaves them out. Contradictions are
-settled by new evidence or through `factoid contradictions` (planned), and go stale without auto-settling when their
-facts expire.
+When two facts contradict, both are marked `contradicted` and point to each other. Reads show both. Search results
+include contradicting facts by default: `contradictions=3` returns up to three in full plus the IDs of any others,
+`contradictions=0` returns IDs only, and `contradictions=False` leaves them out.
+
+There are two ways to settle a contradiction. When a newer fact supersedes, ends, or corrects one side, the other side
+stands. Otherwise, a person or agent chooses what to keep:
+
+```sh
+factoid contradictions                  # open pairs, newest first; --json for scripts
+factoid contradictions settle FACT_A FACT_B --keep FACT_A --reason "the signed copy says $3M"
+```
+
+`--keep` takes one of the two IDs, retracting the other, or `both` when the facts turn out not to conflict. Either way,
+both facts get a `fact.settled` event with the reason and who settled it. An unsettled contradiction goes stale when its
+facts pass `valid_until`. It is listed as stale and is never settled automatically. The HTTP API and the MCP server can
+list and settle contradictions too.
 
 ### Classification
 
@@ -842,6 +853,8 @@ factoid serve --port 9000 --data-dir runs/20261118-034725/cuad/default
 | `GET /entities` | Entities with their fact counts. Also `class`, `name`, and `limit`. |
 | `GET /entities/<name or id>` | One entity, its current facts, and the entities it appears with most. |
 | `GET /stats` | Counts by class and status. |
+| `GET /contradictions` | Open contradictions, newest first, with both facts. Also `stale=false` and `limit`. |
+| `POST /contradictions/settle` | Settles one with `{"fact_id", "other_id", "keep", "reason", "by"}`. `keep` is one of the two IDs or `both`. |
 | `POST /ingest` | Ingests `{"text": ..., "document_type", "uri", "title", "metadata"}` and returns the facts kept and rejected. |
 | `GET /health` | `{"ok": true, "version": ...}` |
 
@@ -874,6 +887,8 @@ claude mcp add factoid -- factoid mcp                # or: factoid mcp --read-on
 | `find_entities` | Entities by part of a name or by class, with their fact counts. |
 | `read_entity` | One entity, its current facts, and the entities it appears with most. |
 | `stats` | Counts by class and status. |
+| `list_contradictions` | Open contradictions, newest first, with both facts. |
+| `settle_contradiction` | Settles one by keeping one fact or both, with a reason. `--read-only` leaves it out. |
 | `ingest_text` | Adds a document's text and returns the facts kept and rejected. `--read-only` leaves it out. |
 
 The tools return the same JSON as the HTTP API. A failed call returns an error the agent can read, and the server keeps

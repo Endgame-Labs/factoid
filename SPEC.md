@@ -1246,6 +1246,17 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   with the newest; `--read-only` drops `ingest_text`; a failed tool call is a tool result with `isError`, so the agent
   reads why; and anything printed while a tool runs goes to stderr. Checked on 2026-11-19 against a CUAD run's store,
   over raw stdio and with the official `mcp` Python SDK as the client.
+- **Contradictions (0.1.4).** `factoid contradictions` lists open pairs and `factoid contradictions settle A B --keep
+  A|both` settles one, as decided in "Resolving"; the HTTP API (`GET /contradictions`, `POST /contradictions/settle`)
+  and MCP (`list_contradictions`, `settle_contradiction`) do the same. Choices made while building, not decided by Kyle:
+  a settled pair's `contradicts` relation becomes `settled`, so search and `stats` stop counting it; keeping one side
+  retracts the other; keeping both returns each to `current` unless another open contradiction holds it; each fact gets
+  a `fact.settled` event with `how` (`picked` or `evidence`), `kept`, `reason`, and `by` (the CLI's user name, or
+  `mcp:<client name>`); new evidence means resolve answered supersedes, ends, or corrects for one side, which settles
+  each of that side's open pairs; a pair is open only while both facts are current or contradicted, and is marked stale
+  when either is past `valid_until`; `--read-only` MCP leaves out `settle_contradiction`. Checked on 2026-11-19 against
+  a copy of a CUAD run's store: 20 open pairs (1 stale), and settling one with `--keep both` returned both facts to
+  current and dropped the count to 19.
 - **Not built yet:** sources (`imap`, `mcp`), `factoid setup`, fact-class trust and visibility, entity
   `merge`, `split`, and `retype` commands, and fingerprint-driven `rebuild`.
 - **`situate`:** the setting `situate = True` runs the built-in step (`situate_chunk`); a method named `situate` on a
@@ -1583,3 +1594,6 @@ All dates are 2026-11-13 unless noted.
 105. 0.1.3 is the first release on PyPI (2026-11-19), published from a GitHub release by the trusted-publishing
      workflow. The README installs with `uv tool install factoid` and shows a PyPI version badge. Decision 90's "nothing
      is released until Kyle says so" is met. (Kyle, 2026-11-19)
+106. 0.1.4 builds `factoid contradictions`: list open pairs, and settle one by keeping one side or both, from the CLI,
+     the HTTP API, and MCP. New evidence (a supersession, end, or correction of one side) settles a pair too. This
+     builds decision 34. Not released to PyPI. (Kyle, 2026-11-19)
