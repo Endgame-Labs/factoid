@@ -720,3 +720,35 @@ def test_a_later_restatement_does_not_supersede(make_app, fake):
     app.ingest_text("Counsel says the territory is the United States and [*].", document_type=Contract,
                     metadata={"signed_at": "1998-07-15T00:00:00Z"}, uri="j.txt")
     assert Fact.get(first.facts[0].id).status == "current"
+
+
+def test_a_grounded_failure_is_trimmed_only_when_asked(make_app, fake):
+    from factoid import DecisionFloors, Nli
+
+    app = build(make_app, fake)
+    prompts = []
+
+    def noul(question, state):
+        if question.instructions.startswith("Do the cited passages support the claim"):
+            return 0.2 if "January 2027" in str(state.get("fact")) else 0.95
+        return 0.9
+
+    def generator(prompt):
+        prompts.append(prompt)
+        if "Rewrite the fact" in prompt or "Split it" in prompt:
+            return json.dumps({"references": [], "facts": ["The second clinic's network upgrade slips to January."]})
+        return json.dumps({"facts": [{"text": "The second clinic's network upgrade slips to January 2027.",
+                                      "passages": [1], "mentions": [{"name": "Orion", "kind": "company",
+                                                                     "role": "subject"}]}]})
+
+    fake.noul, fake.generator = noul, generator
+    note = "Grace Liu raised that the second clinic's network upgrade slips to January."
+    meta = {"signed_at": "2026-11-01T00:00:00Z"}
+    assert app.ingest_text(note, document_type=Contract, metadata=meta, uri="a.txt").facts == []
+    SourceFact.fact_evals = [Nli(), DecisionFloors(repair_grounded=True)]
+    try:
+        kept = app.ingest_text(note, document_type=Contract, metadata=meta, uri="b.txt").facts
+    finally:
+        del SourceFact.fact_evals
+    assert [f.text for f in kept] == ["The second clinic's network upgrade slips to January."]
+    assert any("Keep only what they state" in p for p in prompts)

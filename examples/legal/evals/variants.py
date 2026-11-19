@@ -2,7 +2,7 @@
 
 from legal.settings import Project
 
-from factoid import Model
+from factoid import DecisionFloors, Model, Nli
 
 RUNE = {**Project.models, "choose": Model("fireworks/rune")}
 
@@ -18,3 +18,7 @@ STATES_VALUE = {
                  "terms that apply in different cases, or a stored fact that only refers to or depends on something "
                  "the new fact changes without stating its value.",
 }
+
+
+# Decision 87's experiment (issue #6): a fact that fails "grounded" is trimmed to what its passages say, not dropped.
+GROUNDED_REPAIR = [Nli(), DecisionFloors(repair_grounded=True)]

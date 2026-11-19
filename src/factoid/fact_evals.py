@@ -177,12 +177,17 @@ class DecisionFloors(FactEval):
     #: Failures a rewording or a split can fix. A fact that fails only these gets one repair, however low the score:
     #: the repair sees the text before the quote, so it can name what "he" or "this aircraft" refers to.
     repairable = ("self_contained", "atomic", "attribution")
+    #: Also repair a fact that fails "grounded", by trimming it to what its passages say. Off by default: an
+    #: experiment (decision 87, issue #6), which the evals decide.
+    repair_grounded: bool = False
     #: A "useful" failure within this margin rides along with a repairable one, since splitting a compound fact often
     #: makes each part useful.
     repair_margin = 0.2
 
     def __init__(self, questions: dict[str, Noul | None] | None = None, targets: dict[str, float] | None = None,
-                 **floors: float):
+                 repair_grounded: bool | None = None, **floors: float):
+        if repair_grounded is not None:
+            self.repair_grounded = repair_grounded
         merged: dict[str, Noul | None] = {**type(self).questions, **(questions or {})}
         self.questions = {k: q for k, q in merged.items() if q is not None}
         unknown = set(floors) - set(self.questions)
@@ -220,8 +225,9 @@ class DecisionFloors(FactEval):
         model = app.client.models.get("choose")
         floors, targets = self.floors_for(getattr(model, "name", model))
         failed = [name for name, floor in floors.items() if scores[name] < floor]
-        near = bool(failed) and any(name in self.repairable for name in failed) and all(
-            name in self.repairable or (name == "useful" and scores[name] >= floors[name] - self.repair_margin)
+        repairable = (*self.repairable, "grounded") if self.repair_grounded else self.repairable
+        near = bool(failed) and any(name in repairable for name in failed) and all(
+            name in repairable or (name == "useful" and scores[name] >= floors[name] - self.repair_margin)
             for name in failed
         )
         short = [name for name, target in targets.items() if floors[name] <= scores[name] < target]
@@ -230,6 +236,7 @@ class DecisionFloors(FactEval):
 
     def __repr__(self) -> str:
         parts = [f"{k}={v}" for k, v in self.floors.items() if DEFAULT_FLOORS.get(k) != v]
+        parts += ["repair_grounded"] if self.repair_grounded else []
         parts += [f"target {k}={v}" for k, v in self.targets.items() if DEFAULT_TARGETS.get(k) != v]
         for name, question in self._changed.items():
             parts.append(f"{name}: dropped" if question is None else

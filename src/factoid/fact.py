@@ -329,7 +329,8 @@ class Fact(Registered, ModelCalls):
             document = {"type": self.document.type, "title": self.document.title,
                         "context": self.document.context(), "text_before": self.document.text_before(self)}
             wording = getattr(type(self.document), "repair_prompt", None) or wording
-        prompt = render(wording, fact=self, failed=result.failed, split=split,
+        trim = any(name.endswith(".grounded") for name in result.failed)  # says more than its passages
+        prompt = render(wording, fact=self, failed=result.failed, split=split, trim=trim,
                         passages=[q.text for q in self.quotes], document=document)
         raw = self.generate(prompt, json_mode=True, step="repair")
         try:

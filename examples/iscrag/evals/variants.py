@@ -51,3 +51,7 @@ from iscrag.settings import Project  # noqa: E402
 from factoid import Model  # noqa: E402
 
 RUNE = {**Project.models, "choose": Model("fireworks/rune")}
+
+
+# Decision 87's experiment (issue #6): a fact that fails "grounded" is trimmed to what its passages say, not dropped.
+GROUNDED_REPAIR = [Nli(), DecisionFloors(repair_grounded=True)]

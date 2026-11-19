@@ -19,6 +19,11 @@ Cited passages:
 - {{ passage }}
 {% endfor %}
 
+{% if trim %}
+The fact says more than the cited passages support. Keep only what they state: drop any date, cause, consequence,
+or detail they do not give, and do not add new ones.
+
+{% endif %}
 {% if split %}
 The fact states several claims. Split it into one sentence per claim, each supported by the passages: at least two
 sentences.

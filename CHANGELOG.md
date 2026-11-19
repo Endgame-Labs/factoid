@@ -2,6 +2,11 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.17 (2026-11-19)
+
+- **Grounded repair, as an experiment.** `DecisionFloors(repair_grounded=True)` trims a fact that fails `grounded` to
+  what its passages say, instead of dropping it. Off by default until the evals decide (issue #6).
+
 ## 0.1.16 (2026-11-19)
 
 - **Keys in code.** `Model(..., api_key=..., base_url=...)` takes a key, or a function that returns one, for apps that

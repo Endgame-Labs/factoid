@@ -1695,3 +1695,7 @@ All dates are 2026-11-13 unless noted.
      request bodies, the cache key, equality, and repr (issue #14). Passages and quotes carry an `attrs` dict that a
      `segment` override fills and quotes copy, stored with each quote; decision 36 (no sides in v1) stands, and a side
      is one thing an app can put there (issue #18). (2026-11-19)
+121. 0.1.17 builds decision 87's experiment as an option (issue #6): `DecisionFloors(repair_grounded=True)` counts a
+     `grounded` failure as repairable, and the repair prompt then asks to keep only what the passages state. It is off
+     by default; the legal and iscrag apps have a `GROUNDED_REPAIR` variant for `--vary`, and the result decides the
+     default. A retry of extraction, decision 87's other arm, is not built. (2026-11-19)
