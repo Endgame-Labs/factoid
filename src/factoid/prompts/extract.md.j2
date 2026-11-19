@@ -7,6 +7,10 @@ Context:
 - {{ key }}: {{ value }}
 {% endfor %}
 {% endif %}
+{% if about %}
+This {{ document.type }} is about {{ about | join(", ") }}. A fact about one of them names it, even where the text
+leaves it unsaid.
+{% endif %}
 {% if situation %}
 Where this part sits in the document: {{ situation }}
 {% endif %}

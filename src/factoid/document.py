@@ -171,6 +171,13 @@ class Document(Registered, ModelCalls):
         """Shown to the extractor before the passages: sender, channel, speakers, and the like."""
         return {}
 
+    def context_entities(self) -> list[Mention]:
+        """What this document is about (an account, a deal, a case), for facts that do not name it. Each is a
+        `Mention` with a name, a `kind` (an entity class name), and `keys` that identify it, such as
+        `Mention("Brightwater Logistics", kind="Account", keys={"crm_id": "001A"})`. Each is linked by key, then by
+        exact name, or created, with no model call, and every fact from the document gets it as a `context` mention."""
+        return []
+
     def state(self) -> dict[str, Any]:
         return {"document_type": self.type, "title": self.title, "text": self.text[:4000]}
 
@@ -396,6 +403,7 @@ class ProseDocument(Document):
             document={"type": self.type, "title": self.title, "text": self.text,
                       "source_datetime": format_datetime(dated) if dated else None},
             context=self.context(),
+            about=[m.text for m in self.context_entities()],
             situation=chunk.situation,
             guidance=self.extraction_guidance(),
             passages=chunk.passages,

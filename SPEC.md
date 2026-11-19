@@ -1675,3 +1675,7 @@ All dates are 2026-11-13 unless noted.
      key, model, step, and tokens of each call with no bodies, so a project that must not keep third-party text can
      still see its costs; neither mode replays. A mode that keeps no document text in the store is issue #22.
      (2026-11-19)
+117. 0.1.13 builds decision 110's `context` role (issue #9): `Document.context_entities()` returns mentions; each links
+     by key, then exact name, or is created, with no model call; every fact from the document gets a `context`
+     mention unless it already links that entity; and the extract prompt names them only when there are any, so
+     documents without them see the same prompt as before. (2026-11-19)

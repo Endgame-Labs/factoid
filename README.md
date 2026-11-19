@@ -7,7 +7,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
 
-> **Status: Version 0.1.12.** Factoid runs end to end, and three example apps publish their eval results. It covers
+> **Status: Version 0.1.13.** Factoid runs end to end, and three example apps publish their eval results. It covers
 > ingest, fact extraction with evals, entities, supersession and as-of search, settling contradictions, eval suites,
 > exports, an HTTP API, and an MCP server. [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) section 17 lists what is built.
 > [CHANGELOG.md](https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md) lists what changed in each version.
@@ -479,8 +479,8 @@ class Person(Entity):
     link_question = "Is this mention the same person as {{ entity.name }}?"
 ```
 
-Every entity link on a fact carries a role (`subject`, `about`, or `speaker`), the method that created the link, and a
-confidence score. Linking proceeds from sure to unsure and stops at the first step that settles the mention:
+Every entity link on a fact carries a role (`subject`, `about`, `speaker`, or `context`), the method that created the
+link, and a confidence score. Linking proceeds from sure to unsure and stops at the first step that settles the mention:
 
 1. Match an exact identifier from the source.
 2. Match a unique key, such as `contract_id`, an email address, a domain, or a URL.
@@ -494,6 +494,12 @@ extracted entity matches no declared class, Factoid stores it as a plain `Entity
 free-text `kind` written by discovery, such as `"court"`. Placeholder mentions such as `"the counterparty"` or
 `"someone"` are refused; a mention that matches no entity stays on the fact as an unlinked mention, and the fact is
 kept.
+
+A fact from a call note often does not name the account the note is about ("The rep agreed to send a pilot plan."). A
+document class can say what it is about with `context_entities()`. It returns mentions with a name, a kind, and keys,
+such as `Mention("Brightwater Logistics", kind="Account", keys={"crm_id": "001A"})`. Each mention is linked by key,
+then by exact name, or created. No model call is made. Every fact from the document gets the entity as a `context`
+link. The extractor is asked to name the entity in facts about it.
 
 Untyped entities are kept, linked, and searchable. `factoid entities kinds` lists untyped kinds by entity and fact
 count. Editing, merging, and deleting entities through the CLI, the API, and MCP are planned and not built yet.

@@ -14,7 +14,7 @@ from collections import Counter
 from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import AbstractContextManager
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, TypeVar
@@ -289,12 +289,34 @@ class Factoid:
         self.map(lambda f: run_step(f, "assess"), passed)
         saved = []
         self._reuse_ids(document, passed)
+        context = self._context_mentions(document)
         for fact in passed:
             run_step(fact, "link")
+            linked = {m.entity_id for m in fact.mentions if m.entity_id}
+            fact.mentions += [replace(m) for m in context if m.entity_id not in linked]
             if self._resolve(fact):
                 run_step(fact, "save")
                 saved.append(fact)
         return saved
+
+    def _context_mentions(self, document: Document) -> list[Mention]:
+        """The document's `context_entities`, linked by key, then by exact name, or created: no model call."""
+        hook = getattr(document, "context_entities", None)
+        out = []
+        for given in (hook() if hook else []):
+            klass = self.entity_class(given.kind) if given.kind else Entity
+            entity_id = next((found for key, value in given.keys.items()
+                              if (found := self.store.entity_by_key(key, str(value)))), None)
+            if entity_id is None:
+                entity_id = next((r["id"] for r in self.store.entities_named(given.text)
+                                  if r["name"].lower() == given.text.lower()
+                                  and (klass is Entity or r["class"] == stored_name(klass))), None)
+            if entity_id is None:
+                kind = given.kind if klass is Entity else None
+                entity_id = klass.create(given.text, kind=kind, keys={k: str(v) for k, v in given.keys.items()}).id
+            out.append(Mention(text=given.text, kind=given.kind, role="context", entity_id=entity_id,
+                               method="context", confidence=1.0))
+        return out
 
     def _resolve(self, fact: Fact) -> bool:
         """Run resolve and apply its answers. False when the fact is a duplicate, which confirms the stored one."""

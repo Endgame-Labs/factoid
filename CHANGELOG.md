@@ -2,6 +2,13 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.13 (2026-11-19)
+
+- **What a document is about.** A document class can return `context_entities()`: the account, deal, or case it is
+  about, with keys. Each is linked by key or exact name, or created, with no model call, and every fact from the
+  document gets it as a `context` mention, so a fact that never names the account still reaches it. The extractor is
+  asked to name it in facts about it (issue #9).
+
 ## 0.1.12 (2026-11-19)
 
 - **A call log with no text.** `Settings.call_log = "metadata"` keeps each model call's model, step, and tokens but no
