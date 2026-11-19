@@ -1578,3 +1578,8 @@ All dates are 2026-11-13 unless noted.
 103. Sinks are renamed exports, because "sink" and "sync" sound too alike: `exports` in `settings.py`,
      `factoid export [name] [--full]`, and `export_after_ingest`. Decisions 93 to 102 keep their old wording.
      (Kyle, 2026-11-18)
+104. Each feature ships with a version bump and a line in `CHANGELOG.md`: 0.1.2 added `factoid serve`, and 0.1.3
+     added `factoid mcp`. (Kyle, 2026-11-19)
+105. 0.1.3 is the first release on PyPI (2026-11-19), published from a GitHub release by the trusted-publishing
+     workflow. The README installs with `uv tool install factoid` and shows a PyPI version badge. Decision 90's "nothing
+     is released until Kyle says so" is met. (Kyle, 2026-11-19)
