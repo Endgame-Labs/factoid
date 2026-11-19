@@ -3,36 +3,36 @@
   "variant": "default",
   "overrides": {},
   "documents": 20,
-  "facts": 3178,
-  "rejected": 127,
+  "facts": 3207,
+  "rejected": 120,
   "rejected_by_reason": {
-    "decision_floors.useful": 37,
-    "decision_floors.grounded": 37,
-    "validate: too long for one fact": 25,
-    "validate: cites no passage": 22,
-    "decision_floors.attribution": 16,
-    "decision_floors.atomic": 10,
+    "decision_floors.useful": 43,
+    "decision_floors.grounded": 29,
+    "validate: too long for one fact": 24,
+    "validate: cites no passage": 21,
+    "decision_floors.attribution": 14,
+    "decision_floors.atomic": 8,
     "decision_floors.distinct": 1
   },
   "metrics": {
     "overall": {
-      "precision": 0.6933,
+      "precision": 0.689,
       "recall": 0.9741,
-      "f1": 0.81,
+      "f1": 0.8071,
       "tp": 113,
-      "fp": 50,
+      "fp": 51,
       "fn": 3,
-      "mean_aupr": 0.9269,
-      "span_recall": 0.8235,
-      "span_jaccard_recall": 0.8025,
-      "span_precision": 0.3528,
-      "coverage": 0.9832
+      "mean_aupr": 0.9264,
+      "span_recall": 0.8361,
+      "span_jaccard_recall": 0.8151,
+      "span_precision": 0.352,
+      "coverage": 0.9748
     },
     "time": {
       "Agreement Date": {
         "field": "valid_from",
         "contracts": 18,
-        "captured": 0.833
+        "captured": 0.889
       },
       "Effective Date": {
         "field": "valid_from",
@@ -47,13 +47,13 @@
     },
     "traits": {
       "change_of_control": {
-        "precision": 0.4,
+        "precision": 0.4286,
         "recall": 1.0,
-        "f1": 0.5714,
+        "f1": 0.6,
         "aupr": 0.9286,
         "p_at_r80": 0.8571,
         "span_recall": 0.667,
-        "span_precision": 0.141,
+        "span_precision": 0.147,
         "coverage": 0.917,
         "positives": 6
       },
@@ -64,7 +64,7 @@
         "aupr": 1.0,
         "p_at_r80": 1.0,
         "span_recall": 0.8,
-        "span_precision": 0.526,
+        "span_precision": 0.538,
         "coverage": 0.92,
         "positives": 13
       },
@@ -74,42 +74,42 @@
         "f1": 0.9091,
         "aupr": 0.9727,
         "p_at_r80": 0.9091,
-        "span_recall": 0.882,
-        "span_precision": 0.381,
-        "coverage": 1.0,
+        "span_recall": 0.853,
+        "span_precision": 0.376,
+        "coverage": 0.971,
         "positives": 10
       },
       "exclusivity": {
-        "precision": 0.8,
+        "precision": 0.6667,
         "recall": 1.0,
-        "f1": 0.8889,
-        "aupr": 1.0,
-        "p_at_r80": 1.0,
+        "f1": 0.8,
+        "aupr": 0.9437,
+        "p_at_r80": 0.875,
         "span_recall": 0.875,
-        "span_precision": 0.487,
+        "span_precision": 0.405,
         "coverage": 1.0,
         "positives": 8
       },
       "non_compete": {
-        "precision": 0.5556,
+        "precision": 0.5,
         "recall": 1.0,
-        "f1": 0.7143,
-        "aupr": 0.885,
+        "f1": 0.6667,
+        "aupr": 0.9029,
         "p_at_r80": 0.8,
         "span_recall": 0.8,
-        "span_precision": 0.275,
+        "span_precision": 0.3,
         "coverage": 1.0,
         "positives": 5
       },
       "termination_for_convenience": {
-        "precision": 0.5385,
+        "precision": 0.6364,
         "recall": 1.0,
-        "f1": 0.7,
+        "f1": 0.7778,
         "aupr": 0.9286,
         "p_at_r80": 0.875,
-        "span_recall": 0.833,
-        "span_precision": 0.478,
-        "coverage": 1.0,
+        "span_recall": 0.75,
+        "span_precision": 0.526,
+        "coverage": 0.917,
         "positives": 7
       },
       "governing_law": {
@@ -119,19 +119,19 @@
         "aupr": 1.0,
         "p_at_r80": 1.0,
         "span_recall": 0.941,
-        "span_precision": 0.727,
+        "span_precision": 0.762,
         "coverage": 1.0,
         "positives": 16
       },
       "audit_rights": {
-        "precision": 0.7,
+        "precision": 0.6364,
         "recall": 0.875,
-        "f1": 0.7778,
-        "aupr": 0.9519,
+        "f1": 0.7368,
+        "aupr": 0.9464,
         "p_at_r80": 1.0,
         "span_recall": 0.714,
-        "span_precision": 0.625,
-        "coverage": 1.0,
+        "span_precision": 0.667,
+        "coverage": 0.952,
         "positives": 8
       },
       "insurance": {
@@ -140,8 +140,8 @@
         "f1": 0.875,
         "aupr": 0.8662,
         "p_at_r80": 0.8571,
-        "span_recall": 0.789,
-        "span_precision": 0.556,
+        "span_recall": 0.947,
+        "span_precision": 0.576,
         "coverage": 1.0,
         "positives": 7
       },
@@ -149,10 +149,10 @@
         "precision": 0.5714,
         "recall": 1.0,
         "f1": 0.7273,
-        "aupr": 0.8143,
-        "p_at_r80": 0.6667,
+        "aupr": 0.8041,
+        "p_at_r80": 0.6364,
         "span_recall": 0.8,
-        "span_precision": 0.389,
+        "span_precision": 0.385,
         "coverage": 1.0,
         "positives": 8
       },
@@ -160,10 +160,10 @@
         "precision": 0.5714,
         "recall": 1.0,
         "f1": 0.7273,
-        "aupr": 0.9583,
+        "aupr": 0.9722,
         "p_at_r80": 0.8889,
         "span_recall": 1.0,
-        "span_precision": 0.245,
+        "span_precision": 0.216,
         "coverage": 1.0,
         "positives": 8
       },
@@ -173,28 +173,28 @@
         "f1": 0.75,
         "aupr": 0.875,
         "p_at_r80": 0.8333,
-        "span_recall": 0.8,
-        "span_precision": 0.315,
+        "span_recall": 0.85,
+        "span_precision": 0.316,
         "coverage": 1.0,
         "positives": 6
       },
       "renewal_term": {
-        "precision": 0.6667,
-        "recall": 0.8571,
-        "f1": 0.75,
-        "aupr": 0.9098,
+        "precision": 0.6364,
+        "recall": 1.0,
+        "f1": 0.7778,
+        "aupr": 0.9571,
         "p_at_r80": 1.0,
-        "span_recall": 0.857,
-        "span_precision": 0.353,
-        "coverage": 0.857,
+        "span_recall": 1.0,
+        "span_precision": 0.35,
+        "coverage": 1.0,
         "positives": 7
       },
       "revenue_sharing": {
-        "precision": 0.75,
-        "recall": 0.8571,
-        "f1": 0.8,
-        "aupr": 0.8867,
-        "p_at_r80": 0.8571,
+        "precision": 0.8333,
+        "recall": 0.7143,
+        "f1": 0.7692,
+        "aupr": 0.8714,
+        "p_at_r80": 0.75,
         "span_recall": 0.556,
         "span_precision": 0.156,
         "coverage": 1.0,
@@ -203,111 +203,167 @@
     }
   },
   "latency": {
-    "p50_doc_s": 68.01,
-    "p95_doc_s": 298.7
+    "p50_doc_s": 104.72,
+    "p95_doc_s": 405.9
   },
   "usage": {
     "by_workload": {
       "embed": {
-        "calls": 1088,
-        "cache_hits": 767,
-        "older_hits": 749,
-        "input_tokens": 29878,
+        "calls": 1086,
+        "cache_hits": 370,
+        "older_hits": 299,
+        "input_tokens": 256294,
         "output_tokens": 0,
-        "seconds": 65.72639906639233,
+        "seconds": 279.5983676640317,
         "cost": 0.0,
         "priced": 0
       },
       "extract": {
         "calls": 159,
-        "cache_hits": 159,
-        "older_hits": 159,
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "seconds": 0.0,
+        "cache_hits": 0,
+        "older_hits": 0,
+        "input_tokens": 333099,
+        "output_tokens": 480663,
+        "seconds": 2410.9224634787533,
         "cost": 0.0,
-        "priced": 1
+        "priced": 0
       },
       "choose": {
-        "calls": 12097,
-        "cache_hits": 519,
-        "older_hits": 405,
-        "input_tokens": 20182128,
-        "output_tokens": 3832385,
-        "seconds": 1000.7501740914304,
+        "calls": 12281,
+        "cache_hits": 125,
+        "older_hits": 0,
+        "input_tokens": 21038554,
+        "output_tokens": 4023362,
+        "seconds": 1255.6711278315634,
         "cost": 0.0,
         "priced": 0
       },
       "repair": {
-        "calls": 1094,
-        "cache_hits": 826,
-        "older_hits": 826,
-        "input_tokens": 191617,
-        "output_tokens": 55483,
-        "seconds": 530.6929419848602,
+        "calls": 1112,
+        "cache_hits": 299,
+        "older_hits": 299,
+        "input_tokens": 592919,
+        "output_tokens": 178205,
+        "seconds": 1311.226181451697,
         "cost": 0.0,
         "priced": 0
       }
     },
+    "by_step": {
+      "ingest": {
+        "calls": 861,
+        "cache_hits": 252,
+        "input_tokens": 249299,
+        "output_tokens": 0
+      },
+      "extract": {
+        "calls": 159,
+        "cache_hits": 0,
+        "input_tokens": 333099,
+        "output_tokens": 480663
+      },
+      "evaluate": {
+        "calls": 4492,
+        "cache_hits": 115,
+        "input_tokens": 8009905,
+        "output_tokens": 809745
+      },
+      "repair": {
+        "calls": 1112,
+        "cache_hits": 299,
+        "input_tokens": 592919,
+        "output_tokens": 178205
+      },
+      "assess": {
+        "calls": 3220,
+        "cache_hits": 0,
+        "input_tokens": 6249374,
+        "output_tokens": 2031992
+      },
+      "link": {
+        "calls": 1166,
+        "cache_hits": 118,
+        "input_tokens": 610240,
+        "output_tokens": 95171
+      },
+      "specific_name": {
+        "calls": 140,
+        "cache_hits": 10,
+        "input_tokens": 46945,
+        "output_tokens": 4290
+      },
+      "resolve": {
+        "calls": 3147,
+        "cache_hits": 0,
+        "input_tokens": 5758028,
+        "output_tokens": 1010520
+      },
+      "claim": {
+        "calls": 341,
+        "cache_hits": 0,
+        "input_tokens": 371057,
+        "output_tokens": 71644
+      }
+    },
     "total": {
-      "calls": 14438,
-      "cache_hits": 2271,
-      "older_hits": 2139,
-      "input_tokens": 20403623,
-      "output_tokens": 3887868,
-      "seconds": 1597.169515142683,
+      "calls": 14638,
+      "cache_hits": 794,
+      "older_hits": 598,
+      "input_tokens": 22220866,
+      "output_tokens": 4682230,
+      "seconds": 5257.418140426045,
       "cost": 0.0
     },
-    "wall_seconds": 535.17
+    "wall_seconds": 779.91
   },
   "rejected_samples": {
     "validate: cites no passage": [
-      "Under the Distributor Agreement between Airspan Networks Inc. and Distributor, Distributor agrees to assume all expenses of its place of business, including rent, stenographic services, and all other expenses, except as specifically assumed in writing by Airspan.",
-      "Under the Co-Branding Agreement between Ebix and About, other than as set forth in the agreement, all intellectual and proprietary information supplied or developed by either party shall remain the sole and exclusive property of the party who supplied and developed it.",
-      "Under the Manufacturing and Supply Agreement between Vapotherm and Medica, on or prior to the first day of each subsequent month, Vapotherm shall deliver to Medica an update to its previously submitted forecast of its expected purchases of Cartridges (each such forecast, a \"Rolling Forecast\").",
-      "Under the Hosting Agreement between eGain Communications Corporation and Eliance Corporation, the agreement may be modified only by a writing signed by an authorized representative of each party, except as otherwise expressly provided in the agreement.",
-      "Under the Hosting Agreement between eGain Communications Corporation and Eliance Corporation, the agreement is governed by and construed in accordance with the laws of the State of California, exclusive of its conflict of laws principles."
+      "Under the Distributor Agreement between Airspan and Distributor, Distributor agrees to assume all expenses of its place of business, including rent, stenographic services, and all other expenses, except as specifically assumed in writing by Airspan.",
+      "Under the Hosting Agreement between eGain Communications Corporation and Customer, all amounts payable are exclusive of any and all taxes, and Customer is responsible for payment of such taxes, excluding taxes based on eGain's net income.",
+      "Under the Hosting Agreement between eGain Communications Corporation and Customer, all prices are stated, and Customer shall pay, in United States dollars.",
+      "Under the Hosting Agreement between eGain Communications Corporation and Customer, payment received by eGain after the due date shall be subject to a late fee equal to one and one-half percent (1.5%) per month, or, if less, the maximum amount allowed by applicable law.",
+      "Under the Hosting Agreement between eGain Communications Corporation and Eliance Corporation, the agreement may be modified only by a writing signed by an authorized representative of each party, except as otherwise expressly provided in the agreement."
     ],
     "decision_floors.useful": [
       "Portions of the Distributor Agreement exhibit indicated by \"[*]\" are subject to a confidential treatment request and have been omitted from the exhibit.",
-      "Portions of the Co-Branding Agreement between About.com, Inc. and ebix.com, Inc. are subject to confidential treatment, and the redacted material has been filed with the commission pursuant to an application for confidential treatment.",
-      "Under the Co-Branding Agreement between About and ebix, a \"Link\" means a hyperlink or so-called \"hot link\" in graphical and/or textual format located on any site which takes a user directly to another site.",
-      "Confidential treatment has been requested for portions of the Co-Branding Agreement between About and ebix, and the redacted material has been filed with the commission pursuant to an application for confidential treatment.",
-      "Certain confidential information in the Manufacturing and Supply Agreement between Vapotherm, Inc. and Medica S.p.A., marked by brackets, has been omitted and filed separately with the Securities and Exchange Commission pursuant to Rule 406 of the Securities Act of 1933, as amended."
-    ],
-    "decision_floors.atomic": [
-      "Confidential treatment has been requested for portions of the Co-Branding Agreement between About and ebix, and the redacted material has been filed with the commission pursuant to an application for confidential treatment.",
-      "Under the Manufacturing and Supply Agreement between Vapotherm and Medica, Medica shall not disclose Vapotherm Confidential Information and shall not use any Vapotherm Confidential Information other than in connection with performing its obligations under the Agreement, and Vapotherm shall not disclose Medica Confidential Information and shall not use any Medica Confidential Information other than in connection with performing its obligations under the Agreement.",
-      "Under the Strategic Licensing, Distribution and Marketing Agreement between Pacira Pharmaceuticals, Inc. (PPI) and EKR, references to \"persons\" include individuals, bodies corporate wherever incorporated, unincorporated associations and partnerships; words denoting the singular include the plural and vice versa; and words denoting one gender include each gender and all genders, unless the context requires otherwise.",
-      "Under the Amended and Restated Remarketing Agreement, the Transaction Agreements are the Remarketing Agreement, the Unit Agreement, the Trust Agreement, the Warrant Agreement, the Guarantee Agreement and the Indenture, and the Unit Documents are the Remarketing Agreement, the Unit Agreement, the Trust Agreement and the Warrant Agreement.",
-      "Under the Remarketing Agreement between Reinsurance Group of America, Incorporated and the Trust, except as would not have a Material Adverse Effect, all leases to which the Company or any of its subsidiaries is a party are valid and binding, no default by the Company or any of its subsidiaries has occurred and is continuing thereunder, and, to the Company's knowledge, no material defaults by the landlord are existing under any such lease."
+      "Under the Co-Branding Agreement, About Marks means the name, tradenames, trademarks, service marks, logos and other distinctive brand marks of About.com, Inc., adopted by About or used in or relating to About's business from time to time, whether or not in connection with performance of the Agreement.",
+      "Under the Co-Branding Agreement, an About Guide Site means an individual specific topical area within the About Site, accessible from within a Channel, as comprised from time to time.",
+      "Portions of the Co-Branding Agreement between About.com, Inc. and ebix.com, Inc. are subject to confidential treatment, with redacted material filed with the commission pursuant to an application for confidential treatment.",
+      "Confidential treatment has been requested for portions of the Co-Branding Agreement between About and ebix, and the redacted material has been filed with the commission pursuant to an application for confidential treatment."
     ],
     "validate: too long for one fact": [
-      "Under the Manufacturing and Supply Agreement between Vapotherm and Medica, \"Change of Control\" means (i) the acquisition, directly or indirectly, by any person or group (within the meaning of Section 13(d)(3) of the Securities Exchange Act of 1934, as amended) that is not a subsidiary or Affiliate of Medica of the beneficial ownership of securities of Medica possessing more than fifty percent (50%) of the total combined voting power of all outstanding securities of Medica; (ii) a merger or consolidation in which neither Medica nor a subsidiary or Affiliate of Medica is the surviving entity; (iii) a reverse merger in which Medica is the surviving entity but in which securities possessing more than fifty percent (50%) of the total combined voting power of Medica's outstanding securities are transferred to or acquired by a person or persons different from the persons holding those securities immediately prior to such merger and where such persons are not a subsidiary or Affiliate of Medica; or (iv) the sale, transfer or other disposition of all or substantially all of the assets of Medica to a person or entity that is not a subsidiary or Affiliate of Medica.",
-      "Under the Manufacturing and Supply Agreement between Vapotherm and Medica, \"Confidential Information\" means all data, specifications, training, and any other know-how related to the design, development, manufacture, or performance of the System or the Cartridge, the customers, finances, methods, research, processes or procedures of a party, as well as all other information and data provided by either party to the other party pursuant to the agreement (i) in written or other tangible medium and marked as confidential, or (ii) if disclosed orally or displayed, confirmed in writing within [* * *] Business Days after disclosure and marked as confidential, or (iii) that by the nature of the information or the circumstances surrounding disclosure, should in good faith be treated as confidential, except that the term \"Confidential Information\" does not include information that is or becomes generally available to the public other than as a result of a breach of the agreement by the receiving party or its Representatives.",
-      "Under the Amended and Restated Strategic Licensing, Distribution and Marketing Agreement, Confidential Information means all confidential information, data and materials in whatever form disclosed by or on behalf of one Party or its Affiliates to the other Party or its Affiliates, including the terms of the Agreement, data, formulae, unpublished patent disclosures, processes, protocols, marketing studies, sales information, specifications and know-how, and in the case of EKR Therapeutics, Inc.'s Confidential Information, EKR's marketing plans and sales forecasts, but excluding information which either Party can establish by written documentation was in the public domain at the time of disclosure, became public by publication after disclosure except by breach of a confidentiality obligation, was already in its possession at receipt and not acquired directly or indirectly from the other Party or its Affiliates, or was received from Third Parties lawfully entitled to disclose it.",
-      "Under the Strategic Licensing, Distribution and Marketing Agreement between Pacira Pharmaceuticals, Inc. (PPI) and EKR, \"Force Majeure\" means, in relation to either Party, any cause affecting performance of that agreement or the Supply Agreement arising from acts, events, non-happenings, omissions or accidents beyond the reasonable control of the Party to perform, including strikes and labor disturbances, lock-outs, industrial action, civil commotion, riot, invasion, war, threat of or preparation for war, terrorist activity, fire, explosion, storm, flood, earthquake, subsidence, epidemic or other natural physical disaster, impossibility of the use of railways, shipping, aircraft, motor transport or other means of public or private transport, failure or suspension of utilities, unavailability, shortage or interruption in the supply of raw material, and political interference with the normal operation of either Party.",
-      "Under the Net Sales definition in the Strategic Licensing, Distribution and Marketing Agreement between Pacira Pharmaceuticals, Inc. (PPI) and EKR, the deductions from gross sales include (i) separately stated transport, freight and insurance costs; (ii) sales and excise taxes and duties; (iii) normal and customary trade, quantity and cash discounts, rebates and chargebacks; (iv) amounts repaid or credited for properly rejected, returned or recalled goods or resulting from retroactive price adjustments related to the Product; (v) amounts incurred or resulting from government-mandated, managed care or other rebate programs now existing or implemented thereafter; (vi) any other identifiable amounts included in gross sales of the Product that were or ultimately will be credited and that are substantially similar to those listed; and (vii) any other deductions allowed by GAAP which effectively reduce the net selling price of Product."
+      "Under the Co-Branding Agreement between About and ebix, About shall create and maintain Links within the About Network to the Insurance Center and to the ebix Site, accessible to About Users by means of a Link on the About Site Home Page substantially as depicted in EXHIBIT C, Links on the Auto Channel, Family/Parenting Channel, Health Channel, Money Channel, and Real Estate Channel Home Pages substantially as depicted in EXHIBIT D, Links within fifty percent (50%) of the Partnership Box on the Personal Insurance, Senior Health, Retirement Planning, Consumer Information/Advocacy, Auto Repair, Vintage Cars, Motorcycles, 4 Wheel Drive/SUVs, Trucks, Cars, Power Boating, and Sailing Guide Site Home Pages and all subsequent Guide Sites Sub-Pages substantially as depicted in EXHIBIT E for as long as such Guide Sites are in existence, and Links from the Advertising Placements as set forth in Section 4.",
+      "Under the Manufacturing and Supply Agreement between Vapotherm, Inc. and Medica, \"Change of Control\" means (i) the acquisition, directly or indirectly, by any person or group (within the meaning of Section 13(d)(3) of the Securities Exchange Act of 1934, as amended) that is not a subsidiary or Affiliate of Medica of the beneficial ownership of securities of Medica possessing more than fifty percent (50%) of the total combined voting power of all outstanding securities of Medica; (ii) a merger or consolidation in which neither Medica nor a subsidiary or Affiliate of Medica is the surviving entity; (iii) a reverse merger in which Medica is the surviving entity but in which securities possessing more than fifty percent (50%) of the total combined voting power of Medica's outstanding securities are transferred to or acquired by a person or persons different from the persons holding those securities immediately prior to such merger and where such persons are not a subsidiary or Affiliate of Medica; or (iv) the sale, transfer or other disposition of all or substantially all of the assets of Medica to a person or entity that is not a subsidiary or Affiliate of Medica.",
+      "Under the Manufacturing and Supply Agreement between Vapotherm, Inc. and Medica, \"Confidential Information\" means all data, specifications, training, and any other know-how related to the design, development, manufacture, or performance of the System or the Cartridge, the customers, finances, methods, research, processes or procedures of a party, as well as all other information and data provided by either party to the other party pursuant to the agreement (i) in written or other tangible medium and marked as confidential, or (ii) if disclosed orally or displayed, confirmed in writing within [* * *] Business Days after disclosure and marked as confidential, or (iii) that by the nature of the information or the circumstances surrounding disclosure, should in good faith be treated as confidential, except that the term does not include information that is or becomes generally available to the public other than as a result of a breach of the agreement by the receiving party or its Representatives.",
+      "Under the Amended and Restated Strategic Licensing, Distribution and Marketing Agreement, Confidential Information means all confidential information, data, and materials disclosed by or on behalf of one Party or its Affiliates to the other Party or its Affiliates, including the terms of the Agreement, data, formulae, unpublished patent disclosures, processes, protocols, marketing studies, sales information, specifications, and know-how, and in the case of EKR Therapeutics, Inc.'s Confidential Information, EKR's marketing plans and sales forecasts, but excluding information that is in the public domain at the time of disclosure, becomes public by publication after disclosure except by breach of a confidentiality obligation, was already in the recipient's possession at receipt and not acquired from the other Party or its Affiliates, or was received from Third Parties lawfully entitled to disclose it.",
+      "Under the Remarketing Agreement among Reinsurance Group of America, Incorporated, the Trust and the Remarketing Agent, \"Preliminary Prospectus\" means each prospectus included in the Latest Registration Statement, or amendments thereof, before it became effective under the Securities Act and any prospectus and prospectus supplement filed with the Commission by the Company with the consent of the Underwriters pursuant to Rule 424(a) of the Securities Act relating to the Remarketing Securities; \"Registration Statement\" means such Latest Registration Statement, as amended as of the Effective Time, including the Incorporated Documents and all information contained in the final prospectus relating to the Remarketing Securities filed with the Commission pursuant to Rule 424(b) of the Securities Act and deemed part of such registration statement as of the Effective Time pursuant to Rule 430A or Rule 430B of the Securities Act; and \"Prospectus\" means the prospectus and prospectus supplement relating to the Remarketing Securities pursuant to Rule 172 or Rule 173 of the Securities Act."
+    ],
+    "decision_floors.atomic": [
+      "Confidential treatment has been requested for portions of the Co-Branding Agreement, and the redacted material has been filed with the commission pursuant to an application for confidential treatment.",
+      "Under the Manufacturing and Supply Agreement between Vapotherm and Medica, Medica shall not disclose Vapotherm Confidential Information and shall not use any Vapotherm Confidential Information other than in connection with performing its obligations under the agreement, and Vapotherm shall not disclose Medica Confidential Information and shall not use any Medica Confidential Information other than in connection with performing its obligations under the agreement.",
+      "Under the Strategic Licensing, Distribution and Marketing Agreement between Pacira Pharmaceuticals, Inc. (PPI) and EKR, references to \"persons\" includes individuals, bodies corporate (wherever incorporated), unincorporated associations and partnerships; words denoting the singular include the plural and vice versa; and words denoting one gender include each gender and all genders, unless the context requires otherwise.",
+      "Under the Remarketing Agreement, as of the date of the Remarketing Agreement, the entities listed on Schedule 2 are the only subsidiaries, direct or indirect, of Reinsurance Group of America, Incorporated, and the Company owns, directly or indirectly through other subsidiaries, the percentage indicated on Schedule 2 of the outstanding capital stock or other equity securities of such subsidiaries, free and clear of any security interest, claim, lien, limitation on voting rights or encumbrance, and all of such securities have been duly authorized, validly issued, are fully paid and nonassessable and were not issued in violation of any preemptive or similar rights.",
+      "Under the Remarketing Agreement between Reinsurance Group of America, Incorporated and the Trust, except as would not have a Material Adverse Effect, all leases to which the Company or any of its subsidiaries is a party are valid and binding and no default by the Company or any of its subsidiaries has occurred and is continuing thereunder, and, to the Company's knowledge, no material defaults by the landlord are existing under any such lease."
     ],
     "decision_floors.grounded": [
       "Under the Manufacturing and Supply Agreement between Vapotherm and Medica, Vapotherm may order for delivery in any given Quarter an aggregate quantity of Cartridges not exceeding [* * *]% of the Final Forecast Quantity.",
-      "Under the Manufacturing and Supply Agreement between Vapotherm and Medica, Medica shall not disclose Vapotherm Confidential Information and shall not use any Vapotherm Confidential Information other than in connection with performing its obligations under the Agreement, and Vapotherm shall not disclose Medica Confidential Information and shall not use any Medica Confidential Information other than in connection with performing its obligations under the Agreement.",
+      "Under the Manufacturing and Supply Agreement between Vapotherm and Medica, Medica shall not disclose Vapotherm Confidential Information and shall not use any Vapotherm Confidential Information other than in connection with performing its obligations under the agreement, and Vapotherm shall not disclose Medica Confidential Information and shall not use any Medica Confidential Information other than in connection with performing its obligations under the agreement.",
+      "Under the Manufacturing and Supply Agreement between Vapotherm, Inc. and Medica S.p.A., every notice or other communication required or contemplated by the agreement must be in writing and sent by personal delivery, in which case delivery is deemed to occur the day of delivery.",
       "eGain Communications Corporation is a party to the Hosting Agreement.",
-      "Under the Strategic Licensing, Distribution and Marketing Agreement between Pacira Pharmaceuticals, Inc. (PPI) and EKR, PPI will use commercially reasonable efforts to cooperate with EKR so as to enable EKR to supply Product and, if applicable, other products to the Other PPI Customers.",
-      "Under the Strategic Licensing, Distribution and Marketing Agreement between Pacira Pharmaceuticals, Inc. (PPI) and EKR, the confidentiality and non-use obligations continue for the duration of the Strategic Licensing, Distribution and Marketing Agreement and for a period of [**] ([**]) years after its termination for any reason."
+      "Under the Strategic Licensing, Distribution and Marketing Agreement between Pacira Pharmaceuticals, Inc. (PPI) and EKR, PPI will use commercially reasonable efforts to cooperate with EKR so as to enable EKR to supply Product and, if applicable, other products to the Other PPI Customers."
     ],
     "decision_floors.attribution": [
-      "Under the Manufacturing and Supply Agreement between Vapotherm and Medica, Medica shall not disclose Vapotherm Confidential Information and shall not use any Vapotherm Confidential Information other than in connection with performing its obligations under the Agreement, and Vapotherm shall not disclose Medica Confidential Information and shall not use any Medica Confidential Information other than in connection with performing its obligations under the Agreement.",
-      "Under the Agency Agreement among AFSALA BANCORP INC (the Company), the Association, and Capital Resources, the officers' certificate must further state that, to the best knowledge of such officers, the representations and warranties in Section 4 of the Agency Agreement are true and correct with the same force and effect as though expressly made at and as of the Closing Date.",
-      "Under the Agency Agreement among AFSALA BANCORP INC (the Company), the Association, and Capital Resources, the officers' certificate must further state that the Company and the Association have complied with all material agreements and satisfied, in all material respects at or prior to the Closing Date, all obligations required to be met by such date and will in all material respects comply with all obligations to be satisfied by them after Conversion.",
-      "Under the Agency Agreement among AFSALA BANCORP INC (the Company), the Association, and Capital Resources, the officers' certificate must further state that no stop order suspending the effectiveness of the Registration Statement has been initiated or, to the best knowledge of the Company or Association, threatened by the Commission or any state authority.",
-      "Under the Agency Agreement among AFSALA BANCORP INC (the Company), the Association, and Capital Resources, prior to and at the Closing Date, in the reasonable opinion of Capital Resources, there shall have been no material adverse change in the condition, financial or otherwise, or in the earnings, or the business affairs or business prospects of the Company or the Association independently, or of the Company or the Association considered as one enterprise, since the latest dates as of which such condition is set forth in the Offering Prospectus, except as referred to therein."
+      "Under the Manufacturing and Supply Agreement between Vapotherm and Medica, Medica shall not disclose Vapotherm Confidential Information and shall not use any Vapotherm Confidential Information other than in connection with performing its obligations under the agreement, and Vapotherm shall not disclose Medica Confidential Information and shall not use any Medica Confidential Information other than in connection with performing its obligations under the agreement.",
+      "eGain Communications Corporation is a party to the Hosting Agreement.",
+      "Certain payments on the Trust Securities are guaranteed by Reinsurance Group of America, Incorporated pursuant to the Guarantee Agreement dated as of December 18, 2001 between the Company and The Bank of New York Mellon Trust Company, as successor guarantee trustee.",
+      "Under the Remarketing Agreement, no relationship, direct or indirect, exists between or among Reinsurance Group of America, Incorporated on the one hand, and the directors, officers, shareholders, customers or suppliers of the Company on the other hand, which is required to be described in each of the Time of Sale Prospectus and the Prospectus and is not so described.",
+      "Under the Remarketing Agreement between Reinsurance Group of America, Incorporated and the Remarketing Agent, the Remarketing Agent shall reimburse the Company and any indemnified director, officer, employee, Trustee or controlling person promptly upon demand for legal or other expenses reasonably incurred in investigating or defending any such loss, claim, damage, liability or action."
     ],
     "decision_floors.distinct": [
-      "Under the Outsourcing Agreement's Schedule 1 definitions, control means the possession, directly or indirectly, of the power to direct or cause the direction of the management and policies of a Person, whether through ownership of voting securities, by contract or otherwise."
+      "Under the Outsourcing Agreement, control means the possession, directly or indirectly, of the power to direct or cause the direction of the management and policies of a Person, whether through ownership of voting securities, by contract or otherwise."
     ]
   },
   "skipped_fact_evals": {
-    "nli: no nli model is set; skipped": 3178
+    "nli: no nli model is set; skipped": 3207
   }
 }

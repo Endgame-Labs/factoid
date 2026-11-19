@@ -1699,3 +1699,11 @@ All dates are 2026-11-13 unless noted.
      `grounded` failure as repairable, and the repair prompt then asks to keep only what the passages state. It is off
      by default; the legal and iscrag apps have a `GROUNDED_REPAIR` variant for `--vary`, and the result decides the
      default. A retry of extraction, decision 87's other arm, is not built. (2026-11-19)
+122. 0.1.18 (issues #8 and #12), each measured against the 0.1.6 scorecards in its own worktree. Questions keep the
+     caller's order, and the cache key includes it: no metric moved beyond run-to-run noise, and iscrag facts at 512
+     tokens went 0.92 to 0.935. Extraction marks the speaker of a reported claim: iscrag went from 0 speaker mentions
+     to 6,513 (subjects 6,805 to 3,035), unseen facts at 2,048 tokens 0.957 to 0.979, CUAD held-out span recall 0.865
+     to 0.893, and amendment supersessions 9 of 12 either way (fresh lost one, SEC gained one). Scorecards are updated.
+     Repeat identical calls inside Factoid replay from the cache; fresh calls to the decision model still vary, and no
+     seed is sent. Tokens by step (decision 114): evaluate, assess, and resolve take 84% to 93% of input tokens, and
+     extraction 1% to 2%. (2026-11-19)

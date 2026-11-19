@@ -2,6 +2,13 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.18 (2026-11-19)
+
+- **Steadier decisions.** A decision request asks its questions in the order the code lists them, not by a hash of
+  their wording, so rewording one question no longer moves the others. The call cache keys on that order (issue #8).
+- **Speakers.** Extraction marks who says or reports a claim as its `speaker`, and what the claim is about as its
+  `subject` (issue #12).
+
 ## 0.1.17 (2026-11-19)
 
 - **Grounded repair, as an experiment.** `DecisionFloors(repair_grounded=True)` trims a fact that fails `grounded` to

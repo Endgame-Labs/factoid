@@ -3,69 +3,68 @@
   "variant": "default",
   "overrides": {},
   "documents": 2,
-  "facts": 241,
-  "rejected": 11,
+  "facts": 253,
+  "rejected": 9,
   "rejected_by_reason": {
-    "decision_floors.grounded": 6,
+    "decision_floors.grounded": 5,
     "decision_floors.attribution": 4,
-    "decision_floors.useful": 2,
-    "validate: too long for one fact": 1,
-    "decision_floors.distinct": 1
+    "decision_floors.useful": 3,
+    "validate: too long for one fact": 2
   },
   "metrics": {
     "supersede_recall": 0.5,
     "supersede_recall_any": 1.0,
     "unchanged_kept": 1.0,
-    "false_change_rate": 0.054,
+    "false_change_rate": 0.044,
     "false_changes": [
       "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and Neon Systems, Inc., Peregrine/Bridge Transfer Corporation grants Neon Systems,",
-      "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, the Licensee shall pay the Licensor a fee equal to 50% of all re",
+      "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, the Licensee shall pay the Licensor for maintenance and support ",
       "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, all fees due to the Licensor shall be paid in U.S. Dollars.",
       "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, fees due to NEON Systems from invoices rendered on or after the ",
       "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, fees due to the Licensor from invoices rendered after the eighte",
-      "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, any amount not paid when due bears simple interest from the date",
       "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, dated January 1, 1996, the agreement is effective until the earl",
-      "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, either party may terminate the agreement immediately upon writte"
+      "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, either party may terminate the agreement immediately upon writte",
+      "superseded: Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, if Peregrine/Bridge Transfer Corporation fails to deliver notice"
     ],
-    "false_change_rate_base": 0.06,
+    "false_change_rate_base": 0.058,
     "as_of_accuracy": 1.0,
-    "qa_facts@2000": 0.833,
-    "qa_facts@2000_outdated": 0.167,
-    "qa_facts@8000": 1.0,
+    "qa_facts@2000": 1.0,
+    "qa_facts@2000_outdated": 0.0,
+    "qa_facts@8000": 0.833,
     "qa_facts@8000_outdated": 0.0,
     "qa_chunks@2000": 0.833,
     "qa_chunks@2000_outdated": 0.0,
-    "qa_chunks@8000": 1.0,
+    "qa_chunks@8000": 0.833,
     "qa_chunks@8000_outdated": 0.0,
     "qa_reranked@2000": 1.0,
     "qa_reranked@2000_outdated": 0.0,
-    "qa_reranked@8000": 1.0,
+    "qa_reranked@8000": 0.833,
     "qa_reranked@8000_outdated": 0.0,
     "qa_questions": 6,
     "qa_details": [
       {
         "as_of": "1997-06-01",
         "query": "How many days after the invoice must NEON Systems pay Peregrine/Bridge?",
-        "facts@2000": "outdated",
-        "facts@2000 answer": "60 days",
-        "facts@8000": "current",
-        "facts@8000 answer": "90 days. On June 1, 1997 (the first day of the 18th month of the term), fees due to NEON Systems from invoices rendered on or after the first day of the 13th mo",
+        "facts@2000": "current",
+        "facts@2000 answer": "90 days after the date of the invoice. As of June 1, 1997, the agreement was in its thirteenth through eighteenth month (the term began January 1, 1996), and fe",
+        "facts@8000": "neither",
+        "facts@8000 answer": "90 days",
         "chunks@2000": "current",
         "chunks@2000 answer": "90 days. As of June 1997 (the 18th month of the term), invoices were payable ninety (90) days after the invoice date under Section 3.2.",
-        "chunks@8000": "current",
-        "chunks@8000 answer": "90 days. As of June 1, 1997 (the last day of the 18th month of the term), invoices rendered on or after the first day of the 13th month through the last day of ",
+        "chunks@8000": "neither",
+        "chunks@8000 answer": "90 days",
         "reranked@2000": "current",
-        "reranked@2000 answer": "90 days. As of June 1, 1997 (the last day of the 18th month of the term), invoices rendered during months 13 through 18 are payable 90 days after the invoice da",
-        "reranked@8000": "current",
-        "reranked@8000 answer": "90 days. As of June 1, 1997 (the 18th month of the term), invoices were payable ninety (90) days after the invoice date under Section 3.2."
+        "reranked@2000 answer": "90 days. As of June 1, 1997 (within the 13th through 18th month of the term), fees were payable ninety (90) days after the date of the invoice.",
+        "reranked@8000": "neither",
+        "reranked@8000 answer": "90 days"
       },
       {
         "as_of": "2000-01-01",
         "query": "How many days after the invoice must NEON Systems pay Peregrine/Bridge?",
         "facts@2000": "current",
-        "facts@2000 answer": "Sixty (60) days after the date of the applicable invoice (or, if later, five business days after NEON Systems' receipt of payment from the Redistributor or Cust",
+        "facts@2000 answer": "Sixty (60) days after the date of the applicable invoice (or, if later, five business days following NEON Systems' receipt of payment from the Redistributor or ",
         "facts@8000": "current",
-        "facts@8000 answer": "Sixty (60) days after the date of the applicable invoice, or five (5) business days following NEON Systems' receipt of payment from that Redistributor or Custom",
+        "facts@8000 answer": "Sixty (60) days after the date of the applicable invoice, or five (5) business days following NEON Systems' receipt of payment from a Redistributor or Customer,",
         "chunks@2000": "current",
         "chunks@2000 answer": "Under the First Amendment (in force on 2000-01-01), royalty payments are due on the later of (i) sixty (60) days after the date of the applicable invoice to a R",
         "chunks@8000": "current",
@@ -79,25 +78,25 @@
         "as_of": "1997-06-01",
         "query": "What royalty does NEON Systems owe Peregrine/Bridge on revenue from licensed pro",
         "facts@2000": "current",
-        "facts@2000 answer": "On 1997-06-01, the original Distributor Agreement (in force from 1996-01-01) applied: NEON Systems owed Peregrine/Bridge a licensee fee equal to 50% of all reve",
+        "facts@2000 answer": "50% of all revenues received by NEON Systems under the applicable Redistributor Agreement or Sublicense (excluding maintenance/support and upgrade revenues), wi",
         "facts@8000": "current",
         "facts@8000 answer": "On 1997-06-01, the original Distributor Agreement (in force from 1996-01-01) applied: NEON Systems owed Peregrine/Bridge a licensee fee equal to 50% of all reve",
         "chunks@2000": "neither",
         "chunks@2000 answer": "Insufficient source evidence.",
         "chunks@8000": "current",
-        "chunks@8000 answer": "50% of all revenues received (without deduction for value added tax, but excluding maintenance/support/upgrade revenues, which are also paid at 50%) under the a",
+        "chunks@8000 answer": "50% of all revenues received (without deduction for value added tax) under the applicable Redistributor Agreement or Sublicense, excluding maintenance/support/u",
         "reranked@2000": "current",
         "reranked@2000 answer": "50% of all revenues received (excluding value added tax; maintenance/support and upgrade revenues are also 50% under Section 3.1(b)).",
         "reranked@8000": "current",
-        "reranked@8000 answer": "50% of all revenues received (excluding value added tax; maintenance/support and upgrade revenues are also 50% under Section 3.1(b))."
+        "reranked@8000 answer": "50% of all revenues received (excluding maintenance/support and upgrade revenues, which are also 50% under Section 3.1(b)), per Section 3.1 of the 1996-01-01 Di"
       },
       {
         "as_of": "2000-01-01",
         "query": "What royalty does NEON Systems owe Peregrine/Bridge on revenue from licensed pro",
         "facts@2000": "current",
-        "facts@2000 answer": "As of 2000-01-01, NEON Systems owes Peregrine/Bridge a royalty equal to the Specified Royalty Percentage (50%) of all revenues received for each Licensed Produc",
+        "facts@2000 answer": "Under the First Amendment (in force on 2000-01-01), NEON Systems owes Peregrine/Bridge a royalty equal to the Specified Royalty Percentage of all revenues recei",
         "facts@8000": "current",
-        "facts@8000 answer": "As of January 1, 2000 (during NEON Systems' fiscal year beginning April 1, 1999), NEON owes Peregrine/Bridge a royalty equal to the Specified Royalty Percentage",
+        "facts@8000 answer": "As of 2000-01-01, under the First Amendment to the Distributor Agreement, NEON Systems owes Peregrine/Bridge a royalty equal to the Specified Royalty Percentage",
         "chunks@2000": "current",
         "chunks@2000 answer": "Under the First Amendment (in force on 2000-01-01), NEON Systems pays Peregrine/Bridge a royalty equal to the Specified Royalty Percentage of all revenues recei",
         "chunks@8000": "current",
@@ -111,9 +110,9 @@
         "as_of": "1997-06-01",
         "query": "When does the term of the NEON Systems distributor agreement end?",
         "facts@2000": "current",
-        "facts@2000 answer": "The agreement runs until the earlier of termination under Article 14 or January 1, 1998 (two years after the January 1, 1996 agreement date), renewing automatic",
+        "facts@2000 answer": "The agreement, dated January 1, 1996, runs until the earlier of termination under Article 14 or two years after its date (i.e., January 1, 1998), and renews aut",
         "facts@8000": "current",
-        "facts@8000 answer": "As of June 1, 1997, the original Distributor Agreement (dated January 1, 1996) was in force, under which the term runs until the earlier of termination under Ar",
+        "facts@8000 answer": "As of June 1, 1997, the Distributor Agreement (dated January 1, 1996) runs until the earlier of termination under Article 14 or January 1, 1998 (two years after",
         "chunks@2000": "current",
         "chunks@2000 answer": "The initial term ends two years after the January 1, 1996 signing date (i.e., January 1, 1998), unless earlier terminated; it renews automatically for successiv",
         "chunks@8000": "current",
@@ -127,7 +126,7 @@
         "as_of": "2000-01-01",
         "query": "When does the term of the NEON Systems distributor agreement end?",
         "facts@2000": "current",
-        "facts@2000 answer": "March 31, 2004",
+        "facts@2000 answer": "March 31, 2004, subject to automatic renewal for successive one-year terms unless either party gives written notice of termination at least sixty days prior to ",
         "facts@8000": "current",
         "facts@8000 answer": "March 31, 2004",
         "chunks@2000": "current",
@@ -186,7 +185,7 @@
       {
         "as_of": "2000-01-01T00:00:00Z",
         "ok": true,
-        "want_rank": 0,
+        "want_rank": 1,
         "stale_rank": null
       },
       {
@@ -204,109 +203,188 @@
     ]
   },
   "latency": {
-    "p50_doc_s": 3.48,
-    "p95_doc_s": 3.89
+    "p50_doc_s": 50.04,
+    "p95_doc_s": 60.21
   },
   "usage": {
     "by_workload": {
       "embed": {
-        "calls": 61,
-        "cache_hits": 61,
-        "older_hits": 42,
-        "input_tokens": 0,
+        "calls": 71,
+        "cache_hits": 31,
+        "older_hits": 31,
+        "input_tokens": 20848,
         "output_tokens": 0,
-        "seconds": 0.0,
+        "seconds": 12.137127112830058,
         "cost": 0.0,
-        "priced": 1
+        "priced": 0
       },
       "extract": {
         "calls": 14,
-        "cache_hits": 14,
-        "older_hits": 14,
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "seconds": 0.0,
+        "cache_hits": 0,
+        "older_hits": 0,
+        "input_tokens": 28760,
+        "output_tokens": 46843,
+        "seconds": 238.24449115502648,
         "cost": 0.0,
-        "priced": 1
+        "priced": 0
       },
       "choose": {
-        "calls": 824,
-        "cache_hits": 824,
-        "older_hits": 310,
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "seconds": 0.0,
+        "calls": 891,
+        "cache_hits": 4,
+        "older_hits": 0,
+        "input_tokens": 1608579,
+        "output_tokens": 321371,
+        "seconds": 77.04922082927078,
         "cost": 0.0,
-        "priced": 1
+        "priced": 0
       },
       "repair": {
-        "calls": 37,
-        "cache_hits": 37,
-        "older_hits": 14,
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "seconds": 0.0,
+        "calls": 41,
+        "cache_hits": 2,
+        "older_hits": 2,
+        "input_tokens": 26791,
+        "output_tokens": 8235,
+        "seconds": 71.10105487564579,
         "cost": 0.0,
-        "priced": 1
+        "priced": 0
       },
       "rerank": {
         "calls": 18,
-        "cache_hits": 18,
-        "older_hits": 0,
-        "input_tokens": 0,
+        "cache_hits": 2,
+        "older_hits": 2,
+        "input_tokens": 357256,
         "output_tokens": 0,
-        "seconds": 0.0,
+        "seconds": 18.554692714475095,
         "cost": 0.0,
-        "priced": 1
+        "priced": 0
       },
       "generate": {
         "calls": 72,
-        "cache_hits": 72,
-        "older_hits": 27,
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "seconds": 0.0,
+        "cache_hits": 40,
+        "older_hits": 40,
+        "input_tokens": 90755,
+        "output_tokens": 2103,
+        "seconds": 39.497163930907845,
         "cost": 0.0,
-        "priced": 1
+        "priced": 0
+      }
+    },
+    "by_step": {
+      "ingest": {
+        "calls": 44,
+        "cache_hits": 5,
+        "input_tokens": 20779,
+        "output_tokens": 0
+      },
+      "extract": {
+        "calls": 14,
+        "cache_hits": 0,
+        "input_tokens": 28760,
+        "output_tokens": 46843
+      },
+      "evaluate": {
+        "calls": 305,
+        "cache_hits": 0,
+        "input_tokens": 484102,
+        "output_tokens": 56425
+      },
+      "repair": {
+        "calls": 41,
+        "cache_hits": 2,
+        "input_tokens": 26791,
+        "output_tokens": 8235
+      },
+      "assess": {
+        "calls": 254,
+        "cache_hits": 0,
+        "input_tokens": 500610,
+        "output_tokens": 160302
+      },
+      "link": {
+        "calls": 54,
+        "cache_hits": 1,
+        "input_tokens": 30501,
+        "output_tokens": 4352
+      },
+      "specific_name": {
+        "calls": 10,
+        "cache_hits": 4,
+        "input_tokens": 2173,
+        "output_tokens": 198
+      },
+      "resolve": {
+        "calls": 253,
+        "cache_hits": 0,
+        "input_tokens": 573622,
+        "output_tokens": 97181
+      },
+      "claim": {
+        "calls": 13,
+        "cache_hits": 0,
+        "input_tokens": 14302,
+        "output_tokens": 2557
+      },
+      "replace_sections": {
+        "calls": 4,
+        "cache_hits": 0,
+        "input_tokens": 3338,
+        "output_tokens": 356
+      },
+      "embed": {
+        "calls": 25,
+        "cache_hits": 25,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "rerank": {
+        "calls": 18,
+        "cache_hits": 2,
+        "input_tokens": 357256,
+        "output_tokens": 0
+      },
+      "generate": {
+        "calls": 72,
+        "cache_hits": 40,
+        "input_tokens": 90755,
+        "output_tokens": 2103
       }
     },
     "total": {
-      "calls": 1026,
-      "cache_hits": 1026,
-      "older_hits": 407,
-      "input_tokens": 0,
-      "output_tokens": 0,
-      "seconds": 0.0,
+      "calls": 1107,
+      "cache_hits": 79,
+      "older_hits": 75,
+      "input_tokens": 2132989,
+      "output_tokens": 378552,
+      "seconds": 456.58375061815605,
       "cost": 0.0
     },
-    "wall_seconds": 7.09
+    "wall_seconds": 100.33
   },
   "rejected_samples": {
     "validate: too long for one fact": [
-      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, the indemnified party may employ separate counsel and participate in the defense, but the fees and expenses of that counsel are not at the indemnifying party's expense if the indemnifying party has assumed the defense with counsel reasonably satisfactory to the indemnified party; the fees are at the indemnifying party's expense if the employment of counsel was specifically authorized in writing by the indemnifying party or the indemnified party was advised by counsel of a conflict of interest or of legal defenses available to the indemnified party that are not available to the indemnifying party, in which case the indemnifying party may not assume the defense, and the indemnifying party is not liable for the reasonable fees of more than one separate firm of attorneys for the indemnified party per action or group of substantially similar related actions in the same jurisdiction, with the firm designated in writing by the indemnified party."
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, the indemnified party may employ separate counsel and participate in the defense, but the fees and expenses of that counsel are not at the indemnifying party's expense if the indemnifying party has assumed the defense with counsel reasonably satisfactory to the indemnified party; provided that the indemnified party's counsel fees are at the indemnifying party's expense if the employment of that counsel was specifically authorized in writing by the indemnifying party, or the indemnified party was advised by counsel that there is a conflict of interest or issue conflict in the representation by the indemnifying party's counsel, or that there may be legal defenses available to the indemnified party that are not available to the indemnifying party (in which case the indemnifying party may not assume the defense).",
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, if the Licensee is prevented from its normal use of any Licensed Product or Documentation by injunction or court order arising from alleged or actual infringement of a third party's intellectual property rights relating to any Licensed Product or Documentation, then the Licensor, at its option, in addition to the other remedies in the Distributor Agreement and at no expense, loss or damage to the Licensee, must (a) replace the infringing Licensed Product or Documentation free of infringement, (b) modify it so it is free of infringement, or (c) procure for the Licensee, by license or other release of the infringement claim, the right to make Sublicense Copies and copies of the Documentation to meet the demand of Redistributors and Customers and to market and sublicense Sublicense Copies and copies of the Documentation."
     ],
     "decision_floors.grounded": [
       "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and Neon Systems, Inc., a \"Redistributor\" means any individual or entity that is granted a license by Neon Systems, Inc. to copy and sublicense one or more Licensed Products to Customers.",
-      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and Neon Systems, Inc., an \"Upgrade\" means any revision, adaptation or new version of a Licensed Product which enhances a Licensed Product and which is offered by Peregrine/Bridge Transfer Corporation to registered users of that Licensed Product as an \"upgrade.\"",
-      "Under Section 3.2 of the Distributor Agreement as amended, the aggregate outstanding Royalty Advances shall be credited against royalties payable to Peregrine/Bridge Transfer Corporation as and when such royalties are recognized as earned in accordance with generally accepted accounting principles.",
-      "Under Section 3.2 of the Distributor Agreement as amended, upon expiration or termination of the Distributor Agreement, Peregrine/Bridge Transfer Corporation shall repay to NEON Systems, Inc. the aggregate amount of all outstanding Royalty Advances.",
-      "Under the First Amendment to the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, Inc., upon exercise of the Option, NEON Systems and Peregrine/Bridge Transfer Corporation or Skunkware shall diligently and in good faith negotiate and execute a definitive purchase and sale agreement for the acquisition of all of the assets of, or outstanding capital stock in, Peregrine/Bridge Transfer Corporation."
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, during the term of the agreement and the five-year period immediately following its termination, Licensee has the right, at its own expense, to audit and examine Licensor's records concerning Licensor's compliance with its confidentiality obligations under the agreement.",
+      "Under the First Amendment to the Distributor Agreement between Peregrine/Bridge and NEON Systems, upon the expiration or any termination of the Distributor Agreement, Peregrine/Bridge Transfer Corporation shall repay to NEON Systems, Inc. the aggregate amount of all Royalty Advances then outstanding.",
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, Inc., upon exercise of the option, NEON Systems, Inc. and Peregrine/Bridge Transfer Corporation or Skunkware, Inc. (as the case may be) shall diligently and in good faith negotiate and execute a definitive purchase and sale agreement for the acquisition of all of the assets of, or outstanding capital stock in, Peregrine/Bridge Transfer Corporation.",
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, Inc., the definitive purchase and sale agreement shall provide that NEON Systems, Inc. may pay the purchase price in cash, in shares of its Common Stock, or in some combination thereof."
     ],
     "decision_floors.attribution": [
       "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and Neon Systems, Inc., a \"Redistributor\" means any individual or entity that is granted a license by Neon Systems, Inc. to copy and sublicense one or more Licensed Products to Customers.",
-      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation (Licensor) and NEON Systems (Licensee), during the term of the agreement and the five-year period immediately following its termination, the Licensee has the right, at its own expense, to audit and examine the Licensor's records concerning the Licensor's compliance with its confidentiality obligations under the agreement.",
-      "Under Section 3.2 of the Distributor Agreement as amended, upon expiration or termination of the Distributor Agreement, Peregrine/Bridge Transfer Corporation shall repay to NEON Systems, Inc. the aggregate amount of all outstanding Royalty Advances.",
-      "Under the First Amendment to the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, Inc., the definitive purchase and sale agreement shall provide that NEON Systems may pay the purchase price in cash, in shares of its Common Stock, or in some combination thereof."
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, during the term of the agreement and the five-year period immediately following its termination, Licensee has the right, at its own expense, to audit and examine Licensor's records concerning Licensor's compliance with its confidentiality obligations under the agreement.",
+      "Under the First Amendment to the Distributor Agreement between Peregrine/Bridge and NEON Systems, upon the expiration or any termination of the Distributor Agreement, Peregrine/Bridge Transfer Corporation shall repay to NEON Systems, Inc. the aggregate amount of all Royalty Advances then outstanding.",
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, Inc., the definitive purchase and sale agreement shall provide that NEON Systems, Inc. may pay the purchase price in cash, in shares of its Common Stock, or in some combination thereof."
     ],
     "decision_floors.useful": [
-      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, a reference in the agreement to an Article, Section, subsection or Exhibit refers to an Article, Section, subsection or Exhibit of the agreement unless otherwise indicated.",
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, during the term of the agreement and the five-year period immediately following its termination, Licensee has the right, at its own expense, to audit and examine Licensor's records concerning Licensor's compliance with its confidentiality obligations under the agreement.",
+      "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, a reference in the agreement to an Article, Section, subsection or Exhibit refers to an Article, Section, subsection or Exhibit of that agreement unless otherwise indicated.",
       "Under the Distributor Agreement between Peregrine/Bridge Transfer Corporation and NEON Systems, the table of contents and headings are for reference purposes only and do not affect the meaning or interpretation of the agreement."
-    ],
-    "decision_floors.distinct": [
-      "Under the First Amendment to the Distributor Agreement, Peregrine/Bridge Transfer Corporation and NEON Systems, Inc. are parties to a Distributor Agreement dated as of January 1, 1996."
     ]
   },
   "skipped_fact_evals": {
-    "nli: no nli model is set; skipped": 241
+    "nli: no nli model is set; skipped": 253
   }
 }

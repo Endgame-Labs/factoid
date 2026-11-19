@@ -3,10 +3,10 @@
   "variant": "default",
   "overrides": {},
   "documents": 4,
-  "facts": 24,
+  "facts": 26,
   "rejected": 1,
   "rejected_by_reason": {
-    "decision_floors.useful": 1
+    "decision_floors.distinct": 1
   },
   "metrics": {
     "passed": "15/15",
@@ -30,79 +30,165 @@
     }
   },
   "latency": {
-    "p50_doc_s": 0.08,
-    "p95_doc_s": 0.57
+    "p50_doc_s": 15.04,
+    "p95_doc_s": 21.55
   },
   "usage": {
     "by_workload": {
       "embed": {
-        "calls": 16,
-        "cache_hits": 16,
-        "older_hits": 13,
-        "input_tokens": 0,
+        "calls": 15,
+        "cache_hits": 10,
+        "older_hits": 10,
+        "input_tokens": 993,
         "output_tokens": 0,
-        "seconds": 0.0,
+        "seconds": 1.464590130141005,
         "cost": 0.0,
-        "priced": 1
+        "priced": 0
       },
       "extract": {
         "calls": 4,
-        "cache_hits": 4,
-        "older_hits": 4,
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "seconds": 0.0,
+        "cache_hits": 0,
+        "older_hits": 0,
+        "input_tokens": 3705,
+        "output_tokens": 3751,
+        "seconds": 44.871837007114664,
         "cost": 0.0,
-        "priced": 1
+        "priced": 0
       },
       "choose": {
         "calls": 108,
-        "cache_hits": 103,
-        "older_hits": 30,
-        "input_tokens": 15143,
-        "output_tokens": 3158,
-        "seconds": 0.4725865521468222,
+        "cache_hits": 0,
+        "older_hits": 0,
+        "input_tokens": 159236,
+        "output_tokens": 33365,
+        "seconds": 11.470824320567772,
         "cost": 0.0,
         "priced": 0
       },
       "repair": {
-        "calls": 5,
-        "cache_hits": 5,
-        "older_hits": 3,
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "seconds": 0.0,
+        "calls": 3,
+        "cache_hits": 2,
+        "older_hits": 2,
+        "input_tokens": 461,
+        "output_tokens": 217,
+        "seconds": 6.276006854139268,
         "cost": 0.0,
-        "priced": 1
+        "priced": 0
       },
       "rerank": {
         "calls": 2,
         "cache_hits": 0,
         "older_hits": 0,
-        "input_tokens": 5576,
+        "input_tokens": 5924,
         "output_tokens": 0,
-        "seconds": 0.49393424508161843,
+        "seconds": 0.763990760082379,
         "cost": 0.0,
         "priced": 0
       }
     },
+    "by_step": {
+      "ingest": {
+        "calls": 11,
+        "cache_hits": 6,
+        "input_tokens": 993,
+        "output_tokens": 0
+      },
+      "extract": {
+        "calls": 3,
+        "cache_hits": 0,
+        "input_tokens": 2956,
+        "output_tokens": 3552
+      },
+      "evaluate": {
+        "calls": 29,
+        "cache_hits": 0,
+        "input_tokens": 42610,
+        "output_tokens": 5365
+      },
+      "assess": {
+        "calls": 26,
+        "cache_hits": 0,
+        "input_tokens": 45108,
+        "output_tokens": 14561
+      },
+      "link": {
+        "calls": 11,
+        "cache_hits": 0,
+        "input_tokens": 6061,
+        "output_tokens": 930
+      },
+      "specific_name": {
+        "calls": 5,
+        "cache_hits": 0,
+        "input_tokens": 1804,
+        "output_tokens": 165
+      },
+      "resolve": {
+        "calls": 23,
+        "cache_hits": 0,
+        "input_tokens": 55951,
+        "output_tokens": 11241
+      },
+      "repair": {
+        "calls": 3,
+        "cache_hits": 2,
+        "input_tokens": 461,
+        "output_tokens": 217
+      },
+      "claim": {
+        "calls": 2,
+        "cache_hits": 0,
+        "input_tokens": 2096,
+        "output_tokens": 471
+      },
+      "fact_class": {
+        "calls": 12,
+        "cache_hits": 0,
+        "input_tokens": 5606,
+        "output_tokens": 632
+      },
+      "save": {
+        "calls": 2,
+        "cache_hits": 2,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "text_facts": {
+        "calls": 1,
+        "cache_hits": 0,
+        "input_tokens": 749,
+        "output_tokens": 199
+      },
+      "embed": {
+        "calls": 2,
+        "cache_hits": 2,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "rerank": {
+        "calls": 2,
+        "cache_hits": 0,
+        "input_tokens": 5924,
+        "output_tokens": 0
+      }
+    },
     "total": {
-      "calls": 135,
-      "cache_hits": 128,
-      "older_hits": 50,
-      "input_tokens": 20719,
-      "output_tokens": 3158,
-      "seconds": 0.9665207972284406,
+      "calls": 132,
+      "cache_hits": 12,
+      "older_hits": 12,
+      "input_tokens": 170319,
+      "output_tokens": 37333,
+      "seconds": 64.84724907204509,
       "cost": 0.0
     },
-    "wall_seconds": 0.79
+    "wall_seconds": 60.51
   },
   "rejected_samples": {
-    "decision_floors.useful": [
-      "Dana Whitfield stated that two points about the Supply Agreement matter for the Acme deal."
+    "decision_floors.distinct": [
+      "Dana Whitfield said Orion needs Vega's written consent to assign the Supply Agreement between Orion and Vega."
     ]
   },
   "skipped_fact_evals": {
-    "nli: no nli model is set; skipped": 22
+    "nli: no nli model is set; skipped": 24
   }
 }

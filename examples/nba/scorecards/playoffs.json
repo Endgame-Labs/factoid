@@ -3,15 +3,15 @@
   "variant": "default",
   "overrides": {},
   "documents": 73,
-  "facts": 4256,
-  "rejected": 119,
+  "facts": 4322,
+  "rejected": 137,
   "rejected_by_reason": {
-    "decision_floors.distinct": 52,
-    "decision_floors.atomic": 46,
-    "decision_floors.grounded": 35,
-    "decision_floors.useful": 12,
-    "validate: cites no passage": 8,
-    "decision_floors.attribution": 4
+    "decision_floors.atomic": 55,
+    "decision_floors.distinct": 48,
+    "decision_floors.grounded": 47,
+    "decision_floors.useful": 17,
+    "validate: cites no passage": 9,
+    "decision_floors.attribution": 5
   },
   "metrics": {
     "passed": "11/11",
@@ -30,75 +30,75 @@
       "entities: the Celtics link games and recaps": "ok"
     },
     "facts": {
-      "superseded": 167,
-      "current": 4023,
-      "contradicted": 62,
-      "ended": 4
+      "current": 4189,
+      "superseded": 61,
+      "contradicted": 70,
+      "ended": 2
     },
     "fact_classes": {
-      "Reported": 3017,
-      "Remark": 1239
+      "Reported": 3010,
+      "Remark": 1312
     },
     "facts_by_document": {
       "GameLog": 44,
       "BoxScore": 982,
       "PlayerTotals": 28,
-      "Recap": 1145,
-      "Interview": 1239,
-      "Article": 818
+      "Recap": 1166,
+      "Interview": 1312,
+      "Article": 790
     },
     "entities": {
       "Game": 27,
-      "Series": 9,
-      "Team": 32,
-      "Player": 141,
+      "Series": 12,
+      "Team": 34,
+      "Player": 143,
       "Person": 55,
-      "Entity": 48
+      "Entity": 49
     }
   },
   "latency": {
-    "p50_doc_s": 19.47,
-    "p95_doc_s": 40.02
+    "p50_doc_s": 39.51,
+    "p95_doc_s": 89.73
   },
   "usage": {
     "by_workload": {
       "embed": {
-        "calls": 2326,
-        "cache_hits": 1637,
-        "older_hits": 1631,
-        "input_tokens": 52575,
+        "calls": 2337,
+        "cache_hits": 1512,
+        "older_hits": 1508,
+        "input_tokens": 150864,
         "output_tokens": 0,
-        "seconds": 220.57613351452164,
+        "seconds": 316.70041912794113,
         "cost": 0.0,
         "priced": 0
       },
       "choose": {
-        "calls": 13848,
-        "cache_hits": 4756,
-        "older_hits": 4753,
-        "input_tokens": 18961730,
-        "output_tokens": 3122722,
-        "seconds": 831.1564157961402,
+        "calls": 14200,
+        "cache_hits": 6,
+        "older_hits": 0,
+        "input_tokens": 23948879,
+        "output_tokens": 4240409,
+        "seconds": 1417.9385729709174,
         "cost": 0.0,
         "priced": 0
       },
       "extract": {
         "calls": 109,
-        "cache_hits": 109,
-        "older_hits": 109,
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "seconds": 0.0,
-        "cost": 0.0,
-        "priced": 1
-      },
-      "repair": {
-        "calls": 1017,
         "cache_hits": 0,
         "older_hits": 0,
-        "input_tokens": 684738,
-        "output_tokens": 163201,
-        "seconds": 3448.1877131904475,
+        "input_tokens": 210080,
+        "output_tokens": 275361,
+        "seconds": 1663.3369496278465,
+        "cost": 0.0,
+        "priced": 0
+      },
+      "repair": {
+        "calls": 1072,
+        "cache_hits": 269,
+        "older_hits": 269,
+        "input_tokens": 549642,
+        "output_tokens": 128631,
+        "seconds": 2625.1790269338526,
         "cost": 0.0,
         "priced": 0
       },
@@ -106,25 +106,111 @@
         "calls": 1,
         "cache_hits": 0,
         "older_hits": 0,
-        "input_tokens": 17250,
+        "input_tokens": 17100,
         "output_tokens": 0,
-        "seconds": 0.6944396919570863,
+        "seconds": 0.6532114339061081,
         "cost": 0.0,
         "priced": 0
       }
     },
+    "by_step": {
+      "ingest": {
+        "calls": 1186,
+        "cache_hits": 402,
+        "input_tokens": 149543,
+        "output_tokens": 0
+      },
+      "assess": {
+        "calls": 4462,
+        "cache_hits": 0,
+        "input_tokens": 4471690,
+        "output_tokens": 1156006
+      },
+      "save": {
+        "calls": 1054,
+        "cache_hits": 1054,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "resolve": {
+        "calls": 3440,
+        "cache_hits": 0,
+        "input_tokens": 10058024,
+        "output_tokens": 2083692
+      },
+      "claim": {
+        "calls": 118,
+        "cache_hits": 0,
+        "input_tokens": 86923,
+        "output_tokens": 21292
+      },
+      "identify": {
+        "calls": 8,
+        "cache_hits": 8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "extract": {
+        "calls": 109,
+        "cache_hits": 0,
+        "input_tokens": 210080,
+        "output_tokens": 275361
+      },
+      "evaluate": {
+        "calls": 4906,
+        "cache_hits": 5,
+        "input_tokens": 8660998,
+        "output_tokens": 906685
+      },
+      "repair": {
+        "calls": 1072,
+        "cache_hits": 269,
+        "input_tokens": 549642,
+        "output_tokens": 128631
+      },
+      "specific_name": {
+        "calls": 142,
+        "cache_hits": 0,
+        "input_tokens": 51066,
+        "output_tokens": 4686
+      },
+      "link": {
+        "calls": 448,
+        "cache_hits": 47,
+        "input_tokens": 216643,
+        "output_tokens": 33341
+      },
+      "fact_class": {
+        "calls": 772,
+        "cache_hits": 1,
+        "input_tokens": 404856,
+        "output_tokens": 34707
+      },
+      "embed": {
+        "calls": 1,
+        "cache_hits": 1,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "rerank": {
+        "calls": 1,
+        "cache_hits": 0,
+        "input_tokens": 17100,
+        "output_tokens": 0
+      }
+    },
     "total": {
-      "calls": 17301,
-      "cache_hits": 6502,
-      "older_hits": 6493,
-      "input_tokens": 19716293,
-      "output_tokens": 3285923,
-      "seconds": 4500.6147021930665,
+      "calls": 17719,
+      "cache_hits": 1787,
+      "older_hits": 1777,
+      "input_tokens": 24876565,
+      "output_tokens": 4644401,
+      "seconds": 6023.808180094464,
       "cost": 0.0
     },
-    "wall_seconds": 1846.67
+    "wall_seconds": 3506.53
   },
   "skipped_fact_evals": {
-    "nli: no nli model is set; skipped": 3202
+    "nli: no nli model is set; skipped": 3268
   }
 }

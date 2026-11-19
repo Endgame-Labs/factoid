@@ -3,34 +3,34 @@
   "variant": "default",
   "overrides": {},
   "documents": 6,
-  "facts": 2362,
-  "rejected": 170,
+  "facts": 2411,
+  "rejected": 129,
   "rejected_by_reason": {
-    "decision_floors.grounded": 67,
-    "validate: too long for one fact": 48,
-    "validate: cites no passage": 25,
-    "decision_floors.useful": 16,
+    "validate: too long for one fact": 36,
+    "decision_floors.grounded": 33,
+    "validate: cites no passage": 31,
+    "decision_floors.useful": 18,
     "decision_floors.attribution": 11,
-    "decision_floors.distinct": 10,
+    "decision_floors.distinct": 7,
     "decision_floors.atomic": 4
   },
   "metrics": {
-    "supersede_recall": 0.75,
-    "supersede_recall_any": 0.75,
+    "supersede_recall": 1.0,
+    "supersede_recall_any": 1.0,
     "unchanged_kept": 1.0,
-    "false_change_rate": 0.008,
+    "false_change_rate": 0.016,
     "false_changes": [
-      "superseded: Under the Five-Year Credit Agreement, the Applicable Rate for Reference Rate Loans, Eurodollar Loans, and facility fees is based on the ratings by Moody's and S",
+      "superseded: Under the Five-Year Credit Agreement of Tyson Foods, the Applicable Rate for Reference Rate Loans, Eurodollar Loans, and facility fees is set by reference to ra",
+      "superseded: Under the Five-Year Credit Agreement of Tyson Foods, the Reference Rate Spread is 0.000% in all five rating categories.",
+      "superseded: Under the Five-Year Credit Agreement of Tyson Foods, the Eurodollar Spread and L/C Participation Fee ranges from 0.320% to 0.825% across the five rating categor",
+      "superseded: Under the Five-Year Credit Agreement of Tyson Foods, the Facility Fee Rate ranges from 0.080% to 0.175% across the five rating categories.",
       "superseded: Under the Five-Year Credit Agreement, if either Moody's or S&P has no rating in effect for the Index Debt, that rating agency is deemed to have established a ra",
-      "superseded: Under the Note Purchase Agreement of Furniture Brands International, the $150,000,000 of 6.83% Senior Notes due May 17, 2018 will be unsecured and will rank par",
-      "superseded: Under the Note Purchase Agreement between Furniture Brands International and the Obligors, the Obligors, jointly and severally, covenant that so long as any of ",
-      "superseded: Under the Note Purchase Agreement of Furniture Brands International, the prohibition on Liens does not apply to Liens securing Indebtedness not otherwise permit",
-      "superseded: Under the Note Purchase Agreement between Furniture Brands International and the holders of the Notes, the Company will not, and will not permit any Subsidiary ",
-      "superseded: Under the Note Purchase Agreement between Furniture Brands International and the Obligors, Furniture Brands International will not permit any Subsidiary that is",
-      "superseded: Under the Note Purchase Agreement between Furniture Brands International and the Obligors, an Event of Default exists if any Obligor defaults in the performance"
+      "superseded: Under the Note Purchase Agreement between Furniture Brands International, Inc. (with its Subsidiary Co-Obligors, the Obligors) and the Purchasers, the Notes wil",
+      "superseded: Under the Note Purchase Agreement of Furniture Brands International, Furniture Brands International must promptly, and in any event within five Business Days af",
+      "superseded: Under the Note Purchase Agreement between Furniture Brands International and the Obligors, the Obligors jointly and severally covenant that, so long as any of t"
     ],
-    "false_change_rate_base": 0.008,
-    "as_of_accuracy": 0.909,
+    "false_change_rate_base": 0.017,
+    "as_of_accuracy": 1.0,
     "qa_facts@2000": 1.0,
     "qa_facts@2000_outdated": 0.0,
     "qa_facts@8000": 1.0,
@@ -55,7 +55,7 @@
         "chunks@2000": "neither",
         "chunks@2000 answer": "Insufficient source evidence.",
         "chunks@8000": "current",
-        "chunks@8000 answer": "3.00:1.00",
+        "chunks@8000 answer": "3.00:1.00 (Section 7.13: the Borrower shall not permit the Leverage Ratio at any time to exceed 3.00:1.00).",
         "reranked@2000": "neither",
         "reranked@2000 answer": "Insufficient source evidence.",
         "reranked@8000": "current",
@@ -65,17 +65,17 @@
         "as_of": "2006-09-01",
         "query": "What is the maximum Leverage Ratio Tyson Foods may have under its Five-Year Cred",
         "facts@2000": "current",
-        "facts@2000 answer": "4.75:1.00. As of September 1, 2006 (first quarter of fiscal year 2007), Section 7.13 as amended by Amendment No. 2 (in force from 2006-04-28) prohibits the Leve",
+        "facts@2000 answer": "4.75:1.00 (applicable in the first and second quarters of fiscal year 2007 under Section 7.13 as amended by Amendment No. 2)",
         "facts@8000": "current",
-        "facts@8000 answer": "As of 2006-09-01 (third/fourth quarter of fiscal year 2006), the maximum permitted Leverage Ratio under Section 7.13, as amended by Amendment No. 2, is 4.75:1.0",
+        "facts@8000 answer": "As of September 1, 2006 (third quarter of fiscal year 2006), the maximum Leverage Ratio Tyson Foods may have under Section 7.13 of the Five-Year Credit Agreemen",
         "chunks@2000": "neither",
         "chunks@2000 answer": "Insufficient source evidence.",
         "chunks@8000": "current",
         "chunks@8000 answer": "As of September 1, 2006, under Amendment No. 2 (April 28, 2006), the maximum Leverage Ratio for Q3 and Q4 of Fiscal Year 2006 is 4.75:1.00 (per the amended Sect",
         "reranked@2000": "current",
-        "reranked@2000 answer": "As of September 1, 2006 (Third Quarter of Fiscal Year 2006), the maximum permitted Leverage Ratio under Section 7.13 (as amended by Amendment No. 2, dated April",
+        "reranked@2000 answer": "4.75:1.00 (for Third and Fourth Quarters of Fiscal Year 2006, per Amendment No. 2, Section 7.13)",
         "reranked@8000": "current",
-        "reranked@8000 answer": "As of September 1, 2006, under Section 7.13 as amended by Amendment No. 2 (April 28, 2006), the maximum Leverage Ratio was 4.75:1.00 (applicable for Q3 and Q4 o"
+        "reranked@8000 answer": "As of September 1, 2006, under Amendment No. 2 (Section 7.13), the maximum Leverage Ratio was 4.75:1.00 (applicable for Q3 and Q4 of fiscal 2006 and Q1 and Q2 o"
       },
       {
         "as_of": "2006-01-15",
@@ -91,7 +91,7 @@
         "reranked@2000": "current",
         "reranked@2000 answer": "3.50:1.00 (Consolidated EBITDA to Consolidated Interest Expense for any four consecutive fiscal quarters, per Section 7.14).",
         "reranked@8000": "current",
-        "reranked@8000 answer": "3.50:1.00 (ratio of Consolidated EBITDA to Consolidated Interest Expense for any four consecutive fiscal quarters, per Section 7.14)."
+        "reranked@8000 answer": "3.50:1.00 (Consolidated EBITDA to Consolidated Interest Expense for any four consecutive fiscal quarters, per Section 7.14)."
       },
       {
         "as_of": "2006-09-01",
@@ -113,17 +113,17 @@
         "as_of": "2006-09-01",
         "query": "What leverage covenant does Tyson's credit facility set?",
         "facts@2000": "current",
-        "facts@2000 answer": "Under Section 7.13 (as amended by Amendment No. 2, in force 2006-04-28), Tyson shall not permit the Leverage Ratio (Indebtedness for Borrowed Money to Consolida",
+        "facts@2000 answer": "Under Section 7.13 of the Tyson Foods Five-Year Credit Agreement as amended by Amendment No. 2 (in force from 2006-04-28), Tyson Foods shall not permit the Leve",
         "facts@8000": "current",
-        "facts@8000 answer": "Under Section 7.13 as amended by Amendment No. 2 (in force from 2006-04-28), Tyson shall not permit the Leverage Ratio (Indebtedness for Borrowed Money to Conso",
+        "facts@8000 answer": "Under Section 7.13 as amended by Amendment No. 2 (in force from 2006-04-28), Tyson must not permit the Leverage Ratio (Indebtedness for Borrowed Money to Consol",
         "chunks@2000": "neither",
         "chunks@2000 answer": "Insufficient source evidence.",
         "chunks@8000": "current",
-        "chunks@8000 answer": "As amended by Amendment No. 2 (April 28, 2006), Section 7.13 sets a maximum Leverage Ratio by period: 4.75:1.00 for Q3\u2013Q4 FY2006 and Q1\u2013Q2 FY2007; 4.50:1.00 for",
+        "chunks@8000 answer": "As amended by Amendment No. 2 (April 28, 2006), Section 7.13 sets a maximum Leverage Ratio of 4.75:1.00 for Q3\u2013Q4 FY2006 and Q1\u2013Q2 FY2007, stepping down to 4.50",
         "reranked@2000": "neither",
         "reranked@2000 answer": "Insufficient source evidence.",
         "reranked@8000": "current",
-        "reranked@8000 answer": "As amended by Amendment No. 2 (April 28, 2006), Section 7.13 sets a maximum Leverage Ratio: not to exceed 4.75:1.00 for Q3\u2013Q4 FY2006 and Q1\u2013Q2 FY2007; 4.50:1.00"
+        "reranked@8000 answer": "As amended by Amendment No. 2 (April 28, 2006), Section 7.13 sets a maximum Leverage Ratio: 4.75:1.00 for Q3\u2013Q4 FY2006 and Q1\u2013Q2 FY2007; 4.50:1.00 for Q3\u2013Q4 FY2"
       },
       {
         "as_of": "2006-10-01",
@@ -145,13 +145,13 @@
         "as_of": "2007-09-01",
         "query": "What is the highest ratio of Consolidated Debt to Consolidated EBITDA that Furni",
         "facts@2000": "current",
-        "facts@2000 answer": "3.25 to 1.00 (per Amendment 1, Section 10.1, in force from 2007-04-16; with a temporary exception allowing up to 4.25 to 1.00 only from March 31, 2007 through J",
+        "facts@2000 answer": "3.25 to 1.00 (per Amendment 1, Section 10.1, in force 2007-03-31; with a temporary allowance of up to 4.25 to 1.00 only from March 31, 2007 through June 29, 200",
         "facts@8000": "current",
-        "facts@8000 answer": "3.25 to 1.00 (per Amendment 1, Section 10.1, in force on 2007-09-01; with a temporary exception through June 29, 2007 allowing up to 4.25 to 1.00).",
+        "facts@8000 answer": "3.25 to 1.00 (per Amendment 1, Section 10.1, in force from 2007-03-31; with a temporary exception allowing up to 4.25 to 1.00 only from March 31, 2007 through J",
         "chunks@2000": "current",
         "chunks@2000 answer": "3.25 to 1.00 (per Section 10.1 as amended by Amendment 1, dated April 16, 2007; with a temporary exception allowing up to 4.25 to 1.00 only from March 31, 2007 ",
         "chunks@8000": "current",
-        "chunks@8000 answer": "3.25 to 1.00",
+        "chunks@8000 answer": "3.25 to 1.00 (with a temporary exception allowing up to 4.25 to 1.00 from March 31, 2007 through June 29, 2007)",
         "reranked@2000": "current",
         "reranked@2000 answer": "3.25 to 1.00 (with a temporary exception allowing up to 4.25 to 1.00 from March 31, 2007 through June 29, 2007)",
         "reranked@8000": "current",
@@ -161,31 +161,31 @@
         "as_of": "2007-09-01",
         "query": "How much debt relative to EBITDA may Furniture Brands carry under its notes?",
         "facts@2000": "current",
-        "facts@2000 answer": "Consolidated Debt to Consolidated EBITDA must not be greater than or equal to 3.25 to 1.00 (a temporary 4.25 to 1.00 allowance applied only from March 31, 2007 ",
+        "facts@2000 answer": "As of 2007-09-01, the Consolidated Debt to Consolidated EBITDA ratio may not be greater than or equal to 3.25 to 1.00 (per Amendment 1, in force from 2007-04-16",
         "facts@8000": "current",
-        "facts@8000 answer": "As of 2007-09-01, under Section 10.1 (as amended by Amendment 1, in force from 2007-04-16), Furniture Brands may not permit the ratio of Consolidated Debt to Co",
+        "facts@8000 answer": "As of 2007-09-01, under Amendment 1 (in force from 2007-04-16), Furniture Brands may not permit the ratio of Consolidated Debt to Consolidated EBITDA to be grea",
         "chunks@2000": "outdated",
         "chunks@2000 answer": "Under the Note Purchase Agreement, the Company may not permit the ratio of Consolidated Debt to Consolidated EBITDA to be greater than 3.50 to 1.00 at any time ",
         "chunks@8000": "current",
-        "chunks@8000 answer": "As amended by Amendment 1 (effective April 16, 2007, in force on 2007-09-01), the Consolidated Debt covenant (Section 10.1) prohibits the ratio of Consolidated ",
+        "chunks@8000 answer": "As amended by Amendment 1 (effective April 16, 2007), the Consolidated Debt covenant (Section 10.1) prohibits the ratio of Consolidated Debt to Consolidated EBI",
         "reranked@2000": "current",
         "reranked@2000 answer": "As of 2007-09-01, under Section 10.1 as amended by Amendment 1 (April 16, 2007), the ratio of Consolidated Debt to Consolidated EBITDA may not be greater than o",
         "reranked@8000": "current",
-        "reranked@8000 answer": "As of September 1, 2007, under Section 10.1 as amended by Amendment 1 (April 16, 2007), the ratio of Consolidated Debt to Consolidated EBITDA may not be greater"
+        "reranked@8000 answer": "As of September 1, 2007, under Section 10.1 as amended by the First Amendment (April 16, 2007), Furniture Brands may not permit the ratio of Consolidated Debt t"
       },
       {
         "as_of": "2006-06-01",
         "query": "Until when may the Borrowers not prepay the Term Loan under the Life Sciences Re",
         "facts@2000": "current",
-        "facts@2000 answer": "Until the first anniversary of the Effective Date (March 1, 2007), the Borrowers have no right to prepay the Term Loan.",
+        "facts@2000 answer": "The Borrowers may not prepay the Term Loan on or prior to the first anniversary of the Effective Date, i.e., until February 28, 2007 (Effective Date being March",
         "facts@8000": "current",
-        "facts@8000 answer": "The Borrowers may not prepay the Term Loan on or prior to the first anniversary of the Effective Date, i.e., until February 28, 2007 (the Effective Date being M",
+        "facts@8000 answer": "The Borrowers may not prepay the Term Loan, in whole or in part, on or prior to the first anniversary of the Effective Date \u2014 i.e., until March 1, 2007 (Effecti",
         "chunks@2000": "current",
         "chunks@2000 answer": "The Borrowers may not prepay the Term Loan on or prior to the first anniversary of the Effective Date, i.e., until March 1, 2007.",
         "chunks@8000": "current",
         "chunks@8000 answer": "Until the first anniversary of the Effective Date (March 1, 2007), the Borrowers have no right to prepay the Term Loan.",
         "reranked@2000": "current",
-        "reranked@2000 answer": "The Borrowers may not prepay the Term Loan on or prior to the first anniversary of the Effective Date (March 1, 2006), i.e., until March 1, 2007.",
+        "reranked@2000 answer": "The Borrowers may not prepay the Term Loan (in whole or in part) on or prior to the first anniversary of the Effective Date, i.e., until March 1, 2007.",
         "reranked@8000": "current",
         "reranked@8000 answer": "Until the first anniversary of the Effective Date (March 1, 2007), the Borrowers have no right to prepay the Term Loan."
       },
@@ -197,7 +197,7 @@
         "facts@8000": "current",
         "facts@8000 answer": "July 31, 2008",
         "chunks@2000": "current",
-        "chunks@2000 answer": "July 31, 2008",
+        "chunks@2000 answer": "On or prior to July 31, 2008 (as amended by the First Amendment, in force on 2007-10-01).",
         "chunks@8000": "current",
         "chunks@8000 answer": "July 31, 2008",
         "reranked@2000": "current",
@@ -222,14 +222,14 @@
         "reranked@8000 answer": "July 31, 2008"
       }
     ],
-    "time_captured": 0.0,
+    "time_captured": 1.0,
     "details": [
       {
         "supersedes": "The Borrower shall not permit the Leverage Ratio at any time to exceed 3.00:1.00",
         "ok": true,
         "any_fact": true,
         "old_facts": 1,
-        "new_facts": 5
+        "new_facts": 1
       },
       {
         "supersedes": "for any period of four consecutive fiscal quarters to be less than 3.50:1.00",
@@ -247,8 +247,8 @@
       },
       {
         "supersedes": "on or prior to the first anniversary of the Effective Date. After the first anniversary",
-        "ok": false,
-        "any_fact": false,
+        "ok": true,
+        "any_fact": true,
         "old_facts": 2,
         "new_facts": 1
       },
@@ -296,7 +296,7 @@
       {
         "as_of": "2006-09-01T00:00:00Z",
         "ok": true,
-        "want_rank": 0,
+        "want_rank": 1,
         "stale_rank": null
       },
       {
@@ -308,13 +308,13 @@
       {
         "as_of": "2007-09-01T00:00:00Z",
         "ok": true,
-        "want_rank": 0,
+        "want_rank": 1,
         "stale_rank": null
       },
       {
         "as_of": "2007-09-01T00:00:00Z",
         "ok": true,
-        "want_rank": 0,
+        "want_rank": 4,
         "stale_rank": null
       },
       {
@@ -325,154 +325,234 @@
       },
       {
         "as_of": "2007-10-01T00:00:00Z",
-        "ok": false,
-        "want_rank": 1,
-        "stale_rank": 0
+        "ok": true,
+        "want_rank": 0,
+        "stale_rank": null
       },
       {
         "as_of": "2007-10-01T00:00:00Z",
         "ok": true,
         "want_rank": 0,
-        "stale_rank": 1
+        "stale_rank": null
       },
       {
         "time": "through and including June 29, 2007",
-        "ok": false,
+        "ok": true,
         "values": [
-          "None"
+          "2007-06-29 00:00:00+00:00"
         ]
       }
     ]
   },
   "latency": {
-    "p50_doc_s": 20.65,
-    "p95_doc_s": 171.73
+    "p50_doc_s": 114.32,
+    "p95_doc_s": 458.49
   },
   "usage": {
     "by_workload": {
       "embed": {
-        "calls": 770,
-        "cache_hits": 770,
-        "older_hits": 457,
-        "input_tokens": 0,
+        "calls": 790,
+        "cache_hits": 303,
+        "older_hits": 279,
+        "input_tokens": 220290,
         "output_tokens": 0,
-        "seconds": 0.0,
+        "seconds": 168.22525598597713,
         "cost": 0.0,
-        "priced": 1
+        "priced": 0
       },
       "extract": {
         "calls": 155,
-        "cache_hits": 155,
-        "older_hits": 155,
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "seconds": 0.0,
+        "cache_hits": 0,
+        "older_hits": 0,
+        "input_tokens": 340093,
+        "output_tokens": 399406,
+        "seconds": 2025.3396475377958,
         "cost": 0.0,
-        "priced": 1
+        "priced": 0
       },
       "choose": {
-        "calls": 9516,
-        "cache_hits": 9514,
-        "older_hits": 2916,
-        "input_tokens": 6958,
-        "output_tokens": 1264,
-        "seconds": 0.258326250128448,
+        "calls": 9753,
+        "cache_hits": 141,
+        "older_hits": 0,
+        "input_tokens": 17209634,
+        "output_tokens": 3157250,
+        "seconds": 866.7816698083188,
         "cost": 0.0,
         "priced": 0
       },
       "repair": {
-        "calls": 1009,
-        "cache_hits": 1009,
-        "older_hits": 333,
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "seconds": 0.0,
+        "calls": 1034,
+        "cache_hits": 233,
+        "older_hits": 233,
+        "input_tokens": 636120,
+        "output_tokens": 169877,
+        "seconds": 1226.277165645035,
         "cost": 0.0,
-        "priced": 1
+        "priced": 0
       },
       "rerank": {
         "calls": 33,
-        "cache_hits": 29,
+        "cache_hits": 0,
         "older_hits": 0,
-        "input_tokens": 98582,
+        "input_tokens": 1320482,
         "output_tokens": 0,
-        "seconds": 5.056691229809076,
+        "seconds": 127.17310062469915,
         "cost": 0.0,
         "priced": 0
       },
       "generate": {
         "calls": 132,
-        "cache_hits": 128,
-        "older_hits": 66,
-        "input_tokens": 11547,
-        "output_tokens": 56,
-        "seconds": 2.922548243775964,
+        "cache_hits": 78,
+        "older_hits": 78,
+        "input_tokens": 195396,
+        "output_tokens": 2429,
+        "seconds": 54.80017552571371,
         "cost": 0.0,
         "priced": 0
       }
     },
+    "by_step": {
+      "ingest": {
+        "calls": 605,
+        "cache_hits": 168,
+        "input_tokens": 216803,
+        "output_tokens": 0
+      },
+      "extract": {
+        "calls": 155,
+        "cache_hits": 0,
+        "input_tokens": 340093,
+        "output_tokens": 399406
+      },
+      "evaluate": {
+        "calls": 3611,
+        "cache_hits": 128,
+        "input_tokens": 6517603,
+        "output_tokens": 644355
+      },
+      "repair": {
+        "calls": 1034,
+        "cache_hits": 233,
+        "input_tokens": 636120,
+        "output_tokens": 169877
+      },
+      "assess": {
+        "calls": 2426,
+        "cache_hits": 0,
+        "input_tokens": 4917018,
+        "output_tokens": 1531453
+      },
+      "link": {
+        "calls": 966,
+        "cache_hits": 82,
+        "input_tokens": 542834,
+        "output_tokens": 85929
+      },
+      "specific_name": {
+        "calls": 81,
+        "cache_hits": 13,
+        "input_tokens": 24670,
+        "output_tokens": 2244
+      },
+      "resolve": {
+        "calls": 2395,
+        "cache_hits": 0,
+        "input_tokens": 4762862,
+        "output_tokens": 818318
+      },
+      "claim": {
+        "calls": 268,
+        "cache_hits": 0,
+        "input_tokens": 314578,
+        "output_tokens": 58711
+      },
+      "replace_sections": {
+        "calls": 138,
+        "cache_hits": 0,
+        "input_tokens": 133556,
+        "output_tokens": 16240
+      },
+      "embed": {
+        "calls": 53,
+        "cache_hits": 53,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "rerank": {
+        "calls": 33,
+        "cache_hits": 0,
+        "input_tokens": 1320482,
+        "output_tokens": 0
+      },
+      "generate": {
+        "calls": 132,
+        "cache_hits": 78,
+        "input_tokens": 195396,
+        "output_tokens": 2429
+      }
+    },
     "total": {
-      "calls": 11615,
-      "cache_hits": 11605,
-      "older_hits": 3927,
-      "input_tokens": 117087,
-      "output_tokens": 1320,
-      "seconds": 8.237565723713487,
+      "calls": 11897,
+      "cache_hits": 755,
+      "older_hits": 590,
+      "input_tokens": 19922015,
+      "output_tokens": 3728962,
+      "seconds": 4468.59701512754,
       "cost": 0.0
     },
-    "wall_seconds": 272.99
+    "wall_seconds": 1000.25
   },
   "rejected_samples": {
-    "validate: too long for one fact": [
-      "Under the Five-Year Credit Agreement of Tyson Foods, \"Indebtedness\" of any Person means, without duplication, all indebtedness for borrowed money or deferred purchase price of property or services (including obligations with respect to surety bonds, letters of credit and bankers' acceptances, whether or not matured), all obligations evidenced by notes, bonds, debentures or similar instruments, all indebtedness under conditional sale or title retention agreements, all obligations under leases recorded as capital leases in accordance with GAAP, all net obligations under Hedging Agreements, all guaranties of such obligations, and all such Indebtedness secured (or for which the holder has a right to be secured) by any Lien on property owned by such Person even if the Person has not assumed liability for it, provided that Indebtedness supported by another type of Indebtedness is not counted more than once.",
-      "Under the Five-Year Credit Agreement of Tyson Foods, not later than 11:00 a.m. (New York City time) two Business Days prior to the proposed date of Borrowing in the case of LIBOR Bid Loans, or on the date of the Bid Borrowing in the case of Absolute Rate Loans, the Borrower shall either cancel the Borrowing by giving the Administrative Agent and the Lenders notice (which may be given by telephone, confirmed by facsimile), or accept one or more of the offers made by any Lender in its sole discretion by giving notice to such Lender of the amount of each Bid Loan to be made, which shall be equal to or greater than the minimum amount and equal to or less than the maximum amount notified by such Lender, and reject any remaining offers, and give notice to the Administrative Agent of the date of the Borrowing and the aggregate amount thereof, which may not exceed the applicable amount set forth in the related Competitive Bid Request.",
-      "Under the Five-Year Credit Agreement of Tyson Foods, if, other than as provided in Sections 3.05, 3.08, 3.09, 3.10 or 3.11, any Lender obtains any payment, whether voluntary, involuntary, through the exercise of any right of set-off or otherwise, on account of any Committed Loan made by it and, after acceleration of all Obligations pursuant to Section 8.02(b), in respect of any Obligation owing to it including with respect to any Bid Loan, in the case of the Committed Loan in excess of its Percentage Share of payments on account of the Committed Loans obtained by all the Lenders and, after acceleration, in excess of its pro rata share of all Obligations, such Lender shall forthwith notify the Administrative Agent of that fact and purchase from the other Lenders such participations in the Committed Loans made by them or, after acceleration, in all Obligations owing to them, as shall be necessary to cause the purchasing Lender to share the excess payment ratably with each of the other Lenders according to their respective Percentage Shares or, after acceleration, their pro rata shares of all the Obligations.",
-      "Under the Five-Year Credit Agreement between Tyson Foods and the Lenders, if any Lender or Issuing Bank determines that, due to (a) the introduction of any Requirement of Law or any change (other than a change by way of imposition of or increase in reserve requirements included in the Eurodollar Reserve Percentage) in or in the interpretation thereof, or (b) compliance with any guideline or request made after the date of the Agreement by any central bank or other Governmental Authority (whether or not having the force of law), there is any increase in the cost to that Lender or Issuing Bank of agreeing to make or making, funding or maintaining any Committed Loan or any Letter of Credit or participation therein, the Borrower is liable for, and must from time to time upon demand by that Lender or Issuing Bank (with a copy to the Administrative Agent), pay to the Administrative Agent for the account of that Lender or Issuing Bank additional amounts sufficient to compensate for the increased costs (other than costs for Taxes contemplated by Section 3.05 or reserve requirements contemplated by Section 3.06).",
-      "Under the Five-Year Credit Agreement between Tyson Foods and the Lenders, if any Lender or Issuing Bank determines that the introduction of, or change in, any Requirement of Law regarding capital adequacy (including any change therein or in its interpretation or application, or any request or directive regarding capital adequacy, whether or not having the force of law, from any central bank or other Governmental Authority), or compliance therewith by that Lender or Issuing Bank (or its Lending Office) or any corporation controlling it, affects or would affect the amount of capital required or expected to be maintained by that Lender or Issuing Bank or any controlling corporation, and that Lender or Issuing Bank (taking into consideration its or the corporation's capital adequacy policies and desired return on capital) determines that the amount of such capital is increased as a consequence of its Commitment, loans or obligations under the Agreement with respect to any Committed Borrowing or any Letters of Credit, then from time to time upon demand of that Lender or Issuing Bank (with a copy to the Administrative Agent), the Borrower is liable for, and must pay to the Administrative Agent for the account of that Lender or Issuing Bank as specified, additional amounts sufficient to compensate for that increase."
-    ],
     "validate: cites no passage": [
       "Under the Five-Year Credit Agreement of Tyson Foods, \"Existing Letters of Credit\" means each letter of credit issued by a Lender in its capacity as an \"Issuing Bank\" under the Existing 2004 Five-Year Credit Agreement for the account of the Borrower that is outstanding on the date of the agreement (September 28, 2005) and is identified in writing by the Borrower to the Administrative Agent as an Existing Letter of Credit on or before that date.",
-      "Under the Five-Year Credit Agreement between Tyson Foods and the Administrative Agent, the Borrower must promptly notify the Administrative Agent of all actions, suits and proceedings before any court or other Governmental Authority affecting the Borrower or any of its Subsidiaries that have any reasonable likelihood of having a Material Adverse Effect.",
-      "Under the Five-Year Credit Agreement of Tyson Foods, the Borrower (Tyson Foods) shall not, and shall not permit any of its Subsidiaries to, engage to any substantial extent in any business other than the production, marketing and distribution of food products and any related food or agricultural products, processes or business.",
-      "Under the Five-Year Credit Agreement of Tyson Foods, no failure on the part of any Lender or the Administrative Agent to exercise, and no delay in exercising, any right, remedy, power or privilege under the agreement or any other Loan Document shall operate as a waiver thereof, nor shall any single or partial exercise preclude any other or further exercise or the exercise of any other right, remedy, power or privilege.",
-      "Under the Five-Year Credit Agreement of Tyson Foods, the remedies provided in the agreement are cumulative and not exclusive of any remedies provided by law."
+      "Under the Five-Year Credit Agreement between Tyson Foods and the Administrative Agent, the Borrower must promptly furnish notice of all actions, suits and proceedings before any court or other Governmental Authority affecting the Borrower or any of its Subsidiaries which, individually or in the aggregate, has any reasonable likelihood of having a Material Adverse Effect.",
+      "Under the Five-Year Credit Agreement, the Administrative Agent must promptly furnish to the Lenders the notices described in clauses (a), (b) and (e) of Section 6.10, other than in the case of clause (d) and, other than to the requesting Lender, clause (e).",
+      "The Five-Year Credit Agreement dated September 28, 2005 embodies the entire agreement and understanding among Tyson Foods, Inc. as Borrower, the Lenders, and JPMorgan Chase Bank, N.A. as Administrative Agent, and supersedes all prior agreements and understandings of such persons relating to its subject matter, except for the Fee Letter and any prior arrangements made with respect to the payment by the Borrower of (or any indemnification for) any fees, costs, or expenses payable to or incurred by or on behalf of the Administrative Agent or the Lenders.",
+      "Citicorp USA, Inc., represented by Richard M. Levin as Director, signed the Five-Year Credit Agreement dated as of September 28, 2005 among Tyson Foods, Inc., the lenders party thereto, and JPMorgan Chase Bank, N.A., as Administrative Agent."
+    ],
+    "validate: too long for one fact": [
+      "Under the Five-Year Credit Agreement of Tyson Foods, if, other than as provided in Sections 3.05, 3.08, 3.09, 3.10 or 3.11, any Lender obtains any payment, whether voluntary, involuntary, through the exercise of any right of set-off or otherwise, on account of any Committed Loan made by it and, after acceleration of all Obligations pursuant to Section 8.02(b), in respect of any Obligation owing to it including with respect to any Bid Loan, in the case of the Committed Loan in excess of its Percentage Share of payments on account of the Committed Loans obtained by all the Lenders and, after acceleration, in excess of its pro rata share of all Obligations, such Lender shall forthwith notify the Administrative Agent of that fact and purchase from the other Lenders such participations in the Committed Loans made by them or, after acceleration, in all Obligations owing to them, as shall be necessary to cause the purchasing Lender to share the excess payment ratably with each of the other Lenders according to their respective Percentage Shares or, after acceleration, their pro rata shares of all the Obligations.",
+      "Under the Five-Year Credit Agreement of Tyson Foods, the Borrower agrees to reimburse each Lender and hold each Lender harmless from any loss, cost or expense incurred as a consequence of (a) any failure of the Borrower to borrow, continue or convert a Eurodollar Loan after giving a Notice of Borrowing or Notice of Conversion/Continuation, (b) any prepayment or payment of a Eurodollar Loan on a day that is not the last day of the applicable Interest Period, (c) any failure of the Borrower to make a prepayment after giving notice under Section 2.07, (d) conversion of a Eurodollar Loan to a Reference Rate Loan on a day that is not the last day of the Interest Period under Section 2.10, or (e) assignment of a Eurodollar Loan other than on the last day of the Interest Period as a result of a Borrower request under Section 3.13, including losses from liquidation or reemployment of funds or fees to terminate deposits.",
+      "Under the Five-Year Credit Agreement between Tyson Foods (as Borrower) and the lenders, permitted asset dispositions include: the sale or disposition of inventory and farm products in the ordinary course of business; the sale or disposition in the ordinary course of business of assets that have become obsolete or surplus to the business of the Borrower or any of its Subsidiaries, or have no remaining useful life, as reasonably determined in good faith by the Borrower or such Subsidiary; the periodic sales to third parties of live inventory and related products and services under grow out contracts; Permitted Dispositions; the sale or disposition of Permitted Investments; the sale of accounts or other receivables by the Borrower and its Subsidiaries in connection with the Receivables Facility or to a special purpose bankruptcy remote Subsidiary or a third party for not less than fair value, without recourse (other than to any such special purpose Subsidiary), in connection with a receivables purchase transaction; and the sale or disposition of Excess Margin Stock for not less than fair value.",
+      "Under the Five-Year Credit Agreement of Tyson Foods, the Borrower may not enter into or permit any of its Subsidiaries to enter into any agreement that prohibits, limits or restricts repayment of loans, advances or other distributions to the Borrower by any Subsidiary, or that restricts any Subsidiary's ability to declare or pay dividends or other distributions on its capital stock or to acquire or make payments in respect thereof, except for restrictions imposed by law or by the agreement, restrictions existing on the date of the agreement identified on Schedule 7.09 (which exception does not apply to any extension, renewal, amendment or modification that expands the scope of such restriction), and customary restrictions in agreements relating to the sale of a Subsidiary pending such sale, provided the restrictions apply only to the Subsidiary being sold and the sale is permitted under the agreement.",
+      "Under the Five-Year Credit Agreement between Tyson Foods and the Administrative Agent, the Borrower agrees to indemnify, defend, reimburse and hold harmless the Administrative Agent, the Syndication Agent, each Documentation Agent, each Co-Documentation Agent, each Lender, each Issuing Bank and each of their Affiliates, and each of their respective directors, officers, employees, agents and advisors (each an Indemnified Party) from and against all claims, actions, proceedings, suits, damages, losses, liabilities, costs and reasonable expenses, including the reasonable fees, charges and disbursements of counsel (including the allocated cost of in-house counsel), incurred by or asserted against any Indemnified Party in connection with, arising out of or relating to (i) any transaction or proposed transaction (whether or not consummated) financed or to be financed, in whole or in part, directly or indirectly, with the proceeds of any Borrowing or otherwise contemplated in the Five-Year Credit Agreement, (ii) the entering into and performance of the Five-Year Credit Agreement and any other Loan Document by the Administrative Agent, the Syndication Agent, any Documentation Agent, any Co-Documentation Agent or any Lender or Issuing Bank or any action or omission of the Borrower in connection therewith, or (iii) any investigation, litigation, suit, action or proceeding (regardless of whether an Indemnified Party is a party thereto) which relates to any of the foregoing or to any Environmental Claim, unless and to the extent such claim, action, proceeding, suit, damage, loss, liability, cost or expense was solely attributable to such Indemnified Party's gross negligence or willful misconduct as determined by a final judgment of a court of competent jurisdiction."
     ],
     "decision_floors.grounded": [
+      "The Five-Year Credit Agreement includes a Leverage Ratio covenant and an Interest Expense Coverage Ratio covenant.",
       "Under the Five-Year Credit Agreement of Tyson Foods, \"Consolidated Net Income Available for Restricted Payments\" equals the sum of $150,000,000 plus 80% (or minus 100% in case of consolidated net loss) of Consolidated Net Income for the period commencing October 3, 2004 and terminating at the fiscal quarter end of the Borrower immediately preceding the date of any proposed Restricted Payment.",
       "Under the Five-Year Credit Agreement of Tyson Foods, \"Priority Debt\" means any Indebtedness secured by a Lien (including in connection with capital leases or other financing leases) encumbering any asset of the Borrower or any of its Subsidiaries.",
       "Under the Five-Year Credit Agreement of Tyson Foods, \"Priority Debt\" means any sale-leaseback transaction involving assets of the Borrower or any of its Subsidiaries.",
-      "Under the Five-Year Credit Agreement of Tyson Foods, the Receivables Facility must be in full force and effect as a condition to effectiveness.",
-      "Under the Five-Year Credit Agreement of Tyson Foods, if any investigation, litigation, suit, action or proceeding is asserted or threatened in writing or instituted against an Indemnified Party, or any remedial, removal or response action is requested of it, for which the Administrative Agent, the Syndication Agent, any Documentation Agent, any Co-Documentation Agent or any Lender or Issuing Bank may desire indemnity or defense, that party shall promptly notify the Borrower in writing."
+      "Under the Five-Year Credit Agreement of Tyson Foods, the Receivables Facility must be in full force and effect as a condition to the effectiveness of the agreement."
     ],
     "decision_floors.atomic": [
-      "Under the Five-Year Credit Agreement of Tyson Foods, a \"Material Acquisition\" means any acquisition or series of related acquisitions of property that constitutes all or substantially all of the Stock or assets of any Person or all or substantially all of any operating unit of a business and involves consideration in excess of $500,000,000, and a \"Material Disposition\" means any sale, transfer, lease or other disposition or series of related dispositions of property that constitutes all or substantially all of the Stock or assets of a Subsidiary of the Borrower or all or substantially all of any operating unit of a business of the Borrower or its Subsidiaries and yields gross proceeds to the Borrower or its Subsidiaries in excess of $500,000,000.",
-      "Amendment No. 2 to the Tyson Foods Five-Year Credit Agreement is dated as of April 28, 2006 and amends the Tyson Foods, Inc. Five-Year Credit Agreement dated as of September 28, 2005.",
-      "Under the Financing Agreement of Life Sciences Research, there are no outstanding debt or equity securities of the Parent or any of its Subsidiaries and no outstanding obligations of the Parent or any of its Subsidiaries convertible into or exchangeable for, or warrants, options or other rights for the purchase or acquisition from the Parent or any of its Subsidiaries, or other obligations of any Subsidiary to issue, directly or indirectly, any shares of Capital Stock of any Subsidiary of the Parent.",
-      "Under the First Amendment to the Life Sciences Research Financing Agreement, the Guarantors and Borrower release the Lender Parties from all claims, whether known or unknown, arising out of or relating to the Amendment, the Financing Agreement, any other Loan Document, and related transactions and agreements, based on acts or omissions occurring at or prior to and including the date of the Amendment."
+      "The Five-Year Credit Agreement includes a Leverage Ratio covenant and an Interest Expense Coverage Ratio covenant.",
+      "Under the Five-Year Credit Agreement, \"Solvent\" means, with respect to any Person, that the fair value of that Person's assets (both at fair valuation and at present fair saleable value) is greater than the total amount of its liabilities including contingent and unliquidated liabilities, that the Person is able to pay its liabilities as they mature, and that the Person does not have unreasonably small capital with which to carry on its business.",
+      "Under the Financing Agreement of Life Sciences Research between the Parent, the Agent and the Lenders, there are no outstanding debt or equity securities of the Parent or any of its Subsidiaries and no outstanding obligations convertible into or exchangeable for, or warrants, options or other rights for the purchase or acquisition from the Parent or any of its Subsidiaries, or other obligations of any Subsidiary to issue, directly or indirectly, any shares of Capital Stock of any Subsidiary of the Parent.",
+      "Under the First Amendment to the Life Sciences Research Financing Agreement, the Guarantors and the Borrower release the Lender Parties from all claims, whether known or unknown, fixed or contingent, secured or unsecured, arising out of or relating to the Amendment, the Financing Agreement, any other Loan Document, and related transactions and agreements, based on acts or omissions occurring at or prior to and including the date of the Amendment."
     ],
     "decision_floors.useful": [
       "Under the Five-Year Credit Agreement of Tyson Foods, \"IRS\" means the Internal Revenue Service of the United States of America.",
       "Under the Five-Year Credit Agreement of Tyson Foods, \"Person\" means an individual, partnership, corporation, business trust, joint stock company, trust, unincorporated association, joint venture or Governmental Authority.",
-      "Under the Five-Year Credit Agreement of Tyson Foods, \"US Dollars\" or \"US$\" refers to lawful money of the United States of America.",
-      "Under the Five-Year Credit Agreement of Tyson Foods, the words \"includes\" and \"including\" are not exclusive and mean \"includes, without limitation\" and \"including, without limitation.\"",
-      "Under the Five-Year Credit Agreement of Tyson Foods, the headings of the agreement are inserted for convenience only and do not affect the meaning or interpretation of the agreement or any of its provisions."
+      "Under the Five-Year Credit Agreement, \"US Dollars\" or \"US$\" refers to lawful money of the United States of America.",
+      "Under the Five-Year Credit Agreement, the word \"includes\" and \"including\" are not exclusive and mean \"includes, without limitation\" and \"including, without limitation\".",
+      "Under the Five-Year Credit Agreement of Tyson Foods, the headings are inserted for convenience only and do not affect the meaning or interpretation of the agreement or any of its provisions."
     ],
     "decision_floors.attribution": [
       "Under the Five-Year Credit Agreement of Tyson Foods, \"Priority Debt\" means any Indebtedness secured by a Lien (including in connection with capital leases or other financing leases) encumbering any asset of the Borrower or any of its Subsidiaries.",
       "Under the Five-Year Credit Agreement of Tyson Foods, \"Priority Debt\" means any sale-leaseback transaction involving assets of the Borrower or any of its Subsidiaries.",
       "Under the Five-Year Credit Agreement of Tyson Foods, the Administrative Agent must receive, together with TFM's executed counterpart of the Guarantee Agreement, such documents and certificates as the Administrative Agent or its counsel may reasonably request relating to the organization, existence and good standing of TFM and the authorization of the Transactions to which TFM is party.",
-      "Agstar Financial Services, PCA, as a Lender, executed Amendment No. 2 to the Tyson Foods Five-Year Credit Agreement through Troy Mostaert, Vice President.",
-      "Under the Note Purchase Agreement between Furniture Brands International and the purchasers, the purchaser and each subsequent holder of a Note agree to release any Subsidiary Guarantor from the Subsidiary Guaranty if (i) such Subsidiary Guarantor ceases to be such as a result of an Asset Disposition or other transaction permitted by Section 10.6 or 10.7, or (ii) such Subsidiary is released as a guarantor under and in respect of the Credit Agreement."
+      "Under the Five-Year Credit Agreement, a Permitted Lien includes any Lien created pursuant to any Loan Document.",
+      "Under the Five-Year Credit Agreement, a Permitted Lien includes Liens for taxes, assessments or governmental charges or levies either not yet due and payable or the non-payment of which is permitted by Section 6.03."
     ],
     "decision_floors.distinct": [
-      "Under the amended Applicable Rate definition in the Five-Year Credit Agreement, if the rating system of Moody's or S&P changes or either agency ceases rating corporate debt obligations, Tyson Foods, Inc. and the Lenders must negotiate in good faith to amend the definition, and pending such amendment the Applicable Rate is determined by reference to the rating most recently in effect before the change or cessation.",
-      "JPMorgan Chase Bank, N.A. serves as administrative agent under the Five-Year Credit Agreement.",
-      "Under the amended Applicable Rate definition in the Five-Year Credit Agreement, each change in the Applicable Rate applies from the effective date of that change until the day before the effective date of the next change.",
-      "CoBank, ACB and U.S. AgBank, FCB serve as co-documentation agents under the Five-Year Credit Agreement.",
-      "SunTrust Bank, Co\u00f6peratieve Centrale Raiffeisen-Boerenleenbank B.A. (\"Rabobank International\"), New York Branch, and BNP Paribas serve as documentation agents under the Five-Year Credit Agreement."
+      "Under the amended Applicable Rate definition in the Tyson Foods Five-Year Credit Agreement, a change in the Moody's or S&P ratings of the Index Debt (other than from a change in the rating system) is effective as of the date the change is first publicly announced by Moody's or S&P.",
+      "Under the amended Applicable Rate definition in the Tyson Foods Five-Year Credit Agreement, if the Moody's and S&P ratings for the Index Debt fall within different categories, the Applicable Rate is based on the higher rating, unless the ratings differ by two or more categories, in which case the Applicable Rate is based on the category one level below the higher rating.",
+      "Under the amended Applicable Rate definition in the Tyson Foods Five-Year Credit Agreement, if the rating system of Moody's or S&P changes or either agency ceases rating corporate debt, Tyson Foods, Inc. and the Lenders must negotiate in good faith to amend the definition, and pending such amendment the Applicable Rate is determined by the rating most recently in effect before the change or cessation.",
+      "Under the amended Applicable Rate definition in the Tyson Foods Five-Year Credit Agreement, each change in the Applicable Rate applies from the effective date of that change until the day before the effective date of the next change.",
+      "Under the Amendment 1 to the Furniture Brands Note Purchase Agreement, the Company will not permit any Subsidiary that is not an Obligor to become a borrower or a guarantor of Indebtedness owed to banks under the Credit Agreement unless such Subsidiary is, or concurrently becomes, a party to the Subsidiary Guaranty."
     ]
   },
   "skipped_fact_evals": {
-    "nli: no nli model is set; skipped": 2362
+    "nli: no nli model is set; skipped": 2411
   }
 }
