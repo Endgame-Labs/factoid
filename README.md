@@ -1,16 +1,16 @@
 # Factoid 📚
 
-[![version](https://img.shields.io/badge/version-0.1.3-blue.svg)](pyproject.toml)
+[![PyPI](https://img.shields.io/pypi/v/factoid.svg)](https://pypi.org/project/factoid/)
 [![tests](https://github.com/Endgame-Labs/factoid/actions/workflows/test.yml/badge.svg)](https://github.com/Endgame-Labs/factoid/actions/workflows/test.yml)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/Endgame-Labs/factoid/blob/main/LICENSE)
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
 
 > **Status: Version 0.1.3.** Factoid runs end to end, and three example apps publish their eval results. It covers
-> ingest, fact extraction with evals, entities, supersession and as-of search, eval suites, exports, an HTTP API, and
-> an MCP server. [SPEC.md](SPEC.md) section 17 lists what is built. [CHANGELOG.md](CHANGELOG.md) lists what changed in
-> each version.
+> ingest, fact extraction with evals, entities, supersession and as-of search, eval suites, exports, an HTTP API, and an
+> MCP server. [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) section 17 lists what is built.
+> [CHANGELOG.md](https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md) lists what changed in each version.
 
 Factoid turns `Documents` into `Facts`.  A fact is a short, self-contained sentence, devoid of filler and explicit in its language (no pronouns, etc).
 Each fact is tied to an exact location in the source document.
@@ -33,14 +33,17 @@ contract.
 
 ### Install
 
-Factoid requires Python 3.13 or newer and [uv](https://docs.astral.sh/uv/). It is not on PyPI yet. Install it from
-GitHub:
+Factoid requires Python 3.13 or newer and [uv](https://docs.astral.sh/uv/). Install it from PyPI:
+
+```sh
+uv tool install factoid
+```
+
+For the latest unreleased changes, install from GitHub, or clone the repository and run `uv tool install .` in it:
 
 ```sh
 uv tool install git+https://github.com/Endgame-Labs/factoid
 ```
-
-Or clone the repository and run `uv tool install .` in it.
 
 Inside a project directory, `factoid` runs in that project's environment without `uv run`.
 
@@ -910,7 +913,7 @@ recent = orion.facts(since="30d")      # every recent fact linked to Orion
 
 - **Fact-level retrieval.** Search returns short, self-contained sentences within a token budget. On dialogue, fact
   retrieval outperformed chunk retrieval while using about one-seventh of the read tokens
-  ([examples/iscrag](examples/iscrag/README.md) measures it, after
+  ([examples/iscrag](https://github.com/Endgame-Labs/factoid/blob/main/examples/iscrag/README.md) measures it, after
   [RAG Deserves an Index](https://arxiv.org/abs/2608.20845)).
 - **Deterministic provenance.** Prose extraction cites numbered passages and structured extraction cites the file, row,
   and column; Factoid's code attaches the exact quote or cell, speaker, and timestamp.
@@ -938,11 +941,13 @@ recent = orion.facts(since="30d")      # every recent fact linked to Orion
 Most of Factoid comes from internal research and production experience at Endgame. A smaller part builds on three
 published papers by Kyle Wild, Yusuke Takahashi, and Asako Uraki.
 
-- [*RAG Deserves an Index: Why Ingest-Time Compilation Beats Query-Time Interpretation*](https://arxiv.org/abs/2608.20845)
-  (2026). Most RAG systems retrieve raw chunks and have a model interpret them on every query. The paper extracts
-  single-claim sentences once at ingest time and checks each one against its source passage. On 500 held-out interview
-  transcripts, compiled claims scored higher than every chunk configuration: 85.2% correct from about 2.2k reader
-  tokens, against 72.5% from 16.3k. [examples/iscrag](examples/iscrag/README.md) reruns this benchmark with Factoid.
+- [*RAG Deserves an Index: Why Ingest-Time Compilation Beats Query-Time
+  Interpretation*](https://arxiv.org/abs/2608.20845) (2026). Most RAG systems retrieve raw chunks and have a model
+  interpret them on every query. The paper extracts single-claim sentences once at ingest time and checks each one
+  against its source passage. On 500 held-out interview transcripts, compiled claims scored higher than every chunk
+  configuration: 85.2% correct from about 2.2k reader tokens, against 72.5% from 16.3k.
+  [examples/iscrag](https://github.com/Endgame-Labs/factoid/blob/main/examples/iscrag/README.md) reruns this benchmark
+  with Factoid.
 - [*Ingest-Time Fact Compilation for Cost-Efficient and Reliable Question Answering over Revised Corpora*](https://arxiv.org/abs/2609.29661)
   (2026). This paper resolves revisions, deletions, effective dates, and differences in source authority once at ingest
   time. At query time, an inexpensive model reads the current state without rebuilding it per question. In its
@@ -991,8 +996,11 @@ published papers by Kyle Wild, Yusuke Takahashi, and Asako Uraki.
 
 ## Further reading
 
-- [SPEC.md](SPEC.md) has every design decision, how settled each one is, and what is built (section 17).
-- [docs/cli.md](docs/cli.md) is the command reference.
-- [examples/](examples/) has three apps: `legal` (contracts and amendments), `nba` (game recaps and box scores), and
-  `iscrag` (news transcripts, with a question-answering eval). Each has a README with its eval results.
-- [docs/archive/](docs/archive/) holds docs from an earlier design; do not follow them.
+- [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) has every design decision, how settled each one
+  is, and what is built (section 17).
+- [docs/cli.md](https://github.com/Endgame-Labs/factoid/blob/main/docs/cli.md) is the command reference.
+- [examples/](https://github.com/Endgame-Labs/factoid/tree/main/examples/) has three apps: `legal` (contracts and
+  amendments), `nba` (game recaps and box scores), and `iscrag` (news transcripts, with a question-answering eval). Each
+  has a README with its eval results.
+- [docs/archive/](https://github.com/Endgame-Labs/factoid/tree/main/docs/archive/) holds docs from an earlier design; do
+  not follow them.
