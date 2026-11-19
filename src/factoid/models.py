@@ -308,7 +308,9 @@ class CallLog:
 
     @staticmethod
     def key(workload: str, model: str, request: dict[str, Any]) -> str:
-        blob = json.dumps([workload, model, request], sort_keys=True, ensure_ascii=False)
+        # Keys are sorted, so the order of a decision request's questions is added: order can change the answers.
+        order = list(request["questions"]) if isinstance(request.get("questions"), dict) else None
+        blob = json.dumps([workload, model, request, *([order] if order else [])], sort_keys=True, ensure_ascii=False)
         return hashlib.sha256(blob.encode()).hexdigest()
 
     def get(self, key: str) -> dict[str, Any] | None:
@@ -514,7 +516,9 @@ class ModelClient:
             body = {
                 "model": model.wire_id(),
                 "state": state,
-                "questions": {key: q.wire() for key, q in sorted(by_key.items())},
+                # In the order the caller listed them, which only changes when the code does. Sorting by key (a
+                # hash) moved a question when its wording changed, and its neighbours' scores moved with it.
+                "questions": {key: q.wire() for key, q in by_key.items()},
                 **model.params,
             }
             data, _ = self._post("choose", model, path, body)
@@ -531,7 +535,7 @@ class ModelClient:
 
     def _ask_decisions(self, model: Model, state: Any, by_key: dict[str, Question]) -> dict[str, Any]:
         """Ask through OpenAI's Decisions API, and return the answers in System One's shape, keyed like `by_key`."""
-        keys = sorted(by_key)
+        keys = list(by_key)  # the caller's order, as for System One
         if isinstance(state, (dict, list)):
             content: Any = [{"type": "input_json", "data": state}]
         else:

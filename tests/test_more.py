@@ -508,3 +508,29 @@ def test_a_key_given_in_code_is_sent_and_never_stored(monkeypatch, tmp_path):
     assert seen[0][0].startswith("http://vault.test/v1/") and all(b"k-one" not in s[2] for s in seen)
     assert "k-one" not in repr(model) and b"k-one" not in (tmp_path / "calls.db").read_bytes()
     assert Model("fireworks/glm-5p3-flash", api_key="x") == Model("fireworks/glm-5p3-flash")
+
+
+def test_decision_questions_keep_the_callers_order(monkeypatch, tmp_path):
+    import httpx
+
+    from factoid.judge import Noul
+    from factoid.models import CallLog, Model, ModelClient
+
+    monkeypatch.setenv("FACTOID_HOME", str(tmp_path))
+    monkeypatch.setenv("TYPESAFE_API_KEY", "ts_test")
+    bodies = []
+
+    def handler(request):
+        body = json.loads(request.content)
+        bodies.append(body)
+        answers = {k: {"type": "noul", "probability": 0.5} for k in body["questions"]}
+        return httpx.Response(200, json={"answers": answers})
+
+    client = ModelClient({"choose": Model("typesafe/jev-1.13.0")}, CallLog(None))
+    client._http = httpx.Client(transport=httpx.MockTransport(handler))
+    names = ["zeta", "alpha", "mid"]
+    client.ask({"x": 1}, {n: Noul(f"Is it {n}?") for n in names})
+    sent = [q["instructions"] for q in bodies[0]["questions"].values()]
+    assert sent == ["Is it zeta?", "Is it alpha?", "Is it mid?"]
+    client.ask({"x": 1}, {n: Noul(f"Is it {n}?") for n in reversed(names)})  # another order is another request
+    assert len(bodies) == 2
