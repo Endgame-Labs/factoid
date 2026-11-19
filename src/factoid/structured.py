@@ -331,9 +331,6 @@ class StructuredDocument(Document):
         size = max(1, type(self).rows_per_chunk)
         chunks = [Chunk(id=f"{self.id}:c{i // size + 1}", n=i // size + 1, passages=passages[i:i + size])
                   for i in range(0, len(passages), size)]
-        keyed = type(self).key is not None
-        if not keyed:
-            app.retire_document_facts(self)
         app.store.save_document(*self.record(passages, chunks))
         app.index_chunks(self, chunks)
         cells = []

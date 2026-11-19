@@ -427,7 +427,7 @@ def read(fact_id: str, data_dir: Path | None) -> None:
 
 def _validity_note(fact: Any) -> str:
     """How `still valid now` was worked out, in a few words."""
-    if fact.status in ("corrected", "retracted"):
+    if fact.status in ("corrected", "retracted", "replaced"):
         return f"the fact is {fact.status}"
     if fact.status in ("superseded", "ended"):
         return "it held until valid_until" if fact.valid_until else f"the fact is {fact.status}"
@@ -501,7 +501,7 @@ def facts() -> None:
 @click.option("--document", help="Only facts from this document (its id, title, or file name).")
 @click.option("--trait", help="Only facts with this trait (its name, such as liability_cap).")
 @click.option("--status", default="current", show_default=True,
-              help="current, superseded, ended, corrected, contradicted, retracted, or all.")
+              help="current, superseded, ended, corrected, contradicted, replaced, retracted, or all.")
 @click.option("--limit", default=50, show_default=True, help="0 lists every fact.")
 @click.option("--json", "as_json", is_flag=True)
 @_data_dir_option

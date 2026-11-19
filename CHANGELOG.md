@@ -2,6 +2,14 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.8 (2026-11-19)
+
+- **Saving a changed document again.** Old facts stay current until the new version's facts are saved, so a failed
+  run loses nothing. The old text is kept as a revision, and each fact records its revision, so old quotes still
+  point at the text they quote. A new fact that says what an old one said keeps its id, judged by an exact match, a
+  close match, or the decision model's "duplicate" (event `fact.restated`). An old fact the new version changes or
+  drops becomes `replaced`, apart from a person's `retracted` (issue #3).
+
 ## 0.1.7 (2026-11-19)
 
 - **Many apps in one process.** Worker threads now use the app that started the work, not the last one made, so two

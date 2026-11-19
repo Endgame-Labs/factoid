@@ -1,8 +1,8 @@
 """The system of record: current state in SQLite, plus an event log in the same database.
 
-Current state is the source of truth. Each change also writes an event (`added`, `superseded`, `ended`, `corrected`,
-`contradicted`, `settled`, `retracted`, `restored`, `linked`, `merged`, or `split`), so a reader can see where a fact
-came from and how it changed. The log is not replayed.
+Current state is the source of truth. Each change also writes an event (`added`, `restated`, `superseded`, `ended`,
+`corrected`, `contradicted`, `settled`, `replaced`, `retracted`, `restored`, `revised`, `linked`, `merged`, or `split`),
+so a reader can see where a fact came from and how it changed. The log is not replayed.
 """
 
 from __future__ import annotations
@@ -21,6 +21,10 @@ SCHEMA = """
 create table if not exists documents (
     id text primary key, class text not null, uri text, title text, source_datetime text, metadata text,
     text text not null, content_hash text, ingested_at text not null
+);
+create table if not exists revisions (
+    document_id text not null, n integer not null, text text not null, metadata text, source_datetime text,
+    saved_at text not null, primary key (document_id, n)
 );
 create table if not exists passages (
     document_id text not null, n integer not null, start integer not null, "end" integer not null,
@@ -94,6 +98,8 @@ class Store:
         columns = {row[1] for row in self.db.execute("pragma table_info(quotes)")}
         if "section" not in columns:  # stores made before quotes carried sections
             self.db.execute("alter table quotes add column section text")
+        if "revision" not in {row[1] for row in self.db.execute("pragma table_info(facts)")}:
+            self.db.execute("alter table facts add column revision integer")  # stores made before revisions
         self.db.commit()
 
     @contextmanager
@@ -156,22 +162,50 @@ class Store:
             )
             self.event(db, "document.saved", doc["id"], uri=doc.get("uri"))
 
-    def retire_document_facts(self, document_id: str) -> dict[str, str]:
-        """When a document is re-ingested, its old facts are retracted. Returns their ids by text, so a fact that
-        comes back with the same sentence keeps its id."""
+    def archive_revision(self, document_id: str) -> bool:
+        """Keep a document's stored text as a numbered revision before a new version replaces it. Facts record the
+        revision they came from, so the quotes of a replaced fact still point at the text they quote."""
         with self.tx() as db:
-            rows = db.execute("select id, text from facts where document_id = ? and status != 'retracted'",
-                              (document_id,)).fetchall()
-            for row in rows:
-                db.execute("update facts set status = 'retracted', updated_at = ? where id = ?", (_now(), row["id"]))
-                self.event(db, "fact.retracted", row["id"], reason="document re-ingested")
-            return {row["text"]: row["id"] for row in rows}
+            row = db.execute("select text, metadata, source_datetime from documents where id = ?",
+                             (document_id,)).fetchone()
+            if row is None:
+                return False
+            n = db.execute("select count(*) from revisions where document_id = ?", (document_id,)).fetchone()[0]
+            db.execute("insert into revisions values (?,?,?,?,?,?)",
+                       (document_id, n, row["text"], row["metadata"], row["source_datetime"], _now()))
+            self.event(db, "document.revised", document_id, revision=n + 1)
+            return True
+
+    def document_text(self, document_id: str, revision: int | None = None) -> str | None:
+        """A document's text: the current version, or an earlier revision by number (0 is the first)."""
+        if revision is not None:
+            row = self.one("select text from revisions where document_id = ? and n = ?", (document_id, revision))
+            if row is not None:
+                return row["text"]
+        row = self.one("select text from documents where id = ?", (document_id,))
+        return row["text"] if row else None
+
+    def standing_facts(self, document_id: str) -> dict[str, str]:
+        """A document's facts that still stand (current or contradicted), as ids by text."""
+        rows = self.query("select id, text from facts where document_id = ? and status in ('current', 'contradicted')",
+                          (document_id,))
+        return {row["text"]: row["id"] for row in rows}
+
+    def replace_fact(self, fact_id: str, by: str | None, reason: str) -> None:
+        """A newer version of the fact's document no longer states it: changed (`by` the fact that says it now) or
+        dropped. Apart from `retracted`, which a person sets."""
+        with self.tx() as db:
+            db.execute("update facts set status = 'replaced', updated_at = ? where id = ?", (_now(), fact_id))
+            self.event(db, "fact.replaced", fact_id, reason=reason, **({"by": by} if by else {}))
+            if by:
+                db.execute("insert or replace into relations values (?,?,?,?)", (by, fact_id, "replaces", _now()))
 
     # -- facts ----------------------------------------------------------------------------------------------
 
     def save_fact(self, row: dict[str, Any], quotes: list[dict[str, Any]], mentions: list[dict[str, Any]]) -> None:
         stamp = _now()
         with self.tx() as db:
+            before = db.execute("select created_at from facts where id = ?", (row["id"],)).fetchone()
             db.execute(
                 """insert or replace into facts (id, class, text, document_id, chunk_id, status, traits,
                 trait_scores, valid_from, expires, valid_until, lifetime, source_datetime, extracted_at, scores,
@@ -181,8 +215,10 @@ class Store:
                  json.dumps(row.get("trait_scores") or {}), row.get("valid_from"), row.get("expires"),
                  row.get("valid_until"), json.dumps(row.get("lifetime")) if row.get("lifetime") else None,
                  row.get("source_datetime"), row["extracted_at"], json.dumps(row.get("scores") or {}),
-                 row.get("fingerprint"), stamp, stamp),
+                 row.get("fingerprint"), before["created_at"] if before else stamp, stamp),
             )
+            db.execute("update facts set revision = (select count(*) from revisions where document_id = ?) "
+                       "where id = ?", (row["document_id"], row["id"]))
             db.execute("delete from quotes where fact_id = ?", (row["id"],))
             db.execute("delete from mentions where fact_id = ?", (row["id"],))
             db.executemany(
@@ -195,9 +231,9 @@ class Store:
                 [(row["id"], m["text"], m.get("kind"), m.get("role", "about"), m.get("entity_id"), m.get("method"),
                   m.get("confidence")) for m in mentions],
             )
-            restored = row.get("restored")
-            self.event(db, "fact.restored" if restored else "fact.added", row["id"], text=row["text"],
-                       document=row["document_id"], **({"reason": restored} if restored else {}))
+            restated = row.get("restated")
+            self.event(db, "fact.restated" if restated else "fact.added", row["id"], text=row["text"],
+                       document=row["document_id"], **({"reason": restated} if restated else {}))
             for m in mentions:
                 if m.get("entity_id"):
                     self.event(db, "entity.linked", m["entity_id"], fact=row["id"], method=m.get("method"))

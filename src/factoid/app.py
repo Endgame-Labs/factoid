@@ -124,7 +124,7 @@ class Factoid:
         self.rejected: list[Rejected] = []
         self._duplicates: Counter[str] = Counter()
         self.skipped_evals: Counter[str] = Counter()  # fact evals that did not run, such as nli with no model, by note
-        self._previous_ids: dict[str, dict[str, str]] = {}  # by document: retracted fact ids by text, for reuse
+        self._revising: dict[str, dict[str, str]] = {}  # by document: the old revision's standing fact ids by text
         self._pool = ThreadPoolExecutor(max_workers=max(1, settings.concurrency))
         use(self)
 
@@ -224,8 +224,10 @@ class Factoid:
         # Documents can ingest in parallel threads, so rejects and duplicates are kept by document.
         before = len(self.rejected)
         self._duplicates.pop(item.id, None)
+        self.begin_revision(item)
         facts = run_step(item, "ingest", self)
         facts = [] if facts is SKIPPED else facts
+        self.finish_revision(item)
         self.store.finish_document(item.id, item.content_hash)
         rejected = [r for r in self.rejected[before:] if r.document_id == item.id]
         return IngestResult(item, facts, rejected, self._duplicates.pop(item.id, 0))
@@ -282,6 +284,21 @@ class Factoid:
         """Run resolve and apply its answers. False when the fact is a duplicate, which confirms the stored one."""
         outcome = run_step(fact, "resolve")
         outcome = [] if outcome is SKIPPED else outcome
+        old = set(self._revising.get(fact.document_id or "", {}).values())
+        if old:  # the document's earlier version: the decision model judges what it still states, and what changed
+            replaced = []
+            for answer, other, _ in outcome:
+                if other.id not in old:
+                    continue
+                if answer == "duplicate" and not getattr(fact, "restated", False):
+                    self._restate_by_judge(fact, other)
+                elif answer != "duplicate":
+                    replaced.append(other)
+            for other in replaced:
+                self._revising[fact.document_id or ""] = {
+                    t: i for t, i in self._revising.get(fact.document_id or "", {}).items() if i != other.id}
+            fact.replaces = [o.id for o in replaced]
+            outcome = [o for o in outcome if o[1].id not in old]
         duplicate = next((other for answer, other, _ in outcome if answer == "duplicate"), None)
         if duplicate is not None:
             self._confirm(duplicate, fact)
@@ -294,6 +311,12 @@ class Factoid:
             if answer != "contradicts":
                 self._settle_by_evidence(other, fact, answer)
         return True
+
+    def _restate_by_judge(self, fact: Fact, other: Fact) -> None:
+        document = self._revising.get(fact.document_id or "")
+        if document is not None and other.id in document.values():
+            fact.id, fact.restated = other.id, True
+            self._revising[fact.document_id or ""] = {t: i for t, i in document.items() if i != other.id}
 
     def _settle_by_evidence(self, older: Fact, newer: Fact, answer: str) -> None:
         """A new fact replaced, ended, or corrected one side of an open contradiction, so that contradiction is
@@ -519,21 +542,24 @@ class Factoid:
             "source_datetime": _fmt(fact.source_datetime), "extracted_at": _fmt(fact.extracted_at),
             "scores": fact.scores, "fingerprint": self.fingerprint(fact),
         }
-        if getattr(fact, "restored", False):
-            row["restored"] = "document re-ingested; the same fact"
+        if getattr(fact, "restated", False):
+            row["restated"] = "the same fact in a new version of its document"
         quotes = [vars(q) for q in fact.quotes]
         mentions = [{k: v for k, v in vars(m).items() if k != "keys"} for m in fact.mentions]
         self.store.save_fact(row, quotes, mentions)
         self._index_fact(fact)
+        for old_id in getattr(fact, "replaces", []):
+            self.store.replace_fact(old_id, fact.id, "changed in a new version of its document")
+        fact.replaces = []
 
-    #: How alike (cosine) a re-extracted fact and a retracted one must be for the new one to take the old id.
+    #: How alike (cosine) a re-extracted fact and an old one must be for the new one to take the old id.
     reuse_similarity = 0.85  # same facts reworded scored 0.87 to 0.92 with qwen3-embedding-8b; others below 0.7
 
     def _reuse_ids(self, document: Document, facts: list[Fact]) -> None:
-        """When a document is re-ingested, a fact that says what one of its retracted facts said takes the old id,
+        """When a document is re-ingested, a fact that says what one of its old facts said takes the old id,
         so ids saved elsewhere keep working. Same sentence, or the same traits, a shared quote, and a close embedding.
         Extraction rewords sentences from run to run, so matching on the sentence alone keeps few ids."""
-        previous = self._previous_ids.pop(document.id, {})
+        previous = self._revising.get(document.id, {})
         if not previous or not facts:
             return
         old = {row["id"]: row for row in self.store.query(
@@ -546,9 +572,9 @@ class Factoid:
         free = dict(old)
         for fact in facts:
             if fact.text in previous and previous[fact.text] in free:
-                fact.id, fact.restored = previous[fact.text], True
+                self._restate(document, fact, previous[fact.text])
                 free.pop(fact.id)
-        rest = [f for f in facts if not getattr(f, "restored", False) and getattr(f, "vector", None)]
+        rest = [f for f in facts if not getattr(f, "restated", False) and getattr(f, "vector", None)]
         if not free or not rest:
             return
         ids = list(free)
@@ -568,13 +594,35 @@ class Factoid:
         for _, key, fact, old_id in sorted(pairs, key=lambda p: -p[0]):
             if key in taken or old_id not in free:
                 continue
-            fact.id, fact.restored = old_id, True
+            self._restate(document, fact, old_id)
             free.pop(old_id)
             taken.add(key)
 
+    def _restate(self, document: Document, fact: Fact, old_id: str) -> None:
+        """The new revision states an old fact again: the new fact takes its id, quotes, and place."""
+        fact.id, fact.restated = old_id, True
+        old = self._revising.get(document.id, {})
+        for text, fact_id in list(old.items()):
+            if fact_id == old_id:
+                del old[text]
+
+    def begin_revision(self, document: Document) -> None:
+        """Before a stored document is ingested again: keep its text as a revision, and note the facts that stand on
+        it. They stay current while the new version is read; `finish_revision` replaces those it no longer states."""
+        if document.id in self._revising or getattr(type(document), "key", None) is not None:
+            return  # begun already, or a keyed table, whose rows update in place
+        standing = self.store.standing_facts(document.id)
+        if self.store.archive_revision(document.id) or standing:
+            self._revising[document.id] = standing
+
     def retire_document_facts(self, document: Document) -> None:
-        """Retract a re-ingested document's facts, and remember their ids so unchanged sentences keep them."""
-        self._previous_ids[document.id] = self.store.retire_document_facts(document.id)
+        """Kept for document classes written before revisions; same as `begin_revision`."""
+        self.begin_revision(document)
+
+    def finish_revision(self, document: Document) -> None:
+        """After the new version's facts are saved: an old fact that nothing restated or replaced is replaced."""
+        for fact_id in self._revising.pop(document.id, {}).values():
+            self.store.replace_fact(fact_id, None, "not in the new version of its document")
 
     def _index_fact(self, fact: Fact) -> None:
         vector = getattr(fact, "vector", None) or self.client.embed([fact.text])[0]
@@ -669,7 +717,7 @@ class Factoid:
         linked = {r["fact_id"] for r in self.store.query("select fact_id from mentions where entity_id = ?",
                                                          (entity.id,))}
         facts = [f for f in (self.load_fact(i) for i in ids if i not in linked) if f is not None
-                 and f.status not in ("retracted", "corrected")]
+                 and f.status not in ("retracted", "corrected", "replaced")]
         if not facts:
             return 0
         keys = [f"F{i + 1}" for i in range(len(facts))]
@@ -721,7 +769,8 @@ class Factoid:
             other = self.load_fact(fact_id)
             if other is None or other.status not in ("current", "contradicted"):
                 continue
-            if other.document_id == fact.document_id:
+            revising = other.id in self._revising.get(fact.document_id or "", {}).values()
+            if other.document_id == fact.document_id and not revising:
                 # Most changes come from other documents, so a document's own facts get at most half the slots.
                 if same_document >= limit // 2:
                     continue

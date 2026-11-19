@@ -39,13 +39,15 @@ factoid entities kinds                                                # count un
 ```
 
 - `ingest` classifies each document unless `--as` names the class. `--dry-run` runs everything, writes nothing, and
-  prints the facts and the rejected candidates with reasons. A stored document with unchanged text, class, and metadata
-  is skipped; `--again` ingests it anyway. Re-ingesting a changed document retracts its old facts, and a new fact saying
-  the same thing as an old one takes the old fact's id. `--fresh` calls the models even when an identical request is
-  cached. Output ends with model calls, tokens, calls replayed from `.factoid/calls.db`, and whether any saved answers
-  came from a different version of Factoid.
+  prints the facts and rejected candidates with reasons. A stored document with unchanged text, class, and metadata is
+  skipped. `--again` ingests it anyway. Re-ingesting a changed document keeps its old text as a revision. Its old facts
+  stay current until the new version's facts are saved. A new fact that says what an old one said takes the old fact's
+  id (the same sentence, a close match, or the decision model's "duplicate"). An old fact that the new version changes
+  or no longer states becomes `replaced`. This is separate from `retracted`, which a person sets. `--fresh` calls the
+  models even when an identical request is cached. Output ends with model calls, tokens, calls replayed from
+  `.factoid/calls.db`, and whether any saved answers came from a different version of Factoid.
 - `facts list` prints facts in the order added, with ids and traits (`--limit 0` lists all). `--status` is `current`
-  (the default), `superseded`, `ended`, `corrected`, `contradicted`, `retracted`, or `all`.
+  (the default), `superseded`, `ended`, `corrected`, `contradicted`, `replaced`, `retracted`, or `all`.
 - `search` returns facts, or source chunks with `--chunks`. The score orders results: keyword and vector ranks fused
   with reciprocal rank fusion, times how likely the fact is still valid now or at `--as-of`. It is not a similarity;
   values near 0.03 are normal. No reranker runs unless `settings.py` sets a `rerank` model.

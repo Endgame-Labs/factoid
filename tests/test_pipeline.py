@@ -575,7 +575,7 @@ def test_reingesting_skips_an_unchanged_document_and_keeps_unchanged_fact_ids(ma
         if fact.text in ids:
             assert fact.id == ids[fact.text] and Fact.get(fact.id).status == "current"
     events = [r["type"] for r in app.store.events_for(ids[first.facts[0].text])]
-    assert events[-1] == "fact.restored"
+    assert events[-1] == "fact.restated"
 
 
 def test_a_document_whose_ingest_failed_is_ingested_again(make_app, fake):

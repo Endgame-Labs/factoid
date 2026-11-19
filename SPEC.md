@@ -1166,7 +1166,8 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
     id (event `fact.restored`): the same sentence, or the same traits, a shared quote, and embeddings at least 0.85
     alike (`Factoid.reuse_similarity`). Extraction rewords a sentence from run to run, so the same-sentence rule alone
     kept 2 of 6 ids on the sample after an edit; with embeddings it kept all 6. This is what `docs/archive/documents.md`
-    promised; resolve against the old revision is still the longer-term plan.
+    promised. Since 0.1.8 (decision 112), resolve against the old revision is built, and old facts are `replaced`,
+    not retracted, only after the new version's facts are saved.
   - `ingest` and `eval` say in words how many calls were replayed from `.factoid/calls.db`, and that `--fresh` calls
     the models again. `ingest` has `--fresh` too. The cache records which Factoid (version and commit) saved each
     answer, and the output says when replayed answers came from a different one.
@@ -1652,3 +1653,10 @@ All dates are 2026-11-13 unless noted.
      app, and `app.active()` scopes class reads. Before, pool threads fell back to the last app made, so a second app in
      the process got the first one's facts. `factoid serve` serializes writes only, so reads no longer wait for ingest.
      Duplicate class names are issue #13. (2026-11-19)
+112. 0.1.8 builds decision 110's re-save (issue #3). `Factoid.ingest` calls `begin_revision` before a document's
+     ingest step, which keeps the stored text as a numbered revision and notes the facts that stand on it, and
+     `finish_revision` after it, which marks old facts that nothing restated or replaced as `replaced`. Facts carry
+     the revision they came from. Resolve compares new facts with the old version's facts without the half-slots cap
+     for a document's own facts: "duplicate" keeps the old id (`fact.restated`), and a change marks the old fact
+     `replaced` with a `replaces` relation. `replaced` counts as retired: validity 0, out of search and claims. Keyed
+     tables still update rows in place. `retire_document_facts` stays as a name for `begin_revision`. (2026-11-19)

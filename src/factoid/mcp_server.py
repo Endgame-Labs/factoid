@@ -46,7 +46,7 @@ TOOLS: list[dict[str, Any]] = [
             "document": {**_STR, "description": "A document's id, title, or file name."},
             "trait": {**_STR, "description": "A trait name, such as liability_cap."},
             "status": {**_STR, "description": "current (default), superseded, ended, corrected, contradicted, "
-                                              "retracted, or all."},
+                                              "replaced, retracted, or all."},
             "limit": {**_INT, "description": "Default 50."},
         }},
     },

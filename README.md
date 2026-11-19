@@ -7,7 +7,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
 
-> **Status: Version 0.1.7.** Factoid runs end to end, and three example apps publish their eval results. It covers
+> **Status: Version 0.1.8.** Factoid runs end to end, and three example apps publish their eval results. It covers
 > ingest, fact extraction with evals, entities, supersession and as-of search, settling contradictions, eval suites,
 > exports, an HTTP API, and an MCP server. [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) section 17 lists what is built.
 > [CHANGELOG.md](https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md) lists what changed in each version.
@@ -774,9 +774,9 @@ no trait, unlinked mentions, single-fact entities, facts past their expected val
 entities with the most facts per entity class.
 Use `--data-dir` to point `factoid stats` at another store, such as an eval run's folder.
 
-Class reads such as `Fact.search` and `Company.find` use the active app: the last `Factoid` made, unless a block says
-otherwise. With several apps in one process, wrap class reads in `with app.active():`. App methods (`app.ingest`,
-`app.search_facts`, and the rest) always use their own app, in every worker thread.
+Class reads such as `Fact.search` and `Company.find` use the active app: the last `Factoid` made, unless a block sets
+another. With several apps in one process, wrap class reads in `with app.active():`. App methods (`app.ingest`,
+`app.search_facts`, and the rest) always use their own app in every worker thread.
 
 ## Exports
 
@@ -939,8 +939,8 @@ recent = orion.facts(since="30d")      # every recent fact linked to Orion
 - **Deterministic provenance.** Prose extraction cites numbered passages and structured extraction cites the file, row,
   and column; Factoid's code attaches the exact quote or cell, speaker, and timestamp.
 - **Event log for history.** Current state in SQLite is the source of truth. Each change also writes a fact event
-  (`added`, `superseded`, `ended`, `corrected`, `contradicted`, `retracted`, or `restored`) or an entity event
-  (`linked`, `merged`, or `split`) to a log in the same database. The log records where each fact came from and how it
+  (`added`, `restated`, `superseded`, `ended`, `corrected`, `contradicted`, `replaced`, `retracted`, or `restored`)
+  or an entity event (`linked`, `merged`, or `split`) to a log in the same database. The log records where each fact came from and how it
   changed, so a response can include the fact a newer one superseded.
 - **Eval-selected defaults.** Default strategies across `classify`, `segment`, `extract`, `evaluate`, `repair`,
   `assess`, `link`, and `resolve` come from eval results. `factoid eval` measures accuracy, cost, and latency on labeled

@@ -229,7 +229,7 @@ class Fact(Registered, ModelCalls):
         seen = max((parse_datetime(q.said_at) for q in self.quotes if q.said_at), default=self.source_datetime)
         if self.status in ("superseded", "ended") and self.valid_until is None:
             return 0.0
-        if self.status in ("corrected", "retracted"):
+        if self.status in ("corrected", "retracted", "replaced"):
             return 0.0
         if self.status in ("superseded", "ended"):
             # Replaced at `valid_until`, so it held until then: no decay inside the window. A standing that "lasts
