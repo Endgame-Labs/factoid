@@ -279,6 +279,10 @@ Two settings on a prose document class control chunking:
   number of characters (`400`) or a share of `chunk_size` as a string (`"15%"`). Because `chunk_overlap` is one setting
   with two forms, the two forms can never disagree. Overlap is rounded to whole passages.
 
+A passage is a paragraph or a speaker turn, split into sentences when it is longer than `max_passage` (1,200
+characters). Every fact from a short paragraph quotes the whole paragraph. To quote single sentences instead, set
+`sentence_passages = True` on the document class. It is off by default because the evals were run with paragraphs.
+
 A `segment` override can put other details about a passage in `passage.attrs`. For example, it can note which side of
 a call spoke (`{"side": "customer"}`). Each quote of that passage keeps a copy in Python, the HTTP results, and the
 MCP results.
