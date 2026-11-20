@@ -1,6 +1,6 @@
 # Landing page
 
-The landing page at https://factoid-landing-netlify.netlify.app is a static page (`index.html`, `styles.css`, and
+The landing page at https://factoid-landing-page.netlify.app is a static page (`index.html`, `styles.css`, and
 `script.js`) with no build step, no backend, and no analytics. This folder is its source. Netlify hosts it.
 
 Netlify's agent (Agent Runner, with Gemini) wrote the first version from a prompt. The ribbon was fixed by hand. Edit
@@ -10,10 +10,10 @@ the page here, commit your changes, and deploy them with the CLI.
 
 | | |
 | --- | --- |
-| Site name | `factoid-landing-netlify` |
+| Site name | `factoid-landing-page` |
 | Site ID | `89962c6b-dacb-4aa9-b877-048cdf6a2bc8` |
-| URL | https://factoid-landing-netlify.netlify.app |
-| Dashboard | https://app.netlify.com/projects/factoid-landing-netlify |
+| URL | https://factoid-landing-page.netlify.app |
+| Dashboard | https://app.netlify.com/projects/factoid-landing-page |
 | Owner | Kyle's Netlify team. Ask Kyle for access. |
 | Password or SSO | Off. Every deploy, including drafts, is public to anyone with its URL. |
 

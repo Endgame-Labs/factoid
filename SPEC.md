@@ -1380,7 +1380,7 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   supersession 1 of 2. Details are in `examples/legal/README.md`.
 - **PyPI:** 0.1.3 is the latest release (decision 105). `main` is ahead of it; a release needs Kyle's go.
 - **Landing page** (decision 124): a static page in `site/`, hosted on Netlify at
-  https://factoid-landing-netlify.netlify.app and deployed with the Netlify CLI. `site/README.md` says how to change,
+  https://factoid-landing-page.netlify.app and deployed with the Netlify CLI. `site/README.md` says how to change,
   publish, and roll it back.
 - **Keys:** a call needs the provider's key or its base URL (`<PROVIDER>_BASE_URL`, for a gateway that adds
   credentials). With neither, it fails at once and names both. The key is sent whenever it is set. The code names no
