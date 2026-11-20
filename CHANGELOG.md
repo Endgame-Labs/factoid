@@ -2,6 +2,11 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.20 (2026-11-20)
+
+- **License holder.** The MIT license and the package metadata name Kyle Wild, not a company. Factoid is a
+  personal project.
+
 ## 0.1.19 (2026-11-19)
 
 - **Fewer decision requests, as an experiment.** `assess_with_evaluate = True` on a fact class asks the trait and time

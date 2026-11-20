@@ -7,7 +7,7 @@ Decisions not made yet. Algorithm choices are not listed here: those are settled
 1. **Implementation language.** Python with uv (research stack, NLP, easy evals; `uv tool install` hides interpreter
    versions), Ruby (the nicest DSLs, a weak NLP ecosystem), or Go (a single static binary; clumsier evals). The docs are
    written to be language-neutral, so this can wait until the interfaces settle.
-2. **One log or one per project?** One `factoid.yml` is one log today. Do we need several tenants in one server (an Org
+2. **One log or one per project?** One `factoid.yml` is one log today. Does it need several tenants in one server (an Org
    per customer), or is that one process per tenant, hop-rip style?
 3. **Log format in a bucket.** Newline-delimited JSON segments, compacted to Parquet like incisive? What is a segment's
    size, and how do concurrent writers order appends (single writer per project, as with hop-rip)?

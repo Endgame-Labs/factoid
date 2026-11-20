@@ -68,7 +68,7 @@ prosaic. See "Prose and structured documents" in section 8.
 
 **Proposed: Pydantic.** Use it underneath: model output schemas, stored records, and validating class settings when a
 subclass is defined. Do not make the classes users write into Pydantic models. A `BaseModel` subclass rejects a plain
-attribute such as `chunk_size = 4000` (tested on Pydantic 2.14), and plain attributes are the surface we want.
+attribute such as `chunk_size = 4000` (tested on Pydantic 2.14), and plain attributes are the surface I want.
 
 ## 4. Project shape
 
@@ -712,7 +712,7 @@ one question with six answers: duplicate, supersedes, ends, corrects, contradict
 - **Corrects:** the new fact says the old one was wrong from the start ("restated Q1 revenue was $380M" corrects
   "$402M"). The old fact is marked `corrected` and is not shown as true at any time.
 
-None of the earlier systems we studied detects that a newer fact replaces or contradicts an older one, so this step is new
+None of the earlier systems I studied detects that a newer fact replaces or contradicts an older one, so this step is new
 work and needs evals before any claim about its quality.
 
 **Decided** (Kyle, 2026-11-14): how contradictions are handled.
@@ -1032,6 +1032,8 @@ Benchmark specs live in `specs/benchmarks/`. The first is facts versus chunks.
 - Carbon (Gemini 4 Carbon, medium, through `agy`) writes the copy for end-user docs: the README and the examples. The
   tone is matter-of-fact and pragmatic, with plain label headings.
 - This file is maintained by the session's agent, without Carbon. Update it whenever a decision is made or changed.
+- Factoid is a personal project. Where the docs speak as their author, they say "I", not "we" (decision 125).
+  Example code and sample documents keep their own voice, such as a law firm's "our lawyers".
 - Always use the Oxford comma. Avoid slogans, "X rather than Y" contrasts, and invented anecdotes.
 - `AGENTS.md` holds the shared rules for coding agents. Each developer's own preferences live in `AGENTS.md.local`,
   which agents read and keep current. Every file ending in `.local` is ignored by git.
@@ -1719,3 +1721,6 @@ All dates are 2026-11-13 unless noted.
      from git, and `site/README.md` is the runbook. Netlify's agent wrote the first version; its follow-up runs failed
      on this site, so changes are made by hand. A custom domain, forms, analytics, or a git link need Kyle's yes.
      (2026-11-20)
+125. Factoid is Kyle's personal project (Kyle, 2026-11-20). The MIT license and `pyproject.toml` name Kyle Wild as
+     the copyright holder and author, not a company, and the docs use first person singular where they speak as their
+     author. Quotes, sample documents, and example personas keep their wording. (0.1.20)

@@ -5,7 +5,7 @@
 ## Why
 
 Factoid indexes facts and chunks in separate namespaces (`SPEC.md`, "Chunking"). Besides serving search, the split lets
-us run the same questions against facts, against chunks, and against both, on the same corpus with the same models. The
+me run the same questions against facts, against chunks, and against both, on the same corpus with the same models. The
 point is to show, on a user's own data, what the ISC papers showed on public data: facts give the same or better answers
 for far fewer tokens.
 

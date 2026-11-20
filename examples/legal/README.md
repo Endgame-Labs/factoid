@@ -38,7 +38,7 @@ Runs replay model calls from `.factoid/calls.db`, so a re-run of the same pipeli
 ## Data
 
 CUAD, the Contract Understanding Atticus Dataset, is CC BY 4.0: https://www.atticusprojectai.org/cuad. The scorers in
-`evals/` are our own. The documents in `sample_docs/` are made up.
+`evals/` are my own. The documents in `sample_docs/` are made up.
 
 ## Rerun (2026-11-19)
 

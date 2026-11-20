@@ -1,9 +1,9 @@
 """CUAD: lawyer-labeled clauses in 102 test contracts, scored against Factoid's facts.
 
-Data: the Contract Understanding Atticus Dataset (CC BY 4.0), https://www.atticusprojectai.org/cuad. The scorer is our
+Data: the Contract Understanding Atticus Dataset (CC BY 4.0), https://www.atticusprojectai.org/cuad. The scorer is my
 own; it borrows CUAD's idea of matching by word overlap so numbers are comparable in spirit to the paper's.
 
-What is scored, per CUAD category that maps to one of our traits:
+What is scored, per CUAD category that maps to one of this app's traits:
 
 - clause detection, per contract: does any fact carry the trait (precision, recall, F1), and the best trait
   probability among the contract's facts as a confidence (AUPR, precision at 80% recall).

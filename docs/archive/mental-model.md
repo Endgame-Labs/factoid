@@ -38,7 +38,7 @@ happened to them, and an **eval loop** that measures the pipeline. Keep these th
 | `resolve` | How does it relate to facts we already have? | `hash`, `slot` (same entity and field, newer wins), `vector-judge` |
 | `index` | Where can it be found? Not a stage of truth, a view. | `sqlite-fts`, `pgvectorscale`, `turbopuffer` |
 
-`resolve` is where Factoid does what none of its predecessors did at ingest. For each new fact it asks: have we seen
+`resolve` is where Factoid does what none of its predecessors did at ingest. For each new fact it asks: has it seen
 this (**duplicate**: keep one, link the other as corroboration), does it replace something (**supersede**), or does it
 disagree with something (**contradict**: keep both, mark both disputed). Slot facts resolve by rule: the same entity and
 field, stated later, supersede. Sentence facts resolve by retrieving their nearest neighbors and asking a judge.
@@ -56,7 +56,7 @@ Facts are never edited in place. Everything is an event appended to the log:
 ```
 
 From the log, Factoid keeps **views**: the current state of every fact, and each search index. Views can be dropped
-and rebuilt at any time, which gives us:
+and rebuilt at any time, which gives:
 
 1. **Undo.** Every automatic change has an actor and a reason, and reversing it is another event.
 2. **Time travel.** "What did we believe on October 1?" is the log replayed to October 1.

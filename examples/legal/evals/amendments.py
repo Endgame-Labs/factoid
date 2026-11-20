@@ -1,6 +1,6 @@
 """Amendments: real contract chains from CUAD, scored on supersession, as-of search, and time.
 
-Each chain is a base agreement and its amendments, ingested in signing order. The gold labels are ours, written by
+Each chain is a base agreement and its amendments, ingested in signing order. The gold labels are mine, written by
 reading the contracts:
 
 - supersedes: a base clause an amendment replaces. Scored (`supersede_recall`) when a fact quoting the old clause is

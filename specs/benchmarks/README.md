@@ -3,7 +3,7 @@
 Specs for the benchmarks Factoid ships and runs. Benchmarks decide Factoid's defaults (see `SPEC.md` section 14), and
 some also show users why Factoid works the way it does.
 
-Each spec says what is compared, on what data, what is measured, and what result we expect from prior work.
+Each spec says what is compared, on what data, what is measured, and what result I expect from prior work.
 
 | Spec | Question |
 | --- | --- |
