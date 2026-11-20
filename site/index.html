@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=89962c6b-dacb-4aa9-b877-048cdf6a2bc8
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Factoid — Open-Source Python Framework for Cited Facts</title>
+  <meta name="description" content="Factoid is an open-source Python framework that turns Documents into short, self-contained Facts and Entities, each tied to an exact location in the source document.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Classic 'Fork me on GitHub' ribbon in top-right corner -->
+  <aside class="github-ribbon" aria-label="Project source code">
+    <a href="https://github.com/Endgame-Labs/factoid" target="_blank" rel="noopener noreferrer">
+      Fork me on GitHub
+    </a>
+  </aside>
+
+  <!-- Top Navigation Bar -->
+  <header class="site-header">
+    <div class="header-container">
+      <div class="brand-group">
+        <a href="#overview" class="brand-logo" aria-label="Factoid homepage">
+          <span class="logo-symbol" aria-hidden="true">[]</span>
+          <span class="brand-name">Factoid</span>
+        </a>
+        <span class="version-badge" title="Early development version">v0.1.x</span>
+      </div>
+
+      <nav class="site-nav" aria-label="Primary navigation">
+        <ul class="nav-links">
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#pipeline">Pipeline</a></li>
+          <li><a href="#access-paths">Access Paths</a></li>
+          <li><a href="#lifecycle">Lifecycle</a></li>
+          <li><a href="#benchmarks">Evaluation</a></li>
+          <li><a href="#papers">Papers</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to dark theme" title="Toggle theme">
+          <svg class="icon-sun" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="icon-moon" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <span class="theme-label" id="theme-status-text">Theme</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <!-- Section 1: Header, summary, and install -->
+    <section id="overview" class="section section-hero">
+      <div class="content-container">
+        <div class="hero-header">
+          <div class="meta-tags">
+            <span class="meta-tag">Python 3.13+</span>
+            <span class="meta-tag">Version 0.1.x</span>
+            <span class="meta-tag">MIT License</span>
+            <span class="meta-tag">Open Source</span>
+          </div>
+
+          <h1 class="page-title">Factoid Framework</h1>
+          <p class="lead-text">
+            Factoid is an open-source Python framework that turns <code>Documents</code> into short, self-contained <code>Facts</code> and <code>Entities</code>, each tied to an exact location in the source document.
+          </p>
+          <p class="sublead-text">
+            Factoid is early software (version 0.1.x), requires Python 3.13+, and uses the MIT license.
+          </p>
+        </div>
+
+        <div class="install-card">
+          <div class="install-header">
+            <span class="install-label">Install via uv</span>
+            <span class="install-spec">Python 3.13+ required</span>
+          </div>
+          <div class="command-box">
+            <div class="command-content">
+              <span class="command-prompt" aria-hidden="true">$</span>
+              <code id="install-cmd">uv tool install factoid</code>
+            </div>
+            <button id="copy-install-btn" class="btn-copy" type="button" aria-label="Copy install command to clipboard" data-copy-target="install-cmd">
+              <svg class="icon-copy" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <svg class="icon-check" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span class="copy-text">Copy</span>
+            </button>
+          </div>
+          <div class="install-links">
+            <span class="links-title">External links:</span>
+            <ul class="inline-links-list">
+              <li>
+                <a href="https://pypi.org/project/factoid/" target="_blank" rel="noopener noreferrer">
+                  PyPI Project
+                  <span class="external-indicator" aria-hidden="true">↗</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/Endgame-Labs/factoid" target="_blank" rel="noopener noreferrer">
+                  GitHub Repository
+                  <span class="external-indicator" aria-hidden="true">↗</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/Endgame-Labs/factoid/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
+                  MIT License
+                  <span class="external-indicator" aria-hidden="true">↗</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Code sample and three-step diagram (lead section) -->
+    <section id="pipeline" class="section section-pipeline">
+      <div class="content-container">
+        <header class="section-header">
+          <h2 class="section-title">Domain Modeling and Extraction Pipeline</h2>
+          <p class="section-intro">
+            Factoid is a configurable framework where you map it to your domain by extending the <code>Document</code>, <code>Fact</code>, and <code>Entity</code> base classes.
+          </p>
+        </header>
+
+        <div class="lead-grid">
+          <!-- Minimal Python 3.13+ Code Sample -->
+          <article class="code-panel">
+            <div class="panel-header">
+              <span class="panel-tag">domain_model.py</span>
+              <span class="panel-meta">Python 3.13+</span>
+            </div>
+            <div class="code-wrapper">
+              <pre><code class="language-python"><span class="code-keyword">from</span> factoid <span class="code-keyword">import</span> Document, Entity, Fact
+
+
+<span class="code-keyword">class</span> <span class="code-class">SourceContract</span>(Document):
+    <span class="code-docstring">"""Domain document representing source text."""</span>
+    <span class="code-keyword">pass</span>
+
+
+<span class="code-keyword">class</span> <span class="code-class">Counterparty</span>(Entity):
+    <span class="code-docstring">"""Domain entity referenced across documents."""</span>
+    <span class="code-keyword">pass</span>
+
+
+<span class="code-keyword">class</span> <span class="code-class">ContractualObligation</span>(Fact):
+    <span class="code-docstring">"""Self-contained fact extracted from a specific document location."""</span>
+    <span class="code-keyword">pass</span></code></pre>
+            </div>
+            <div class="panel-footer">
+              <span class="panel-note">Subclass Document, Fact, and Entity to map custom domain objects.</span>
+            </div>
+          </article>
+
+          <!-- Accessible Three-Step Diagram -->
+          <article class="diagram-panel">
+            <div class="panel-header">
+              <span class="panel-tag">Extraction and Update Pipeline</span>
+              <span class="panel-meta">Flow diagram</span>
+            </div>
+            <figure class="diagram-figure" role="region" aria-label="Three-step pipeline diagram">
+              <figcaption class="diagram-caption">
+                Documents in, cited facts out
+              </figcaption>
+
+              <div class="flow-steps" role="list">
+                <!-- Step 1 -->
+                <div class="flow-step" role="listitem">
+                  <div class="step-badge" aria-hidden="true">Step 1</div>
+                  <div class="step-card">
+                    <h3 class="step-title">Documents in</h3>
+                    <p class="step-body">
+                      Source text feeds into the domain-configured <code>Document</code> models for ingestion and coordinate tracking.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flow-connector" aria-hidden="true">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <polyline points="19 12 12 19 5 12"></polyline>
+                  </svg>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="flow-step" role="listitem">
+                  <div class="step-badge" aria-hidden="true">Step 2</div>
+                  <div class="step-card">
+                    <h3 class="step-title">Extract facts and link entities</h3>
+                    <p class="step-body">
+                      Extract explicit, pronoun-free facts tied to exact source locations, and link affected <code>Entities</code>.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flow-connector" aria-hidden="true">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <polyline points="19 12 12 19 5 12"></polyline>
+                  </svg>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="flow-step" role="listitem">
+                  <div class="step-badge" aria-hidden="true">Step 3</div>
+                  <div class="step-card">
+                    <h3 class="step-title">Update the fact set</h3>
+                    <p class="step-body">
+                      Update the fact set as new documents arrive—retire outdated facts, merge duplicate facts, and flag facts that disagree.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </figure>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Access paths (CLI, HTTP API, and MCP) -->
+    <section id="access-paths" class="section section-access">
+      <div class="content-container">
+        <header class="section-header">
+          <h2 class="section-title">Access Paths</h2>
+          <p class="section-intro">
+            People, agents, and data pipelines use these paths to query facts with semantic, BM25, and hybrid-reranked search, including "as of" queries for a past date.
+          </p>
+        </header>
+
+        <!-- Structured 3-column reference layout -->
+        <div class="access-grid" role="region" aria-label="Access paths overview">
+          <article class="access-card">
+            <div class="access-card-header">
+              <span class="access-type">Terminal Interface</span>
+              <h3 class="access-title">CLI</h3>
+            </div>
+            <p class="access-description">
+              Direct terminal access for engineers and automated shell scripts. Search the fact database interactively or emit structured JSON streams for shell pipelines.
+            </p>
+            <div class="access-query-support">
+              <h4 class="subhead">Query capabilities:</h4>
+              <ul class="feature-list">
+                <li>Semantic vector retrieval</li>
+                <li>Exact BM25 keyword matching</li>
+                <li>Hybrid-reranked query mode</li>
+                <li>"as of" queries for past dates</li>
+              </ul>
+            </div>
+            <div class="access-sample">
+              <span class="sample-label">CLI invocation</span>
+              <code>factoid query "payment terms" --as-of 2024-01-01 --hybrid</code>
+            </div>
+          </article>
+
+          <article class="access-card">
+            <div class="access-card-header">
+              <span class="access-type">Network Service</span>
+              <h3 class="access-title">HTTP API</h3>
+            </div>
+            <p class="access-description">
+              Standard REST API for backend services and data pipelines. Provides endpoints for ingestion, fact retrieval, entity graph traversal, and temporal status filters.
+            </p>
+            <div class="access-query-support">
+              <h4 class="subhead">Query capabilities:</h4>
+              <ul class="feature-list">
+                <li>Semantic vector retrieval</li>
+                <li>Exact BM25 keyword matching</li>
+                <li>Hybrid-reranked query mode</li>
+                <li>"as of" queries for past dates</li>
+              </ul>
+            </div>
+            <div class="access-sample">
+              <span class="sample-label">HTTP endpoint</span>
+              <code>POST /v1/facts/search<br>{"query": "...", "as_of": "2024-01-01"}</code>
+            </div>
+          </article>
+
+          <article class="access-card">
+            <div class="access-card-header">
+              <span class="access-type">Agent Protocol</span>
+              <h3 class="access-title">MCP</h3>
+            </div>
+            <p class="access-description">
+              Model Context Protocol server integration for AI assistants and autonomous agents. Gives language models native access to inspect cited facts and entities.
+            </p>
+            <div class="access-query-support">
+              <h4 class="subhead">Query capabilities:</h4>
+              <ul class="feature-list">
+                <li>Semantic vector retrieval</li>
+                <li>Exact BM25 keyword matching</li>
+                <li>Hybrid-reranked query mode</li>
+                <li>"as of" queries for past dates</li>
+              </ul>
+            </div>
+            <div class="access-sample">
+              <span class="sample-label">MCP tool definition</span>
+              <code>mcp://factoid/query_facts?rerank=hybrid&amp;as_of=...</code>
+            </div>
+          </article>
+        </div>
+
+        <!-- Audience mapping note -->
+        <div class="access-summary-callout">
+          <div class="callout-icon" aria-hidden="true">ℹ</div>
+          <div class="callout-text">
+            <strong>Unified retrieval engine:</strong> People, agents, and data pipelines share identical ranking and temporal precision across all three interfaces. Every query supports semantic, BM25, and hybrid-reranked search, including exact historical queries evaluated "as of" any past date.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Fact lifecycle and statuses -->
+    <section id="lifecycle" class="section section-lifecycle">
+      <div class="content-container">
+        <header class="section-header">
+          <h2 class="section-title">Fact Lifecycle and Statuses</h2>
+          <p class="section-intro">
+            Every fact is a short, self-contained sentence devoid of filler and explicit in its language (no pronouns), linked to its exact source location and affected entities.
+          </p>
+        </header>
+
+        <div class="table-container" role="region" aria-label="Fact statuses table" tabindex="0">
+          <table class="status-table">
+            <thead>
+              <tr>
+                <th scope="col" style="width: 22%;">Status</th>
+                <th scope="col" style="width: 53%;">Lifecycle Meaning and Role</th>
+                <th scope="col" style="width: 25%;">Fact Set Behavior</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">
+                  <span class="status-badge status-current">current</span>
+                </th>
+                <td>Active, verified fact that reflects the latest valid state extracted from source documents.</td>
+                <td>Active in default queries</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <span class="status-badge status-superseded">superseded</span>
+                </th>
+                <td>Replaced by newer information introduced in a subsequent document.</td>
+                <td>Historical queries only</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <span class="status-badge status-ended">ended</span>
+                </th>
+                <td>The stated event, condition, or period has concluded according to source documents.</td>
+                <td>Historical queries only</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <span class="status-badge status-corrected">corrected</span>
+                </th>
+                <td>Modified to resolve an extraction error or erratum identified in the source text.</td>
+                <td>Archived with correction link</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <span class="status-badge status-contradicted">contradicted</span>
+                </th>
+                <td>Conflicts with another recorded fact in the repository and has been flagged for disagreement.</td>
+                <td>Flagged in query results</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <span class="status-badge status-replaced">replaced</span>
+                </th>
+                <td>Substituted due to structural changes, schema updates, or entity consolidation.</td>
+                <td>Substituted by replacement fact</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <span class="status-badge status-retracted">retracted</span>
+                </th>
+                <td>Explicitly withdrawn by the publisher or author of the source document.</td>
+                <td>Excluded from active state</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="lifecycle-note">
+          <h3 class="note-title">Sentence Structure Mandate</h3>
+          <p class="note-body">
+            In Factoid, each fact is recorded as an explicit, pronoun-free statement. Facts carry coordinate pointers back to the original source text alongside bidirectional links to all affected <code>Entities</code>. When new documents arrive, Factoid retires outdated facts, merges duplicate facts, and flags facts that disagree.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Benchmarks and example apps -->
+    <section id="benchmarks" class="section section-benchmarks">
+      <div class="content-container">
+        <header class="section-header">
+          <h2 class="section-title">News Transcripts Evaluation and Example Applications</h2>
+          <p class="section-intro">
+            Empirical evaluation results demonstrate retrieval efficiency and precision on news transcripts.
+          </p>
+        </header>
+
+        <div class="benchmark-grid">
+          <!-- Quantitative Evaluation Card -->
+          <article class="benchmark-card">
+            <div class="benchmark-header">
+              <span class="benchmark-tag">Benchmark Dataset</span>
+              <h3 class="benchmark-title">News Transcripts (200 Questions)</h3>
+            </div>
+            <p class="benchmark-summary">
+              On 200 questions about news transcripts, facts read at 512 tokens answered 0.92 right, plain chunks read at 2,048 tokens answered 0.87 right, and at 8,192 tokens the two are even.
+            </p>
+
+            <!-- Visual comparison chart -->
+            <div class="chart-wrapper" role="region" aria-label="Evaluation accuracy bar chart">
+              <div class="chart-header">
+                <span class="chart-title">Accuracy Rate by Token Budget</span>
+                <span class="chart-axis-label">Accuracy (0.00 – 1.00)</span>
+              </div>
+
+              <div class="chart-bars">
+                <!-- Bar 1: Facts at 512 tokens -->
+                <div class="bar-group">
+                  <div class="bar-info">
+                    <span class="bar-name">Facts read (Factoid)</span>
+                    <span class="bar-meta">512 tokens</span>
+                    <span class="bar-score highlight">0.92</span>
+                  </div>
+                  <div class="bar-track" aria-hidden="true">
+                    <div class="bar-fill fill-facts" style="width: 92%;"></div>
+                  </div>
+                </div>
+
+                <!-- Bar 2: Plain chunks at 2,048 tokens -->
+                <div class="bar-group">
+                  <div class="bar-info">
+                    <span class="bar-name">Plain chunks</span>
+                    <span class="bar-meta">2,048 tokens</span>
+                    <span class="bar-score">0.87</span>
+                  </div>
+                  <div class="bar-track" aria-hidden="true">
+                    <div class="bar-fill fill-chunks" style="width: 87%;"></div>
+                  </div>
+                </div>
+
+                <!-- Bar 3: Both at 8,192 tokens -->
+                <div class="bar-group">
+                  <div class="bar-info">
+                    <span class="bar-name">Facts and plain chunks</span>
+                    <span class="bar-meta">8,192 tokens</span>
+                    <span class="bar-score">0.92 (Even)</span>
+                  </div>
+                  <div class="bar-track" aria-hidden="true">
+                    <div class="bar-fill fill-even" style="width: 92%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Scannable comparison table -->
+            <div class="eval-table-wrapper">
+              <table class="eval-table" aria-label="Detailed evaluation numbers">
+                <thead>
+                  <tr>
+                    <th scope="col">Representation Method</th>
+                    <th scope="col">Token Budget</th>
+                    <th scope="col">Correct Answers</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Facts (Factoid)</th>
+                    <td>512 tokens</td>
+                    <td><strong>0.92</strong></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Plain chunks</th>
+                    <td>2,048 tokens</td>
+                    <td><strong>0.87</strong></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Facts and plain chunks</th>
+                    <td>8,192 tokens</td>
+                    <td><strong>Even (0.92)</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <!-- Example Applications Card -->
+          <article class="apps-card">
+            <div class="apps-header">
+              <span class="benchmark-tag">Reference Implementations</span>
+              <h3 class="apps-title">Example Applications</h3>
+            </div>
+            <p class="apps-intro">
+              Example apps for legal contracts, NBA playoffs, and news transcripts publish their evaluation results in the repo.
+            </p>
+
+            <ul class="apps-list">
+              <li class="app-item">
+                <div class="app-icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                </div>
+                <div class="app-details">
+                  <h4 class="app-name">Legal Contracts</h4>
+                  <p class="app-desc">
+                    Subclasses contracts into obligations, parties, and effective dates. Evaluation results published in repository.
+                  </p>
+                </div>
+              </li>
+
+              <li class="app-item">
+                <div class="app-icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M4.93 4.93l4.24 4.24"></path>
+                    <path d="M14.83 9.17l4.24-4.24"></path>
+                    <path d="M14.83 14.83l4.24 4.24"></path>
+                    <path d="M9.17 14.83l-4.24 4.24"></path>
+                    <circle cx="12" cy="12" r="4"></circle>
+                  </svg>
+                </div>
+                <div class="app-details">
+                  <h4 class="app-name">NBA Playoffs</h4>
+                  <p class="app-desc">
+                    Extracts series outcomes, player statistics, and game sequences with temporal validity. Evaluation results published in repository.
+                  </p>
+                </div>
+              </li>
+
+              <li class="app-item">
+                <div class="app-icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                </div>
+                <div class="app-details">
+                  <h4 class="app-name">News Transcripts</h4>
+                  <p class="app-desc">
+                    Extracts verifiable statements from broadcast reporting transcripts across 200 benchmark questions. Evaluation results published in repository.
+                  </p>
+                </div>
+              </li>
+            </ul>
+
+            <div class="apps-footer-link">
+              <a href="https://github.com/Endgame-Labs/factoid" class="inline-link" target="_blank" rel="noopener noreferrer">
+                Browse example applications in repository
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Research Papers -->
+    <section id="papers" class="section section-papers">
+      <div class="content-container">
+        <header class="section-header">
+          <h2 class="section-title">Research Papers</h2>
+          <p class="section-intro">
+            Theoretical foundation, empirical methodology, and citation mechanics behind the Factoid framework.
+          </p>
+        </header>
+
+        <div class="papers-grid">
+          <article class="paper-card">
+            <div class="paper-header">
+              <span class="paper-badge">arXiv:2608.20845</span>
+              <span class="paper-date">August 2026</span>
+            </div>
+            <h3 class="paper-title">
+              <a href="https://arxiv.org/abs/2608.20845" target="_blank" rel="noopener noreferrer">
+                arXiv:2608.20845
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </h3>
+            <p class="paper-desc">
+              Foundational research on fine-grained fact extraction, coordinate citations, and pronoun-free knowledge representation from unstructured documents.
+            </p>
+            <div class="paper-action">
+              <a href="https://arxiv.org/abs/2608.20845" class="btn-paper" target="_blank" rel="noopener noreferrer">
+                Read paper on arXiv
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </div>
+          </article>
+
+          <article class="paper-card">
+            <div class="paper-header">
+              <span class="paper-badge">arXiv:2609.29661</span>
+              <span class="paper-date">September 2026</span>
+            </div>
+            <h3 class="paper-title">
+              <a href="https://arxiv.org/abs/2609.29661" target="_blank" rel="noopener noreferrer">
+                arXiv:2609.29661
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </h3>
+            <p class="paper-desc">
+              Evaluation methodology, lifecycle reconciliation of contradictory statements, and retrieval comparisons between dense chunks and structured facts.
+            </p>
+            <div class="paper-action">
+              <a href="https://arxiv.org/abs/2609.29661" class="btn-paper" target="_blank" rel="noopener noreferrer">
+                Read paper on arXiv
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Section 6: Minimal documentation footer -->
+  <footer class="site-footer">
+    <div class="content-container">
+      <div class="footer-main">
+        <div class="footer-brand">
+          <div class="brand-group">
+            <span class="logo-symbol" aria-hidden="true">[]</span>
+            <span class="brand-name">Factoid</span>
+          </div>
+          <p class="footer-release-note">
+            Factoid is early software (version 0.1.x), requires Python 3.13+, and uses the MIT license.
+          </p>
+        </div>
+
+        <nav class="footer-nav" aria-label="Footer links">
+          <ul class="footer-links-list">
+            <li>
+              <a href="https://github.com/Endgame-Labs/factoid" target="_blank" rel="noopener noreferrer">
+                GitHub Repository
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://pypi.org/project/factoid/" target="_blank" rel="noopener noreferrer">
+                PyPI Package
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://github.com/Endgame-Labs/factoid/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
+                MIT License
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://arxiv.org/abs/2608.20845" target="_blank" rel="noopener noreferrer">
+                arXiv:2608.20845
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://arxiv.org/abs/2609.29661" target="_blank" rel="noopener noreferrer">
+                arXiv:2609.29661
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <div class="footer-bottom">
+        <span class="footer-meta">Python 3.13+ required</span>
+        <span class="footer-meta">Version 0.1.x (Early Release)</span>
+        <span class="footer-meta">MIT Licensed Open Source</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

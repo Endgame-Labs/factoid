@@ -1378,7 +1378,10 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   chains. On CUAD contracts 21 to 40, never looked at while tuning, clause F1 was 0.85 (0.82 on the tuning set),
   coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
   supersession 1 of 2. Details are in `examples/legal/README.md`.
-- **Not on PyPI yet:** `uv tool install factoid` does not work until a release is published. Install from the repo.
+- **PyPI:** 0.1.3 is the latest release (decision 105). `main` is ahead of it; a release needs Kyle's go.
+- **Landing page** (decision 124): a static page in `site/`, hosted on Netlify at
+  https://factoid-landing-netlify.netlify.app and deployed with the Netlify CLI. `site/README.md` says how to change,
+  publish, and roll it back.
 - **Keys:** a call needs the provider's key or its base URL (`<PROVIDER>_BASE_URL`, for a gateway that adds
   credentials). With neither, it fails at once and names both. The key is sent whenever it is set. The code names no
   hosting platform or gateway (decision 83): a machine behind one sets the base URLs in `~/.factoid/.env`.
@@ -1711,3 +1714,8 @@ All dates are 2026-11-13 unless noted.
      request and keeps their answers on the fact for `assess`, if its text is unchanged; a repaired fact is evaluated,
      and so assessed, again. Assess is 11% to 29% of input tokens (decision 122). Off by default; the evals decide.
      (2026-11-19)
+124. The landing page is hosted on Netlify (Kyle, 2026-11-20); a Lovable version was tried too. Its source is in
+     `site/`: three static files, no build step. It is deployed with the Netlify CLI from a checkout of `main`, not
+     from git, and `site/README.md` is the runbook. Netlify's agent wrote the first version; its follow-up runs failed
+     on this site, so changes are made by hand. A custom domain, forms, analytics, or a git link need Kyle's yes.
+     (2026-11-20)
