@@ -1379,7 +1379,7 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
   supersession 1 of 2. Details are in `examples/legal/README.md`.
 - **PyPI:** 0.1.3 is the latest release (decision 105). `main` is ahead of it; a release needs Kyle's go.
-- **Landing page** (decision 124): a static page in `site/`, hosted on Netlify at
+- **Landing page** (decisions 124 and 126): a static page in `site/`, hosted on Netlify at
   https://factoid-landing-page.netlify.app and deployed with the Netlify CLI. `site/README.md` says how to change,
   publish, and roll it back.
 - **Example layout** (decision 125): each example app keeps its code in `app/` (`settings.py`, `documents.py`,
@@ -1725,4 +1725,7 @@ All dates are 2026-11-13 unless noted.
 125. Example apps keep their code in `app/`, not in a package named after the app (Kyle, 2026-11-20). A fixed name
      makes every example look the same, as Rails and FastAPI projects do. `app` clashes with the docs' `app =
      Factoid(...)` only in a file that imports the module itself, which none does. `factoid init` is unchanged for now.
+     (2026-11-20)
+126. The landing page is redesigned (Kyle, 2026-11-20): Neon wrote four drafts, and Kyle chose the one in Endgame's
+     brand colors. It is one `index.html` with its CSS and JavaScript inline, replacing the three files of decision 124.
      (2026-11-20)
