@@ -22,7 +22,7 @@ class Playoffs(Suite):
     parallel = 1  # in date order, so later documents supersede earlier ones
 
     def documents(self, limit: int | None = None):
-        from nba import documents as d
+        from app import documents as d
 
         if not (DATA / "games.csv").exists():
             raise FileNotFoundError("run `uv run python fetch.py` first")
@@ -41,8 +41,8 @@ class Playoffs(Suite):
                         title=meta["title"])
 
     def score(self, app, results) -> dict[str, Any]:
-        from nba.entities import Game, Player, Series, Team
-        from nba.facts import Injury, Milestone, Remark
+        from app.entities import Game, Player, Series, Team
+        from app.facts import Injury, Milestone, Remark
 
         checks: dict[str, bool] = {}
         facts = app.list_facts()

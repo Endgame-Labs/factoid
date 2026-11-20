@@ -338,7 +338,7 @@ class Amendments(Suite):
     fresh = False
 
     def documents(self, limit: int | None = None):
-        from legal.documents import Contract
+        from app.documents import Contract
 
         full = load_full()
         self.texts: dict[str, str] = {}
@@ -621,7 +621,7 @@ class AmendmentsSec(Amendments):
     description = "Three SEC credit-agreement chains with covenants amended in their entirety, labeled before any run."
 
     def documents(self, limit: int | None = None):
-        from legal.documents import Contract
+        from app.documents import Contract
 
         folder = DATA.parent / "sec"
         self.texts = {}
@@ -644,7 +644,7 @@ class WindowsDev(Suite):
     parallel = 4
 
     def documents(self, limit: int | None = None):
-        from legal.documents import Contract
+        from app.documents import Contract
 
         folder = DATA.parent / "windows"
         self.gold = json.loads((folder / "gold.json").read_text())[:limit]
@@ -686,7 +686,7 @@ class ExtensionsDev(AmendmentsSec):
     description = "A dev chain of term extensions, for tuning supersession of an extended date."
 
     def documents(self, limit: int | None = None):
-        from legal.documents import Contract
+        from app.documents import Contract
 
         folder = DATA.parent / "sec"
         self.texts = {}

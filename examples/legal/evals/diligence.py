@@ -23,7 +23,7 @@ class Diligence(Suite):
     description = "The README's Orion and Vega deal: classes, traits, supersede, as-of search, and entities."
 
     def documents(self, limit: int | None = None):
-        from legal import documents
+        from app import documents
 
         for name, class_name in ORDER[:limit]:
             sidecar = DOCS / f"{name}.meta.json"
@@ -32,8 +32,8 @@ class Diligence(Suite):
             yield klass((DOCS / name).read_text(), metadata=meta, uri=f"sample_docs/{name}", title=meta["title"])
 
     def score(self, app, results) -> dict[str, Any]:
-        from legal.entities import Agreement, Company
-        from legal.facts import (
+        from app.entities import Agreement, Company
+        from app.facts import (
             AssignmentRestriction,
             ChangeOfControl,
             ClosingRisk,

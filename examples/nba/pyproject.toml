@@ -9,7 +9,7 @@ dependencies = ["factoid"]
 factoid = { path = "../..", editable = true }
 
 [tool.factoid]
-package = "nba"
+package = "app"
 
 [dependency-groups]
 dev = ["pytest>=8"]

@@ -1,6 +1,6 @@
 """Variants for `factoid eval --vary`. `--vary models=@evals.variants:RUNE` runs the suites with Rune for `choose`."""
 
-from legal.settings import Project
+from app.settings import Project
 
 from factoid import DecisionFloors, Model, Nli
 

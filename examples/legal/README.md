@@ -7,7 +7,7 @@ framework needs.
 ## Layout
 
 ```text
-legal/
+app/
 ├── settings.py    # models: Jev for decisions, GLM 5.3 Flash for extraction, Qwen3 for embeddings
 ├── documents.py   # Contract, CounselEmail, and ContractRegister (the data room's CSV)
 ├── entities.py    # Company, Agreement, and Person

@@ -102,7 +102,7 @@ class HeldOut(Suite):
     budgets = BUDGETS
 
     def documents(self, limit: int | None = None):
-        from iscrag.documents import Transcript
+        from app.documents import Transcript
 
         ids = (HERE / self.sample).read_text().split()
         rows = load_transcripts(ids)

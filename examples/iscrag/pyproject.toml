@@ -9,4 +9,4 @@ dependencies = ["factoid", "tiktoken>=0.8"]
 factoid = { path = "../..", editable = true }
 
 [tool.factoid]
-package = "iscrag"
+package = "app"

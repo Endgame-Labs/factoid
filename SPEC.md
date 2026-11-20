@@ -1382,6 +1382,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
 - **Landing page** (decision 124): a static page in `site/`, hosted on Netlify at
   https://factoid-landing-page.netlify.app and deployed with the Netlify CLI. `site/README.md` says how to change,
   publish, and roll it back.
+- **Example layout** (decision 125): each example app keeps its code in `app/` (`settings.py`, `documents.py`,
+  `entities.py`, and `facts.py`), with `package = "app"` under `[tool.factoid]`, so every example looks the same. Its
+  evals import from `app`. `factoid init` still names the package after the project.
 - **Keys:** a call needs the provider's key or its base URL (`<PROVIDER>_BASE_URL`, for a gateway that adds
   credentials). With neither, it fails at once and names both. The key is sent whenever it is set. The code names no
   hosting platform or gateway (decision 83): a machine behind one sets the base URLs in `~/.factoid/.env`.
@@ -1718,4 +1721,8 @@ All dates are 2026-11-13 unless noted.
      `site/`: three static files, no build step. It is deployed with the Netlify CLI from a checkout of `main`, not
      from git, and `site/README.md` is the runbook. Netlify's agent wrote the first version; its follow-up runs failed
      on this site, so changes are made by hand. A custom domain, forms, analytics, or a git link need Kyle's yes.
+     (2026-11-20)
+125. Example apps keep their code in `app/`, not in a package named after the app (Kyle, 2026-11-20). A fixed name
+     makes every example look the same, as Rails and FastAPI projects do. `app` clashes with the docs' `app =
+     Factoid(...)` only in a file that imports the module itself, which none does. `factoid init` is unchanged for now.
      (2026-11-20)

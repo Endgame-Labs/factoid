@@ -86,7 +86,7 @@ class Cuad(Suite):
     count: int | None = None  # how many contracts from offset; None means every one
 
     def documents(self, limit: int | None = None):
-        from legal.documents import Contract
+        from app.documents import Contract
 
         self.contracts = {}
         contracts = load_contracts()[self.offset:][:self.count]
@@ -96,7 +96,7 @@ class Cuad(Suite):
             yield Contract(contract["text"], uri=f"cuad:{contract['title']}", id=doc_id, title=contract["title"])
 
     def score(self, app, results) -> dict[str, Any]:
-        from legal.facts import CUAD_TRAITS
+        from app.facts import CUAD_TRAITS
 
         per_trait: dict[str, Any] = {}
         totals = {"tp": 0, "fp": 0, "fn": 0, "span_hit": 0, "span_total": 0, "covered": 0, "fact_hit": 0,

@@ -38,7 +38,7 @@ MID_40_EXPLICIT_50 = [Nli(), DecisionFloors(questions={"self_contained": MID, "e
                                        explicit=0.0, targets={"explicit": 0.5})]
 STRICT_10_T50 = [Nli(), DecisionFloors(self_contained=0.1, targets={"self_contained": 0.5})]
 
-from iscrag.settings import Project  # noqa: E402
+from app.settings import Project  # noqa: E402
 
 from factoid import Model  # noqa: E402
 
@@ -46,7 +46,7 @@ REPAIR_MEDIUM = {**Project.models, "repair": Model("fireworks/glm-5p3-flash", re
 
 
 # Decision models for `--vary models=@evals.variants:RUNE`: the project's models with Rune for `choose`.
-from iscrag.settings import Project  # noqa: E402
+from app.settings import Project  # noqa: E402
 
 from factoid import Model  # noqa: E402
 

@@ -8,7 +8,7 @@ to game (the series standing), and the difference between what happened and what
 ## Layout
 
 ```text
-nba/
+app/
 ├── settings.py    # the same models as the legal app
 ├── documents.py   # GameLog, BoxScore, and PlayerTotals (CSV); Interview, Recap, and Article (prose)
 ├── entities.py    # Player, Team, Game, Series, and Person
