@@ -177,7 +177,7 @@ of 4.
 ## After the fact eval tuning (2026-11-17)
 
 On 2026-11-17, framework fact evals and prompts changed (SPEC decisions 73 to 76). They were tuned on news transcripts
-(the iscrag app), and this app was re-run to check that contracts did not get worse. Nothing here changed. Fact evals
+(the mediasum app), and this app was re-run to check that contracts did not get worse. Nothing here changed. Fact evals
 and repair now see the 1,200 characters before each quote. The self-contained question is strict about pronouns, unclear
 descriptions, and relative dates. Facts below target get one repair and keep their wording if it does not help. The
 extract prompt asks the extractor to resolve references and relative dates.

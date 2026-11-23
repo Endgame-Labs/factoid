@@ -1,4 +1,4 @@
-# iscrag
+# mediasum
 
 This is the held-out benchmark from "RAG Deserves an Index" ([arXiv 2608.20845](https://arxiv.org/abs/2608.20845)),
 rerun with Factoid in place of the original ISC pipeline. It uses 500 MediaSum transcripts and 499 questions, keeping

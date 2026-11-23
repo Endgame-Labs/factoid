@@ -83,7 +83,7 @@ The page states facts about Factoid. Keep them in step with the README:
 - The Python version (3.13+) and the license (MIT).
 - The install command: `uv tool install factoid`.
 - The news transcripts result: 0.92 for facts at 512 tokens, 0.87 for chunks at 2,048, and even at 8,192. If
-  `examples/iscrag` publishes new numbers, update the page.
+  `examples/mediasum` publishes new numbers, update the page.
 - The seven fact statuses: `current`, `superseded`, `ended`, `corrected`, `contradicted`, `replaced`, and `retracted`.
 - The two papers.
 

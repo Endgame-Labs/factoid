@@ -159,7 +159,7 @@ wheels = [
 
 [[package]]
 name = "factoid"
-version = "0.1.19"
+version = "0.1.22"
 source = { editable = "../../" }
 dependencies = [
     { name = "click" },
@@ -188,7 +188,7 @@ dev = [
 ]
 
 [[package]]
-name = "factoid-iscrag"
+name = "factoid-mediasum"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

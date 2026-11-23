@@ -688,7 +688,7 @@ what it uses, a decision (System One) model, and not for one vendor's model. It 
   `MODEL_TARGETS` hold floors and targets per model, keyed by the model's name (`fireworks/rune`). They fill in only
   the floors and targets a project did not set: a project's own `DecisionFloors(grounded=0.5)`, or a subclass's own
   `floors`, always wins. A target is never below its floor.
-- Rune's floors were matched to Jev's pass rates on the same 1,450 requests from the iscrag dev run: grounded 0.25,
+- Rune's floors were matched to Jev's pass rates on the same 1,450 requests from the mediasum dev run: grounded 0.25,
   self-contained 0.05 (target 0.95), atomic 0.08, useful 0.25, and distinct 0.05. On that run Rune answers 0.915,
   0.955, and 0.955 of the QA questions from facts at 512, 2,048, and 8,192 tokens, against Jev's 0.925, 0.965, and
   0.955.
@@ -1051,7 +1051,7 @@ The README's "Further reading" points at SPEC.md, `docs/cli.md`, and the example
 
 The first code is in `src/factoid`. It follows this spec, with these differences and gaps. Each is either a choice
 the code had to make that the spec leaves open, or work not done yet. The first app built on it is the legal
-diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the ISC-RAG held-out benchmark.
+diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns the ISC-RAG held-out benchmark.
 
 - **Built:** prose documents (segment, chunk, situate, extract), steps as methods with `before_` and `after_` hooks,
   `@judge` with Noul, Choice, and Score, the document classifier registry, fact classes with per-fact
@@ -1275,12 +1275,12 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   and that the reranker and the resolve check actually run. Each of the five regression tests fails on the old code.
   Open, for Kyle: the legal QA comparison reranks facts but not chunks; the amendments suite's recall accepts any fact
   from the amending document and its false-change rate reads only base documents; the suites called scored once have
-  been rescored; iscrag's dev scores pool its 30 tuning transcripts with the 70 unseen ones, and the README's
+  been rescored; mediasum's dev scores pool its 30 tuning transcripts with the 70 unseen ones, and the README's
   one-seventh figure is the paper's; and scorecards are not committed.
 - **Eval rerun (0.1.6, 2026-11-19).** Every example suite was rerun with the review's scoring changes (decision 108).
   Legal: facts and reranked chunks tie on the 32 as-of questions at 2k tokens, 30 each, and facts lead at 8k, 32
   against 30; plain chunks score 19 and 31. CUAD mean AUPR fell 0.02 on the held-out and fresh contracts with the tie
-  fix. iscrag: the 70 unseen dev transcripts score as well as the 30 tuning ones (facts 0.93, 0.95, and 0.96). NBA
+  fix. mediasum: the 70 unseen dev transcripts score as well as the 30 tuning ones (facts 0.93, 0.95, and 0.96). NBA
   passes 11 of 11. The rerun found the resolve split-rule bug (decision 109). Numbers are in each example's README.
 - **Not built yet:** sources (`imap`, `mcp`), `factoid setup`, fact-class trust and visibility, entity
   `merge`, `split`, and `retype` commands, and fingerprint-driven `rebuild`.
@@ -1754,3 +1754,5 @@ All dates are 2026-11-13 unless noted.
 131. The landing page keeps its first version's words in decision 126's design (Kyle, 2026-11-23). The chosen draft
      came with its own copy; Neon moved the original content into its layout, with a section nav added, and that is
      what went live.
+132. `examples/iscrag` is renamed `examples/mediasum`, after its corpus (Kyle, 2026-11-23). "ISC-RAG" names the study
+     the questions came from, which a reader outside it would not know. Entries above keep the old name.

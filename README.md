@@ -977,7 +977,7 @@ recent = orion.facts(since="30d")      # every recent fact linked to Orion
 
 - **Fact-level retrieval.** Search returns short, self-contained sentences within a token budget. On 200 questions about
   news transcripts, facts read at 512 tokens score 0.92, and chunks read at 2,048 tokens score 0.87. At 8,192 tokens,
-  the two are even ([examples/iscrag](https://github.com/Endgame-Labs/factoid/blob/main/examples/iscrag/README.md),
+  the two are even ([examples/mediasum](https://github.com/Endgame-Labs/factoid/blob/main/examples/mediasum/README.md),
   after [RAG Deserves an Index](https://arxiv.org/abs/2608.20845)). On contract questions about the terms in force on a
   date, facts and reranked chunks tie at 2,000 tokens
   ([examples/legal](https://github.com/Endgame-Labs/factoid/blob/main/examples/legal/README.md)).
@@ -1012,7 +1012,7 @@ published papers by Kyle Wild, Yusuke Takahashi, and Asako Uraki.
   interpret them on every query. The paper extracts single-claim sentences once at ingest time and checks each one
   against its source passage. On 500 held-out interview transcripts, compiled claims scored higher than every chunk
   configuration: 85.2% correct from about 2.2k reader tokens, against 72.5% from 16.3k.
-  [examples/iscrag](https://github.com/Endgame-Labs/factoid/blob/main/examples/iscrag/README.md) reruns this benchmark
+  [examples/mediasum](https://github.com/Endgame-Labs/factoid/blob/main/examples/mediasum/README.md) reruns this benchmark
   with Factoid.
 - [*Ingest-Time Fact Compilation for Cost-Efficient and Reliable Question Answering over Revised Corpora*](https://arxiv.org/abs/2609.29661)
   (2026). This paper resolves revisions, deletions, effective dates, and differences in source authority once at ingest
@@ -1066,7 +1066,7 @@ published papers by Kyle Wild, Yusuke Takahashi, and Asako Uraki.
   is, and what is built (section 17).
 - [docs/cli.md](https://github.com/Endgame-Labs/factoid/blob/main/docs/cli.md) is the command reference.
 - [examples/](https://github.com/Endgame-Labs/factoid/tree/main/examples/) has three apps: `legal` (contracts and
-  amendments), `nba` (game recaps and box scores), and `iscrag` (news transcripts, with a question-answering eval). Each
+  amendments), `nba` (game recaps and box scores), and `mediasum` (news transcripts, with a question-answering eval). Each
   has a README with its eval results.
 - [docs/archive/](https://github.com/Endgame-Labs/factoid/tree/main/docs/archive/) holds docs from an earlier design; do
   not follow them.

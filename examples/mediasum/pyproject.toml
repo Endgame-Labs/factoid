@@ -1,7 +1,7 @@
 [project]
-name = "factoid-iscrag"
+name = "factoid-mediasum"
 version = "0.1.0"
-description = "The ISC-RAG held-out benchmark, rerun with Factoid."
+description = "News interview transcripts from MediaSum, with the ISC-RAG question-answering benchmark."
 requires-python = ">=3.13"
 dependencies = ["factoid", "tiktoken>=0.8"]
 
