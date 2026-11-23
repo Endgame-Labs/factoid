@@ -3,8 +3,8 @@
 The landing page at https://factoid-landing-page.netlify.app is one static file (`index.html`, with its CSS and
 JavaScript inline) with no build step, no backend, and no analytics. This folder is its source. Netlify hosts it.
 
-Neon (agy) wrote the current version, one of four drafts, in Endgame's brand colors. Netlify's agent wrote the first
-one. Edit the page here, commit your changes, and deploy them with the CLI.
+The design is one of four drafts Neon (agy) made, in Endgame's brand colors. The words are the first version's, which
+Netlify's agent wrote. Edit the page here, commit your changes, and deploy them with the CLI.
 
 ## Site details
 

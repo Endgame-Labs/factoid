@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Factoid — Python Framework for Cited Facts and Entities</title>
-  <meta name="description" content="Factoid is an open-source Python framework that turns prose and structured documents into short, self-contained facts tied to exact source quotes and linked entities.">
+  <title>Factoid — Open-Source Python Framework for Cited Facts</title>
+  <meta name="description" content="Factoid is an open-source Python framework that turns Documents into short, self-contained Facts and Entities, each tied to an exact location in the source document.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script>
     (function () {
       try {
@@ -295,8 +295,16 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      gap: 12px;
       min-height: 62px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex-shrink: 0;
     }
 
     .brand {
@@ -325,6 +333,10 @@
       background: var(--accent-soft);
       border: 1px solid var(--accent-border);
       color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 600;
+      line-height: 1;
     }
 
     .version-chip {
@@ -342,7 +354,7 @@
     .nav-list {
       display: none;
       align-items: center;
-      gap: 22px;
+      gap: 20px;
       list-style: none;
       margin: 0;
       padding: 0;
@@ -353,6 +365,7 @@
       font-size: 0.88rem;
       font-weight: 500;
       transition: color 140ms ease;
+      white-space: nowrap;
     }
 
     .nav-list a:hover {
@@ -364,6 +377,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-shrink: 0;
     }
 
     .icon-btn {
@@ -381,6 +395,7 @@
       font-size: 0.84rem;
       font-weight: 500;
       cursor: pointer;
+      white-space: nowrap;
       transition: border-color 140ms ease, background-color 140ms ease;
     }
 
@@ -400,6 +415,10 @@
       background: var(--accent-solid-hover);
       border-color: var(--accent-solid-hover);
       color: var(--eg-white);
+    }
+
+    .theme-label {
+      display: none;
     }
 
     .theme-icon-sun { display: none; }
@@ -445,6 +464,27 @@
       text-decoration: none;
     }
 
+    @media (max-width: 479px) {
+      .container {
+        padding-inline: 14px;
+      }
+      .header-inner {
+        gap: 8px;
+      }
+      .icon-btn {
+        height: 34px;
+        padding: 0 9px;
+        font-size: 0.78rem;
+      }
+      .mobile-menu-btn {
+        width: 34px;
+        padding: 0;
+      }
+      .header-actions {
+        gap: 6px;
+      }
+    }
+
     /* Sections */
     section {
       padding-block: 64px;
@@ -453,18 +493,6 @@
 
     section:last-of-type {
       border-bottom: none;
-    }
-
-    .section-eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--font-mono);
-      font-size: 0.76rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--accent);
-      margin-bottom: 10px;
     }
 
     .section-title {
@@ -489,7 +517,7 @@
 
     /* Hero */
     .hero {
-      padding-top: 48px;
+      padding-top: 52px;
       padding-bottom: 64px;
       background:
         radial-gradient(640px 320px at 15% 0%, rgba(59, 130, 246, 0.10), transparent 70%),
@@ -500,17 +528,6 @@
       background:
         radial-gradient(640px 320px at 15% 0%, rgba(37, 99, 235, 0.06), transparent 70%),
         radial-gradient(520px 280px at 85% 10%, rgba(13, 148, 136, 0.05), transparent 70%);
-    }
-
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 36px;
-      align-items: start;
-    }
-
-    .hero-grid > * {
-      min-width: 0;
     }
 
     .pill-row {
@@ -549,60 +566,48 @@
     }
 
     .hero-lead {
-      margin: 0 0 24px;
-      font-size: 1.06rem;
-      color: var(--fg-muted);
-      max-width: 56ch;
+      margin: 0 0 12px;
+      font-size: 1.08rem;
+      color: var(--fg-primary);
+      max-width: 64ch;
     }
 
-    /* Install box */
+    .hero-sublead {
+      margin: 0 0 28px;
+      font-size: 0.95rem;
+      color: var(--fg-muted);
+      max-width: 64ch;
+    }
+
+    /* Install panel */
     .install-panel {
       background: var(--bg-surface);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
-      padding: 14px;
-      max-width: 560px;
+      padding: 16px;
+      max-width: 660px;
     }
 
-    .install-tabs {
+    .install-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 8px;
       margin-bottom: 10px;
-    }
-
-    .segmented {
-      display: inline-flex;
-      background: var(--bg-subtle);
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius-sm);
-      padding: 2px;
-      gap: 2px;
-    }
-
-    .seg-btn {
-      border: none;
-      background: transparent;
-      color: var(--fg-muted);
       font-family: var(--font-mono);
-      font-size: 0.75rem;
-      padding: 5px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 140ms ease, color 140ms ease;
+      font-size: 0.76rem;
     }
 
-    .seg-btn[aria-selected="true"] {
-      background: var(--accent-solid);
-      color: var(--eg-white);
+    .install-label {
+      color: var(--fg-strong);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
 
     .install-note {
-      font-size: 0.76rem;
       color: var(--fg-subtle);
-      font-family: var(--font-mono);
     }
 
     .cmd-bar {
@@ -623,7 +628,7 @@
       gap: 8px;
       overflow-x: auto;
       min-width: 0;
-      font-size: 0.84rem;
+      font-size: 0.86rem;
       white-space: nowrap;
       scrollbar-width: thin;
     }
@@ -642,16 +647,20 @@
       background: var(--eg-white-a100);
       color: var(--eg-gray-100);
       font-family: var(--font-sans);
-      font-size: 0.76rem;
+      font-size: 0.78rem;
       font-weight: 500;
       padding: 5px 10px;
       border-radius: 5px;
       cursor: pointer;
-      transition: background-color 140ms ease;
+      transition: background-color 140ms ease, border-color 140ms ease;
     }
 
     .copy-btn:hover {
       background: var(--eg-white-a200);
+    }
+
+    .copy-btn .icon-check {
+      display: none;
     }
 
     .copy-btn.copied {
@@ -659,130 +668,66 @@
       color: var(--eg-green-300);
     }
 
-    .hero-links {
+    .copy-btn.copied .icon-copy {
+      display: none;
+    }
+
+    .copy-btn.copied .icon-check {
+      display: inline-block;
+      stroke: var(--eg-green-300);
+    }
+
+    .install-links {
       display: flex;
+      align-items: center;
       flex-wrap: wrap;
-      gap: 14px 20px;
+      gap: 10px 16px;
       margin-top: 14px;
-      font-size: 0.85rem;
-      font-weight: 500;
-    }
-
-    .hero-links a {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      color: var(--fg-muted);
-    }
-
-    .hero-links a:hover {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    /* Hero Compilation Artifact */
-    .artifact-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-    }
-
-    .artifact-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 10px 14px;
-      background: var(--bg-elevated);
-      border-bottom: 1px solid var(--border-default);
-      font-family: var(--font-mono);
-      font-size: 0.74rem;
-      color: var(--fg-muted);
-    }
-
-    .artifact-body {
-      padding: 16px;
-      display: grid;
-      gap: 12px;
-    }
-
-    .source-snippet {
-      background: var(--bg-subtle);
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius-sm);
-      padding: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
       font-size: 0.84rem;
     }
 
-    .source-meta {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 6px;
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
+    .links-title {
       color: var(--fg-subtle);
-      margin-bottom: 6px;
+      font-weight: 500;
     }
 
-    .source-quote {
+    .inline-links-list {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      list-style: none;
       margin: 0;
-      color: var(--fg-primary);
-      font-style: italic;
+      padding: 0;
     }
 
-    .compile-arrow {
-      display: flex;
+    .inline-links-list a,
+    .inline-link {
+      display: inline-flex;
       align-items: center;
-      gap: 10px;
-      color: var(--fg-subtle);
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
+      gap: 4px;
+      font-weight: 500;
+      color: var(--accent);
     }
 
-    .compile-arrow::before,
-    .compile-arrow::after {
-      content: "";
-      height: 1px;
-      flex: 1;
-      background: var(--border-default);
+    .external-indicator {
+      font-size: 0.85em;
+      line-height: 1;
     }
 
-    .fact-card {
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius-sm);
-      padding: 12px;
-      display: grid;
-      gap: 8px;
-    }
-
-    .fact-card.is-superseded {
-      opacity: 0.74;
-      border-style: dashed;
-    }
-
-    .fact-card.is-current {
-      border-color: var(--ok-border);
-    }
-
-    .fact-top {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px;
-    }
-
+    /* Badges */
     .badge {
       display: inline-flex;
       align-items: center;
       font-family: var(--font-mono);
-      font-size: 0.7rem;
+      font-size: 0.72rem;
       font-weight: 500;
-      padding: 2px 7px;
+      padding: 2px 8px;
       border-radius: 4px;
       border: 1px solid transparent;
+      white-space: nowrap;
     }
 
     .badge-ok { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-border); }
@@ -793,33 +738,12 @@
     .badge-purple { color: var(--purple-fg); background: var(--purple-bg); border-color: var(--purple-border); }
     .badge-muted { color: var(--fg-muted); background: var(--bg-subtle); border-color: var(--border-default); }
 
-    .fact-sentence {
-      margin: 0;
-      font-size: 0.88rem;
-      color: var(--fg-strong);
-      line-height: 1.45;
-    }
-
-    .fact-card.is-superseded .fact-sentence {
-      text-decoration: line-through;
-      color: var(--fg-muted);
-    }
-
-    .fact-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 14px;
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      color: var(--fg-subtle);
-    }
-
-    /* Pipeline & Code Explorer */
+    /* Section 2: Pipeline & Code */
     .split-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 24px;
-      align-items: start;
+      align-items: stretch;
     }
 
     .split-grid > * {
@@ -831,68 +755,43 @@
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       overflow: hidden;
-    }
-
-    .tab-bar {
       display: flex;
-      overflow-x: auto;
-      border-bottom: 1px solid var(--border-default);
+      flex-direction: column;
+    }
+
+    .panel-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 16px;
       background: var(--bg-elevated);
-      scrollbar-width: none;
-    }
-
-    .tab-bar::-webkit-scrollbar {
-      display: none;
-    }
-
-    .tab-btn {
-      flex-shrink: 0;
-      border: none;
-      border-bottom: 2px solid transparent;
-      background: transparent;
-      color: var(--fg-muted);
+      border-bottom: 1px solid var(--border-default);
       font-family: var(--font-mono);
-      font-size: 0.8rem;
-      padding: 11px 15px;
-      cursor: pointer;
-      transition: color 140ms ease, border-color 140ms ease;
+      font-size: 0.76rem;
+      color: var(--fg-muted);
     }
 
-    .tab-btn:hover {
+    .panel-bar-title {
       color: var(--fg-strong);
-    }
-
-    .tab-btn[aria-selected="true"] {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-      background: var(--bg-surface);
-    }
-
-    .code-pane {
-      display: none;
-    }
-
-    .code-pane.active {
-      display: block;
+      font-weight: 500;
     }
 
     .code-block {
       margin: 0;
-      padding: 16px;
+      padding: 18px 16px;
       background: var(--bg-code);
       color: var(--eg-gray-100);
-      font-size: 0.81rem;
-      line-height: 1.55;
+      font-size: 0.82rem;
+      line-height: 1.6;
       overflow-x: auto;
       max-width: 100%;
+      flex: 1;
     }
 
     .kw { color: var(--code-kw); }
     .cls { color: var(--code-cls); }
     .str { color: var(--code-str); }
-    .cm { color: var(--code-cm); }
-    .num { color: var(--code-num); }
-    .fn { color: var(--code-fn); }
 
     .pane-caption {
       padding: 12px 16px;
@@ -902,36 +801,55 @@
       background: var(--bg-surface);
     }
 
-    /* Pipeline steps list */
-    .pipeline-stack {
-      display: grid;
-      gap: 12px;
+    /* Diagram panel */
+    .diagram-figure {
+      margin: 0;
+      padding: 18px 16px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .diagram-caption {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--fg-strong);
+      margin-bottom: 16px;
+      text-align: center;
+      letter-spacing: -0.01em;
+    }
+
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
     .stage-card {
-      background: var(--bg-surface);
+      background: var(--bg-elevated);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       padding: 14px 16px;
       display: grid;
-      grid-template-columns: 30px 1fr;
+      grid-template-columns: auto 1fr;
       gap: 12px;
       align-items: start;
     }
 
     .stage-num {
-      width: 30px;
-      height: 30px;
-      border-radius: 7px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      padding: 4px 8px;
+      border-radius: 6px;
       font-family: var(--font-mono);
-      font-size: 0.78rem;
+      font-size: 0.72rem;
       font-weight: 600;
       background: var(--accent-soft);
       border: 1px solid var(--accent-border);
       color: var(--accent);
+      white-space: nowrap;
     }
 
     .stage-title {
@@ -945,122 +863,75 @@
       margin: 0;
       font-size: 0.86rem;
       color: var(--fg-muted);
+      line-height: 1.5;
     }
 
-    /* Presets strip */
-    .presets-grid {
-      margin-top: 24px;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-
-    .preset-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius-md);
-      padding: 14px 16px;
-      min-width: 0;
-    }
-
-    .preset-head {
+    .flow-connector {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .preset-name {
-      font-family: var(--font-mono);
-      font-size: 0.86rem;
-      font-weight: 600;
-      color: var(--fg-strong);
-    }
-
-    .preset-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: grid;
-      gap: 4px;
-      font-size: 0.8rem;
-      color: var(--fg-muted);
-      font-family: var(--font-mono);
-    }
-
-    .preset-list span {
+      justify-content: center;
       color: var(--fg-subtle);
+      line-height: 1;
     }
 
-    /* Lifecycle grid */
-    .status-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .status-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius-md);
-      padding: 14px 16px;
-      display: grid;
-      gap: 6px;
-      min-width: 0;
-    }
-
-    .status-card p {
-      margin: 0;
-      font-size: 0.86rem;
-      color: var(--fg-muted);
-    }
-
-    .detail-cards {
+    /* Section 3: Access Paths */
+    .access-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 16px;
+      margin-bottom: 20px;
     }
 
-    .detail-card {
+    .access-grid > * {
+      min-width: 0;
+    }
+
+    .access-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
-      padding: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
       min-width: 0;
     }
 
-    .detail-card h3 {
-      margin: 0 0 8px;
-      font-size: 0.98rem;
-      color: var(--fg-strong);
-      font-weight: 600;
+    .access-card-header {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
     }
 
-    .detail-card p {
+    .access-title {
+      margin: 0;
+      font-size: 1.12rem;
+      font-weight: 600;
+      color: var(--fg-strong);
+    }
+
+    .access-description {
       margin: 0;
       font-size: 0.88rem;
       color: var(--fg-muted);
+      line-height: 1.55;
     }
 
-    .check-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 12px;
-    }
-
-    /* Access paths */
-    .access-body {
+    .access-query-support {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 18px;
-      padding: 18px;
+      gap: 8px;
     }
 
-    .access-body > * {
-      min-width: 0;
+    .subhead {
+      margin: 0;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--fg-subtle);
+      font-weight: 600;
     }
 
     .access-list {
@@ -1068,12 +939,12 @@
       margin: 0;
       padding: 0;
       display: grid;
-      gap: 10px;
+      gap: 6px;
     }
 
     .access-list li {
-      font-size: 0.88rem;
-      color: var(--fg-muted);
+      font-size: 0.86rem;
+      color: var(--fg-primary);
       padding-left: 14px;
       position: relative;
     }
@@ -1089,11 +960,153 @@
       background: var(--accent);
     }
 
-    .access-list strong {
+    .access-sample {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .sample-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--fg-subtle);
+    }
+
+    .access-sample code {
+      display: block;
+      padding: 10px 12px;
+      background: var(--bg-code);
+      color: var(--eg-gray-100);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      line-height: 1.5;
+      overflow-x: auto;
+      max-width: 100%;
+      word-break: break-word;
+    }
+
+    .callout-card {
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .callout-icon {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent-solid);
+      color: var(--eg-white);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .callout-text {
+      font-size: 0.9rem;
+      color: var(--fg-primary);
+      line-height: 1.55;
+    }
+
+    .callout-text strong {
       color: var(--fg-strong);
     }
 
-    /* Benchmarks */
+    /* Section 4: Lifecycle Table & Note */
+    .table-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      overflow-x: auto;
+      max-width: 100%;
+      margin-bottom: 20px;
+    }
+
+    .status-table,
+    .eval-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    .status-table {
+      min-width: 560px;
+    }
+
+    .status-table thead th,
+    .eval-table thead th {
+      background: var(--bg-elevated);
+      color: var(--fg-strong);
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    .status-table tbody th,
+    .status-table tbody td,
+    .eval-table tbody th,
+    .eval-table tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      vertical-align: middle;
+    }
+
+    .status-table tbody tr:last-child th,
+    .status-table tbody tr:last-child td,
+    .eval-table tbody tr:last-child th,
+    .eval-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .status-table tbody td {
+      color: var(--fg-muted);
+    }
+
+    .status-table tbody td:last-child {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--fg-primary);
+    }
+
+    .detail-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+    }
+
+    .detail-card h3 {
+      margin: 0 0 8px;
+      font-size: 0.98rem;
+      color: var(--fg-strong);
+      font-weight: 600;
+    }
+
+    .detail-card p {
+      margin: 0;
+      font-size: 0.88rem;
+      color: var(--fg-muted);
+      line-height: 1.6;
+    }
+
+    /* Section 5: Benchmarks & Example Apps */
     .bench-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -1109,22 +1122,22 @@
       border: 1px solid var(--border-default);
       border-radius: var(--radius-lg);
       padding: 20px;
-      display: grid;
+      display: flex;
+      flex-direction: column;
       gap: 16px;
-      align-content: start;
+      min-width: 0;
     }
 
     .bench-head {
       display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      justify-content: space-between;
+      flex-direction: column;
+      align-items: flex-start;
       gap: 8px;
     }
 
     .bench-title {
       margin: 0;
-      font-size: 1.08rem;
+      font-size: 1.12rem;
       font-weight: 600;
       color: var(--fg-strong);
     }
@@ -1133,6 +1146,36 @@
       margin: 0;
       font-size: 0.88rem;
       color: var(--fg-muted);
+      line-height: 1.55;
+    }
+
+    .chart-wrapper {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .chart-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .chart-title {
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--fg-strong);
+    }
+
+    .chart-axis-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--fg-subtle);
     }
 
     .bar-rows {
@@ -1147,19 +1190,39 @@
 
     .bar-labels {
       display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
       justify-content: space-between;
-      gap: 8px;
+      gap: 6px 10px;
       font-size: 0.82rem;
     }
 
-    .bar-labels strong {
+    .bar-name-group {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 6px 10px;
+    }
+
+    .bar-name {
+      font-weight: 600;
       color: var(--fg-strong);
+    }
+
+    .bar-meta {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--fg-subtle);
     }
 
     .bar-val {
       font-family: var(--font-mono);
       font-weight: 600;
       color: var(--fg-strong);
+    }
+
+    .bar-val.highlight {
+      color: var(--accent);
     }
 
     .bar-track {
@@ -1173,83 +1236,91 @@
     .bar-fill {
       height: 100%;
       border-radius: 999px;
-      transition: width 260ms ease;
     }
 
     .bar-facts { background: var(--eg-blue-500); }
-    .bar-rerank { background: var(--eg-teal-500); }
     .bar-chunks { background: var(--eg-gray-500); }
+    .bar-even { background: var(--eg-teal-500); }
 
-    .metric-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 10px;
-    }
-
-    .metric-box {
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius-sm);
-      padding: 10px 12px;
-    }
-
-    .metric-num {
-      font-family: var(--font-mono);
-      font-size: 1.15rem;
-      font-weight: 600;
-      color: var(--fg-strong);
-      line-height: 1.2;
-    }
-
-    .metric-label {
-      font-size: 0.76rem;
-      color: var(--fg-muted);
-      margin-top: 2px;
-    }
-
-    .apps-strip {
-      margin-top: 20px;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 14px;
-    }
-
-    .app-card {
-      background: var(--bg-surface);
+    .eval-table-wrapper {
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
-      padding: 16px;
+      overflow-x: auto;
+      max-width: 100%;
+    }
+
+    .eval-table tbody th {
+      font-weight: 500;
+      color: var(--fg-strong);
+    }
+
+    .eval-table tbody td {
+      color: var(--fg-muted);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+    }
+
+    .eval-table tbody td strong {
+      color: var(--fg-strong);
+    }
+
+    .apps-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
       display: grid;
-      gap: 8px;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .app-item {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .app-icon {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app-details {
       min-width: 0;
     }
 
-    .app-card-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .app-card h3 {
-      margin: 0;
-      font-size: 0.96rem;
+    .app-name {
+      margin: 0 0 4px;
+      font-size: 0.94rem;
+      font-weight: 600;
       color: var(--fg-strong);
     }
 
-    .app-card p {
+    .app-desc {
       margin: 0;
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       color: var(--fg-muted);
+      line-height: 1.5;
     }
 
-    .app-stats {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--fg-subtle);
+    .apps-footer-link {
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 0.86rem;
     }
 
-    /* Papers */
+    /* Section 6: Research Papers */
     .papers-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -1267,40 +1338,64 @@
       min-width: 0;
     }
 
+    .paper-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
     .paper-id {
       font-family: var(--font-mono);
       font-size: 0.76rem;
       color: var(--accent);
     }
 
+    .paper-date {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--fg-subtle);
+    }
+
     .paper-title {
       margin: 0;
-      font-size: 1rem;
+      font-size: 1.05rem;
       line-height: 1.35;
       color: var(--fg-strong);
       font-weight: 600;
     }
 
-    .paper-authors {
-      margin: 0;
-      font-size: 0.8rem;
-      color: var(--fg-subtle);
+    .paper-title a {
+      color: var(--fg-strong);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .paper-title a:hover {
+      color: var(--accent);
+      text-decoration: none;
     }
 
     .paper-summary {
       margin: 0;
-      font-size: 0.86rem;
+      font-size: 0.88rem;
       color: var(--fg-muted);
       flex: 1;
+      line-height: 1.55;
+    }
+
+    .paper-action {
+      margin-top: 4px;
     }
 
     .paper-link {
-      font-size: 0.84rem;
+      font-size: 0.85rem;
       font-weight: 500;
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      margin-top: 4px;
     }
 
     /* Footer */
@@ -1316,10 +1411,11 @@
       gap: 20px;
     }
 
-    .footer-meta {
-      margin: 6px 0 0;
+    .footer-release-note {
+      margin: 8px 0 0;
       font-size: 0.84rem;
       color: var(--fg-muted);
+      max-width: 56ch;
     }
 
     .footer-links {
@@ -1334,78 +1430,84 @@
 
     .footer-links a {
       color: var(--fg-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
 
     .footer-links a:hover {
       color: var(--accent);
     }
 
+    .footer-bottom {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 20px;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      color: var(--fg-subtle);
+    }
+
     /* Responsive breakpoints */
     @media (min-width: 640px) {
       .version-chip { display: inline-flex; }
-      .status-grid { grid-template-columns: repeat(2, 1fr); }
-      .detail-cards { grid-template-columns: repeat(2, 1fr); }
-      .presets-grid { grid-template-columns: repeat(3, 1fr); }
-      .apps-strip { grid-template-columns: repeat(3, 1fr); }
+      .theme-label { display: inline; }
+      .papers-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
-    @media (min-width: 860px) {
+    @media (min-width: 900px) {
       .nav-list { display: flex; }
       .mobile-menu-btn { display: none; }
       .mobile-nav.open { display: none; }
-      .hero-grid { grid-template-columns: 1.1fr 0.9fr; gap: 40px; }
-      .split-grid { grid-template-columns: 1.15fr 0.85fr; }
-      .access-body { grid-template-columns: 0.9fr 1.1fr; align-items: start; }
-      .bench-grid { grid-template-columns: 1fr 1fr; }
-      .papers-grid { grid-template-columns: repeat(3, 1fr); }
-      .status-grid { grid-template-columns: repeat(4, 1fr); }
-      .footer-inner { flex-direction: row; align-items: center; justify-content: space-between; }
+      .split-grid { grid-template-columns: 1fr 1fr; }
+      .access-grid { grid-template-columns: repeat(3, 1fr); }
+      .bench-grid { grid-template-columns: 1.15fr 0.85fr; }
+      .footer-inner { flex-direction: row; align-items: flex-start; justify-content: space-between; }
     }
   </style>
 </head>
 <body>
   <header class="site-header">
     <div class="container header-inner">
-      <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-        <a href="#top" class="brand" aria-label="Factoid home">
-          <span class="brand-mark" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M8 4H5v16h3"></path>
-              <path d="M16 4h3v16h-3"></path>
-              <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"></circle>
-            </svg>
-          </span>
+      <div class="brand-group">
+        <a href="#overview" class="brand" aria-label="Factoid homepage">
+          <span class="brand-mark" aria-hidden="true">[]</span>
           <span>Factoid</span>
         </a>
-        <span class="version-chip">main 0.1.19 · PyPI 0.1.3</span>
+        <span class="version-chip" title="Early development version">v0.1.x</span>
       </div>
 
-      <nav aria-label="Primary">
+      <nav aria-label="Primary navigation">
         <ul class="nav-list">
+          <li><a href="#overview">Overview</a></li>
           <li><a href="#pipeline">Pipeline</a></li>
+          <li><a href="#access-paths">Access Paths</a></li>
           <li><a href="#lifecycle">Lifecycle</a></li>
-          <li><a href="#interfaces">Interfaces</a></li>
-          <li><a href="#benchmarks">Benchmarks</a></li>
-          <li><a href="#research">Research</a></li>
+          <li><a href="#benchmarks">Evaluation</a></li>
+          <li><a href="#papers">Papers</a></li>
         </ul>
       </nav>
 
       <div class="header-actions">
-        <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle color theme" title="Toggle color theme">
-          <svg class="theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <button id="theme-toggle" class="icon-btn" type="button" aria-label="Switch to light theme" title="Toggle theme">
+          <svg class="theme-icon-sun" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="4"></circle>
             <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
           </svg>
-          <svg class="theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg class="theme-icon-moon" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
+          <span class="theme-label" id="theme-status-text">Theme</span>
         </button>
 
-        <a class="icon-btn icon-btn-primary" href="https://github.com/Endgame-Labs/factoid" target="_blank" rel="noopener noreferrer">
+        <a class="icon-btn icon-btn-primary" href="https://github.com/Endgame-Labs/factoid" target="_blank" rel="noopener noreferrer" aria-label="Project source code">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"></path>
           </svg>
-          <span>GitHub</span>
+          <span>Fork me on GitHub</span>
         </a>
 
         <button id="mobile-menu-btn" class="icon-btn mobile-menu-btn" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobile-nav">
@@ -1420,710 +1522,581 @@
 
     <nav id="mobile-nav" class="mobile-nav" aria-label="Mobile navigation">
       <ul>
+        <li><a href="#overview">Overview</a></li>
         <li><a href="#pipeline">Pipeline</a></li>
+        <li><a href="#access-paths">Access Paths</a></li>
         <li><a href="#lifecycle">Lifecycle</a></li>
-        <li><a href="#interfaces">Interfaces</a></li>
-        <li><a href="#benchmarks">Benchmarks</a></li>
-        <li><a href="#research">Research</a></li>
+        <li><a href="#benchmarks">Evaluation</a></li>
+        <li><a href="#papers">Papers</a></li>
       </ul>
     </nav>
   </header>
 
-  <main id="top">
-    <!-- Hero -->
-    <section class="hero">
-      <div class="container hero-grid">
-        <div>
-          <div class="pill-row">
-            <span class="pill pill-accent">main 0.1.19 · PyPI 0.1.3</span>
-            <span class="pill">Python 3.13+</span>
-            <span class="pill">MIT License</span>
-          </div>
-
-          <h1 class="hero-title">Turn documents into cited, self-contained facts.</h1>
-
-          <p class="hero-lead">
-            Factoid is an open-source Python framework that compiles prose and tabular documents into short,
-            pronoun-free facts tied to exact source quotes and linked entities. As new documents arrive, it retires
-            outdated facts, merges duplicates, and flags contradictions.
-          </p>
-
-          <div class="install-panel">
-            <div class="install-tabs">
-              <div class="segmented" role="tablist" aria-label="Install source">
-                <button class="seg-btn" type="button" role="tab" aria-selected="true" data-install="github">GitHub (0.1.19)</button>
-                <button class="seg-btn" type="button" role="tab" aria-selected="false" data-install="pypi">PyPI (0.1.3)</button>
-              </div>
-              <span class="install-note">Requires Python 3.13+ and uv</span>
-            </div>
-            <div class="cmd-bar">
-              <div class="cmd-text">
-                <span class="cmd-prompt" aria-hidden="true">$</span>
-                <code id="install-command">uv tool install git+https://github.com/Endgame-Labs/factoid</code>
-              </div>
-              <button id="copy-install" class="copy-btn" type="button" aria-label="Copy install command">Copy</button>
-            </div>
-          </div>
-
-          <div class="hero-links">
-            <a href="https://github.com/Endgame-Labs/factoid" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
-            <a href="https://pypi.org/project/factoid/" target="_blank" rel="noopener noreferrer">PyPI ↗</a>
-            <a href="https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md" target="_blank" rel="noopener noreferrer">SPEC.md ↗</a>
-            <a href="https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog ↗</a>
-            <a href="https://github.com/Endgame-Labs/factoid/blob/main/docs/cli.md" target="_blank" rel="noopener noreferrer">CLI reference ↗</a>
-          </div>
+  <main id="main-content">
+    <!-- Section 1: Header, summary, and install -->
+    <section id="overview" class="hero">
+      <div class="container">
+        <div class="pill-row">
+          <span class="pill">Python 3.13+</span>
+          <span class="pill pill-accent">Version 0.1.x</span>
+          <span class="pill">MIT License</span>
+          <span class="pill">Open Source</span>
         </div>
 
-        <!-- Visual compilation example using the repo's Orion & Vega sample deal -->
-        <aside class="artifact-card" aria-label="Sample document compilation">
-          <div class="artifact-bar">
-            <span>sample_docs/amendment_2.txt</span>
-            <span>Contract → SourceFact</span>
+        <h1 class="hero-title">Factoid Framework</h1>
+        <p class="hero-lead">
+          Factoid is an open-source Python framework that turns <code>Documents</code> into short, self-contained <code>Facts</code> and <code>Entities</code>, each tied to an exact location in the source document.
+        </p>
+        <p class="hero-sublead">
+          Factoid is early software (version 0.1.x), requires Python 3.13+, and uses the MIT license.
+        </p>
+
+        <div class="install-panel">
+          <div class="install-header">
+            <span class="install-label">Install via uv</span>
+            <span class="install-note">Python 3.13+ required</span>
           </div>
-          <div class="artifact-body">
-            <div class="source-snippet">
-              <div class="source-meta">
-                <span>Document: Amendment 2</span>
-                <span>source_datetime: 2026-10-03</span>
-              </div>
-              <p class="source-quote">
-                Models cite numbered passages; Factoid attaches the exact source quote, speaker, and timestamp in code.
-              </p>
+          <div class="cmd-bar">
+            <div class="cmd-text">
+              <span class="cmd-prompt" aria-hidden="true">$</span>
+              <code id="install-cmd">uv tool install factoid</code>
             </div>
-
-            <div class="compile-arrow" aria-hidden="true">extract · evaluate · link · resolve</div>
-
-            <div class="fact-card is-superseded">
-              <div class="fact-top">
-                <span class="badge badge-muted">superseded</span>
-                <span class="badge badge-blue">SourceFact</span>
-                <span class="badge badge-purple">LiabilityCap</span>
-              </div>
-              <p class="fact-sentence">
-                Orion's liability under the Vega supply agreement is capped at $1M.
-              </p>
-              <div class="fact-meta">
-                <span>entities: Orion, Vega, Supply Agreement</span>
-                <span>valid_until: 2027-01-01</span>
-              </div>
-            </div>
-
-            <div class="fact-card is-current">
-              <div class="fact-top">
-                <span class="badge badge-ok">current</span>
-                <span class="badge badge-blue">SourceFact</span>
-                <span class="badge badge-purple">LiabilityCap</span>
-              </div>
-              <p class="fact-sentence">
-                Amendment 2 raises the liability cap in the Vega supply agreement to $2M from January 1, 2027.
-              </p>
-              <div class="fact-meta">
-                <span>valid_from: 2027-01-01</span>
-                <span>expires: estimated (years)</span>
-              </div>
-            </div>
+            <button id="copy-install-btn" class="copy-btn" type="button" aria-label="Copy install command to clipboard" data-copy-target="install-cmd">
+              <svg class="icon-copy" aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <svg class="icon-check" aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span class="copy-text">Copy</span>
+            </button>
           </div>
-        </aside>
+          <div class="install-links">
+            <span class="links-title">External links:</span>
+            <ul class="inline-links-list">
+              <li>
+                <a href="https://pypi.org/project/factoid/" target="_blank" rel="noopener noreferrer">
+                  PyPI Project
+                  <span class="external-indicator" aria-hidden="true">↗</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/Endgame-Labs/factoid" target="_blank" rel="noopener noreferrer">
+                  GitHub Repository
+                  <span class="external-indicator" aria-hidden="true">↗</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/Endgame-Labs/factoid/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
+                  MIT License
+                  <span class="external-indicator" aria-hidden="true">↗</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- Pipeline & Domain Classes -->
+    <!-- Section 2: Code sample and three-step diagram -->
     <section id="pipeline">
       <div class="container">
-        <div class="section-head">
-          <div class="section-eyebrow">Domain framework</div>
-          <h2 class="section-title">Map your domain with plain Python classes</h2>
+        <header class="section-head">
+          <h2 class="section-title">Domain Modeling and Extraction Pipeline</h2>
           <p class="section-lead">
-            Subclass <code>ProseDocument</code>, <code>StructuredDocument</code>, <code>Fact</code>,
-            <code>FactTrait</code>, <code>Entity</code>, and <code>Settings</code>. Subclassing is the declaration,
-            with no registration step and no single config file. Every step exposes <code>before_</code> and
-            <code>after_</code> hooks.
+            Factoid is a configurable framework where you map it to your domain by extending the <code>Document</code>, <code>Fact</code>, and <code>Entity</code> base classes.
           </p>
-        </div>
+        </header>
 
         <div class="split-grid">
-          <div class="panel">
-            <div class="tab-bar" role="tablist" aria-label="Framework code examples">
-              <button class="tab-btn" type="button" role="tab" aria-selected="true" data-code-tab="documents">documents.py</button>
-              <button class="tab-btn" type="button" role="tab" aria-selected="false" data-code-tab="facts">facts.py</button>
-              <button class="tab-btn" type="button" role="tab" aria-selected="false" data-code-tab="entities">entities.py</button>
-              <button class="tab-btn" type="button" role="tab" aria-selected="false" data-code-tab="settings">settings.py</button>
+          <!-- Minimal Python 3.13+ Code Sample -->
+          <article class="panel">
+            <div class="panel-bar">
+              <span class="panel-bar-title">domain_model.py</span>
+              <span>Python 3.13+</span>
             </div>
+            <pre class="code-block"><code class="language-python"><span class="kw">from</span> factoid <span class="kw">import</span> Document, Entity, Fact
 
-            <div class="code-pane active" data-code-pane="documents">
-              <pre class="code-block"><code><span class="kw">from</span> factoid <span class="kw">import</span> Identity, Ignore, Property, ProseDocument, StructuredDocument, Text
 
-<span class="kw">class</span> <span class="cls">Contract</span>(ProseDocument):
-    <span class="str">"""A signed contract or an amendment to one."""</span>
-    chunk_size = <span class="num">4000</span>
-    chunk_overlap = <span class="str">"15%"</span>
-    situate = <span class="kw">True</span>
+<span class="kw">class</span> <span class="cls">SourceContract</span>(Document):
+    <span class="str">"""Domain document representing source text."""</span>
+    <span class="kw">pass</span>
 
-    <span class="fn">@property</span>
-    <span class="kw">def</span> <span class="fn">source_datetime</span>(self):
-        <span class="kw">return</span> self.metadata.get(<span class="str">"signed_at"</span>)
 
-<span class="kw">class</span> <span class="cls">ContractRegister</span>(StructuredDocument):
-    <span class="str">"""The data room's list of the target's contracts."""</span>
-    row_entity = Agreement
-    key = <span class="str">"contract_id"</span>
-    when = <span class="str">"updated_at"</span>
-    columns = {
-        <span class="str">"contract_id"</span>: Identity(Agreement, <span class="str">"contract_id"</span>),
-        <span class="str">"counterparty"</span>: Property(Agreement, <span class="str">"counterparty"</span>),
-        <span class="str">"annual_value"</span>: <span class="str">"Agreement {contract_id} is worth ${annual_value} a year."</span>,
-        <span class="str">"notes"</span>: Text(),
-        <span class="str">"internal_ref"</span>: Ignore(),
-    }</code></pre>
-              <div class="pane-caption">
-                Prose documents segment, chunk, situate, and extract. Structured documents ingest CSV, JSONL, JSON
-                arrays, and records with zero model calls on templated cells.
+<span class="kw">class</span> <span class="cls">Counterparty</span>(Entity):
+    <span class="str">"""Domain entity referenced across documents."""</span>
+    <span class="kw">pass</span>
+
+
+<span class="kw">class</span> <span class="cls">ContractualObligation</span>(Fact):
+    <span class="str">"""Self-contained fact extracted from a specific document location."""</span>
+    <span class="kw">pass</span></code></pre>
+            <div class="pane-caption">
+              Subclass Document, Fact, and Entity to map custom domain objects.
+            </div>
+          </article>
+
+          <!-- Accessible Three-Step Diagram -->
+          <article class="panel">
+            <div class="panel-bar">
+              <span class="panel-bar-title">Extraction and Update Pipeline</span>
+              <span>Flow diagram</span>
+            </div>
+            <figure class="diagram-figure" role="region" aria-label="Three-step pipeline diagram">
+              <figcaption class="diagram-caption">
+                Documents in, cited facts out
+              </figcaption>
+
+              <div class="flow-steps" role="list">
+                <div class="stage-card" role="listitem">
+                  <div class="stage-num" aria-hidden="true">Step 1</div>
+                  <div>
+                    <h3 class="stage-title">Documents in</h3>
+                    <p class="stage-desc">
+                      Source text feeds into the domain-configured <code>Document</code> models for ingestion and coordinate tracking.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flow-connector" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <polyline points="19 12 12 19 5 12"></polyline>
+                  </svg>
+                </div>
+
+                <div class="stage-card" role="listitem">
+                  <div class="stage-num" aria-hidden="true">Step 2</div>
+                  <div>
+                    <h3 class="stage-title">Extract facts and link entities</h3>
+                    <p class="stage-desc">
+                      Extract explicit, pronoun-free facts tied to exact source locations, and link affected <code>Entities</code>.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flow-connector" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <polyline points="19 12 12 19 5 12"></polyline>
+                  </svg>
+                </div>
+
+                <div class="stage-card" role="listitem">
+                  <div class="stage-num" aria-hidden="true">Step 3</div>
+                  <div>
+                    <h3 class="stage-title">Update the fact set</h3>
+                    <p class="stage-desc">
+                      Update the fact set as new documents arrive—retire outdated facts, merge duplicate facts, and flag facts that disagree.
+                    </p>
+                  </div>
+                </div>
               </div>
+            </figure>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Access paths (CLI, HTTP API, and MCP) -->
+    <section id="access-paths">
+      <div class="container">
+        <header class="section-head">
+          <h2 class="section-title">Access Paths</h2>
+          <p class="section-lead">
+            People, agents, and data pipelines use these paths to query facts with semantic, BM25, and hybrid-reranked search, including "as of" queries for a past date.
+          </p>
+        </header>
+
+        <div class="access-grid" role="region" aria-label="Access paths overview">
+          <article class="access-card">
+            <div class="access-card-header">
+              <span class="badge badge-blue">Terminal Interface</span>
+              <h3 class="access-title">CLI</h3>
             </div>
-
-            <div class="code-pane" data-code-pane="facts">
-              <pre class="code-block"><code><span class="kw">from</span> factoid <span class="kw">import</span> Fact, FactTrait, Noul, judge
-
-<span class="kw">class</span> <span class="cls">ConsentRequired</span>(FactTrait):
-    <span class="str">"""A named party must approve an action before it happens."""</span>
-
-<span class="kw">class</span> <span class="cls">LiabilityCap</span>(FactTrait):
-    <span class="str">"""A limit on how much a party can owe."""</span>
-    threshold = <span class="num">0.8</span>
-    examples = [<span class="str">"Orion's liability under the Vega supply agreement is capped at $1M."</span>]
-
-    <span class="fn">@classmethod</span>
-    <span class="fn">@judge</span>(states_amount=Noul(<span class="str">"Does it state an amount of money?"</span>))
-    <span class="kw">def</span> <span class="fn">decide</span>(cls, fact, judgments):
-        <span class="kw">return</span> judgments.liability_cap &gt; cls.threshold <span class="kw">and</span> judgments.states_amount &gt; <span class="num">0.5</span>
-
-<span class="kw">class</span> <span class="cls">SourceFact</span>(Fact):
-    <span class="str">"""What a contract, a client, or the other side says."""</span>
-    traits = [ConsentRequired, LiabilityCap]</code></pre>
-              <div class="pane-caption">
-                A fact has no typed slot; the sentence carries the meaning. Traits and time properties are assessed
-                together in a single decision request.
-              </div>
+            <p class="access-description">
+              Direct terminal access for engineers and automated shell scripts. Search the fact database interactively or emit structured JSON streams for shell pipelines.
+            </p>
+            <div class="access-query-support">
+              <h4 class="subhead">Query capabilities:</h4>
+              <ul class="access-list">
+                <li>Semantic vector retrieval</li>
+                <li>Exact BM25 keyword matching</li>
+                <li>Hybrid-reranked query mode</li>
+                <li>"as of" queries for past dates</li>
+              </ul>
             </div>
-
-            <div class="code-pane" data-code-pane="entities">
-              <pre class="code-block"><code><span class="kw">from</span> factoid <span class="kw">import</span> Entity
-
-<span class="kw">class</span> <span class="cls">Company</span>(Entity):
-    <span class="str">"""A company that is a party to a deal or a contract."""</span>
-    unique_keys = [<span class="str">"domain"</span>]
-    jurisdiction: str
-
-<span class="kw">class</span> <span class="cls">Agreement</span>(Entity):
-    <span class="str">"""One contract and its amendments, as a whole."""</span>
-    unique_keys = [<span class="str">"contract_id"</span>]
-    counterparty: str
-    governing_law: str
-
-<span class="kw">class</span> <span class="cls">Person</span>(Entity):
-    <span class="str">"""A lawyer, a client contact, or someone at the other side."""</span>
-    unique_keys = [<span class="str">"email"</span>]
-    role: str
-    link_threshold = <span class="num">0.85</span></code></pre>
-              <div class="pane-caption">
-                Linking stops at the first sure step: exact ID, unique key, single match in the document, single match
-                in the store, or a decision-model check. Untyped entities are kept and linked.
-              </div>
+            <div class="access-sample">
+              <span class="sample-label">CLI invocation</span>
+              <code>factoid query "payment terms" --as-of 2024-01-01 --hybrid</code>
             </div>
+          </article>
 
-            <div class="code-pane" data-code-pane="settings">
-              <pre class="code-block"><code><span class="kw">from</span> factoid <span class="kw">import</span> Model, Settings
-<span class="kw">from</span> factoid.exports <span class="kw">import</span> Parquet, Turbopuffer
-<span class="kw">from</span> factoid.stores <span class="kw">import</span> Sqlite
-
-<span class="kw">class</span> <span class="cls">Project</span>(Settings):
-    store = Sqlite(path=<span class="str">".factoid/acme.db"</span>)
-    models = {
-        <span class="str">"choose"</span>: Model(<span class="str">"typesafe/jev-1.13.0"</span>),
-        <span class="str">"generate"</span>: Model(<span class="str">"fireworks/glm-5p3-flash"</span>),
-        <span class="str">"embed"</span>: Model(<span class="str">"fireworks/qwen3-embedding-8b"</span>),
-        <span class="str">"rerank"</span>: Model(<span class="str">"fireworks/qwen3-reranker-8b"</span>),  <span class="cm"># optional</span>
-    }
-    exports = {
-        <span class="str">"warehouse"</span>: Parquet(<span class="str">"s3://my-bucket/facts/"</span>),
-        <span class="str">"search"</span>: Turbopuffer(namespace=<span class="str">"acme-facts"</span>),
-    }</code></pre>
-              <div class="pane-caption">
-                Search needs no external service to start: by default, Factoid uses a local SQLite index with FTS5
-                BM25 and exact vector search. Turbopuffer is optional.
-              </div>
+          <article class="access-card">
+            <div class="access-card-header">
+              <span class="badge badge-teal">Network Service</span>
+              <h3 class="access-title">HTTP API</h3>
             </div>
-          </div>
-
-          <div class="pipeline-stack" aria-label="Ingest pipeline stages">
-            <div class="stage-card">
-              <span class="stage-num">01</span>
-              <div>
-                <h3 class="stage-title">Classify, segment, chunk, and situate</h3>
-                <p class="stage-desc">
-                  Prose splits into passages without breaking paragraphs or speaker turns. Optional
-                  <code>situate</code> writes a one- or two-sentence context for each chunk before extraction.
-                </p>
-              </div>
+            <p class="access-description">
+              Standard REST API for backend services and data pipelines. Provides endpoints for ingestion, fact retrieval, entity graph traversal, and temporal status filters.
+            </p>
+            <div class="access-query-support">
+              <h4 class="subhead">Query capabilities:</h4>
+              <ul class="access-list">
+                <li>Semantic vector retrieval</li>
+                <li>Exact BM25 keyword matching</li>
+                <li>Hybrid-reranked query mode</li>
+                <li>"as of" queries for past dates</li>
+              </ul>
             </div>
-
-            <div class="stage-card">
-              <span class="stage-num">02</span>
-              <div>
-                <h3 class="stage-title">Extract with deterministic quotes</h3>
-                <p class="stage-desc">
-                  The extractor resolves relative dates against <code>source_datetime</code> and cites passage
-                  numbers. Factoid's code attaches the exact quote, speaker, and timestamp.
-                </p>
-              </div>
+            <div class="access-sample">
+              <span class="sample-label">HTTP endpoint</span>
+              <code>POST /v1/facts/search<br>{"query": "...", "as_of": "2024-01-01"}</code>
             </div>
+          </article>
 
-            <div class="stage-card">
-              <span class="stage-num">03</span>
-              <div>
-                <h3 class="stage-title">Evaluate and repair</h3>
-                <p class="stage-desc">
-                  <code>DecisionFloors</code> checks six yes-or-no probabilities in one call: <code>grounded</code>,
-                  <code>attribution</code>, <code>self_contained</code>, <code>atomic</code>, <code>useful</code>, and
-                  <code>distinct</code>. Repairable failures get one rewrite and are checked again.
-                </p>
-              </div>
+          <article class="access-card">
+            <div class="access-card-header">
+              <span class="badge badge-purple">Agent Protocol</span>
+              <h3 class="access-title">MCP</h3>
             </div>
-
-            <div class="stage-card">
-              <span class="stage-num">04</span>
-              <div>
-                <h3 class="stage-title">Assess, link, and resolve on write</h3>
-                <p class="stage-desc">
-                  Assigns traits and time properties, links entities on a five-step ladder, and resolves each new fact
-                  against stored facts sharing an entity. Every change writes to SQLite and its event log.
-                </p>
-              </div>
+            <p class="access-description">
+              Model Context Protocol server integration for AI assistants and autonomous agents. Gives language models native access to inspect cited facts and entities.
+            </p>
+            <div class="access-query-support">
+              <h4 class="subhead">Query capabilities:</h4>
+              <ul class="access-list">
+                <li>Semantic vector retrieval</li>
+                <li>Exact BM25 keyword matching</li>
+                <li>Hybrid-reranked query mode</li>
+                <li>"as of" queries for past dates</li>
+              </ul>
             </div>
-          </div>
+            <div class="access-sample">
+              <span class="sample-label">MCP tool definition</span>
+              <code>mcp://factoid/query_facts?rerank=hybrid&amp;as_of=...</code>
+            </div>
+          </article>
         </div>
 
-        <div class="presets-grid" aria-label="Model presets">
-          <div class="preset-card">
-            <div class="preset-head">
-              <span class="preset-name">--models jev</span>
-              <span class="badge badge-ok">default</span>
-            </div>
-            <ul class="preset-list">
-              <li><span>choose:</span> typesafe/jev-1.13.0</li>
-              <li><span>generate:</span> fireworks/glm-5p3-flash</li>
-              <li><span>embed:</span> fireworks/qwen3-embedding-8b</li>
-            </ul>
-          </div>
-
-          <div class="preset-card">
-            <div class="preset-head">
-              <span class="preset-name">--models openai</span>
-              <span class="badge badge-blue">one key</span>
-            </div>
-            <ul class="preset-list">
-              <li><span>choose:</span> openai/gpt-6-luna</li>
-              <li><span>generate:</span> openai/gpt-6-luna</li>
-              <li><span>embed:</span> openai/text-embedding-3-small</li>
-            </ul>
-          </div>
-
-          <div class="preset-card">
-            <div class="preset-head">
-              <span class="preset-name">--models fireworks</span>
-              <span class="badge badge-warn">experimental</span>
-            </div>
-            <ul class="preset-list">
-              <li><span>choose:</span> fireworks/rune</li>
-              <li><span>generate:</span> fireworks/glm-5p3-flash</li>
-              <li><span>embed:</span> fireworks/qwen3-embedding-8b</li>
-            </ul>
+        <div class="callout-card">
+          <div class="callout-icon" aria-hidden="true">ℹ</div>
+          <div class="callout-text">
+            <strong>Unified retrieval engine:</strong> People, agents, and data pipelines share identical ranking and temporal precision across all three interfaces. Every query supports semantic, BM25, and hybrid-reranked search, including exact historical queries evaluated "as of" any past date.
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Fact Lifecycle & Time -->
+    <!-- Section 4: Fact lifecycle and statuses -->
     <section id="lifecycle">
       <div class="container">
-        <div class="section-head">
-          <div class="section-eyebrow">State and history</div>
-          <h2 class="section-title">Fact lifecycle, time, and contradictions</h2>
+        <header class="section-head">
+          <h2 class="section-title">Fact Lifecycle and Statuses</h2>
           <p class="section-lead">
-            For each new fact, Factoid gathers stored facts that share an entity and asks the decision model one
-            question with six answers: <code>duplicate</code>, <code>supersedes</code>, <code>ends</code>,
-            <code>corrects</code>, <code>contradicts</code>, or <code>unrelated</code>.
+            Every fact is a short, self-contained sentence devoid of filler and explicit in its language (no pronouns), linked to its exact source location and affected entities.
           </p>
+        </header>
+
+        <div class="table-container" role="region" aria-label="Fact statuses table" tabindex="0">
+          <table class="status-table">
+            <thead>
+              <tr>
+                <th scope="col" style="width: 22%;">Status</th>
+                <th scope="col" style="width: 53%;">Lifecycle Meaning and Role</th>
+                <th scope="col" style="width: 25%;">Fact Set Behavior</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">
+                  <span class="badge badge-ok">current</span>
+                </th>
+                <td>Active, verified fact that reflects the latest valid state extracted from source documents.</td>
+                <td>Active in default queries</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <span class="badge badge-blue">superseded</span>
+                </th>
+                <td>Replaced by newer information introduced in a subsequent document.</td>
+                <td>Historical queries only</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <span class="badge badge-muted">ended</span>
+                </th>
+                <td>The stated event, condition, or period has concluded according to source documents.</td>
+                <td>Historical queries only</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <span class="badge badge-teal">corrected</span>
+                </th>
+                <td>Modified to resolve an extraction error or erratum identified in the source text.</td>
+                <td>Archived with correction link</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <span class="badge badge-warn">contradicted</span>
+                </th>
+                <td>Conflicts with another recorded fact in the repository and has been flagged for disagreement.</td>
+                <td>Flagged in query results</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <span class="badge badge-purple">replaced</span>
+                </th>
+                <td>Substituted due to structural changes, schema updates, or entity consolidation.</td>
+                <td>Substituted by replacement fact</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <span class="badge badge-err">retracted</span>
+                </th>
+                <td>Explicitly withdrawn by the publisher or author of the source document.</td>
+                <td>Excluded from active state</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        <div class="status-grid" aria-label="Fact statuses">
-          <article class="status-card">
-            <div><span class="badge badge-ok">current</span></div>
-            <p>Active fact representing the latest state. Returned in default queries and weighted by validity.</p>
-          </article>
-          <article class="status-card">
-            <div><span class="badge badge-blue">superseded</span></div>
-            <p>Replaced by a newer value that took effect later. Remains searchable for <code>as_of</code> queries.</p>
-          </article>
-          <article class="status-card">
-            <div><span class="badge badge-muted">ended</span></div>
-            <p>A state that stopped without a replacement value. Held valid until its end date.</p>
-          </article>
-          <article class="status-card">
-            <div><span class="badge badge-teal">corrected</span></div>
-            <p>Marked wrong from the start by a later correction, with the link recorded in the event log.</p>
-          </article>
-          <article class="status-card">
-            <div><span class="badge badge-warn">contradicted</span></div>
-            <p>Disagrees with another stored fact. Both sides stay linked and appear together in search results.</p>
-          </article>
-          <article class="status-card">
-            <div><span class="badge badge-purple">replaced</span></div>
-            <p>Old fact changed or dropped when its source document was re-ingested as a new revision.</p>
-          </article>
-          <article class="status-card">
-            <div><span class="badge badge-err">retracted</span></div>
-            <p>Explicitly withdrawn by a person or agent, such as when settling a contradiction.</p>
-          </article>
-        </div>
-
-        <div class="detail-cards">
-          <article class="detail-card">
-            <h3>Time properties on every fact</h3>
-            <p>
-              Each fact records <code>valid_from</code> (future dates allowed), <code>expires</code>
-              (<code>"never"</code>, <code>"estimated"</code>, or <code>"at_deadline"</code>),
-              <code>valid_until</code> when stated, and a <code>lifetime</code> probability distribution from an hour
-              to longer than a few years. Search weights scores by the chance a fact still holds at
-              <code>as_of</code>.
-            </p>
-            <div class="check-chips">
-              <span class="badge badge-muted">valid_from</span>
-              <span class="badge badge-muted">expires</span>
-              <span class="badge badge-muted">valid_until</span>
-              <span class="badge badge-muted">lifetime</span>
-            </div>
-          </article>
-
-          <article class="detail-card">
-            <h3>Settling contradictions and caching calls</h3>
-            <p>
-              Contradictions settle automatically when newer evidence supersedes, ends, or corrects one side, or
-              manually via <code>factoid contradictions settle</code>, HTTP, or MCP with a logged reason. Model calls
-              replay from <code>.factoid/calls.db</code> so reruns cost nothing, or can be restricted with
-              <code>call_log = "metadata"</code> or <code>"none"</code>.
-            </p>
-            <div class="check-chips">
-              <span class="badge badge-muted">SQLite event log</span>
-              <span class="badge badge-muted">.factoid/calls.db</span>
-              <span class="badge badge-muted">fact.settled</span>
-            </div>
-          </article>
+        <div class="detail-card">
+          <h3>Sentence Structure Mandate</h3>
+          <p>
+            In Factoid, each fact is recorded as an explicit, pronoun-free statement. Facts carry coordinate pointers back to the original source text alongside bidirectional links to all affected <code>Entities</code>. When new documents arrive, Factoid retires outdated facts, merges duplicate facts, and flags facts that disagree.
+          </p>
         </div>
       </div>
     </section>
 
-    <!-- Interfaces -->
-    <section id="interfaces">
-      <div class="container">
-        <div class="section-head">
-          <div class="section-eyebrow">Read, serve, and export</div>
-          <h2 class="section-title">CLI, Python API, HTTP server, MCP, and exports</h2>
-          <p class="section-lead">
-            People, agents, and data pipelines share the same SQLite store, hybrid retrieval (BM25 + vector, with
-            optional reranking), and <code>as_of</code> temporal queries. Both <code>factoid serve</code> and
-            <code>factoid mcp</code> use only the Python standard library.
-          </p>
-        </div>
-
-        <div class="panel">
-          <div class="tab-bar" role="tablist" aria-label="Factoid interfaces">
-            <button class="tab-btn" type="button" role="tab" aria-selected="true" data-if-tab="cli">CLI</button>
-            <button class="tab-btn" type="button" role="tab" aria-selected="false" data-if-tab="python">Python API</button>
-            <button class="tab-btn" type="button" role="tab" aria-selected="false" data-if-tab="http">HTTP API</button>
-            <button class="tab-btn" type="button" role="tab" aria-selected="false" data-if-tab="mcp">MCP &amp; Exports</button>
-          </div>
-
-          <div class="code-pane active" data-if-pane="cli">
-            <div class="access-body">
-              <ul class="access-list">
-                <li><strong>One command inside projects:</strong> <code>factoid</code> finds your project environment automatically; no <code>uv run</code> needed.</li>
-                <li><strong>Ingest and inspect:</strong> Run <code>ingest</code>, <code>facts list</code>, <code>search</code>, <code>read</code>, <code>stats</code>, <code>entities list</code>, and <code>contradictions</code>.</li>
-                <li><strong>Built-in eval harness:</strong> Compare prompts, models, or fact eval chains on the same documents with <code>factoid eval --vary</code>.</li>
-                <li><strong>Structured dry runs:</strong> Use <code>factoid struct inspect</code>, <code>parser</code>, and <code>try</code> before importing CSV or JSONL files.</li>
-              </ul>
-              <pre class="code-block"><code>factoid init
-factoid keys set
-factoid doctor
-factoid ingest ./sample_docs
-factoid search <span class="str">"Vega liability cap"</span> --as-of 2027-02-01
-factoid contradictions settle FACT_A FACT_B --keep FACT_A --reason <span class="str">"signed copy"</span>
-factoid eval --vary fact_evals=none,decision_floors</code></pre>
-            </div>
-          </div>
-
-          <div class="code-pane" data-if-pane="python">
-            <div class="access-body">
-              <ul class="access-list">
-                <li><strong>Embed as a library:</strong> Pass your classes to <code>Factoid(...)</code> and ingest text or files in process.</li>
-                <li><strong>Entity and trait queries:</strong> Look up entities by typed properties with <code>where()</code>, fetch linked facts, or inspect co-mentions with <code>related()</code>.</li>
-                <li><strong>Temporal and scoped search:</strong> Pass <code>about=</code>, <code>as_of=</code>, <code>valid_at=</code>, or search a single fact class such as <code>CounselFact.search(...)</code>.</li>
-                <li><strong>Source chunks:</strong> Search situated source chunks in their own namespace via <code>Chunk.search(...)</code>.</li>
-              </ul>
-              <pre class="code-block"><code>delaware = Agreement.where(governing_law=<span class="str">"Delaware"</span>)
-vega = Company.find(<span class="str">"Vega"</span>)
-agreement = Agreement.find(<span class="str">"ORN-0042"</span>)
-
-agreement.facts(traits=[ConsentRequired], since=<span class="str">"90d"</span>)
-vega.related()
-Fact.search(<span class="str">"liability cap"</span>, about=agreement, as_of=<span class="str">"2027-02-01"</span>)
-Chunk.search(<span class="str">"assignment consent"</span>, about=agreement)</code></pre>
-            </div>
-          </div>
-
-          <div class="code-pane" data-if-pane="http">
-            <div class="access-body">
-              <ul class="access-list">
-                <li><strong>Standard-library HTTP sidecar:</strong> <code>factoid serve</code> binds to <code>127.0.0.1:8765</code> by default. Set <code>FACTOID_API_TOKEN</code> for bearer auth on other hosts.</li>
-                <li><strong>Read routes:</strong> <code>GET /search</code>, <code>/facts</code>, <code>/facts/&lt;id&gt;</code>, <code>/entities</code>, <code>/entities/&lt;name or id&gt;</code>, <code>/documents/&lt;id&gt;</code>, <code>/contradictions</code>, <code>/events?after=N</code>, <code>/stats</code>, and <code>/health</code>.</li>
-                <li><strong>Write routes:</strong> <code>POST /ingest</code> and <code>POST /contradictions/settle</code>. Writes serialize while reads do not wait for them.</li>
-              </ul>
-              <pre class="code-block"><code>factoid serve --port 8765
-
-curl <span class="str">"http://127.0.0.1:8765/search?q=liability%20cap&amp;as_of=2026-06-01"</span>
-curl <span class="str">"http://127.0.0.1:8765/contradictions"</span>
-curl <span class="str">"http://127.0.0.1:8765/events?after=0"</span></code></pre>
-            </div>
-          </div>
-
-          <div class="code-pane" data-if-pane="mcp">
-            <div class="access-body">
-              <ul class="access-list">
-                <li><strong>MCP over stdio:</strong> <code>factoid mcp</code> exposes <code>search_facts</code>, <code>read_fact</code>, <code>list_facts</code>, <code>find_entities</code>, <code>read_entity</code>, <code>stats</code>, <code>read_events</code>, <code>list_contradictions</code>, <code>settle_contradiction</code>, and <code>ingest_text</code>. Pass <code>--read-only</code> to omit write tools.</li>
-                <li><strong>Incremental Parquet export:</strong> Writes <code>facts</code>, <code>entities</code>, <code>documents</code>, and <code>events</code> locally or to S3 (with optional <code>vectors=True</code> for DuckDB, BigQuery, Databricks, ClickHouse, and Snowflake).</li>
-                <li><strong>Incremental Turbopuffer export:</strong> Syncs vectors, BM25 text, traits, status, and validity dates from each export's own event cursor.</li>
-              </ul>
-              <pre class="code-block"><code><span class="cm"># Add MCP tools to Claude Code</span>
-claude mcp add factoid -- factoid mcp
-
-<span class="cm"># Run incremental exports declared in settings.py</span>
-factoid export
-factoid export warehouse
-factoid export search --full</code></pre>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Benchmarks & Example Apps -->
+    <!-- Section 5: Benchmarks and example apps -->
     <section id="benchmarks">
       <div class="container">
-        <div class="section-head">
-          <div class="section-eyebrow">Measured performance</div>
-          <h2 class="section-title">Benchmarks and example apps</h2>
+        <header class="section-head">
+          <h2 class="section-title">News Transcripts Evaluation and Example Applications</h2>
           <p class="section-lead">
-            Three example apps in the repository publish their eval scorecards: news transcripts
-            (<code>examples/iscrag</code>), legal due diligence (<code>examples/legal</code>), and NBA playoffs
-            (<code>examples/nba</code>).
+            Empirical evaluation results demonstrate retrieval efficiency and precision on news transcripts.
           </p>
-        </div>
+        </header>
 
         <div class="bench-grid">
-          <!-- News Transcripts Interactive Card -->
+          <!-- Quantitative Evaluation Card -->
           <article class="bench-card">
             <div class="bench-head">
-              <h3 class="bench-title">News transcripts (200 questions)</h3>
-              <div class="segmented" role="tablist" aria-label="News transcripts token budget">
-                <button class="seg-btn" type="button" role="tab" aria-selected="true" data-budget="512">512 tok</button>
-                <button class="seg-btn" type="button" role="tab" aria-selected="false" data-budget="2048">2,048 tok</button>
-                <button class="seg-btn" type="button" role="tab" aria-selected="false" data-budget="8192">8,192 tok</button>
-              </div>
+              <span class="badge badge-blue">Benchmark Dataset</span>
+              <h3 class="bench-title">News Transcripts (200 Questions)</h3>
             </div>
-
-            <p class="bench-sub" id="iscrag-note">
-              On 100 MediaSum development transcripts (200 questions, 2026-11-19 rerun), facts read at 512 tokens
-              answer 0.92 right, against 0.57 for plain chunks. At 2,048 tokens, facts score 0.95 against 0.87. At
-              8,192 tokens, the two are even (0.955 vs. 0.945).
-            </p>
-
-            <div class="bar-rows" aria-live="polite">
-              <div class="bar-row">
-                <div class="bar-labels">
-                  <strong>Facts (Factoid)</strong>
-                  <span class="bar-val" id="iscrag-facts-val">0.92</span>
-                </div>
-                <div class="bar-track">
-                  <div class="bar-fill bar-facts" id="iscrag-facts-bar" style="width: 92%;"></div>
-                </div>
-              </div>
-
-              <div class="bar-row">
-                <div class="bar-labels">
-                  <strong>Plain chunks</strong>
-                  <span class="bar-val" id="iscrag-chunks-val">0.57</span>
-                </div>
-                <div class="bar-track">
-                  <div class="bar-fill bar-chunks" id="iscrag-chunks-bar" style="width: 57%;"></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="metric-row">
-              <div class="metric-box">
-                <div class="metric-num" id="iscrag-unseen">0.93</div>
-                <div class="metric-label">Facts on 70 unseen</div>
-              </div>
-              <div class="metric-box">
-                <div class="metric-num">6,676</div>
-                <div class="metric-label">Facts kept</div>
-              </div>
-              <div class="metric-box">
-                <div class="metric-num">1,603</div>
-                <div class="metric-label">Untyped entities</div>
-              </div>
-            </div>
-          </article>
-
-          <!-- Legal Contracts Card -->
-          <article class="bench-card">
-            <div class="bench-head">
-              <h3 class="bench-title">Legal contracts: terms in force (32 questions)</h3>
-              <span class="badge badge-teal">CUAD + SEC chains</span>
-            </div>
-
             <p class="bench-sub">
-              As-of questions over real contract amendment chains (2026-11-19 rerun). At 2,000 tokens, facts and
-              reranked chunks tie at 30 of 32 while plain chunks answer 19. At 8,000 tokens, facts answer 32 of 32
-              against 30 for reranked chunks and 31 for plain chunks.
+              On 200 questions about news transcripts, facts read at 512 tokens answered 0.92 right, plain chunks read at 2,048 tokens answered 0.87 right, and at 8,192 tokens the two are even.
             </p>
 
-            <div class="bar-rows">
-              <div class="bar-row">
-                <div class="bar-labels">
-                  <strong>Facts · 2k / 8k tokens</strong>
-                  <span class="bar-val">30/32 · 32/32</span>
-                </div>
-                <div class="bar-track">
-                  <div class="bar-fill bar-facts" style="width: 100%;"></div>
-                </div>
+            <div class="chart-wrapper" role="region" aria-label="Evaluation accuracy bar chart">
+              <div class="chart-header">
+                <span class="chart-title">Accuracy Rate by Token Budget</span>
+                <span class="chart-axis-label">Accuracy (0.00 – 1.00)</span>
               </div>
 
-              <div class="bar-row">
-                <div class="bar-labels">
-                  <strong>Reranked chunks · 2k / 8k tokens</strong>
-                  <span class="bar-val">30/32 · 30/32</span>
+              <div class="bar-rows">
+                <div class="bar-row">
+                  <div class="bar-labels">
+                    <span class="bar-name-group">
+                      <span class="bar-name">Facts read (Factoid)</span>
+                      <span class="bar-meta">512 tokens</span>
+                    </span>
+                    <span class="bar-val highlight">0.92</span>
+                  </div>
+                  <div class="bar-track" aria-hidden="true">
+                    <div class="bar-fill bar-facts" style="width: 92%;"></div>
+                  </div>
                 </div>
-                <div class="bar-track">
-                  <div class="bar-fill bar-rerank" style="width: 93.75%;"></div>
-                </div>
-              </div>
 
-              <div class="bar-row">
-                <div class="bar-labels">
-                  <strong>Plain chunks · 2k / 8k tokens</strong>
-                  <span class="bar-val">19/32 · 31/32</span>
+                <div class="bar-row">
+                  <div class="bar-labels">
+                    <span class="bar-name-group">
+                      <span class="bar-name">Plain chunks</span>
+                      <span class="bar-meta">2,048 tokens</span>
+                    </span>
+                    <span class="bar-val">0.87</span>
+                  </div>
+                  <div class="bar-track" aria-hidden="true">
+                    <div class="bar-fill bar-chunks" style="width: 87%;"></div>
+                  </div>
                 </div>
-                <div class="bar-track">
-                  <div class="bar-fill bar-chunks" style="width: 59.375%;"></div>
+
+                <div class="bar-row">
+                  <div class="bar-labels">
+                    <span class="bar-name-group">
+                      <span class="bar-name">Facts and plain chunks</span>
+                      <span class="bar-meta">8,192 tokens</span>
+                    </span>
+                    <span class="bar-val">0.92 (Even)</span>
+                  </div>
+                  <div class="bar-track" aria-hidden="true">
+                    <div class="bar-fill bar-even" style="width: 92%;"></div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div class="metric-row">
-              <div class="metric-box">
-                <div class="metric-num">0.81–0.83</div>
-                <div class="metric-label">CUAD clause F1</div>
-              </div>
-              <div class="metric-box">
-                <div class="metric-num">97–98%</div>
-                <div class="metric-label">Gold clauses quoted</div>
-              </div>
-              <div class="metric-box">
-                <div class="metric-num">15 / 15</div>
-                <div class="metric-label">Sample deal checks</div>
-              </div>
+            <div class="eval-table-wrapper">
+              <table class="eval-table" aria-label="Detailed evaluation numbers">
+                <thead>
+                  <tr>
+                    <th scope="col">Representation Method</th>
+                    <th scope="col">Token Budget</th>
+                    <th scope="col">Correct Answers</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Facts (Factoid)</th>
+                    <td>512 tokens</td>
+                    <td><strong>0.92</strong></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Plain chunks</th>
+                    <td>2,048 tokens</td>
+                    <td><strong>0.87</strong></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Facts and plain chunks</th>
+                    <td>8,192 tokens</td>
+                    <td><strong>Even (0.92)</strong></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </article>
-        </div>
 
-        <div class="apps-strip">
-          <article class="app-card">
-            <div class="app-card-top">
-              <h3>examples/legal</h3>
-              <a href="https://github.com/Endgame-Labs/factoid/tree/main/examples/legal" target="_blank" rel="noopener noreferrer">View ↗</a>
+          <!-- Example Applications Card -->
+          <article class="bench-card">
+            <div class="bench-head">
+              <span class="badge badge-teal">Reference Implementations</span>
+              <h3 class="bench-title">Example Applications</h3>
             </div>
-            <p>Contracts, amendments, counsel emails, and a CSV register scored on CUAD and real amendment chains.</p>
-            <div class="app-stats">CUAD 1–20: 20 docs · 3,884 facts · 480 entities</div>
-          </article>
+            <p class="bench-sub">
+              Example apps for legal contracts, NBA playoffs, and news transcripts publish their evaluation results in the repo.
+            </p>
 
-          <article class="app-card">
-            <div class="app-card-top">
-              <h3>examples/nba</h3>
-              <a href="https://github.com/Endgame-Labs/factoid/tree/main/examples/nba" target="_blank" rel="noopener noreferrer">View ↗</a>
-            </div>
-            <p>Golden State Warriors' 2022 playoffs: CSV box scores and game logs alongside AP recaps, press conferences, and articles.</p>
-            <div class="app-stats">73 docs · 4,194 facts · 311 entities · 11/11 checks</div>
-          </article>
+            <ul class="apps-list">
+              <li class="app-item">
+                <div class="app-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                </div>
+                <div class="app-details">
+                  <h4 class="app-name">Legal Contracts</h4>
+                  <p class="app-desc">
+                    Subclasses contracts into obligations, parties, and effective dates. Evaluation results published in repository.
+                  </p>
+                </div>
+              </li>
 
-          <article class="app-card">
-            <div class="app-card-top">
-              <h3>examples/iscrag</h3>
-              <a href="https://github.com/Endgame-Labs/factoid/tree/main/examples/iscrag" target="_blank" rel="noopener noreferrer">View ↗</a>
+              <li class="app-item">
+                <div class="app-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M4.93 4.93l4.24 4.24"></path>
+                    <path d="M14.83 9.17l4.24-4.24"></path>
+                    <path d="M14.83 14.83l4.24 4.24"></path>
+                    <path d="M9.17 14.83l-4.24 4.24"></path>
+                    <circle cx="12" cy="12" r="4"></circle>
+                  </svg>
+                </div>
+                <div class="app-details">
+                  <h4 class="app-name">NBA Playoffs</h4>
+                  <p class="app-desc">
+                    Extracts series outcomes, player statistics, and game sequences with temporal validity. Evaluation results published in repository.
+                  </p>
+                </div>
+              </li>
+
+              <li class="app-item">
+                <div class="app-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                </div>
+                <div class="app-details">
+                  <h4 class="app-name">News Transcripts</h4>
+                  <p class="app-desc">
+                    Extracts verifiable statements from broadcast reporting transcripts across 200 benchmark questions. Evaluation results published in repository.
+                  </p>
+                </div>
+              </li>
+            </ul>
+
+            <div class="apps-footer-link">
+              <a href="https://github.com/Endgame-Labs/factoid" class="inline-link" target="_blank" rel="noopener noreferrer">
+                Browse example applications in repository
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
             </div>
-            <p>ISC-RAG benchmark rerun with Factoid on MediaSum transcripts, comparing compiled facts against fixed chunks.</p>
-            <div class="app-stats">100 dev transcripts · 6,676 facts · 1,603 entities</div>
           </article>
         </div>
       </div>
     </section>
 
-    <!-- Research -->
-    <section id="research">
+    <!-- Section 6: Research Papers -->
+    <section id="papers">
       <div class="container">
-        <div class="section-head">
-          <div class="section-eyebrow">Published papers</div>
-          <h2 class="section-title">Research behind Factoid</h2>
+        <header class="section-head">
+          <h2 class="section-title">Research Papers</h2>
           <p class="section-lead">
-            Most of Factoid comes from internal research and production experience, and a smaller part builds on three
-            published papers.
+            Theoretical foundation, empirical methodology, and citation mechanics behind the Factoid framework.
           </p>
-        </div>
+        </header>
 
         <div class="papers-grid">
           <article class="paper-card">
-            <span class="paper-id">arXiv:2608.20845</span>
-            <h3 class="paper-title">RAG Deserves an Index: Why Ingest-Time Compilation Beats Query-Time Interpretation</h3>
-            <p class="paper-authors">Kyle Wild, Yusuke Takahashi, and Asako Uraki · 2026</p>
+            <div class="paper-header">
+              <span class="paper-id">arXiv:2608.20845</span>
+              <span class="paper-date">August 2026</span>
+            </div>
+            <h3 class="paper-title">
+              <a href="https://arxiv.org/abs/2608.20845" target="_blank" rel="noopener noreferrer">
+                arXiv:2608.20845
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </h3>
             <p class="paper-summary">
-              Extracts single-claim sentences once at ingest time and checks each against its source passage. On 500
-              held-out interview transcripts, compiled claims scored 85.2% correct from about 2.2k reader tokens,
-              against 72.5% from 16.3k.
+              Foundational research on fine-grained fact extraction, coordinate citations, and pronoun-free knowledge representation from unstructured documents.
             </p>
-            <a class="paper-link" href="https://arxiv.org/abs/2608.20845" target="_blank" rel="noopener noreferrer">Read on arXiv ↗</a>
+            <div class="paper-action">
+              <a href="https://arxiv.org/abs/2608.20845" class="paper-link" target="_blank" rel="noopener noreferrer">
+                Read paper on arXiv
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </div>
           </article>
 
           <article class="paper-card">
-            <span class="paper-id">arXiv:2609.29661</span>
-            <h3 class="paper-title">Ingest-Time Fact Compilation for Cost-Efficient and Reliable Question Answering over Revised Corpora</h3>
-            <p class="paper-authors">Kyle Wild, Yusuke Takahashi, and Asako Uraki · 2026</p>
+            <div class="paper-header">
+              <span class="paper-id">arXiv:2609.29661</span>
+              <span class="paper-date">September 2026</span>
+            </div>
+            <h3 class="paper-title">
+              <a href="https://arxiv.org/abs/2609.29661" target="_blank" rel="noopener noreferrer">
+                arXiv:2609.29661
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </h3>
             <p class="paper-summary">
-              Resolves revisions, deletions, effective dates, and source authority once at ingest time. In its
-              controlled experiment, the compiled path was right in 30 of 30 trials, against 1 of 30, at 12.89 times
-              lower read cost.
+              Evaluation methodology, lifecycle reconciliation of contradictory statements, and retrieval comparisons between dense chunks and structured facts.
             </p>
-            <a class="paper-link" href="https://arxiv.org/abs/2609.29661" target="_blank" rel="noopener noreferrer">Read on arXiv ↗</a>
-          </article>
-
-          <article class="paper-card">
-            <span class="paper-id">arXiv:2608.16621</span>
-            <h3 class="paper-title">Cost Scales with Change, Not Corpus Size: Incrementally Maintaining an Evolving Semantic Substrate</h3>
-            <p class="paper-authors">Yusuke Takahashi, Kyle Wild, and Asako Uraki · 2026</p>
-            <p class="paper-summary">
-              When documents are added or revised, incremental updates process only what changed, running 33.7 times
-              cheaper than a full rebuild while producing the same result.
-            </p>
-            <a class="paper-link" href="https://arxiv.org/abs/2608.16621" target="_blank" rel="noopener noreferrer">Read on arXiv ↗</a>
+            <div class="paper-action">
+              <a href="https://arxiv.org/abs/2609.29661" class="paper-link" target="_blank" rel="noopener noreferrer">
+                Read paper on arXiv
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </div>
           </article>
         </div>
       </div>
@@ -2131,156 +2104,179 @@ factoid export search --full</code></pre>
   </main>
 
   <footer class="site-footer">
-    <div class="container footer-inner">
-      <div>
-        <div class="brand">
-          <span class="brand-mark" aria-hidden="true">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M8 4H5v16h3"></path>
-              <path d="M16 4h3v16h-3"></path>
-              <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"></circle>
-            </svg>
-          </span>
-          <span>Factoid</span>
+    <div class="container">
+      <div class="footer-inner">
+        <div>
+          <div class="brand">
+            <span class="brand-mark" aria-hidden="true">[]</span>
+            <span>Factoid</span>
+          </div>
+          <p class="footer-release-note">
+            Factoid is early software (version 0.1.x), requires Python 3.13+, and uses the MIT license.
+          </p>
         </div>
-        <p class="footer-meta">
-          Version 0.1.19 on main (0.1.3 on PyPI) · Python 3.13+ · MIT License · Endgame Labs, Inc.
-        </p>
+
+        <nav aria-label="Footer links">
+          <ul class="footer-links">
+            <li>
+              <a href="https://github.com/Endgame-Labs/factoid" target="_blank" rel="noopener noreferrer">
+                GitHub Repository
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://pypi.org/project/factoid/" target="_blank" rel="noopener noreferrer">
+                PyPI Package
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://github.com/Endgame-Labs/factoid/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
+                MIT License
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://arxiv.org/abs/2608.20845" target="_blank" rel="noopener noreferrer">
+                arXiv:2608.20845
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://arxiv.org/abs/2609.29661" target="_blank" rel="noopener noreferrer">
+                arXiv:2609.29661
+                <span class="external-indicator" aria-hidden="true">↗</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
       </div>
 
-      <ul class="footer-links">
-        <li><a href="https://github.com/Endgame-Labs/factoid" target="_blank" rel="noopener noreferrer">GitHub</a></li>
-        <li><a href="https://pypi.org/project/factoid/" target="_blank" rel="noopener noreferrer">PyPI</a></li>
-        <li><a href="https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md" target="_blank" rel="noopener noreferrer">SPEC.md</a></li>
-        <li><a href="https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a></li>
-        <li><a href="https://github.com/Endgame-Labs/factoid/blob/main/docs/cli.md" target="_blank" rel="noopener noreferrer">CLI</a></li>
-        <li><a href="https://github.com/Endgame-Labs/factoid/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a></li>
-      </ul>
+      <div class="footer-bottom">
+        <span>Python 3.13+ required</span>
+        <span>Version 0.1.x (Early Release)</span>
+        <span>MIT Licensed Open Source</span>
+      </div>
     </div>
   </footer>
 
   <script>
     (function () {
-      // Theme toggle
-      var html = document.documentElement;
-      var themeBtn = document.getElementById("theme-toggle");
-      if (themeBtn) {
-        themeBtn.addEventListener("click", function () {
-          var next = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
-          html.setAttribute("data-theme", next);
-          html.style.colorScheme = next;
-          try { localStorage.setItem("factoid-theme", next); } catch (e) {}
+      'use strict';
+
+      // Theme Management
+      var STORAGE_KEY = 'factoid-theme';
+      var root = document.documentElement;
+      var themeToggleBtn = document.getElementById('theme-toggle');
+      var themeStatusText = document.getElementById('theme-status-text');
+
+      function applyTheme(theme) {
+        root.setAttribute('data-theme', theme);
+        root.style.colorScheme = theme;
+        if (themeToggleBtn) {
+          var nextTheme = theme === 'light' ? 'dark' : 'light';
+          themeToggleBtn.setAttribute('aria-label', 'Switch to ' + nextTheme + ' theme');
+          themeToggleBtn.setAttribute('title', 'Switch to ' + nextTheme + ' theme');
+          if (themeStatusText) {
+            themeStatusText.textContent = theme === 'light' ? 'Theme' : 'Dark';
+          }
+        }
+      }
+
+      var initialTheme = root.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+      applyTheme(initialTheme);
+
+      if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', function () {
+          var activeTheme = root.getAttribute('data-theme') || 'dark';
+          var newTheme = activeTheme === 'light' ? 'dark' : 'light';
+          applyTheme(newTheme);
+          try {
+            localStorage.setItem(STORAGE_KEY, newTheme);
+          } catch (err) {
+            // Local storage unavailable or disabled
+          }
+        });
+      }
+
+      if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
+          try {
+            if (!localStorage.getItem(STORAGE_KEY)) {
+              applyTheme(e.matches ? 'dark' : 'light');
+            }
+          } catch (err) {
+            // Local storage unavailable
+          }
         });
       }
 
       // Mobile navigation
-      var menuBtn = document.getElementById("mobile-menu-btn");
-      var mobileNav = document.getElementById("mobile-nav");
+      var menuBtn = document.getElementById('mobile-menu-btn');
+      var mobileNav = document.getElementById('mobile-nav');
       if (menuBtn && mobileNav) {
-        menuBtn.addEventListener("click", function () {
-          var open = mobileNav.classList.toggle("open");
-          menuBtn.setAttribute("aria-expanded", String(open));
+        menuBtn.addEventListener('click', function () {
+          var open = mobileNav.classList.toggle('open');
+          menuBtn.setAttribute('aria-expanded', String(open));
         });
-        mobileNav.querySelectorAll("a").forEach(function (link) {
-          link.addEventListener("click", function () {
-            mobileNav.classList.remove("open");
-            menuBtn.setAttribute("aria-expanded", "false");
+        mobileNav.querySelectorAll('a').forEach(function (link) {
+          link.addEventListener('click', function () {
+            mobileNav.classList.remove('open');
+            menuBtn.setAttribute('aria-expanded', 'false');
           });
         });
       }
 
-      // Install switcher + copy
-      var installCmds = {
-        github: "uv tool install git+https://github.com/Endgame-Labs/factoid",
-        pypi: "uv tool install factoid"
-      };
-      var installEl = document.getElementById("install-command");
-      var copyBtn = document.getElementById("copy-install");
-      document.querySelectorAll("[data-install]").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          var key = btn.getAttribute("data-install");
-          document.querySelectorAll("[data-install]").forEach(function (b) {
-            b.setAttribute("aria-selected", String(b === btn));
-          });
-          if (installEl && installCmds[key]) {
-            installEl.textContent = installCmds[key];
-          }
-        });
-      });
+      // Copy-to-clipboard functionality
+      var copyBtn = document.getElementById('copy-install-btn');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', function () {
+          var targetId = copyBtn.getAttribute('data-copy-target');
+          var targetElement = targetId ? document.getElementById(targetId) : null;
+          var textToCopy = targetElement ? targetElement.innerText.trim() : 'uv tool install factoid';
 
-      if (copyBtn && installEl) {
-        copyBtn.addEventListener("click", function () {
-          var text = installEl.textContent || "";
-          var done = function () {
-            copyBtn.textContent = "Copied";
-            copyBtn.classList.add("copied");
+          function markCopied() {
+            copyBtn.classList.add('copied');
+            var textNode = copyBtn.querySelector('.copy-text');
+            if (textNode) {
+              textNode.textContent = 'Copied!';
+            }
             setTimeout(function () {
-              copyBtn.textContent = "Copy";
-              copyBtn.classList.remove("copied");
-            }, 1600);
-          };
+              copyBtn.classList.remove('copied');
+              if (textNode) {
+                textNode.textContent = 'Copy';
+              }
+            }, 2000);
+          }
+
           if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(done, done);
+            navigator.clipboard.writeText(textToCopy).then(markCopied).catch(function () {
+              fallbackCopy(textToCopy, markCopied);
+            });
           } else {
-            var ta = document.createElement("textarea");
-            ta.value = text;
-            ta.style.position = "fixed";
-            ta.style.opacity = "0";
-            document.body.appendChild(ta);
-            ta.select();
-            try { document.execCommand("copy"); } catch (e) {}
-            document.body.removeChild(ta);
-            done();
+            fallbackCopy(textToCopy, markCopied);
           }
         });
       }
 
-      // Tabbed panels helper
-      function wireTabs(tabAttr, paneAttr) {
-        var tabs = document.querySelectorAll("[" + tabAttr + "]");
-        var panes = document.querySelectorAll("[" + paneAttr + "]");
-        tabs.forEach(function (tab) {
-          tab.addEventListener("click", function () {
-            var target = tab.getAttribute(tabAttr);
-            tabs.forEach(function (t) {
-              t.setAttribute("aria-selected", String(t === tab));
-            });
-            panes.forEach(function (p) {
-              p.classList.toggle("active", p.getAttribute(paneAttr) === target);
-            });
-          });
-        });
+      function fallbackCopy(text, callback) {
+        var textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.top = '0';
+        textArea.style.left = '0';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          callback();
+        } catch (e) {
+          // Copy failed silently
+        }
+        document.body.removeChild(textArea);
       }
-      wireTabs("data-code-tab", "data-code-pane");
-      wireTabs("data-if-tab", "data-if-pane");
-
-      // Interactive news transcripts benchmark switcher (exact 2026-11-19 numbers from examples/iscrag/README.md)
-      var iscragData = {
-        "512": { facts: "0.92", factsPct: 92, chunks: "0.57", chunksPct: 57, unseen: "0.93" },
-        "2048": { facts: "0.95", factsPct: 95, chunks: "0.87", chunksPct: 87, unseen: "0.95" },
-        "8192": { facts: "0.955", factsPct: 95.5, chunks: "0.945", chunksPct: 94.5, unseen: "0.96" }
-      };
-      var fVal = document.getElementById("iscrag-facts-val");
-      var fBar = document.getElementById("iscrag-facts-bar");
-      var cVal = document.getElementById("iscrag-chunks-val");
-      var cBar = document.getElementById("iscrag-chunks-bar");
-      var uVal = document.getElementById("iscrag-unseen");
-
-      document.querySelectorAll("[data-budget]").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          var key = btn.getAttribute("data-budget");
-          var d = iscragData[key];
-          if (!d) return;
-          document.querySelectorAll("[data-budget]").forEach(function (b) {
-            b.setAttribute("aria-selected", String(b === btn));
-          });
-          if (fVal) fVal.textContent = d.facts;
-          if (fBar) fBar.style.width = d.factsPct + "%";
-          if (cVal) cVal.textContent = d.chunks;
-          if (cBar) cBar.style.width = d.chunksPct + "%";
-          if (uVal) uVal.textContent = d.unseen;
-        });
-      });
     })();
   </script>
 </body>
