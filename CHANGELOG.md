@@ -2,6 +2,13 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.23 (2026-11-23)
+
+- **Costs at list prices.** `prices.json` holds list prices for Jev, Rune, GLM 5.3 Flash, and the Fireworks embedders
+  and reranker, so runs show dollars without setting `price_in` and `price_out`. A replayed call still counts at list
+  price in `full_cost`, so an eval on the cache shows what it would cost fresh, and the scorecards break cost down by
+  step. A mediasum dev run costs about $2.70, of which Jev's decisions are $1.60.
+
 ## 0.1.22 (2026-11-23)
 
 - **Grounded repair is on by default.** A fact that fails `grounded` is trimmed to what its passages say instead of

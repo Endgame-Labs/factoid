@@ -103,9 +103,16 @@ def _echo_calls(total: dict[str, float], cache: Path | None, steps: dict[str, di
     calls, replayed, older = int(total["calls"]), int(total["cache_hits"]), int(total.get("older_hits", 0))
     click.echo(f"model calls: {calls}, {int(total['input_tokens']):,} input tokens, "
                f"{int(total['output_tokens']):,} output tokens")
+    if total.get("full_cost"):
+        partly = "" if total.get("priced", 1) else " (some models have no price in prices.json, so it is low)"
+        fresh = f", ${total['full_cost']:.2f} with nothing replayed" if replayed else ""
+        click.echo(f"  cost at list prices: ${total.get('cost', 0):.2f}{fresh}{partly}")
     if steps and len(steps) > 1:
-        parts = [f"{name} {int(row['calls'])} ({int(row['input_tokens']):,} in)"
-                 for name, row in sorted(steps.items(), key=lambda kv: -kv[1]["input_tokens"])]
+        def part(name: str, row: dict[str, float]) -> str:
+            dollars = f", ${row['full_cost']:.2f}" if row.get("full_cost") else ""
+            return f"{name} {int(row['calls'])} ({int(row['input_tokens']):,} in{dollars})"
+        parts = [part(name, row) for name, row in sorted(steps.items(), key=lambda kv: (-kv[1].get("full_cost", 0),
+                                                                                          -kv[1]["input_tokens"]))]
         click.echo(f"  by step: {', '.join(parts)}")
     if replayed:
         where = f" from {_rel(cache)}" if cache else ""

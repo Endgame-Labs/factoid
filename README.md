@@ -693,6 +693,11 @@ each prompt in the step's fingerprint.
 
 Define models once in `settings.py` with pinned versions. Keys come from `factoid keys`, never from the file.
 
+Factoid prices calls from list prices in `src/factoid/prices.json` (dollars per million tokens, for Jev, Rune, GLM, and
+the Fireworks embedders and reranker). `Model(name, price_in=, price_out=)` overrides them. After `ingest` and `eval`,
+the model calls line shows the cost at list prices, what it would be with nothing replayed, and the cost by step. Jev
+and Rune charge for input tokens only.
+
 ```python
 # settings.py
 from factoid import Model, Settings

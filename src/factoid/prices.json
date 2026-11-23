@@ -1,0 +1,14 @@
+{
+  "about": "List prices in US dollars per million tokens, used to estimate what model calls cost. A Model's own price_in and price_out win over these. cached_input is the price of input the provider served from its prompt cache. Update a price when the provider changes it, with the page it came from and the date it was checked.",
+  "models": {
+    "typesafe/jev-1.13.0": {"input": 0.042, "output": 0.0, "source": "https://docs.typesafe.ai/models", "checked": "2026-11-23"},
+    "typesafe/jev-1.14.0": {"input": 0.042, "output": 0.0, "source": "https://docs.typesafe.ai/models", "checked": "2026-11-23"},
+    "fireworks/rune": {"input": 0.042, "cached_input": 0.008, "output": 0.0, "source": "https://fireworks.ai/models/fireworks/rune", "checked": "2026-11-23"},
+    "fireworks/glm-5p3-flash": {"input": 0.15, "cached_input": 0.03, "output": 0.5, "source": "https://fireworks.ai/models/fireworks/glm-5p3-flash", "checked": "2026-11-23"},
+    "fireworks/glm-5p3": {"input": 1.4, "cached_input": 0.26, "output": 4.4, "source": "https://fireworks.ai/pricing", "checked": "2026-11-23"},
+    "fireworks/kimi-k3p1-pro": {"input": 2.0, "cached_input": 0.2, "output": 10.0, "source": "https://fireworks.ai/pricing", "checked": "2026-11-23"},
+    "fireworks/qwen3-embedding-8b": {"input": 0.1, "output": 0.0, "source": "https://fireworks.ai/models/fireworks/qwen3-embedding-8b", "checked": "2026-11-23"},
+    "fireworks/qwen3-reranker-8b": {"input": 0.2, "output": 0.0, "source": "https://fireworks.ai/models/fireworks/qwen3-reranker-8b", "checked": "2026-11-23"},
+    "fireworks/nomic-ai/nomic-embed-text-v1.5": {"input": 0.008, "output": 0.0, "source": "https://fireworks.ai/pricing", "checked": "2026-11-23"}
+  }
+}

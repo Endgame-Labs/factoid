@@ -39,6 +39,7 @@ __all__ = [
     "Provider",
     "check_models",
     "keys_file",
+    "list_prices",
     "load_keys",
 ]
 
@@ -211,7 +212,7 @@ class Model:
 
     name: str
     params: dict[str, Any] = field(default_factory=dict)
-    price_in: float | None = None  # dollars per million input tokens, when known
+    price_in: float | None = None  # dollars per million input tokens; None looks it up in prices.json
     price_out: float | None = None
 
     def __init__(self, name: str, price_in: float | None = None, price_out: float | None = None, *,
@@ -245,6 +246,18 @@ class Model:
 
     def ready(self) -> bool:
         return bool(self._api_key or self._base_url or self.provider.ready())
+
+    def prices(self) -> tuple[float, float, float] | None:
+        """Dollars per million input, cached input, and output tokens: the prices given in code, else the list
+        prices in `prices.json`. None when neither knows this model."""
+        if self.price_in is not None and self.price_out is not None:
+            return self.price_in, self.price_in, self.price_out
+        listed = list_prices().get(self.name)
+        if listed is None:
+            return None
+        given_in = self.price_in if self.price_in is not None else listed["input"]
+        cached = listed.get("cached_input", listed["input"]) if self.price_in is None else given_in
+        return given_in, cached, self.price_out if self.price_out is not None else listed.get("output", 0.0)
 
     @property
     def provider_name(self) -> str:
@@ -358,32 +371,39 @@ class Meter:
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def add(self, workload: str, *, hit: bool, input_tokens: int, output_tokens: int, seconds: float,
-            cost: float | None, older: bool = False, step: str | None = None) -> None:
-        """`older`: a cache hit saved by a different Factoid (another version or commit)."""
+            cost: float | None, older: bool = False, step: str | None = None, full_cost: float | None = None) -> None:
+        """`cost` is what this call spent: nothing for a replayed one. `full_cost` is what it costs at list prices
+        whether or not it was replayed, so a run on the cache still shows what it would cost fresh. `older`: a cache
+        hit saved by a different Factoid (another version or commit)."""
         with self._lock:
             row = self.steps.setdefault(step or workload, {"calls": 0, "cache_hits": 0, "input_tokens": 0,
-                                                           "output_tokens": 0})
+                                                           "output_tokens": 0, "cost": 0.0, "full_cost": 0.0})
             row["calls"] += 1
             row["cache_hits"] += int(hit)
             row["input_tokens"] += input_tokens
             row["output_tokens"] += output_tokens
+            row["cost"] = row.get("cost", 0.0) + (cost or 0.0)
+            row["full_cost"] = row.get("full_cost", 0.0) + (full_cost or 0.0)
             row = self.rows.setdefault(workload, {"calls": 0, "cache_hits": 0, "older_hits": 0, "input_tokens": 0,
-                                                  "output_tokens": 0, "seconds": 0.0, "cost": 0.0,
+                                                  "output_tokens": 0, "seconds": 0.0, "cost": 0.0, "full_cost": 0.0,
                                                   "priced": 1})
+            row["full_cost"] = row.get("full_cost", 0.0) + (full_cost or 0.0)
             row["calls"] += 1
             row["cache_hits"] += int(hit)
             row["older_hits"] = row.get("older_hits", 0) + int(hit and older)
             row["input_tokens"] += input_tokens
             row["output_tokens"] += output_tokens
             row["seconds"] += seconds
-            if cost is None:
+            if cost is None or (hit and full_cost is None):
                 row["priced"] = 0
             else:
                 row["cost"] += cost
 
     def total(self) -> dict[str, float]:
-        keys = ("calls", "cache_hits", "older_hits", "input_tokens", "output_tokens", "seconds", "cost")
-        return {k: sum(r.get(k, 0) for r in self.rows.values()) for k in keys}
+        keys = ("calls", "cache_hits", "older_hits", "input_tokens", "output_tokens", "seconds", "cost", "full_cost")
+        out = {k: sum(r.get(k, 0) for r in self.rows.values()) for k in keys}
+        out["priced"] = int(all(r.get("priced", 1) for r in self.rows.values()))
+        return out
 
 
 def _retry_after(response: httpx.Response) -> float | None:
@@ -395,10 +415,38 @@ def _retry_after(response: httpx.Response) -> float | None:
         return None
 
 
-def _cost(model: Model, input_tokens: int, output_tokens: int) -> float | None:
-    if model.price_in is None or model.price_out is None:
+_PRICES: dict[str, dict[str, Any]] | None = None
+
+
+def list_prices() -> dict[str, dict[str, Any]]:
+    """The list prices in `prices.json`, by model name, in dollars per million tokens."""
+    global _PRICES
+    if _PRICES is None:
+        _PRICES = json.loads((Path(__file__).parent / "prices.json").read_text())["models"]
+    return _PRICES
+
+
+def _usage(data: dict[str, Any]) -> tuple[int, int, int]:
+    """Input, cached input, and output tokens from a response's usage."""
+    usage = data.get("usage") or {}
+    tokens_in = int(usage.get("input_tokens") or usage.get("prompt_tokens") or 0)
+    cached = int(((usage.get("prompt_tokens_details") or {}).get("cached_tokens")) or 0)
+    tokens_out = int(usage.get("output_tokens") or usage.get("completion_tokens") or 0)
+    return tokens_in, min(cached, tokens_in), tokens_out
+
+
+def _tokens(data: dict[str, Any]) -> tuple[int, int, int]:
+    """`_usage` in `_cost`'s order: input, output, and cached input."""
+    tokens_in, cached, tokens_out = _usage(data)
+    return tokens_in, tokens_out, cached
+
+
+def _cost(model: Model, input_tokens: int, output_tokens: int, cached_tokens: int = 0) -> float | None:
+    prices = model.prices()
+    if prices is None:
         return None
-    return (input_tokens * model.price_in + output_tokens * model.price_out) / 1e6
+    price_in, price_cached, price_out = prices
+    return ((input_tokens - cached_tokens) * price_in + cached_tokens * price_cached + output_tokens * price_out) / 1e6
 
 
 class ModelClient:
@@ -435,6 +483,7 @@ class ModelClient:
             if found is not None:
                 cached, saved_by = found
                 self.meter.add(workload, hit=True, input_tokens=0, output_tokens=0, seconds=0.0, cost=0.0,
+                               full_cost=_cost(model, *_tokens(cached)),
                                older=saved_by != self.log.factoid, step=current_step())
                 return cached, True
         provider = model.provider
@@ -486,13 +535,11 @@ class ModelClient:
             raise ModelError(f"{model.name}: HTTP {response.status_code}: {response.text[:500]}{hint}")
         data = response.json()
         seconds = time.monotonic() - started
-        usage = data.get("usage") or {}
-        tokens_in = int(usage.get("input_tokens") or usage.get("prompt_tokens") or 0)
-        tokens_out = int(usage.get("output_tokens") or usage.get("completion_tokens") or 0)
+        tokens_in, tokens_cached, tokens_out = _usage(data)
         self.log.put(key, workload, model.name, body, data, tokens_in, tokens_out, seconds, step=current_step())
+        cost = _cost(model, tokens_in, tokens_out, tokens_cached)
         self.meter.add(workload, hit=False, input_tokens=tokens_in, output_tokens=tokens_out, seconds=seconds,
-                       step=current_step(),
-                       cost=_cost(model, tokens_in, tokens_out))
+                       step=current_step(), cost=cost, full_cost=cost)
         return data, False
 
     # -- choose: the decision model -------------------------------------------------------------------------

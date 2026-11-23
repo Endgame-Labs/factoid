@@ -542,3 +542,30 @@ def test_decision_questions_keep_the_callers_order(monkeypatch, tmp_path):
     assert sent == ["Is it zeta?", "Is it alpha?", "Is it mid?"]
     client.ask({"x": 1}, {n: Noul(f"Is it {n}?") for n in reversed(names)})  # another order is another request
     assert len(bodies) == 2
+
+
+def test_list_prices_cost_live_and_replayed_calls(monkeypatch, tmp_path):
+    import httpx
+
+    from factoid.models import CallLog, Model, ModelClient, list_prices
+
+    monkeypatch.setenv("FACTOID_HOME", str(tmp_path))
+    monkeypatch.setenv("FIREWORKS_API_KEY", "fw_test")
+    assert list_prices()["typesafe/jev-1.13.0"]["output"] == 0.0
+    assert Model("fireworks/glm-5p3-flash").prices() == (0.15, 0.03, 0.5)
+    assert Model("fireworks/glm-5p3-flash", price_in=1.0, price_out=2.0).prices() == (1.0, 1.0, 2.0)
+    assert Model("fireworks/unknown-model").prices() is None
+
+    usage = {"prompt_tokens": 1_000_000, "completion_tokens": 1_000_000,
+             "prompt_tokens_details": {"cached_tokens": 500_000}}
+    reply = {"choices": [{"message": {"content": "ok"}}], "usage": usage}
+    log = CallLog(tmp_path / "calls.db")
+    client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, log)
+    client._http = httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(200, json=reply)))
+    client.generate("hi")
+    client.generate("hi")  # replayed: spends nothing, but still counts at list price
+    total = client.meter.total()
+    live = 0.5 * 0.15 + 0.5 * 0.03 + 1.0 * 0.5
+    assert total["cost"] == pytest.approx(live)
+    assert total["full_cost"] == pytest.approx(2 * live)
+    assert total["priced"] == 1

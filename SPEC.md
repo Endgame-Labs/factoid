@@ -1352,6 +1352,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
   split it rather than reword it.
 - **Grounded repair** (decision 129): a fact that fails `grounded` gets one repair that trims it to what its passages
   say, on by default. `DecisionFloors(repair_grounded=False)` turns it off.
+- **List prices** (decision 135): `src/factoid/prices.json` holds dollars per million input, cached input, and output
+  tokens by model name, with the page each came from and the date checked. A model's own `price_in` and `price_out`
+  win. The meter keeps `cost` (spent) and `full_cost` (at list price, replayed or not), by workload and by step.
 - **Link threshold** (decision 130): `Entity.link_threshold` is 0.6 by default, down from 0.8.
 - **Repair guidance** (decision 128): `repair_guidance` on a document class, then on a fact class, is shown to the
   repair, and `repair.md.j2` has `guidance` and `references` blocks a project template can replace. Empty by default,
@@ -1385,7 +1388,7 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
   chains. On CUAD contracts 21 to 40, never looked at while tuning, clause F1 was 0.85 (0.82 on the tuning set),
   coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
   supersession 1 of 2. Details are in `examples/legal/README.md`.
-- **PyPI:** 0.1.22 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
+- **PyPI:** 0.1.23 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
 - **Landing page** (decisions 124, 126, and 131): a static page in `site/`, hosted on Netlify at
   https://factoid-landing-page.netlify.app and deployed with the Netlify CLI. `site/README.md` says how to change,
   publish, and roll it back.
@@ -1770,3 +1773,9 @@ All dates are 2026-11-13 unless noted.
      200, NBA facts 4,381 to 4,353, and one of 11 as-of answers lost on amendments_fresh with one gained on
      amendments_heldout. A rule that buys nothing on the evals stays out of everyone's prompt; a project that needs it
      sets `repair_guidance`, as END-10179 does.
+135. Factoid ships list prices in `prices.json` (2026-11-23, Kyle; issue #7). Scorecards showed `cost: 0.0`, so the
+     decision step looked like the biggest cost by tokens alone. At list prices (Jev and Rune $0.042 per million input
+     tokens, output free; GLM 5.3 Flash $0.15 in and $0.50 out) a mediasum dev run costs about $2.70: Jev $1.60 and GLM
+     $1.09. Decisions are the largest share but not most of it, and their real cost is time and Jev's capacity, so issue
+     #7 is about latency and load from here. Replayed calls count at list price in `full_cost`, so an eval on the cache
+     still says what a fresh run would cost.
