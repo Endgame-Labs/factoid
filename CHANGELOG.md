@@ -2,6 +2,12 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## Unreleased
+
+- **A demo app.** `examples/demo` is a sales call and two emails, with a five-check eval. It runs in a minute for
+  under a cent.
+- **Eval cost.** Each suite's summary line gives what its calls cost at list prices, replayed or not.
+
 ## 0.1.24 (2026-11-23)
 
 - **`factoid init` puts the code in `app/`.** A new project gets `app/settings.py`, `app/documents.py`, and the rest,

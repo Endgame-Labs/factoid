@@ -1197,7 +1197,8 @@ def eval_(suites: tuple[str, ...], vary: tuple[str, ...], limit: int | None, fre
         click.echo(f"{result.suite} / {result.variant.name}: {result.documents} docs, {result.facts} facts, "
                    f"{result.rejected} rejected, {int(total['calls'])} calls ({int(total['cache_hits'])} replayed), "
                    f"{int(total['input_tokens'] + total['output_tokens'])} tokens, "
-                   f"p50 {result.latency.get('p50_doc_s', 0)}s/doc")
+                   + (f"{_dollars(total.get('full_cost', 0))} at list prices fresh, " if total.get("full_cost") else "")
+                   + f"p50 {result.latency.get('p50_doc_s', 0)}s/doc")
         for note, count in result.skipped_evals.items():
             click.echo(f"    (fact eval skipped on {count} facts: {note})")
         older = int(total.get("older_hits", 0))

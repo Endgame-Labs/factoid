@@ -1070,8 +1070,8 @@ published papers by Kyle Wild, Yusuke Takahashi, and Asako Uraki.
 - [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) has every design decision, how settled each one
   is, and what is built (section 17).
 - [docs/cli.md](https://github.com/Endgame-Labs/factoid/blob/main/docs/cli.md) is the command reference.
-- [examples/](https://github.com/Endgame-Labs/factoid/tree/main/examples/) has three apps: `legal` (contracts and
-  amendments), `nba` (game recaps and box scores), and `mediasum` (news transcripts, with a question-answering eval). Each
-  has a README with its eval results.
+- [examples/](https://github.com/Endgame-Labs/factoid/tree/main/examples/) has four apps: `demo` (a sales call and two
+  emails, the place to start: it runs in a minute for under a cent), `legal` (contracts and amendments), `nba` (game
+  recaps and box scores), and `mediasum` (news transcripts, with a question-answering eval). Each has a README.
 - [docs/archive/](https://github.com/Endgame-Labs/factoid/tree/main/docs/archive/) holds docs from an earlier design; do
   not follow them.

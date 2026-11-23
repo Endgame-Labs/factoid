@@ -1,0 +1,19 @@
+[00:12] Maya Lin: Thanks for making time this afternoon, Elena and Samir. I want to walk through your timeline, pricing, and security checklist so we leave with clear next steps.
+
+[00:46] Elena Ortiz: Sure, happy to jump in. Our nightly billing pipelines on Redshift are missing their 6:00 AM SLA about three times a week, so leadership wants us off it soon. Right now we are targeting December 1, 2026 to cut over to a new analytics platform.
+
+[01:38] Devon Brooks: Got it, that helps frame the migration. How many people will need access in the first wave?
+
+[02:05] Elena Ortiz: We are planning on 45 analyst seats for the initial rollout, and we need annual fixed pricing rather than metered billing. Finance hates surprise overage invoices at quarter end.
+
+[02:51] Maya Lin: That fits our Enterprise tier. For Enterprise, pricing is $96,000 a year for 45 seats, and that includes SAML SSO and full audit logs.
+
+[04:10] Samir Patel: Before legal can countersign anything, we need your current SOC 2 Type II report. We also require customer-managed encryption keys in AWS KMS for any production patient-billing data. Our internal security review usually takes three weeks once those docs land.
+
+[05:24] Samir Patel: One quick flag on scope before we go further. Finance only approved 30 analyst seats for the initial rollout in this morning's budget check, not 45.
+
+[06:18] Elena Ortiz: Fair point, Samir. I will reconcile the seat count with finance after this call. And with a three-week security review plus the December freeze, let's move our target cutover date to January 18, 2027.
+
+[07:02] Devon Brooks: I will send our SOC 2 Type II report and AWS KMS architecture brief to Samir by this Friday. Let me know if your team wants a sandbox before then.
+
+[07:35] Maya Lin: Sounds good, thanks both of you. I will follow up with a recap email later today.
