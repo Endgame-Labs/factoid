@@ -78,7 +78,9 @@ You can also roll back in the dashboard: open Deploys, pick a deploy, and click 
 
 The page states facts about Factoid. Keep them in step with the README:
 
-- The version line (0.1.x), the Python version (3.13+), and the license (MIT).
+- The version: each `data-version` span holds the latest release as a fallback, and the page replaces it with
+  PyPI's latest version when it loads. Update the fallback when you release.
+- The Python version (3.13+) and the license (MIT).
 - The install command: `uv tool install factoid`.
 - The news transcripts result: 0.92 for facts at 512 tokens, 0.87 for chunks at 2,048, and even at 8,192. If
   `examples/iscrag` publishes new numbers, update the page.
