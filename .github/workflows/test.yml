@@ -12,4 +12,5 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: uv run --frozen pytest -q
-      - run: uv run --frozen ruff check src tests examples
+      - run: uv run --frozen ruff check src tests examples site
+      - run: uv run --frozen --project site python site/app.py build

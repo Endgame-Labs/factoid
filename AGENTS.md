@@ -34,7 +34,7 @@ Requires Python 3.13 or later, managed by `uv`.
 ```sh
 uv sync                              # install
 uv run pytest                        # about 80 tests, under two seconds, no network: tests use fake models
-uv run ruff check src tests examples # must pass; settings in pyproject.toml
+uv run ruff check src tests examples site # must pass; settings in pyproject.toml
 uv run factoid --help
 ```
 
@@ -62,8 +62,9 @@ To try a change end to end, make a project in a scratch folder with `uv run --pr
 - `scaffold.py`: what `factoid init` writes
 - `prompts/`: the built-in Jinja prompts
 
-The landing page's source is in `site/`, hosted on GitHub Pages. A push to `main` that changes `site/` publishes it
-(`.github/workflows/pages.yml`), so check the page before you push. `site/README.md` has the details.
+The landing site's source is in `site/`: Jinja templates that share one header, nav, and footer, served by Flask while
+you work and built to self-contained static pages. A push to `main` that changes `site/` builds and publishes it to
+GitHub Pages (`.github/workflows/pages.yml`), so check the pages before you push. `site/README.md` has the details.
 
 Example apps in `examples/` have their own `pyproject.toml` and run against this checkout. Their eval suites call real
 models and cost money; run them only when asked.

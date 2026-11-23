@@ -1393,9 +1393,10 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
 - **Default decision model** (decision 139): `typesafe/jev-1.14.0`, in `settings.py`, the `jev` preset, and the
   example apps.
 - **PyPI:** 0.1.26 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
-- **Landing page** (decisions 124, 126, 131, and 136): a static page in `site/`, hosted on GitHub Pages at
-  https://endgame-labs.github.io/factoid/ and published by `.github/workflows/pages.yml` on every push to `main` that
-  changes it. `site/README.md` says how to change, publish, and roll it back. A second page, `what-is-a-fact.html`,
+- **Landing page** (decisions 124, 126, 131, 136, and 141): Jinja templates in `site/` with one shared header, nav, and
+  footer, served by Flask while you work and built to self-contained static pages (`site/app.py`). Hosted on GitHub
+  Pages at https://endgame-labs.github.io/factoid/; `.github/workflows/pages.yml` builds and publishes it on every
+  push to `main` that changes it. `site/README.md` says how to change, publish, and roll it back. A second page, `what-is-a-fact.html`,
   shows a call beside the facts Factoid kept from it, from `examples/demo`'s real output (decision 138).
 - **Example layout** (decision 125): each example app keeps its code in `app/` (`settings.py`, `documents.py`,
   `entities.py`, and `facts.py`), with `package = "app"` under `[tool.factoid]`, so every example looks the same. Its
@@ -1816,3 +1817,10 @@ All dates are 2026-11-13 unless noted.
      as-of 100%, and CUAD unchanged (F1 0.80, AUPR 0.92; Jev 1.14 0.83 and 0.94). Rune still misses a supersession
      Jev finds on the tuning chain and the NBA "standings replaced" check. The `fireworks` preset stays experimental
      while CUAD trails.
+141. The landing site is built from Jinja templates (Kyle, 2026-11-23: the nav was not shared between the pages, and
+     should be part of a build). `site/app.py` is a small Flask app: every page extends `templates/base.html`, which
+     holds the header, nav, and footer, and the nav and footer links are lists in `app.py`. `python site/app.py
+     build` renders each page to one self-contained HTML file in `site/dist/` with its CSS and JavaScript inline, and
+     the Pages workflow publishes that. The version comes from `pyproject.toml`, so releases no longer edit the site
+     by hand. The "What is a fact?" page's data is `site/data/demo.json`. The built home page is pixel for pixel the
+     same as the hand-written one; the "What is a fact?" page now has the home page's nav and footer.

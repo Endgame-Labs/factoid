@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}What is a fact? — Factoid{% endblock %}
+{% block description %}Interactive demo showing how Factoid turns a call transcript into short, self-contained facts tied to exact source quotes, linked entities, traits, and resolution status.{% endblock %}
+{% block styles %}{{ asset("fact.css") }}{% endblock %}
+{% block content %}
+  <main>
+    <section class="page-intro">
+      <div class="container">
+        <div class="pill-row">
+          <span class="pill pill-accent">Interactive demo</span>
+          <span class="pill">Real output</span>
+        </div>
+        <h1 class="page-title">What is a fact?</h1>
+        <p class="page-lead">
+          In Factoid, a fact is one short, self-contained sentence with no filler, no unresolved pronouns, and no typed
+          fields. Each fact keeps source quotes (with who said them and when), links to the entities it is about,
+          traits, and time properties. When a later passage updates or disagrees with an earlier one, Factoid resolves
+          the pair on write, retiring superseded facts or flagging contradictions.
+        </p>
+        <p class="page-lead" style="margin-top:12px">
+          Below are the facts Factoid kept from a made-up sales call, as they stand after two emails that followed it.
+          This is real output from
+          <a href="https://github.com/Endgame-Labs/factoid/tree/main/examples/demo" target="_blank" rel="noopener noreferrer">examples/demo</a>,
+          which you can run yourself for under a cent. Factoid cites the turn a fact came from; this page highlights
+          the sentences in that turn that share words with the fact.
+        </p>
+      </div>
+    </section>
+
+    <section class="demo-section" aria-label="Passage and extracted facts demo">
+      <div class="container">
+        <div class="demo-toolbar">
+          <div class="demo-toolbar-left">
+            <p class="demo-hint" id="demo-hint">
+              Hover or click any fact to highlight its quotes in the transcript. Hover or click a highlighted
+              sentence to see every fact that cites it.
+            </p>
+          </div>
+          <div class="selection-status">
+            <span id="selection-label">No selection pinned</span>
+            <button id="clear-selection" class="clear-btn" type="button" hidden>Clear selection</button>
+          </div>
+        </div>
+
+        <div class="demo-grid">
+          <section class="pane" aria-label="Source call transcript">
+            <div class="pane-header">
+              <div class="pane-title-group">
+                <h2 class="pane-title">
+                  <span>Source passage</span>
+                  <span class="badge badge-muted" id="doc-class-badge">CallTranscript</span>
+                </h2>
+                <p class="pane-subtitle" id="doc-subtitle"></p>
+              </div>
+              <div class="pane-counts" id="passage-counts"></div>
+            </div>
+            <div class="pane-body" id="passage-scroller">
+              <div class="call-meta" id="call-meta"></div>
+              <div class="turns-list" id="turns-list"></div>
+            </div>
+          </section>
+
+          <section class="pane" aria-label="Extracted facts">
+            <div class="pane-header">
+              <div class="pane-title-group">
+                <h2 class="pane-title">
+                  <span>Extracted facts</span>
+                  <span class="badge badge-ok" id="facts-count-badge"></span>
+                </h2>
+                <p class="pane-subtitle">Resolved on write · quotes attached in code</p>
+              </div>
+              <div class="pane-counts" id="facts-counts"></div>
+            </div>
+            <div class="pane-body" id="facts-scroller">
+              <div class="facts-list" id="facts-list"></div>
+            </div>
+          </section>
+        </div>
+
+        <div class="legend-row" aria-label="Demo legend">
+          <span class="legend-item">
+            <span class="legend-swatch legend-swatch-cited" aria-hidden="true"></span>
+            <span>Sentence cited by one or more facts</span>
+          </span>
+          <span class="legend-item">
+            <span class="legend-swatch legend-swatch-plain" aria-hidden="true"></span>
+            <span>Plain sentence (no fact cites it)</span>
+          </span>
+          <span class="legend-item">
+            <span class="badge badge-blue">superseded</span>
+            <span>Replaced by a later turn</span>
+          </span>
+          <span class="legend-item">
+            <span class="badge badge-warn">contradicted</span>
+            <span>Disagrees with another stored fact</span>
+          </span>
+        </div>
+      </div>
+    </section>
+  </main>
+{% endblock %}
+{% block data %}<script>var DEMO_DATA = {{ demo|tojson }};</script>{% endblock %}
+{% block scripts %}{{ asset("fact.js") }}{% endblock %}

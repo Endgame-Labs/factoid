@@ -1,0 +1,745 @@
+{
+  "document": {
+    "id": "doc_0618c91f77cd03bc",
+    "title": "Kestrel Health and Northstar Data: technical and commercial review",
+    "documentClass": "CallTranscript",
+    "sourceDatetime": "2026-10-14T16:00:00Z",
+    "sourceDateLabel": "Wed, Oct 14, 2026 · 16:00 UTC",
+    "sampleNote": "Real Factoid output from examples/demo",
+    "participants": [
+      "Maya Lin (Northstar Data)",
+      "Devon Brooks (Northstar Data)",
+      "Elena Ortiz (Kestrel Health)",
+      "Samir Patel (Kestrel Health)"
+    ]
+  },
+  "turns": [
+    {
+      "id": "t1",
+      "speaker": "Maya Lin",
+      "role": "account executive, Northstar Data",
+      "side": "vendor",
+      "timestamp": "00:12",
+      "sentences": [
+        {
+          "id": "s1-1",
+          "text": "Thanks for making time this afternoon, Elena and Samir."
+        },
+        {
+          "id": "s1-2",
+          "text": "I want to walk through your timeline, pricing, and security checklist so we leave with clear next steps."
+        }
+      ]
+    },
+    {
+      "id": "t2",
+      "speaker": "Elena Ortiz",
+      "role": "VP of Data Platform, Kestrel Health",
+      "side": "customer",
+      "timestamp": "00:46",
+      "sentences": [
+        {
+          "id": "s2-1",
+          "text": "Sure, happy to jump in."
+        },
+        {
+          "id": "s2-2",
+          "text": "Our nightly billing pipelines on Redshift are missing their 6:00 AM SLA about three times a week, so leadership wants us off it soon."
+        },
+        {
+          "id": "s2-3",
+          "text": "Right now we are targeting December 1, 2026 to cut over to a new analytics platform."
+        }
+      ]
+    },
+    {
+      "id": "t3",
+      "speaker": "Devon Brooks",
+      "role": "solutions engineer, Northstar Data",
+      "side": "vendor",
+      "timestamp": "01:38",
+      "sentences": [
+        {
+          "id": "s3-1",
+          "text": "Got it, that helps frame the migration."
+        },
+        {
+          "id": "s3-2",
+          "text": "How many people will need access in the first wave?"
+        }
+      ]
+    },
+    {
+      "id": "t4",
+      "speaker": "Elena Ortiz",
+      "role": "VP of Data Platform, Kestrel Health",
+      "side": "customer",
+      "timestamp": "02:05",
+      "sentences": [
+        {
+          "id": "s4-1",
+          "text": "We are planning on 45 analyst seats for the initial rollout, and we need annual fixed pricing rather than metered billing."
+        },
+        {
+          "id": "s4-2",
+          "text": "Finance hates surprise overage invoices at quarter end."
+        }
+      ]
+    },
+    {
+      "id": "t5",
+      "speaker": "Maya Lin",
+      "role": "account executive, Northstar Data",
+      "side": "vendor",
+      "timestamp": "02:51",
+      "sentences": [
+        {
+          "id": "s5-1",
+          "text": "That fits our Enterprise tier."
+        },
+        {
+          "id": "s5-2",
+          "text": "For Enterprise, pricing is $96,000 a year for 45 seats, and that includes SAML SSO and full audit logs."
+        }
+      ]
+    },
+    {
+      "id": "t6",
+      "speaker": "Samir Patel",
+      "role": "Head of Security, Kestrel Health",
+      "side": "customer",
+      "timestamp": "04:10",
+      "sentences": [
+        {
+          "id": "s6-1",
+          "text": "Before legal can countersign anything, we need your current SOC 2 Type II report."
+        },
+        {
+          "id": "s6-2",
+          "text": "We also require customer-managed encryption keys in AWS KMS for any production patient-billing data."
+        },
+        {
+          "id": "s6-3",
+          "text": "Our internal security review usually takes three weeks once those docs land."
+        }
+      ]
+    },
+    {
+      "id": "t7",
+      "speaker": "Samir Patel",
+      "role": "Head of Security, Kestrel Health",
+      "side": "customer",
+      "timestamp": "05:24",
+      "sentences": [
+        {
+          "id": "s7-1",
+          "text": "One quick flag on scope before we go further."
+        },
+        {
+          "id": "s7-2",
+          "text": "Finance only approved 30 analyst seats for the initial rollout in this morning's budget check, not 45."
+        }
+      ]
+    },
+    {
+      "id": "t8",
+      "speaker": "Elena Ortiz",
+      "role": "VP of Data Platform, Kestrel Health",
+      "side": "customer",
+      "timestamp": "06:18",
+      "sentences": [
+        {
+          "id": "s8-1",
+          "text": "Fair point, Samir."
+        },
+        {
+          "id": "s8-2",
+          "text": "I will reconcile the seat count with finance after this call."
+        },
+        {
+          "id": "s8-3",
+          "text": "And with a three-week security review plus the December freeze, let's move our target cutover date to January 18, 2027."
+        }
+      ]
+    },
+    {
+      "id": "t9",
+      "speaker": "Devon Brooks",
+      "role": "solutions engineer, Northstar Data",
+      "side": "vendor",
+      "timestamp": "07:02",
+      "sentences": [
+        {
+          "id": "s9-1",
+          "text": "I will send our SOC 2 Type II report and AWS KMS architecture brief to Samir by this Friday."
+        },
+        {
+          "id": "s9-2",
+          "text": "Let me know if your team wants a sandbox before then."
+        }
+      ]
+    },
+    {
+      "id": "t10",
+      "speaker": "Maya Lin",
+      "role": "account executive, Northstar Data",
+      "side": "vendor",
+      "timestamp": "07:35",
+      "sentences": [
+        {
+          "id": "s10-1",
+          "text": "Sounds good, thanks both of you."
+        },
+        {
+          "id": "s10-2",
+          "text": "I will follow up with a recap email later today."
+        }
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "id": "fact_01",
+      "sentence": "Elena Ortiz said that Kestrel Health's nightly billing pipelines on Redshift miss their 6:00 AM SLA about three times a week.",
+      "factClass": "CustomerFact",
+      "traits": [
+        "PainPoint",
+        "Timeline"
+      ],
+      "status": "current",
+      "quotes": [
+        {
+          "sentenceId": "s2-2",
+          "speaker": "Elena Ortiz",
+          "timestamp": "00:46"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Kestrel Health",
+          "kind": "Company",
+          "role": "subject"
+        },
+        {
+          "name": "Elena Ortiz",
+          "kind": "Person",
+          "role": "speaker"
+        },
+        {
+          "name": "Redshift",
+          "kind": "Product",
+          "role": "about"
+        }
+      ],
+      "time": {
+        "validFrom": "2026-10-14",
+        "expires": "estimated"
+      }
+    },
+    {
+      "id": "fact_02",
+      "sentence": "Elena Ortiz said that Kestrel Health leadership wants Kestrel Health off Redshift soon.",
+      "factClass": "CustomerFact",
+      "traits": [
+        "PainPoint",
+        "Timeline"
+      ],
+      "status": "current",
+      "quotes": [
+        {
+          "sentenceId": "s2-2",
+          "speaker": "Elena Ortiz",
+          "timestamp": "00:46"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Kestrel Health",
+          "kind": "Company",
+          "role": "subject"
+        },
+        {
+          "name": "Elena Ortiz",
+          "kind": "Person",
+          "role": "speaker"
+        },
+        {
+          "name": "Redshift",
+          "kind": "Product",
+          "role": "about"
+        }
+      ],
+      "time": {
+        "validFrom": "2026-10-14",
+        "expires": "at_deadline"
+      }
+    },
+    {
+      "id": "fact_03",
+      "sentence": "Elena Ortiz said that Kestrel Health is targeting December 1, 2026 to cut over to a new analytics platform.",
+      "factClass": "CustomerFact",
+      "traits": [
+        "Timeline",
+        "Commitment"
+      ],
+      "status": "superseded",
+      "quotes": [
+        {
+          "sentenceId": "s2-3",
+          "speaker": "Elena Ortiz",
+          "timestamp": "00:46"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Kestrel Health",
+          "kind": "Company",
+          "role": "subject"
+        },
+        {
+          "name": "Elena Ortiz",
+          "kind": "Person",
+          "role": "speaker"
+        },
+        {
+          "name": "Redshift",
+          "kind": "Product",
+          "role": "about"
+        }
+      ],
+      "time": {
+        "validFrom": "2026-10-14",
+        "validUntil": "2026-10-14",
+        "expires": "at_deadline"
+      },
+      "relation": {
+        "type": "superseded",
+        "targetFactId": "fact_13",
+        "label": "superseded by fact_13"
+      }
+    },
+    {
+      "id": "fact_04",
+      "sentence": "Elena Ortiz said that Kestrel Health needs annual fixed pricing rather than metered billing because Kestrel Health's finance team dislikes surprise overage invoices at quarter end.",
+      "factClass": "CustomerFact",
+      "traits": [
+        "PainPoint",
+        "Pricing"
+      ],
+      "status": "current",
+      "quotes": [
+        {
+          "sentenceId": "s4-1",
+          "speaker": "Elena Ortiz",
+          "timestamp": "02:05"
+        },
+        {
+          "sentenceId": "s4-2",
+          "speaker": "Elena Ortiz",
+          "timestamp": "02:05"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Elena Ortiz",
+          "kind": "Person",
+          "role": "speaker"
+        },
+        {
+          "name": "Kestrel Health",
+          "kind": "Company",
+          "role": "about"
+        }
+      ],
+      "time": {
+        "validFrom": "2026-10-14",
+        "expires": "estimated"
+      }
+    },
+    {
+      "id": "fact_05",
+      "sentence": "Elena Ortiz said that Kestrel Health planned 45 analyst seats for the initial rollout of the new analytics platform.",
+      "factClass": "CustomerFact",
+      "traits": [
+        "Pricing"
+      ],
+      "status": "current",
+      "quotes": [
+        {
+          "sentenceId": "s4-1",
+          "speaker": "Elena Ortiz",
+          "timestamp": "02:05"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Elena Ortiz",
+          "kind": "Person",
+          "role": "speaker"
+        },
+        {
+          "name": "Kestrel Health",
+          "kind": "Company",
+          "role": "about"
+        }
+      ],
+      "time": {
+        "validFrom": "2026-10-14",
+        "expires": "estimated"
+      }
+    },
+    {
+      "id": "fact_06",
+      "sentence": "Maya Lin, the account executive at Northstar Data, said that Northstar Data's Enterprise tier includes SAML SSO and full audit logs.",
+      "factClass": "VendorFact",
+      "traits": [
+        "Pricing",
+        "SecurityRequirement"
+      ],
+      "status": "current",
+      "quotes": [
+        {
+          "sentenceId": "s5-1",
+          "speaker": "Maya Lin",
+          "timestamp": "02:51"
+        },
+        {
+          "sentenceId": "s5-2",
+          "speaker": "Maya Lin",
+          "timestamp": "02:51"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Maya Lin",
+          "kind": "Person",
+          "role": "speaker"
+        },
+        {
+          "name": "Northstar Data",
+          "kind": "Company",
+          "role": "about"
+        },
+        {
+          "name": "Enterprise tier",
+          "kind": "Product",
+          "role": "subject"
+        }
+      ],
+      "time": {
+        "validFrom": "2026-10-14",
+        "expires": "estimated"
+      }
+    },
+    {
+      "id": "fact_07",
+      "sentence": "Maya Lin, the account executive at Northstar Data, said that Northstar Data's Enterprise tier pricing is $96,000 a year for 45 seats.",
+      "factClass": "VendorFact",
+      "traits": [
+        "Pricing"
+      ],
+      "status": "current",
+      "quotes": [
+        {
+          "sentenceId": "s5-1",
+          "speaker": "Maya Lin",
+          "timestamp": "02:51"
+        },
+        {
+          "sentenceId": "s5-2",
+          "speaker": "Maya Lin",
+          "timestamp": "02:51"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Maya Lin",
+          "kind": "Person",
+          "role": "speaker"
+        },
+        {
+          "name": "Northstar Data",
+          "kind": "Company",
+          "role": "about"
+        },
+        {
+          "name": "Enterprise tier",
+          "kind": "Product",
+          "role": "subject"
+        }
+      ],
+      "time": {
+        "validFrom": "2026-10-14",
+        "expires": "estimated"
+      }
+    },
+    {
+      "id": "fact_08",
+      "sentence": "Samir Patel said that Kestrel Health requires Northstar Data's current SOC 2 Type II report before Kestrel Health's legal team can countersign anything.",
+      "factClass": "CustomerFact",
+      "traits": [
+        "SecurityRequirement"
+      ],
+      "status": "current",
+      "quotes": [
+        {
+          "sentenceId": "s6-1",
+          "speaker": "Samir Patel",
+          "timestamp": "04:10"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Samir Patel",
+          "kind": "Person",
+          "role": "speaker"
+        },
+        {
+          "name": "Kestrel Health",
+          "kind": "Company",
+          "role": "about"
+        },
+        {
+          "name": "Northstar Data",
+          "kind": "Company",
+          "role": "about"
+        },
+        {
+          "name": "SOC 2 Type II report",
+          "kind": "Entity",
+          "role": "subject"
+        }
+      ],
+      "time": {
+        "validFrom": "2026-10-14",
+        "expires": "estimated"
+      }
+    },
+    {
+      "id": "fact_09",
+      "sentence": "Samir Patel said that Kestrel Health requires customer-managed encryption keys in AWS KMS for any production patient-billing data.",
+      "factClass": "CustomerFact",
+      "traits": [
+        "SecurityRequirement"
+      ],
+      "status": "current",
+      "quotes": [
+        {
+          "sentenceId": "s6-2",
+          "speaker": "Samir Patel",
+          "timestamp": "04:10"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Samir Patel",
+          "kind": "Person",
+          "role": "speaker"
+        },
+        {
+          "name": "Kestrel Health",
+          "kind": "Company",
+          "role": "about"
+        },
+        {
+          "name": "AWS KMS",
+          "kind": "Product",
+          "role": "subject"
+        },
+        {
+          "name": "AWS KMS architecture brief",
+          "kind": "Entity",
+          "role": "about"
+        }
+      ],
+      "time": {
+        "validFrom": "2026-10-14",
+        "expires": "estimated"
+      }
+    },
+    {
+      "id": "fact_10",
+      "sentence": "Samir Patel said that Kestrel Health's internal security review usually takes three weeks once the required documents are received.",
+      "factClass": "CustomerFact",
+      "traits": [],
+      "status": "current",
+      "quotes": [
+        {
+          "sentenceId": "s6-3",
+          "speaker": "Samir Patel",
+          "timestamp": "04:10"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Samir Patel",
+          "kind": "Person",
+          "role": "speaker"
+        },
+        {
+          "name": "Kestrel Health",
+          "kind": "Company",
+          "role": "subject"
+        }
+      ],
+      "time": {
+        "validFrom": "2026-10-14",
+        "expires": "estimated"
+      }
+    },
+    {
+      "id": "fact_11",
+      "sentence": "Samir Patel said that Kestrel Health's finance team only approved 30 analyst seats for the initial rollout in the morning of October 14, 2026 budget check, not 45.",
+      "factClass": "CustomerFact",
+      "traits": [
+        "Pricing"
+      ],
+      "status": "current",
+      "quotes": [
+        {
+          "sentenceId": "s7-2",
+          "speaker": "Samir Patel",
+          "timestamp": "05:24"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Samir Patel",
+          "kind": "Person",
+          "role": "speaker"
+        },
+        {
+          "name": "Kestrel Health",
+          "kind": "Company",
+          "role": "about"
+        }
+      ],
+      "time": {
+        "validFrom": "2026-10-14",
+        "expires": "never"
+      }
+    },
+    {
+      "id": "fact_12",
+      "sentence": "Elena Ortiz said she would reconcile the seat count with Kestrel Health's finance team after the call of October 14, 2026.",
+      "factClass": "VendorFact",
+      "traits": [
+        "Pricing",
+        "Commitment"
+      ],
+      "status": "current",
+      "quotes": [
+        {
+          "sentenceId": "s8-2",
+          "speaker": "Elena Ortiz",
+          "timestamp": "06:18"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Elena Ortiz",
+          "kind": "Person",
+          "role": "speaker"
+        },
+        {
+          "name": "Kestrel Health",
+          "kind": "Company",
+          "role": "about"
+        }
+      ],
+      "time": {
+        "validFrom": "2026-10-14",
+        "expires": "never"
+      }
+    },
+    {
+      "id": "fact_13",
+      "sentence": "Elena Ortiz said that Kestrel Health would move its target cutover date to January 18, 2027, given the three-week security review and the December freeze.",
+      "factClass": "CustomerFact",
+      "traits": [
+        "Timeline",
+        "SecurityRequirement",
+        "Commitment"
+      ],
+      "status": "current",
+      "quotes": [
+        {
+          "sentenceId": "s8-3",
+          "speaker": "Elena Ortiz",
+          "timestamp": "06:18"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Elena Ortiz",
+          "kind": "Person",
+          "role": "speaker"
+        },
+        {
+          "name": "Kestrel Health",
+          "kind": "Company",
+          "role": "subject"
+        }
+      ],
+      "time": {
+        "validFrom": "2026-10-14",
+        "validUntil": "2027-01-18",
+        "expires": "at_deadline"
+      },
+      "relation": {
+        "type": "supersedes",
+        "targetFactId": "fact_03",
+        "label": "supersedes fact_03"
+      }
+    },
+    {
+      "id": "fact_14",
+      "sentence": "Devon Brooks said he would send Northstar Data's SOC 2 Type II report and AWS KMS architecture brief to Samir Patel by this Friday.",
+      "factClass": "VendorFact",
+      "traits": [
+        "SecurityRequirement",
+        "Commitment"
+      ],
+      "status": "current",
+      "quotes": [
+        {
+          "sentenceId": "s9-1",
+          "speaker": "Devon Brooks",
+          "timestamp": "07:02"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Devon Brooks",
+          "kind": "Person",
+          "role": "speaker"
+        },
+        {
+          "name": "Northstar Data",
+          "kind": "Company",
+          "role": "about"
+        },
+        {
+          "name": "Samir Patel",
+          "kind": "Person",
+          "role": "about"
+        },
+        {
+          "name": "SOC 2 Type II report",
+          "kind": "Entity",
+          "role": "subject"
+        },
+        {
+          "name": "AWS KMS architecture brief",
+          "kind": "Entity",
+          "role": "subject"
+        }
+      ],
+      "time": {
+        "validFrom": "2026-10-14",
+        "validUntil": "2026-10-16",
+        "expires": "at_deadline"
+      }
+    }
+  ]
+}

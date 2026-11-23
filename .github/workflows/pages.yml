@@ -1,10 +1,11 @@
 name: landing page
 
-# Publishes site/ to GitHub Pages (https://endgame-labs.github.io/factoid/) on every push to main that changes it.
+# Builds site/ (Jinja templates, see site/app.py) to self-contained static pages and publishes them to GitHub Pages
+# (https://endgame-labs.github.io/factoid/) on every push to main that changes the site or the version.
 on:
   push:
     branches: [main]
-    paths: ["site/**", ".github/workflows/pages.yml"]
+    paths: ["site/**", "pyproject.toml", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -24,9 +25,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv run --project site python site/app.py build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: site/dist
       - id: deployment
         uses: actions/deploy-pages@v4

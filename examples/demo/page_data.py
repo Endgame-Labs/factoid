@@ -1,10 +1,10 @@
 """Writes the call's real Factoid output as the data for the landing site's "What is a fact?" page.
 
-Run it after ingesting all three documents (see README.md):
+Run it after ingesting all three documents (see README.md), then build the site:
 
-    uv run python page_data.py ../../site/what-is-a-fact.html
+    uv run python page_data.py ../../site/data/demo.json
 
-It replaces the page's `DEMO_DATA` object with the call's turns and its facts as they stand after the emails: their
+It writes the call's turns and its facts as they stand after the emails: their
 text, class, traits, status, relations, quotes, entities, and dates. Factoid cites a whole turn; the page highlights
 the sentences in that turn that share at least two words with the fact, and says so. A cited turn with no such
 sentence is left out.
@@ -47,7 +47,7 @@ def day(value: str | None) -> str | None:
     return value[:10] if value else None
 
 
-def main(page: Path) -> None:
+def main(out: Path) -> None:
     app = load(HERE).app()
     meta = json.loads((HERE / (CALL + ".meta.json")).read_text())
     who = people(meta["participants"])
@@ -121,34 +121,8 @@ def main(page: Path) -> None:
         "turns": turns,
         "facts": facts,
     }
-    text = page.read_text()
-    start = text.index("var DEMO_DATA = ")
-    end = _object_end(text, start + len("var DEMO_DATA = "))
-    block = json.dumps(data, indent=2, ensure_ascii=False).replace("\n", "\n      ")
-    page.write_text(text[:start] + "var DEMO_DATA = " + block + text[end:])
-    print(f"{page}: {len(turns)} turns, {len(facts)} facts")
-
-
-def _object_end(text: str, at: int) -> int:
-    """The index just after the object literal that starts at `at`, skipping braces inside strings."""
-    depth, quote, i = 0, None, at
-    while i < len(text):
-        c = text[i]
-        if quote:
-            if c == "\\":
-                i += 1
-            elif c == quote:
-                quote = None
-        elif c in "\"'":
-            quote = c
-        elif c == "{":
-            depth += 1
-        elif c == "}":
-            depth -= 1
-            if depth == 0:
-                return i + 1
-        i += 1
-    raise ValueError("DEMO_DATA has no end")
+    out.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+    print(f"{out}: {len(turns)} turns, {len(facts)} facts")
 
 
 if __name__ == "__main__":

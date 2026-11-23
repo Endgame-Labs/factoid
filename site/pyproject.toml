@@ -1,0 +1,9 @@
+[project]
+name = "factoid-site"
+version = "0"
+description = "The Factoid landing site: Jinja templates, built to static pages"
+requires-python = ">=3.13"
+dependencies = ["flask>=3.1"]
+
+[tool.uv]
+package = false

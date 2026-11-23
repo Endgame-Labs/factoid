@@ -1,28 +1,63 @@
-# Landing page
+# Landing site
 
-The landing page at https://endgame-labs.github.io/factoid/ is one static file (`index.html`, with its CSS and
-JavaScript inline) with no build step, no backend, and no analytics. This folder is its source. GitHub Pages hosts it.
+The landing site at https://endgame-labs.github.io/factoid/ is built from this folder. Its pages are Jinja templates
+that extend one base template, so the header, nav, and footer are written once. Flask serves them while you work. The
+build renders each page to one self-contained HTML file in `dist/`, with its CSS and JavaScript inline, and GitHub
+Pages hosts those files. There is no backend and no analytics.
+
+```text
+site/
+  app.py              Flask app, the page list, the nav, the footer links, and the build
+  templates/
+    base.html         <head>, header and nav, footer, and the shared scripts
+    index.html        the home page
+    what-is-a-fact.html
+  static/
+    base.css, base.js the shared styles, theme toggle, mobile nav, and PyPI version check
+    home.css, home.js the home page's styles and copy button
+    fact.css, fact.js the "What is a fact?" page
+  data/demo.json      the "What is a fact?" page's data
+  dist/               the build (ignored by git)
+```
 
 The design is one of four drafts Neon (agy) made, in Endgame's brand colors. The words are the first version's, which
 Netlify's agent wrote.
 
-`what-is-a-fact.html` is a second page, in the same style: a call transcript beside the facts Factoid kept from it.
-Its `DEMO_DATA` is real output from `examples/demo`. To refresh it after a change to Factoid, ingest the demo's three
-documents in order (its README says how), then run `uv run python page_data.py ../../site/what-is-a-fact.html` from
+## Working on it
+
+From the repo root:
+
+```sh
+uv run --project site flask --app site/app.py run --debug   # http://127.0.0.1:5000, reloads on change
+uv run --project site python site/app.py build              # writes site/dist/
+```
+
+- **A nav link or a footer link:** edit `NAV` or `FOOTER` in `app.py`. A nav link that starts with `#` goes to that
+  section of the home page.
+- **A new page:** add a template that extends `base.html`, and add its file name to `PAGES` and, if it belongs there,
+  to `NAV`.
+- **The version:** taken from the repo's `pyproject.toml` at build time. Each page also asks PyPI for the latest
+  release when it loads.
+
+Check both pages at phone width before you push.
+
+## The "What is a fact?" page
+
+`data/demo.json` is real output from `examples/demo`. To refresh it after a change to Factoid, ingest the demo's three
+documents in order (its README says how), then run `uv run python page_data.py ../../site/data/demo.json` from
 `examples/demo`.
 
-## Updating the page
+## Publishing
 
-1. Edit the files in `site/`. Open `site/index.html` in a browser to check your changes, or serve the folder with
-   `python3 -m http.server -d site`. Check it at phone width too.
-2. Commit and push to `main`. The `landing page` workflow (`.github/workflows/pages.yml`) publishes `site/` on every
-   push to `main` that changes it, in about a minute. Watch it with `gh run watch`.
+Push to `main`. The `landing page` workflow (`.github/workflows/pages.yml`) builds the site and publishes `dist/` on
+every push to `main` that changes `site/` or `pyproject.toml`, in about a minute. Watch it with `gh run watch`. The
+`test` workflow also builds the site, so a broken template fails there first.
 
 To publish again without a change, run `gh workflow run pages.yml`.
 
 ## Rollback
 
-Revert the commit and push. The workflow publishes the reverted page.
+Revert the commit and push. The workflow publishes the reverted site.
 
 ## Netlify
 
@@ -32,10 +67,8 @@ the same day.
 
 ## Page content
 
-The page states facts about Factoid. Keep them in step with the README:
+The pages state facts about Factoid. Keep them in step with the README:
 
-- The version: each `data-version` span, on both pages, holds the latest release as a fallback, and the page replaces
-  it with PyPI's latest version when it loads. Update the fallbacks when you release.
 - The Python version (3.13+) and the license (MIT).
 - The install command: `uv tool install factoid`.
 - The news transcripts result: 0.92 for facts at 512 tokens, 0.87 for chunks at 2,048, and even at 8,192. If
@@ -45,9 +78,6 @@ The page states facts about Factoid. Keep them in step with the README:
 
 Follow the repo's writing rules: plain words, short sentences, the Oxford comma, and plain headings. Do not add numbers,
 customers, logos, or quotes that the repo does not support.
-
-The "Fork me on GitHub" ribbon sits in a 150 px clipping box (120 px at viewport widths under 480 px). If you change its
-text or font size, check that the full text shows at both widths.
 
 ## Approval
 
