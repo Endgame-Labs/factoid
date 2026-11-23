@@ -22,8 +22,8 @@ Revert the commit and push. The workflow publishes the reverted page.
 ## Netlify
 
 The page was on Netlify at https://factoid-landing-page.netlify.app (site ID `89962c6b-dacb-4aa9-b877-048cdf6a2bc8`)
-until 2026-11-23, when the account's free credits ran out and Netlify blocked new deploys. That site still serves the
-last Netlify deploy and is no longer updated.
+until 2026-11-23, when the account's free credits ran out and Netlify blocked new deploys. The Netlify site was deleted
+the same day.
 
 ## Page content
 

@@ -1782,5 +1782,4 @@ All dates are 2026-11-13 unless noted.
 136. The landing page moves to GitHub Pages (Kyle, 2026-11-23). Netlify blocked new deploys when the account's free
      credits ran out, and the page is one static file, which Pages hosts free for a public repository. A workflow
      publishes `site/` on every push to `main` that changes it, so the live page always matches the repository. The
-     Netlify site keeps its last deploy and is no longer updated. This replaces decision 124's hosting and its CLI
-     deploys.
+     Netlify site was deleted (Kyle). This replaces decision 124's hosting and its CLI deploys.
