@@ -1378,7 +1378,7 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   chains. On CUAD contracts 21 to 40, never looked at while tuning, clause F1 was 0.85 (0.82 on the tuning set),
   coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
   supersession 1 of 2. Details are in `examples/legal/README.md`.
-- **PyPI:** 0.1.3 is the latest release (decision 105). `main` is ahead of it; a release needs Kyle's go.
+- **PyPI:** 0.1.20 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
 - **Landing page** (decisions 124 and 126): a static page in `site/`, hosted on Netlify at
   https://factoid-landing-page.netlify.app and deployed with the Netlify CLI. `site/README.md` says how to change,
   publish, and roll it back.
@@ -1729,3 +1729,6 @@ All dates are 2026-11-13 unless noted.
 126. The landing page is redesigned (Kyle, 2026-11-20): Neon wrote four drafts, and Kyle chose the one in Endgame's
      brand colors. It is one `index.html` with its CSS and JavaScript inline, replacing the three files of decision 124.
      (2026-11-20)
+127. 0.1.20 is released to PyPI (Kyle, 2026-11-23), so apps that install from PyPI get 0.1.4 to 0.1.20: settling
+     contradictions, revisions, grounded repair as an option, speakers, keys in code, and a retry on HTTP 529, among
+     others.
