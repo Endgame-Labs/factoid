@@ -1350,6 +1350,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   supersessions (signature and date facts), and broke 4 of 12 checks on the sample deal.
 - **Repair splits on an atomic failure**: a fact that failed the atomic check states several claims, so repair must
   split it rather than reword it.
+- **Repair guidance** (decision 128): `repair_guidance` on a document class, then on a fact class, is shown to the
+  repair, and `repair.md.j2` has `guidance` and `references` blocks a project template can replace. Empty by default,
+  so the default prompt is unchanged byte for byte and cached calls still replay.
 - **Fresh amendment chains** (2026-11-15), labeled before any run and scored once: supersessions 2 of 4, untouched
   clauses 2 of 2, as-of search 3 of 4, dated windows 2 of 2, false changes 2.5% with replaced sections off. The
   misses: a base clause never kept as a fact (ScanSource's inventory claim window), a section deleted and replaced
@@ -1732,3 +1735,8 @@ All dates are 2026-11-13 unless noted.
 127. 0.1.20 is released to PyPI (Kyle, 2026-11-23), so apps that install from PyPI get 0.1.4 to 0.1.20: settling
      contradictions, revisions, grounded repair as an option, speakers, keys in code, and a retry on HTTP 529, among
      others.
+128. The repair prompt takes guidance and has blocks (2026-11-23), asked for by an app whose repairs undid its
+     extraction rules: a repair resolved "the second clinic" to the first clinic named before it. The extractor's
+     `guidance` is not passed on by default, since extraction rules ("skip greetings") do not all fit a repair; an app
+     sets `repair_guidance = guidance` to share them. The default reference rule is unchanged: on the default generate
+     model the reported wrong subject did not recur in 30 tries, so a default change waits for an eval that shows it.

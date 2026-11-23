@@ -157,6 +157,9 @@ class Fact(Registered, ModelCalls):
         "signing, or if both facts can be true at once."
     )
     repair_prompt: ClassVar[str | Template] = builtin("repair.md.j2")
+    #: Guidance shown to the repair, after the document class's `repair_guidance`. The `guidance` block of
+    #: `repair.md.j2` shows it.
+    repair_guidance: ClassVar[str] = ""
 
     # -- instance -------------------------------------------------------------------------------------------
 
@@ -328,13 +331,16 @@ class Fact(Registered, ModelCalls):
         # Repair sees the document's title and context, as the extractor did: a cited sentence such as "The
         # expiration date is extended to March 26, 2006" does not name the parties, and the title does.
         document, wording = None, type(self).repair_prompt
+        guidance = [type(self).repair_guidance.strip()]
         if self.document is not None:
             document = {"type": self.document.type, "title": self.document.title,
                         "context": self.document.context(), "text_before": self.document.text_before(self)}
             wording = getattr(type(self.document), "repair_prompt", None) or wording
+            guidance.insert(0, str(getattr(type(self.document), "repair_guidance", "")).strip())
         trim = any(name.endswith(".grounded") for name in result.failed)  # says more than its passages
         prompt = render(wording, fact=self, failed=result.failed, split=split, trim=trim,
-                        passages=[q.text for q in self.quotes], document=document)
+                        passages=[q.text for q in self.quotes], document=document,
+                        guidance="\n".join(g for g in guidance if g))
         raw = self.generate(prompt, json_mode=True, step="repair")
         try:
             data = json.loads(raw)

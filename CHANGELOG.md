@@ -2,6 +2,12 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.21 (2026-11-23)
+
+- **Rules for the repair.** `repair_guidance` on a document or fact class adds rules to the repair prompt, such as
+  keeping a reference the passage leaves open as worded. `repair.md.j2` has `guidance` and `references` blocks that a
+  project template can replace. Nothing changes for an app that sets neither.
+
 ## 0.1.20 (2026-11-23)
 
 - **An overloaded model is retried.** HTTP 529 ("overloaded") now waits and tries again, like 429 and 503. Before,

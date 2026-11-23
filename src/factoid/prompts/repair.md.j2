@@ -24,6 +24,9 @@ The fact says more than the cited passages support. Keep only what they state: d
 or detail they do not give, and do not add new ones.
 
 {% endif %}
+{% block guidance %}{% if guidance %}{{ guidance }}
+
+{% endif %}{% endblock %}
 {% if split %}
 The fact states several claims. Split it into one sentence per claim, each supported by the passages: at least two
 sentences.
@@ -32,6 +35,7 @@ Rewrite the fact as one self-contained sentence that states one claim, supported
 several claims, split it into one sentence per claim.
 {% endif %}
 
+{% block references %}
 First list every reference in the fact a reader could not resolve alone: a pronoun, a description that stands for
 something named elsewhere ("the money", "the matter", "this aircraft", "the president"), a person named by surname or
 title only, or a time relative to the document ("yesterday", "this week"). For each, write what it refers to, from the
@@ -39,5 +43,6 @@ text before the passages, the passages, or the document's details, or null if th
 facts with each reference replaced by what it refers to, and relative times as dates in words. Each fact already
 records when and where the document was written or said, so do not add that otherwise. Keep who said it, and keep
 conditions, hedges, and negations, in the sentence they limit. Keep redaction markers such as [*] as they appear.
+{% endblock %}
 Answer with JSON only:
 {"references": [{"words": "...", "means": "..."}], "facts": ["...", "..."]}

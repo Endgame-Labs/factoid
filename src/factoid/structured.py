@@ -368,6 +368,7 @@ class StructuredDocument(Document):
             # Defined in the factoid package, so it is not registered as a document class of the project.
             reader_class = type(f"{cls.__name__}Text", (ProseDocument,), {
                 "__module__": __name__, "__doc__": cls.__doc__, "guidance": cls.guidance,
+                "repair_guidance": cls.repair_guidance,
                 "extract_prompt": cls.extract_prompt, "fact_classes": cls.fact_classes})
             _READERS[cls] = reader_class
         context = {**self.context(), **{f"{column} (already identified)": name for column, name in known.items()}}

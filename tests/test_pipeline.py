@@ -536,6 +536,49 @@ def test_a_fact_below_its_target_is_repaired_or_kept_as_it_was(make_app, fake):
     assert result.facts[0].scores["repair_missed"][0]["failed"] == ["short: decision_floors.explicit"]
 
 
+def test_repair_guidance_and_blocks_reach_the_repair(make_app, fake):
+    from factoid import DecisionFloors, Noul
+
+    class Explicit(SourceFact):
+        """What a contract says."""
+
+        repair_guidance = "Fact rule: keep an open reference as worded."
+        fact_evals = [DecisionFloors(questions={"explicit": Noul("Every reference resolved?")}, explicit=0.0,
+                                targets={"explicit": 0.5})]
+
+    class GuidedContract(Contract):
+        """A contract, with rules for the repair."""
+
+        repair_guidance = "Document rule: never guess a name."
+
+    app = build(make_app, fake)
+    app.document_classes = [*app.document_classes, GuidedContract]
+    app.fact_classes = [Explicit]
+    inner = fake.noul
+    fake.noul = lambda q, s: (0.9 if "Vega Components" in s["fact"] else 0.2) if "resolved" in q.instructions \
+        else inner(q, s)
+    prompts = []
+
+    def generator(p):
+        if "failed these checks" not in p:
+            return extractor(p)
+        prompts.append(p)
+        return json.dumps({"facts": ["Vega Components Corp.'s liability is capped at $1M."]})
+
+    fake.generator = generator
+    app.ingest_text("Its liability is capped at $1M.", document_type=GuidedContract,
+                    metadata={"signed_at": "2025-03-01T00:00:00Z"})
+    assert "Document rule: never guess a name.\nFact rule: keep an open reference as worded." in prompts[-1]
+
+    # A project template extends the built-in one and replaces a block.
+    GuidedContract.repair_prompt = (
+        '{% extends "factoid/repair.md.j2" %}{% block references %}Keep every reference as worded.\n{% endblock %}')
+    app.ingest_text("Its liability is capped at $3M.", document_type=GuidedContract,
+                    metadata={"signed_at": "2025-05-01T00:00:00Z"})
+    assert "Keep every reference as worded." in prompts[-1] and "First list every reference" not in prompts[-1]
+    assert "Document rule" in prompts[-1]
+
+
 def test_decision_floors_use_a_decision_models_own_floors_unless_the_project_set_one():
     from factoid.fact_evals import DEFAULT_FLOORS, DEFAULT_TARGETS, MODEL_FLOORS, MODEL_TARGETS, DecisionFloors
 
