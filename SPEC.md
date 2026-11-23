@@ -1391,7 +1391,8 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
 - **PyPI:** 0.1.24 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
 - **Landing page** (decisions 124, 126, 131, and 136): a static page in `site/`, hosted on GitHub Pages at
   https://endgame-labs.github.io/factoid/ and published by `.github/workflows/pages.yml` on every push to `main` that
-  changes it. `site/README.md` says how to change, publish, and roll it back.
+  changes it. `site/README.md` says how to change, publish, and roll it back. A second page, `what-is-a-fact.html`,
+  shows a call beside the facts Factoid kept from it, from `examples/demo`'s real output (decision 138).
 - **Example layout** (decision 125): each example app keeps its code in `app/` (`settings.py`, `documents.py`,
   `entities.py`, and `facts.py`), with `package = "app"` under `[tool.factoid]`, so every example looks the same. Its
   evals import from `app`. `factoid init` writes `app/` too (decision 137).
@@ -1786,3 +1787,8 @@ All dates are 2026-11-13 unless noted.
 137. `factoid init` puts a new project's code in `app/`, as the example apps do (Kyle, 2026-11-23; decision 125 left
      init unchanged). `pyproject.toml`'s name and the project's id come from the folder's name, so two projects still
      get different key folders. `--package` picks another name, and existing projects keep theirs.
+138. `examples/demo` is the first example to run (Kyle, 2026-11-23): a made-up sales call and two emails, with a
+     five-check eval, for under a cent. Its real output fills the landing site's "What is a fact?" page through
+     `examples/demo/page_data.py`, replacing the page's invented facts. Factoid cites whole turns, so the page highlights
+     the sentences in a cited turn that share words with the fact, and says so. One check fails until issue #25 is
+     fixed, and the demo's README says why.

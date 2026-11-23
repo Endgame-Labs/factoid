@@ -6,6 +6,11 @@ JavaScript inline) with no build step, no backend, and no analytics. This folder
 The design is one of four drafts Neon (agy) made, in Endgame's brand colors. The words are the first version's, which
 Netlify's agent wrote.
 
+`what-is-a-fact.html` is a second page, in the same style: a call transcript beside the facts Factoid kept from it.
+Its `DEMO_DATA` is real output from `examples/demo`. To refresh it after a change to Factoid, ingest the demo's three
+documents in order (its README says how), then run `uv run python page_data.py ../../site/what-is-a-fact.html` from
+`examples/demo`.
+
 ## Updating the page
 
 1. Edit the files in `site/`. Open `site/index.html` in a browser to check your changes, or serve the folder with
@@ -29,8 +34,8 @@ the same day.
 
 The page states facts about Factoid. Keep them in step with the README:
 
-- The version: each `data-version` span holds the latest release as a fallback, and the page replaces it with
-  PyPI's latest version when it loads. Update the fallback when you release.
+- The version: each `data-version` span, on both pages, holds the latest release as a fallback, and the page replaces
+  it with PyPI's latest version when it loads. Update the fallbacks when you release.
 - The Python version (3.13+) and the license (MIT).
 - The install command: `uv tool install factoid`.
 - The news transcripts result: 0.92 for facts at 512 tokens, 0.87 for chunks at 2,048, and even at 8,192. If
