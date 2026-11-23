@@ -32,3 +32,13 @@ KEEP_OPEN = (
     'worded, such as "its" when the text does not say which thing it means. Never guess what it refers to.\n'
     '{% endblock %}'
 )
+
+
+# Decision models side by side (decision 135's follow-up): Jev 1.13 (the default), Jev 1.14, and Rune, which makes the
+# project Fireworks only. Run with --vary models=@evals.variants:JEV_113,@evals.variants:JEV_114,@evals.variants:RUNE.
+from app.settings import Project as _Project  # noqa: E402
+
+from factoid import Model as _Model  # noqa: E402
+
+JEV_113 = {**_Project.models, "choose": _Model("typesafe/jev-1.13.0")}
+JEV_114 = {**_Project.models, "choose": _Model("typesafe/jev-1.14.0")}
