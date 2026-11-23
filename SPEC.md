@@ -1355,7 +1355,8 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
 - **Link threshold** (decision 130): `Entity.link_threshold` is 0.6 by default, down from 0.8.
 - **Repair guidance** (decision 128): `repair_guidance` on a document class, then on a fact class, is shown to the
   repair, and `repair.md.j2` has `guidance` and `references` blocks a project template can replace. Empty by default,
-  so the default prompt is unchanged byte for byte and cached calls still replay.
+  so the default prompt is unchanged byte for byte and cached calls still replay. A rule to keep open references as
+  worded stays opt-in through `repair_guidance` (decision 134).
 - **Fresh amendment chains** (2026-11-15), labeled before any run and scored once: supersessions 2 of 4, untouched
   clauses 2 of 2, as-of search 3 of 4, dated windows 2 of 2, false changes 2.5% with replaced sections off. The
   misses: a base clause never kept as a fact (ScanSource's inventory claim window), a section deleted and replaced
@@ -1762,3 +1763,10 @@ All dates are 2026-11-13 unless noted.
      answers, slipped: 2 lost to outdated facts (amendments_heldout at 2,000 tokens, amendments_sec as-of) and 1 gained,
      with false changes up slightly on two sets. With nothing gained to offset it, the saving waits for a version that
      keeps the as-of answers.
+134. The repair prompt's default reference rule is unchanged (2026-11-23, issue #24). A rule to keep a reference the
+     text leaves open as worded fixed END-10179's case (3 of 140 repairs guessed wrong without it, 0 of 100 with it),
+     so it was run against the default on all three example apps. Nothing moved past noise: calls the same, rejected
+     facts within a few either way, CUAD F1 0.810 to 0.808 and 0.837 to 0.834, mediasum QA facts@2048 193 to 192 of
+     200, NBA facts 4,381 to 4,353, and one of 11 as-of answers lost on amendments_fresh with one gained on
+     amendments_heldout. A rule that buys nothing on the evals stays out of everyone's prompt; a project that needs it
+     sets `repair_guidance`, as END-10179 does.
