@@ -431,6 +431,14 @@ def test_tries_and_the_deadline_bound_one_call(monkeypatch, tmp_path):
         client.generate("hi")
     assert sum(slept) < 1.5
 
+    # 529 ("overloaded") is retried like 503
+    slept.clear()
+    client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, CallLog(None), replay=False, attempts=3)
+    client._http = httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(529, json={"error": "busy"})))
+    with pytest.raises(ModelError, match="HTTP 529"):
+        client.generate("hi")
+    assert len(slept) == 2
+
 
 def test_model_calls_are_labelled_by_step(monkeypatch, tmp_path):
     import httpx

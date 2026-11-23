@@ -468,7 +468,7 @@ class ModelClient:
                     raise ModelError(f"{model.name}: {err}") from err
                 wait(min(60, 2 ** attempt), str(err))
                 continue
-            if response.status_code in (429, 500, 502, 503, 504) and attempt < attempts - 1:
+            if response.status_code in (429, 500, 502, 503, 504, 529) and attempt < attempts - 1:
                 wait(_retry_after(response) or min(60, 2 ** attempt) * (0.5 + random.random()),
                      f"HTTP {response.status_code}")
                 continue

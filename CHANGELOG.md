@@ -2,6 +2,11 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.20 (2026-11-23)
+
+- **An overloaded model is retried.** HTTP 529 ("overloaded") now waits and tries again, like 429 and 503. Before,
+  one 529 ended the whole run.
+
 ## 0.1.19 (2026-11-19)
 
 - **Fewer decision requests, as an experiment.** `assess_with_evaluate = True` on a fact class asks the trait and time
