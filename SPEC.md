@@ -1756,3 +1756,9 @@ All dates are 2026-11-13 unless noted.
      what went live.
 132. `examples/iscrag` is renamed `examples/mediasum`, after its corpus (Kyle, 2026-11-23). "ISC-RAG" names the study
      the questions came from, which a reader outside it would not know. Entries above keep the old name.
+133. `assess_with_evaluate` stays off by default (2026-11-23, issue #7). It cut decision calls by about 20% on all three
+     example apps (mediasum 35,379 to 28,550; NBA 17,719 to 14,220; legal's sets 20 to 25%), and QA and CUAD held. But
+     it asks the time questions alongside the fact evals, and the amendment as-of answers, which rest on those
+     answers, slipped: 2 lost to outdated facts (amendments_heldout at 2,000 tokens, amendments_sec as-of) and 1 gained,
+     with false changes up slightly on two sets. With nothing gained to offset it, the saving waits for a version that
+     keeps the as-of answers.
