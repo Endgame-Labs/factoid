@@ -24,7 +24,7 @@ from .templates import render
 if TYPE_CHECKING:
     from .fact import Fact
 
-__all__ = ["PLACEHOLDER_QUESTION", "Entity", "link_mention"]
+__all__ = ["MODEL_LINK", "PLACEHOLDER_QUESTION", "Entity", "link_mention"]
 
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 URL = re.compile(r"https?://[^\s/]+[^\s]*")
@@ -38,6 +38,11 @@ PLACEHOLDER_QUESTION = Noul(
     false="A placeholder or a generic noun.",
 )
 
+#: Link thresholds for decision models whose probabilities run on a different scale from Jev's, which the default was
+#: set on. Rune answers the link question at 0.99 for a true match and up to 0.96 for a near miss such as "Robert
+#: Smith Jr." (decision 140).
+MODEL_LINK: dict[str, float] = {"fireworks/rune": 0.975}
+
 
 class Entity(Registered, ModelCalls):
     """A thing facts are about. Subclass it and write a docstring."""
@@ -50,8 +55,9 @@ class Entity(Registered, ModelCalls):
 
     #: Identifiers that prove two records are the same entity. Email, domain, and URL count by default.
     unique_keys: ClassVar[list[str]] = []
-    #: The probability the link question must reach to link a mention to an existing entity.
-    link_threshold: ClassVar[float] = 0.6
+    #: The probability the link question must reach to link a mention to an existing entity. None takes the decision
+    #: model's value from `MODEL_LINK`, else 0.6.
+    link_threshold: ClassVar[float | None] = None
     #: Asked when a mention may match an existing entity.
     link_question: ClassVar[str] = (
         "Is the mention \"{{ mention }}\" the same {{ kind }} as \"{{ entity.name }}\"?"
@@ -84,6 +90,14 @@ class Entity(Registered, ModelCalls):
         if name in type(self).typed_props():
             return self.__dict__.get("props", {}).get(name)
         raise AttributeError(f"{type(self).__name__} has no attribute {name!r}")
+
+    @classmethod
+    def link_bar(cls, app: Any) -> float:
+        """`link_threshold` for the decision model: the class's own value, else the model's, else 0.6."""
+        if cls.link_threshold is not None:
+            return cls.link_threshold
+        model = app.client.models.get("choose")
+        return MODEL_LINK.get(getattr(model, "name", model) or "", 0.6)
 
     @classmethod
     def typed_props(cls) -> dict[str, Any]:
@@ -271,7 +285,7 @@ def link_mention(mention: Mention, fact: Fact) -> None:
         best = max(range(len(candidates)), key=lambda i: judgments[f"E{i}"])
         p = judgments[f"E{best}"]
         cls = app.entity_class(candidates[best]["class"])
-        if p >= cls.link_threshold:
+        if p >= cls.link_bar(app):
             entity_id = candidates[best]["id"]
             for alias in [mention.text, *mention.aliases]:
                 app.add_alias(entity_id, alias)

@@ -108,15 +108,28 @@ class Linking(Suite):
                 registered[name] = Entity.create(name, kind=kind)
         tp = fp = fn = tn = 0
         rows = []
+        asked: list[float] = []  # the link question's top probability, linked or not, to set link_threshold by
+        ask = app.client.ask
+
+        def spy(state: Any, questions: dict) -> Any:
+            judgments = ask(state, questions)
+            if "E0" in questions:  # the link question, not the discovery questions that may follow it
+                asked.append(max(float(judgments[k]) for k in questions))
+            return judgments
+
+        app.client.ask = spy
         for i, (name, kind, mention_text, text, same) in enumerate(cases):
             fact = Fact(text, mentions=[Mention(mention_text, kind=kind, role="subject")])
             fact.document_id = f"linking_{i}"
+            asked.clear()
             fact.link()
             linked = fact.mentions[0].entity_id == registered[name].id
             tp, fp = tp + (same and linked), fp + (not same and linked)
             fn, tn = fn + (same and not linked), tn + (not same and not linked)
             rows.append({"name": name, "mention": mention_text, "same": same, "linked": linked,
-                         "method": fact.mentions[0].method, "ok": linked == same})
+                         "method": fact.mentions[0].method, "p": round(asked[0], 3) if asked else None,
+                         "ok": linked == same})
+        app.client.ask = ask
         return {**prf(tp, fp, fn), "true_negatives": tn, "accuracy": round((tp + tn) / len(cases), 3),
                 "cases": len(cases), "details": rows}
 

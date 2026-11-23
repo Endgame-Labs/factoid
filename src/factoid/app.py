@@ -844,9 +844,10 @@ class Factoid:
         with labelled("claim"):
             judgments = self.client.ask(state, questions)
         claimed = 0
+        bar = type(entity).link_bar(self)
         with self.store.tx() as db:
             for key, fact in zip(keys, facts):
-                if judgments[key] >= entity.link_threshold:
+                if judgments[key] >= bar:
                     db.execute("insert into mentions values (?,?,?,?,?,?,?)",
                                (fact.id, entity.name, entity.kind, "about", entity.id, "claim",
                                 round(judgments[key], 4)))
@@ -856,7 +857,7 @@ class Factoid:
         # The index filters facts by entity, so a claimed fact must be indexed under its new entity too, or
         # `related_facts` and `search_facts(about=...)` never find it there.
         for key, fact in zip(keys, facts):
-            if judgments[key] >= entity.link_threshold:
+            if judgments[key] >= bar:
                 self._index_fact(fact)
         return claimed
 

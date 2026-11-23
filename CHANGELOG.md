@@ -2,6 +2,13 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.26 (2026-11-23)
+
+- **Rune links and flags contradictions more carefully.** With Rune as the decision model (the `fireworks` preset), a
+  mention links to an entity only at 0.975 and a contradiction needs 0.95, set in `MODEL_LINK` and `MODEL_RESOLVE`.
+  On the example evals, false links went from 2 to 0 and false contradictions mostly went away. A project's own
+  `link_threshold` or `contradiction_threshold` still wins.
+
 ## 0.1.25 (2026-11-23)
 
 - **Jev 1.14 is the default decision model.** New projects and the `jev` preset use `typesafe/jev-1.14.0`. It

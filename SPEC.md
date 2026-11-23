@@ -1150,7 +1150,8 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
     the sample eval scores 1.0. The legal suites on Rune ran on 2026-11-18 (decision 92).
   - Resolve settings per decision model (`MODEL_RESOLVE`): `resolve_batch` (stored facts per request) and
     `resolve_verify` (a yes-or-no check on each supersession, end, or correction, which drops it below the bar). Rune
-    gets `resolve_verify = 0.5` (decision 94). `--vary` reads `none` as None.
+    gets `resolve_verify = 0.5` (decision 94), and a contradiction bar of 0.95 instead of 0.75 (decision 140).
+    `--vary` reads `none` as None.
   - OpenAI generation sends `max_completion_tokens` and no `temperature`, which its reasoning models require.
   - The README marks `serve`, `mcp`, `rebuild`, and `contradictions` as planned.
   - Checked live on 2026-11-17: Rune answers under both `models/rune` and `routers/rune`; the Decisions API answers
@@ -1355,7 +1356,8 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
 - **List prices** (decision 135): `src/factoid/prices.json` holds dollars per million input, cached input, and output
   tokens by model name, with the page each came from and the date checked. A model's own `price_in` and `price_out`
   win. The meter keeps `cost` (spent) and `full_cost` (at list price, replayed or not), by workload and by step.
-- **Link threshold** (decision 130): `Entity.link_threshold` is 0.6 by default, down from 0.8.
+- **Link threshold** (decisions 130 and 140): `Entity.link_threshold` is 0.6 by default, down from 0.8. Left at None,
+  it takes the decision model's value from `MODEL_LINK`: 0.975 for Rune.
 - **Repair guidance** (decision 128): `repair_guidance` on a document class, then on a fact class, is shown to the
   repair, and `repair.md.j2` has `guidance` and `references` blocks a project template can replace. Empty by default,
   so the default prompt is unchanged byte for byte and cached calls still replay. A rule to keep open references as
@@ -1390,7 +1392,7 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
   supersession 1 of 2. Details are in `examples/legal/README.md`.
 - **Default decision model** (decision 139): `typesafe/jev-1.14.0`, in `settings.py`, the `jev` preset, and the
   example apps.
-- **PyPI:** 0.1.25 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
+- **PyPI:** 0.1.26 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
 - **Landing page** (decisions 124, 126, 131, and 136): a static page in `site/`, hosted on GitHub Pages at
   https://endgame-labs.github.io/factoid/ and published by `.github/workflows/pages.yml` on every push to `main` that
   changes it. `site/README.md` says how to change, publish, and roll it back. A second page, `what-is-a-fact.html`,
@@ -1802,3 +1804,15 @@ All dates are 2026-11-13 unless noted.
      far fewer contradictions (10 against 78 on MediaSum), and makes 2% to 12% fewer calls. It was not better
      everywhere, but every gap is a question or a clause or two. Jev 1.13 stays in `prices.json` and in each example's
      `evals/variants.py` as `JEV_113`.
+140. Rune gets its own link and contradiction bars (2026-11-23). In decision 139's run, Rune linked "Acme Labs" to
+     Acme Corporation and "Robert Smith Jr." to Robert Smith, and flagged 120 contradictions on MediaSum and 93 on
+     NBA, most of them false (Jev 1.13: 78 and 87). Rune answers the link question at 0.988 or more for every true
+     match and at up to 0.963 for a near miss, so `MODEL_LINK` sets its bar at 0.975. Its contradiction bar is 0.95
+     (`MODEL_RESOLVE`). A project's own `link_threshold` or `contradiction_threshold` still wins. The `linking` suite
+     now records each link question's top probability. On the tuning sets: linking F1 0.909 (0.833 before, Jev
+     0.909), contradictions 6 on MediaSum and 6 on NBA, and false changes to base facts 0.2%, 2.4%, and 2.4% on the
+     tuning, fresh, and SEC chains (1.2%, 3.5%, 3.2% before; Jev 1.13 1.6%, 3.2%, 1.6%), with MediaSum and NBA
+     answers unchanged within a question. Held out, once: amendment false changes 3.6% (4.0% before, Jev 1.14 4.2%),
+     as-of 100%, and CUAD unchanged (F1 0.80, AUPR 0.92; Jev 1.14 0.83 and 0.94). Rune still misses a supersession
+     Jev finds on the tuning chain and the NBA "standings replaced" check. The `fireworks` preset stays experimental
+     while CUAD trails.

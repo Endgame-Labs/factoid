@@ -694,6 +694,21 @@ def test_rune_gets_its_resolve_check_by_default(make_app, fake):
     assert SourceFact.resolve_settings(app) == (None, None)
 
 
+def test_rune_gets_its_own_contradiction_and_link_bars(make_app, fake, monkeypatch):
+    from factoid import Entity
+
+    app = build(make_app, fake)
+    fake.models["choose"] = type("M", (), {"name": "fireworks/rune"})()
+    assert (SourceFact.contradiction_bar(app), Entity.link_bar(app)) == (0.95, 0.975)
+    monkeypatch.setattr(SourceFact, "contradiction_threshold", 0.8)
+    monkeypatch.setattr(Entity, "link_threshold", 0.7)
+    assert (SourceFact.contradiction_bar(app), Entity.link_bar(app)) == (0.8, 0.7)  # a project's own value wins
+    fake.models["choose"] = "fake"
+    monkeypatch.setattr(SourceFact, "contradiction_threshold", None)
+    monkeypatch.setattr(Entity, "link_threshold", None)
+    assert (SourceFact.contradiction_bar(app), Entity.link_bar(app)) == (0.75, 0.6)
+
+
 def _answer(fake, answer, new_has, old_has):
     """Make resolve give `answer` when a new fact containing `new_has` meets a stored fact containing `old_has`."""
     inner = fake.choice

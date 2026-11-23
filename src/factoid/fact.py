@@ -83,9 +83,10 @@ RESOLVE_ANSWERS: dict[str, str] = {
 
 #: Resolve settings for decision models other than the default. Rune calls many pairs a supersession that only refer
 #: to what changed, at probabilities a floor cannot separate from real ones, so each of its changes is checked with
-#: `resolve_verify_question` (SPEC decision 94).
+#: `resolve_verify_question` (SPEC decision 94). Rune is also far surer of a contradiction than Jev, so it needs a
+#: higher bar to flag one (decision 140).
 MODEL_RESOLVE: dict[str, dict[str, Any]] = {
-    "fireworks/rune": {"verify": 0.5},
+    "fireworks/rune": {"verify": 0.5, "contradiction": 0.95},
 }
 
 
@@ -116,7 +117,8 @@ class Fact(Registered, ModelCalls):
     #: Answers that drop or flag a fact need more: a duplicate is merged away, and a contradiction marks both facts.
     #: Below these, the next best answer is used.
     duplicate_threshold: ClassVar[float] = 0.8
-    contradiction_threshold: ClassVar[float] = 0.75
+    #: None takes the decision model's value from `MODEL_RESOLVE`, else 0.75.
+    contradiction_threshold: ClassVar[float | None] = None
     #: When the model is sure two facts state the same claim but not whether the value changed, a later fact from
     #: another document supersedes, but only if "supersedes" got at least this much. A restatement the model calls a
     #: duplicate at 0.78 and a change at 0 is not a change.
@@ -432,7 +434,7 @@ class Fact(Registered, ModelCalls):
             return [a for i in range(0, len(group), size) for a in ask(group[i:i + size], make)]
 
         answers = batched(candidates, lambda key: Choice(klass.resolve_question.format(key=key), klass.resolve_answers))
-        out = self._resolve_outcomes(candidates, answers)
+        out = self._resolve_outcomes(candidates, answers, klass.contradiction_bar(app))
         if verify is not None:
             changes = [o for o in out if o[0] in ("supersedes", "ends", "corrects")]
             if changes:
@@ -449,10 +451,19 @@ class Fact(Registered, ModelCalls):
         return (cls.resolve_batch if cls.resolve_batch is not None else defaults.get("batch"),
                 cls.resolve_verify if cls.resolve_verify is not None else defaults.get("verify"))
 
-    def _resolve_outcomes(self, candidates: list[Fact], answers: list[Any]) -> list[tuple[str, Fact, float]]:
+    @classmethod
+    def contradiction_bar(cls, app: Any) -> float:
+        """`contradiction_threshold` for the decision model: the class's own value, else the model's, else 0.75."""
+        if cls.contradiction_threshold is not None:
+            return cls.contradiction_threshold
+        model = app.client.models.get("choose")
+        return MODEL_RESOLVE.get(getattr(model, "name", model) or "", {}).get("contradiction", 0.75)
+
+    def _resolve_outcomes(self, candidates: list[Fact], answers: list[Any],
+                          contradiction: float = 0.75) -> list[tuple[str, Fact, float]]:
         out = []
         klass = type(self)
-        bars = {"duplicate": klass.duplicate_threshold, "contradicts": klass.contradiction_threshold}
+        bars = {"duplicate": klass.duplicate_threshold, "contradicts": contradiction}
         mine = self.valid_from or self.source_datetime
         for answer, other in zip(answers, candidates):
             theirs = other.valid_from or other.source_datetime
