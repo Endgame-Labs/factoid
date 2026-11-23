@@ -580,3 +580,18 @@ def test_list_prices_cost_live_and_replayed_calls(monkeypatch, tmp_path):
     assert total["cost"] == pytest.approx(live)
     assert total["full_cost"] == pytest.approx(2 * live)
     assert total["priced"] == 1
+
+
+def test_every_listed_version_is_the_current_one():
+    """The README status line and init's fallback version must match pyproject.toml, so a release cannot leave them."""
+    import re
+    import tomllib
+    from pathlib import Path
+
+    root = Path(__file__).parent.parent
+    current = tomllib.loads((root / "pyproject.toml").read_text())["project"]["version"]
+    status = re.search(r"\*\*Status: Version ([\d.]+)\.\*\*", (root / "README.md").read_text())
+    fallback = re.search(r'else "([\d.]+)"', (root / "src/factoid/scaffold.py").read_text())
+    spec = re.search(r"\*\*PyPI:\*\* ([\d.]+) is the latest release", (root / "SPEC.md").read_text())
+    assert status and fallback and spec
+    assert (status[1], fallback[1], spec[1]) == (current, current, current)
