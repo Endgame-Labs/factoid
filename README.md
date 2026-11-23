@@ -1,11 +1,15 @@
 # Factoid 📚
 
+[![Website](https://img.shields.io/badge/website-endgame--labs.github.io%2Ffactoid-2563eb.svg)](https://endgame-labs.github.io/factoid/)
 [![PyPI](https://img.shields.io/pypi/v/factoid.svg)](https://pypi.org/project/factoid/)
 [![tests](https://github.com/Endgame-Labs/factoid/actions/workflows/test.yml/badge.svg)](https://github.com/Endgame-Labs/factoid/actions/workflows/test.yml)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/Endgame-Labs/factoid/blob/main/LICENSE)
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
+
+**Website:** https://endgame-labs.github.io/factoid/, with an interactive
+[What is a fact?](https://endgame-labs.github.io/factoid/what-is-a-fact.html) page.
 
 > **Status: Version 0.1.19.** Factoid runs end to end, and three example apps publish their eval results. It covers
 > ingest, fact extraction with evals, entities, supersession and as-of search, settling contradictions, eval suites,
