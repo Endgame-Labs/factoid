@@ -1389,9 +1389,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
   coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
   supersession 1 of 2. Details are in `examples/legal/README.md`.
 - **PyPI:** 0.1.23 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
-- **Landing page** (decisions 124, 126, and 131): a static page in `site/`, hosted on Netlify at
-  https://factoid-landing-page.netlify.app and deployed with the Netlify CLI. `site/README.md` says how to change,
-  publish, and roll it back.
+- **Landing page** (decisions 124, 126, 131, and 136): a static page in `site/`, hosted on GitHub Pages at
+  https://endgame-labs.github.io/factoid/ and published by `.github/workflows/pages.yml` on every push to `main` that
+  changes it. `site/README.md` says how to change, publish, and roll it back.
 - **Example layout** (decision 125): each example app keeps its code in `app/` (`settings.py`, `documents.py`,
   `entities.py`, and `facts.py`), with `package = "app"` under `[tool.factoid]`, so every example looks the same. Its
   evals import from `app`. `factoid init` still names the package after the project.
@@ -1779,3 +1779,8 @@ All dates are 2026-11-13 unless noted.
      $1.09. Decisions are the largest share but not most of it, and their real cost is time and Jev's capacity, so issue
      #7 is about latency and load from here. Replayed calls count at list price in `full_cost`, so an eval on the cache
      still says what a fresh run would cost.
+136. The landing page moves to GitHub Pages (Kyle, 2026-11-23). Netlify blocked new deploys when the account's free
+     credits ran out, and the page is one static file, which Pages hosts free for a public repository. A workflow
+     publishes `site/` on every push to `main` that changes it, so the live page always matches the repository. The
+     Netlify site keeps its last deploy and is no longer updated. This replaces decision 124's hosting and its CLI
+     deploys.

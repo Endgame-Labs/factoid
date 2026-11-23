@@ -62,8 +62,8 @@ To try a change end to end, make a project in a scratch folder with `uv run --pr
 - `scaffold.py`: what `factoid init` writes
 - `prompts/`: the built-in Jinja prompts
 
-The landing page's source is in `site/`, hosted on Netlify. `site/README.md` says how to deploy it, and nothing goes
-live without the developer's yes.
+The landing page's source is in `site/`, hosted on GitHub Pages. A push to `main` that changes `site/` publishes it
+(`.github/workflows/pages.yml`), so check the page before you push. `site/README.md` has the details.
 
 Example apps in `examples/` have their own `pyproject.toml` and run against this checkout. Their eval suites call real
 models and cost money; run them only when asked.
