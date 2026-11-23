@@ -98,6 +98,11 @@ def _echo_json(value: Any) -> None:
     click.echo(json.dumps(value, indent=2, default=str))
 
 
+def _dollars(amount: float) -> str:
+    """Dollars to the cent, or to four places when under a cent, so a small run does not show $0.00."""
+    return f"${amount:.2f}" if amount >= 0.01 or amount == 0 else f"${amount:.4f}"
+
+
 def _echo_calls(total: dict[str, float], cache: Path | None, steps: dict[str, dict[str, float]] | None = None) -> None:
     """The model call line, which says plainly when answers came from the cache instead of the models."""
     calls, replayed, older = int(total["calls"]), int(total["cache_hits"]), int(total.get("older_hits", 0))
@@ -105,11 +110,11 @@ def _echo_calls(total: dict[str, float], cache: Path | None, steps: dict[str, di
                f"{int(total['output_tokens']):,} output tokens")
     if total.get("full_cost"):
         partly = "" if total.get("priced", 1) else " (some models have no price in prices.json, so it is low)"
-        fresh = f", ${total['full_cost']:.2f} with nothing replayed" if replayed else ""
-        click.echo(f"  cost at list prices: ${total.get('cost', 0):.2f}{fresh}{partly}")
+        fresh = f", {_dollars(total['full_cost'])} with nothing replayed" if replayed else ""
+        click.echo(f"  cost at list prices: {_dollars(total.get('cost', 0))}{fresh}{partly}")
     if steps and len(steps) > 1:
         def part(name: str, row: dict[str, float]) -> str:
-            dollars = f", ${row['full_cost']:.2f}" if row.get("full_cost") else ""
+            dollars = f", {_dollars(row['full_cost'])}" if row.get("full_cost") else ""
             return f"{name} {int(row['calls'])} ({int(row['input_tokens']):,} in{dollars})"
         parts = [part(name, row) for name, row in sorted(steps.items(), key=lambda kv: (-kv[1].get("full_cost", 0),
                                                                                           -kv[1]["input_tokens"]))]
@@ -184,7 +189,7 @@ def cli() -> None:
 
 
 @cli.command()
-@click.option("--package", help="Python package name (defaults to the folder name).")
+@click.option("--package", help="The Python package for the project's code (default: app).")
 @click.option("--models", "preset", type=click.Choice(list(scaffold.PRESETS)), default=None,
               help="Which providers settings.py uses: jev (TypeSafe and Fireworks, the default), fireworks (Fireworks "
                    "alone), or openai (OpenAI alone). In an existing project, switches its settings.py to the preset.")
@@ -212,7 +217,7 @@ def init(package: str | None, preset: str | None) -> None:
         click.echo("  factoid doctor                 one small call per workload")
         return
     preset = preset or "jev"
-    name = package or root.name.replace("-", "_").lower()
+    name = package or "app"
     for path in scaffold.write(root, name, preset):
         click.echo(f"  wrote {path.relative_to(root)}")
     providers = scaffold.PRESETS[preset][0]

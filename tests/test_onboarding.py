@@ -223,7 +223,8 @@ def test_project_keys_live_in_the_home_folder_under_the_project_id(tmp_path, mon
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     assert CliRunner().invoke(cli, ["init", "--package", "acme", "--models", "openai"]).exit_code == 0
     pid = project_id(tmp_path)
-    assert pid and pid.startswith("acme-")
+    from factoid.scaffold import project_name
+    assert pid and pid.startswith(project_name(tmp_path) + "-")  # named after the folder, not the package
 
     # A key an older Factoid stored inside the project is moved out on the next `keys set --project`.
     (tmp_path / ".factoid").mkdir(exist_ok=True)

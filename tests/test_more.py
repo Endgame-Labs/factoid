@@ -145,6 +145,17 @@ def test_init_scaffolds_a_project(tmp_path, monkeypatch):
     assert "[tool.factoid]" in (tmp_path / "pyproject.toml").read_text()
 
 
+def test_init_puts_the_code_in_app_by_default(tmp_path, monkeypatch):
+    project = tmp_path / "My Deals"
+    project.mkdir()
+    monkeypatch.chdir(project)
+    result = CliRunner().invoke(cli, ["init"])
+    assert result.exit_code == 0, result.output
+    assert (project / "app" / "facts.py").is_file() and (project / "app" / "settings.py").is_file()
+    text = (project / "pyproject.toml").read_text()
+    assert 'name = "my-deals"' in text and 'package = "app"' in text and 'id = "my-deals-' in text
+
+
 def test_init_in_a_project_switches_its_models(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     CliRunner().invoke(cli, ["init", "--package", "deal"])

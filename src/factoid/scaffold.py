@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from .project_id import new_project_id
@@ -182,11 +183,18 @@ def switch(settings: Path, preset: str) -> bool:
     return False
 
 
-def write(root: Path, package: str, preset: str = "jev") -> list[Path]:
+def project_name(root: Path) -> str:
+    """The folder's name as a package name for `pyproject.toml`: lower case, with dashes."""
+    return re.sub(r"[^a-z0-9]+", "-", root.name.lower()).strip("-") or "factoid-project"
+
+
+def write(root: Path, package: str = "app", preset: str = "jev") -> list[Path]:
+    """The project's code goes in `package`, `app/` by default (decision 137); `pyproject.toml` and the project's id
+    are named after the folder."""
+    name = project_name(root)
     files = {
-        root / "pyproject.toml": PYPROJECT.format(name=package.replace("_", "-"), package=package,
-                                                  sources=_sources(), version=_version(),
-                                                  project_id=new_project_id(package)),
+        root / "pyproject.toml": PYPROJECT.format(name=name, package=package, sources=_sources(), version=_version(),
+                                                  project_id=new_project_id(name)),
         root / package / "__init__.py": "",
         root / package / "settings.py": SETTINGS.format(models=PRESETS[preset][1]),
         root / package / "documents.py": DOCUMENTS,

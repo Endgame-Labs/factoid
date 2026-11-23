@@ -2,6 +2,13 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.24 (2026-11-23)
+
+- **`factoid init` puts the code in `app/`.** A new project gets `app/settings.py`, `app/documents.py`, and the rest,
+  the same layout as the example apps, and `pyproject.toml` and the project's id are named after the folder.
+  `--package` still picks another name. Existing projects are unchanged.
+- **Small costs show.** A run under a cent shows its cost to four places instead of $0.00.
+
 ## 0.1.23 (2026-11-23)
 
 - **Costs at list prices.** `prices.json` holds list prices for Jev, Rune, GLM 5.3 Flash, and the Fireworks embedders

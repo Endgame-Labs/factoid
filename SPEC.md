@@ -1388,13 +1388,13 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
   chains. On CUAD contracts 21 to 40, never looked at while tuning, clause F1 was 0.85 (0.82 on the tuning set),
   coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
   supersession 1 of 2. Details are in `examples/legal/README.md`.
-- **PyPI:** 0.1.23 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
+- **PyPI:** 0.1.24 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
 - **Landing page** (decisions 124, 126, 131, and 136): a static page in `site/`, hosted on GitHub Pages at
   https://endgame-labs.github.io/factoid/ and published by `.github/workflows/pages.yml` on every push to `main` that
   changes it. `site/README.md` says how to change, publish, and roll it back.
 - **Example layout** (decision 125): each example app keeps its code in `app/` (`settings.py`, `documents.py`,
   `entities.py`, and `facts.py`), with `package = "app"` under `[tool.factoid]`, so every example looks the same. Its
-  evals import from `app`. `factoid init` still names the package after the project.
+  evals import from `app`. `factoid init` writes `app/` too (decision 137).
 - **Keys:** a call needs the provider's key or its base URL (`<PROVIDER>_BASE_URL`, for a gateway that adds
   credentials). With neither, it fails at once and names both. The key is sent whenever it is set. The code names no
   hosting platform or gateway (decision 83): a machine behind one sets the base URLs in `~/.factoid/.env`.
@@ -1783,3 +1783,6 @@ All dates are 2026-11-13 unless noted.
      credits ran out, and the page is one static file, which Pages hosts free for a public repository. A workflow
      publishes `site/` on every push to `main` that changes it, so the live page always matches the repository. The
      Netlify site was deleted (Kyle). This replaces decision 124's hosting and its CLI deploys.
+137. `factoid init` puts a new project's code in `app/`, as the example apps do (Kyle, 2026-11-23; decision 125 left
+     init unchanged). `pyproject.toml`'s name and the project's id come from the folder's name, so two projects still
+     get different key folders. `--package` picks another name, and existing projects keep theirs.

@@ -193,7 +193,7 @@ client Acme on acquiring Orion and reviews Orion's contracts, including Orion's 
 ```text
 acme/
 ├── pyproject.toml
-├── acme/
+├── app/             # the project's code; `factoid init` names it app
 │   ├── settings.py    # storage, indexes, pinned models, and search
 │   ├── sources.py     # document sources
 │   ├── documents.py   # Contract, CounselEmail, and ContractRegister
@@ -342,7 +342,7 @@ the old fact by rule, with no model call. Files that point to the same entity co
 ```python
 # documents.py
 from factoid import Identity, Ignore, Property, StructuredDocument, Text
-from acme.entities import Agreement
+from app.entities import Agreement
 
 class ContractRegister(StructuredDocument):
     """The data room's list of the target's contracts."""
@@ -637,7 +637,7 @@ confirm the name. A project can change one floor or add a custom fact eval witho
 # facts.py
 from factoid import Fact
 from factoid.fact_evals import DecisionFloors, Nli
-from acme.fact_evals import CitesSourceEval
+from app.fact_evals import CitesSourceEval
 
 class SourceFact(Fact):
     """What a contract, a client, or the other side says."""
