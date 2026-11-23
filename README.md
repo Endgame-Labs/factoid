@@ -625,14 +625,13 @@ The floors are starting values set from eval runs, and calibration from labeled 
 only checks a rewording or a split can fix (`self_contained`, `atomic`, and `attribution`) gets one repair, and Factoid
 evaluates the repaired sentences again. The repair names what pronouns and relative dates refer to, or splits a compound
 fact. `repair_guidance` on a document or fact class adds rules to the repair prompt, and the prompt's `guidance` and
-`references` blocks can be replaced by a project template that extends `factoid/repair.md.j2`.
-`DecisionFloors(repair_grounded=True)` also repairs a fact that fails `grounded`, by trimming it to what its passages
-say. It is off by default while evals decide. `assess_with_evaluate = True` on a fact class asks the trait and time
-questions in the fact evals' request, which saves one decision request per fact; it is off by default for the same
-reason. The fact evals and repair see the document text just before the fact's first cited passage (`evidence_context`,
-1,200 characters by default; 0 for structured documents). The extractor resolves "he" or "this aircraft" from earlier
-text, so the checks need that text to confirm the name. A project can change one floor or add a custom fact eval without
-replacing the default chain:
+`references` blocks can be replaced by a project template that extends `factoid/repair.md.j2`. A fact that fails
+`grounded` gets one repair too, which trims it to what its passages say; `DecisionFloors(repair_grounded=False)` turns
+that off. `assess_with_evaluate = True` on a fact class asks the trait and time questions in the fact evals' request,
+which saves one decision request per fact; it is off by default while evals decide. The fact evals and repair see the
+document text just before the fact's first cited passage (`evidence_context`, 1,200 characters by default; 0 for
+structured documents). The extractor resolves "he" or "this aircraft" from earlier text, so the checks need that text to
+confirm the name. A project can change one floor or add a custom fact eval without replacing the default chain:
 
 ```python
 # facts.py

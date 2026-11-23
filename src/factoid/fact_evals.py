@@ -177,9 +177,9 @@ class DecisionFloors(FactEval):
     #: Failures a rewording or a split can fix. A fact that fails only these gets one repair, however low the score:
     #: the repair sees the text before the quote, so it can name what "he" or "this aircraft" refers to.
     repairable = ("self_contained", "atomic", "attribution")
-    #: Also repair a fact that fails "grounded", by trimming it to what its passages say. Off by default: an
-    #: experiment (decision 87, issue #6), which the evals decide.
-    repair_grounded: bool = False
+    #: Also repair a fact that fails "grounded", by trimming it to what its passages say. On by default since the
+    #: evals showed it helps (decision 129, issue #6).
+    repair_grounded: bool = True
     #: A "useful" failure within this margin rides along with a repairable one, since splitting a compound fact often
     #: makes each part useful.
     repair_margin = 0.2
@@ -243,7 +243,7 @@ class DecisionFloors(FactEval):
 
     def __repr__(self) -> str:
         parts = [f"{k}={v}" for k, v in self.floors.items() if DEFAULT_FLOORS.get(k) != v]
-        parts += ["repair_grounded"] if self.repair_grounded else []
+        parts += [] if self.repair_grounded else ["repair_grounded=False"]
         parts += [f"target {k}={v}" for k, v in self.targets.items() if DEFAULT_TARGETS.get(k) != v]
         for name, question in self._changed.items():
             parts.append(f"{name}: dropped" if question is None else

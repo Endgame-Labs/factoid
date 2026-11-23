@@ -2,6 +2,14 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.22 (2026-11-23)
+
+- **Grounded repair is on by default.** A fact that fails `grounded` is trimmed to what its passages say instead of
+  being dropped. The evals showed fewer rejected facts and better as-of answers on the legal suites, with QA on iscrag
+  holding (issue #6). `DecisionFloors(repair_grounded=False)` turns it off.
+- **Looser entity linking.** `Entity.link_threshold` is 0.6 by default, down from 0.8. The linking suite's accuracy
+  went from 0.79 to 0.92 with no new false links (issue #23).
+
 ## 0.1.21 (2026-11-23)
 
 - **Rules for the repair.** `repair_guidance` on a document or fact class adds rules to the repair prompt, such as

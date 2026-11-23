@@ -51,7 +51,7 @@ class Entity(Registered, ModelCalls):
     #: Identifiers that prove two records are the same entity. Email, domain, and URL count by default.
     unique_keys: ClassVar[list[str]] = []
     #: The probability the link question must reach to link a mention to an existing entity.
-    link_threshold: ClassVar[float] = 0.8
+    link_threshold: ClassVar[float] = 0.6
     #: Asked when a mention may match an existing entity.
     link_question: ClassVar[str] = (
         "Is the mention \"{{ mention }}\" the same {{ kind }} as \"{{ entity.name }}\"?"

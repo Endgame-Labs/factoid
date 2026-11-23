@@ -1350,6 +1350,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   supersessions (signature and date facts), and broke 4 of 12 checks on the sample deal.
 - **Repair splits on an atomic failure**: a fact that failed the atomic check states several claims, so repair must
   split it rather than reword it.
+- **Grounded repair** (decision 129): a fact that fails `grounded` gets one repair that trims it to what its passages
+  say, on by default. `DecisionFloors(repair_grounded=False)` turns it off.
+- **Link threshold** (decision 130): `Entity.link_threshold` is 0.6 by default, down from 0.8.
 - **Repair guidance** (decision 128): `repair_guidance` on a document class, then on a fact class, is shown to the
   repair, and `repair.md.j2` has `guidance` and `references` blocks a project template can replace. Empty by default,
   so the default prompt is unchanged byte for byte and cached calls still replay.
@@ -1381,7 +1384,7 @@ diligence app in `examples/legal`, scored on CUAD; `examples/iscrag` reruns the 
   chains. On CUAD contracts 21 to 40, never looked at while tuning, clause F1 was 0.85 (0.82 on the tuning set),
   coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
   supersession 1 of 2. Details are in `examples/legal/README.md`.
-- **PyPI:** 0.1.21 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
+- **PyPI:** 0.1.22 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
 - **Landing page** (decisions 124 and 126): a static page in `site/`, hosted on Netlify at
   https://factoid-landing-page.netlify.app and deployed with the Netlify CLI. `site/README.md` says how to change,
   publish, and roll it back.
@@ -1740,3 +1743,11 @@ All dates are 2026-11-13 unless noted.
      `guidance` is not passed on by default, since extraction rules ("skip greetings") do not all fit a repair; an app
      sets `repair_guidance = guidance` to share them. The default reference rule is unchanged: on the default generate
      model the reported wrong subject did not recur in 30 tries, so a default change waits for an eval that shows it.
+129. `repair_grounded` is on by default (2026-11-23, issue #6). Against the 0.1.18 scorecards, with replayed calls:
+     legal rejected about a quarter fewer facts on CUAD, the fresh amendment chain's as-of accuracy went from 0.82 to
+     0.91, and CUAD coverage rose on two sets (0.971 to 0.975, 0.975 to 0.987) and held on the third. iscrag dev QA moved
+     within run-to-run noise (facts@2048 0.960 to 0.965, @512 0.935 to 0.920, @8192 0.960 to 0.950; the link arm, which
+     changes nothing in extraction, moved it as much). Calls rose about 1%.
+130. `Entity.link_threshold` defaults to 0.6 (2026-11-23, issue #23). On the legal `linking` suite, accuracy went from
+     0.79 to 0.92 and recall from 0.58 to 0.83, with no new false links. NBA still passed 11 of 11 with fewer duplicate
+     entities (Game 27 to 24, Team 34 to 33), iscrag made 3% fewer entities, and legal's other suites held.

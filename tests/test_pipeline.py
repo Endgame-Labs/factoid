@@ -765,7 +765,7 @@ def test_a_later_restatement_does_not_supersede(make_app, fake):
     assert Fact.get(first.facts[0].id).status == "current"
 
 
-def test_a_grounded_failure_is_trimmed_only_when_asked(make_app, fake):
+def test_a_grounded_failure_is_trimmed_unless_turned_off(make_app, fake):
     from factoid import DecisionFloors, Nli
 
     app = build(make_app, fake)
@@ -787,14 +787,14 @@ def test_a_grounded_failure_is_trimmed_only_when_asked(make_app, fake):
     fake.noul, fake.generator = noul, generator
     note = "Grace Liu raised that the second clinic's network upgrade slips to January."
     meta = {"signed_at": "2026-11-01T00:00:00Z"}
-    assert app.ingest_text(note, document_type=Contract, metadata=meta, uri="a.txt").facts == []
-    SourceFact.fact_evals = [Nli(), DecisionFloors(repair_grounded=True)]
-    try:
-        kept = app.ingest_text(note, document_type=Contract, metadata=meta, uri="b.txt").facts
-    finally:
-        del SourceFact.fact_evals
+    kept = app.ingest_text(note, document_type=Contract, metadata=meta, uri="a.txt").facts
     assert [f.text for f in kept] == ["The second clinic's network upgrade slips to January."]
     assert any("Keep only what they state" in p for p in prompts)
+    SourceFact.fact_evals = [Nli(), DecisionFloors(repair_grounded=False)]
+    try:
+        assert app.ingest_text(note, document_type=Contract, metadata=meta, uri="b.txt").facts == []
+    finally:
+        del SourceFact.fact_evals
 
 
 def test_assess_can_ride_along_with_the_fact_evals(make_app, fake):
