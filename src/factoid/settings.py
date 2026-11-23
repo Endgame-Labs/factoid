@@ -13,7 +13,7 @@ from .models import Model
 __all__ = ["DEFAULT_MODELS", "Settings"]
 
 DEFAULT_MODELS: dict[str, Model] = {
-    "choose": Model("typesafe/jev-1.13.0"),
+    "choose": Model("typesafe/jev-1.14.0"),
     "generate": Model("fireworks/glm-5p3-flash", reasoning_effort="low"),
     "embed": Model("fireworks/qwen3-embedding-8b"),
 }

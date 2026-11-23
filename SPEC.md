@@ -1388,7 +1388,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
   chains. On CUAD contracts 21 to 40, never looked at while tuning, clause F1 was 0.85 (0.82 on the tuning set),
   coverage 0.93 (0.95), and expiration dates 5 of 5. On a held-out amendment chain, as-of search was 2 of 2 and
   supersession 1 of 2. Details are in `examples/legal/README.md`.
-- **PyPI:** 0.1.24 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
+- **Default decision model** (decision 139): `typesafe/jev-1.14.0`, in `settings.py`, the `jev` preset, and the
+  example apps.
+- **PyPI:** 0.1.25 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
 - **Landing page** (decisions 124, 126, 131, and 136): a static page in `site/`, hosted on GitHub Pages at
   https://endgame-labs.github.io/factoid/ and published by `.github/workflows/pages.yml` on every push to `main` that
   changes it. `site/README.md` says how to change, publish, and roll it back. A second page, `what-is-a-fact.html`,
@@ -1792,3 +1794,11 @@ All dates are 2026-11-13 unless noted.
      `examples/demo/page_data.py`, replacing the page's invented facts. Factoid cites whole turns, so the page highlights
      the sentences in a cited turn that share words with the fact, and says so. One check fails until issue #25 is
      fixed, and the demo's README says why.
+139. Jev 1.14 is the default decision model (Kyle, 2026-11-23: "close enough, go with it"). Jev 1.13, Jev 1.14, and
+     Rune ran every legal suite, MediaSum dev, and NBA playoffs in one run. Jev 1.14 against 1.13: CUAD F1 0.809 and
+     0.826 on fresh and held-out contracts (0.807, 0.837), mean AUPR 0.932 and 0.939 (0.930, 0.953), as-of answers
+     equal or better on every amendment chain, false changes to base facts a little lower on each, MediaSum facts@2048
+     192 of 200 (193), NBA 11 of 11 (11), and linking and grounded cases equal. It keeps about 6% fewer facts, flags
+     far fewer contradictions (10 against 78 on MediaSum), and makes 2% to 12% fewer calls. It was not better
+     everywhere, but every gap is a question or a clause or two. Jev 1.13 stays in `prices.json` and in each example's
+     `evals/variants.py` as `JEV_113`.

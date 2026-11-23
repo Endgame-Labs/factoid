@@ -62,7 +62,7 @@ Factoid uses models for four kinds of work, and the fourth is optional:
 
 | Preset | `choose` | `generate` | `embed` | Keys you need |
 | --- | --- | --- | --- | --- |
-| `jev` (the default) | TypeSafe `jev-1.13.0` | Fireworks `glm-5p3-flash` | Fireworks `qwen3-embedding-8b` | TypeSafe and Fireworks |
+| `jev` (the default) | TypeSafe `jev-1.14.0` | Fireworks `glm-5p3-flash` | Fireworks `qwen3-embedding-8b` | TypeSafe and Fireworks |
 | `fireworks` (experimental) | Fireworks `rune` | Fireworks `glm-5p3-flash` | Fireworks `qwen3-embedding-8b` | Fireworks |
 | `openai` | OpenAI `gpt-6-luna` (Decisions API) | OpenAI `gpt-6-luna` | OpenAI `text-embedding-3-small` | OpenAI |
 
@@ -707,7 +707,7 @@ from factoid.stores import Sqlite
 class Project(Settings):
     store = Sqlite(path=".factoid/acme.db")            # the system of record
     models = {
-        "choose": Model("typesafe/jev-1.13.0"),        # classify, evaluate facts, assess, and resolve
+        "choose": Model("typesafe/jev-1.14.0"),        # classify, evaluate facts, assess, and resolve
         "generate": Model("fireworks/glm-5p3-flash"),  # extract and repair, unless a step has its own model
         "situate": Model("fireworks/glm-5p3-flash"),   # optional: a model for one generation step
         "embed": Model("openai/text-embedding-3-small"),
@@ -969,7 +969,7 @@ class DealMemo(ProseDocument):
     """A memo a lawyer wrote about a deal."""
 
 class ServiceSettings(Settings):
-    models = {"generate": Model("fireworks/glm-5p3-flash"), "choose": Model("typesafe/jev-1.13.0")}
+    models = {"generate": Model("fireworks/glm-5p3-flash"), "choose": Model("typesafe/jev-1.14.0")}
 
 factoid = Factoid(settings=ServiceSettings, documents=[DealMemo], entities=[Company])
 factoid.ingest_text("Orion's lease in Austin ends in March 2027.", document_type=DealMemo)

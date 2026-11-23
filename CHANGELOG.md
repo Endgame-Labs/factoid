@@ -2,8 +2,11 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
-## Unreleased
+## 0.1.25 (2026-11-23)
 
+- **Jev 1.14 is the default decision model.** New projects and the `jev` preset use `typesafe/jev-1.14.0`. It
+  scores about the same as 1.13 on the example evals, with fewer calls. Existing projects keep the model in their
+  `settings.py`.
 - **A demo app.** `examples/demo` is a sales call and two emails, with a five-check eval. It runs in a minute for
   under a cent.
 - **Eval cost.** Each suite's summary line gives what its calls cost at list prices, replayed or not.
