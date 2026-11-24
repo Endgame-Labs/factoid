@@ -1392,7 +1392,7 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
   supersession 1 of 2. Details are in `examples/legal/README.md`.
 - **Default decision model** (decision 139): `typesafe/jev-1.14.0`, in `settings.py`, the `jev` preset, and the
   example apps.
-- **PyPI:** 0.1.26 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
+- **PyPI:** 0.1.27 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
 - **Landing page** (decisions 124, 126, 131, 136, and 141): Jinja templates in `site/` with one shared header, nav, and
   footer, served by Flask while you work and built to self-contained static pages (`site/app.py`). Hosted on GitHub
   Pages at https://endgame-labs.github.io/factoid/; `.github/workflows/pages.yml` builds and publishes it on every
@@ -1401,9 +1401,10 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
 - **Per-model bars** (decisions 140 and 143): a decision model whose probabilities run high gets its own bars, in
   `MODEL_LINK` (entity.py), `MODEL_RESOLVE` (fact.py), and `MODEL_TRAIT` (trait.py). Rune has all three. A project's
   own `link_threshold`, `contradiction_threshold`, or trait `threshold` still wins.
-- **Issue #25 settings, off while evals decide:** `Fact.duplicate_applies_changes` (a duplicate still supersedes,
-  ends, or corrects other stored facts, as the stored fact it confirms) and `Fact.pool_changes` (supersedes plus
-  corrects reaching `resolve_threshold`, for a newer fact from another document).
+- **Issue #25 settings, on by default** (decision 144): `Fact.duplicate_applies_changes` (a duplicate still
+  supersedes, ends, or corrects other stored facts, as the stored fact it confirms) and `Fact.pool_changes`
+  (supersedes plus corrects reaching `resolve_threshold`, for a newer fact from another document). The "unrelated"
+  resolve answer says that reports are compared on what was said, not on whether both were said.
 - **Example layout** (decision 125): each example app keeps its code in `app/` (`settings.py`, `documents.py`,
   `entities.py`, and `facts.py`), with `package = "app"` under `[tool.factoid]`, so every example looks the same. Its
   evals import from `app`. `factoid init` writes `app/` too (decision 137).
@@ -1804,8 +1805,8 @@ All dates are 2026-11-13 unless noted.
 138. `examples/demo` is the first example to run (Kyle, 2026-11-23): a made-up sales call and two emails, with a
      five-check eval, for under a cent. Its real output fills the landing site's "What is a fact?" page through
      `examples/demo/page_data.py`, replacing the page's invented facts. Factoid cites whole turns, so the page highlights
-     the sentences in a cited turn that share words with the fact, and says so. One check fails until issue #25 is
-     fixed, and the demo's README says why.
+     the sentences in a cited turn that share words with the fact, and says so. One check failed until issue #25 was
+     fixed (decision 144); all five pass since 0.1.27.
 139. Jev 1.14 is the default decision model (Kyle, 2026-11-23: "close enough, go with it"). Jev 1.13, Jev 1.14, and
      Rune ran every legal suite, MediaSum dev, and NBA playoffs in one run. Jev 1.14 against 1.13: CUAD F1 0.809 and
      0.826 on fresh and held-out contracts (0.807, 0.837), mean AUPR 0.932 and 0.939 (0.930, 0.953), as-of answers
@@ -1850,13 +1851,14 @@ All dates are 2026-11-13 unless noted.
      now None by default and `FactTrait.bar()` returns the class's own value, else the model's, else 0.5. A trait
      whose `decide` reads `cls.threshold` must set it. Jev's F1 would also rise with a higher bar (0.86 at 0.9 on
      `cuad_fresh`), but that trades recall for precision, so the default stays 0.5 until Kyle decides.
-144. Proposed (2026-11-24; issue #25): turn on `duplicate_applies_changes` and `pool_changes`, and add to the
-     "unrelated" resolve answer that two reports are compared on what was said, not on whether both were said. With
-     Jev 1.14 the demo's 45-seat plan stayed current because Jev called it unrelated to "starting with 30, not the 45 I
-     mentioned" (0.50): both statements were made, so both "can be true". All three together fix the demo (5 of 5),
-     raise supersede recall on `amendments_fresh` from 0.50 to 0.75 and as-of accuracy from 0.909 to 1.0, keep false
-     changes level on every amendment chain, keep NBA at 11 of 11, and keep MediaSum within two questions. Waiting on
-     one `amendments_heldout` run, which failed when TypeSafe ran out of credits. Issue #25 has the table.
+144. Decided (Kyle, 2026-11-24: "yes"; issue #25; 0.1.27): turn on `duplicate_applies_changes` and `pool_changes`, and
+     add to the "unrelated" resolve answer that two reports are compared on what was said, not on whether both were
+     said. With Jev 1.14 the demo's 45-seat plan stayed current because Jev called it unrelated to "starting with 30,
+     not the 45 I mentioned" (0.50): both statements were made, so both "can be true". All three together fix the demo
+     (5 of 5), raise supersede recall on `amendments_fresh` from 0.50 to 0.75 and as-of accuracy from 0.909 to 1.0, keep
+     false changes level on every amendment chain, keep NBA at 11 of 11, and keep MediaSum within two questions. On
+     `amendments_heldout` both arms scored the same: supersede recall 0.5 (any 1.0), false changes 4.2%, as-of 1.0, and
+     facts QA at 2,000 tokens 0.833. Issue #25 has the table.
 145. `redaction_markers` stays off (2026-11-24; issue #26). Showing "[*]" to the decision model as "[redacted]" made
      Rune answer "supersedes" (0.92) for the territory amendment it missed, but its verify step still dropped the
      change (0.41): with both values hidden it cannot tell they differ. On the three amendment chains, recall did not

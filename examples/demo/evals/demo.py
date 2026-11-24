@@ -1,7 +1,7 @@
 """The demo's checks: what each fact's status should be after the call and the two emails.
 
-`factoid eval demo` runs them. The 45-seat check fails today (issue #25): the email that moves the rollout to 30 seats
-is resolved as a duplicate of Samir's remark, which drops its change to the 45-seat plan.
+`factoid eval demo` runs them. The 45-seat check needs 0.1.27 or later (issue #25): the email that moves the rollout to
+30 seats repeats Samir's remark and also retires the 45-seat plan.
 """
 
 import json

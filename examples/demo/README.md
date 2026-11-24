@@ -39,9 +39,8 @@ uv run factoid eval demo                                 # the checks
 - **What it costs.** The model calls line after each ingest gives the cost at list prices. All three documents cost
   under a cent.
 
-## What it gets wrong today
+## A change in a later email
 
-Elena's email says the rollout starts with 30 seats, "not the 45 I mentioned on the call", but the fact that
-Kestrel Health planned 45 seats stays current. The email's fact was matched as a repeat of Samir's remark that
-finance approved 30, and a repeat drops the change it carries (issue #25). `factoid eval demo` passes 4 of its 5
-checks until that is fixed.
+Elena's email says the rollout starts with 30 seats, "not the 45 I mentioned on the call". Its fact repeats Samir's
+remark that finance approved 30, and it also retires the 45-seat plan, which is superseded as of October 15.
+`factoid eval demo` passes all 5 of its checks. Before 0.1.27, a repeat dropped the change it carried (issue #25).

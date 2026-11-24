@@ -1,6 +1,6 @@
 [project]
 name = "factoid"
-version = "0.1.26"
+version = "0.1.27"
 description = "Turn documents into facts and entities."
 readme = "README.md"
 license = "MIT"

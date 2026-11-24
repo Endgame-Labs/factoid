@@ -2,7 +2,13 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
-## Unreleased
+## 0.1.27 (2026-11-24)
+
+- **A repeat no longer drops the change it carries (issue #25).** When a new fact repeats one stored fact and
+  supersedes, ends, or corrects another, those changes now apply (`duplicate_applies_changes`). Supersedes and
+  corrects that together reach the bar now count as a change (`pool_changes`), and resolve compares what reports
+  said, not whether both were said. The demo passes 5 of 5; legal supersede recall went from 0.50 to 0.75, with no
+  more false changes.
 
 - **A RAG example.** `examples/rag` answers questions about Python's standard library from its "What's New" pages,
   with facts, chunks, or both as the retriever. Facts answered all 45 eval questions from about 470 tokens of
@@ -10,7 +16,6 @@ Features and fixes that change what Factoid does, by version. `SPEC.md` has the 
 - **Rune tags clauses more carefully.** With Rune as the decision model, a trait needs 0.85 instead of 0.5
   (`MODEL_TRAIT`). CUAD F1 on held-out contracts went from 0.80 to 0.83, level with Jev 1.14. A trait's own
   `threshold` still wins; `FactTrait.threshold` is now None by default, and `FactTrait.bar()` gives the value in use.
-- **Two resolve settings for issue #25, off by default:** `duplicate_applies_changes` and `pool_changes`.
 - **`redaction_markers`**, off by default: resolve shows markers such as `[*]` to the decision model as "[redacted]"
   (issue #26).
 - **`generate_field`** in `factoid.evals` asks a model for JSON and returns one field, with a fallback: what an

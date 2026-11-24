@@ -77,7 +77,9 @@ RESOLVE_ANSWERS: dict[str, str] = {
     "contradicts": "The two facts cannot both be true at the same time and in the same case, and neither replaces "
                    "the other.",
     "unrelated": "The facts are about different things, or both can be true at once, such as a rule and an exception "
-                 "to it, or terms that apply in different cases.",
+                 "to it, or terms that apply in different cases. When the facts report what someone said, compare "
+                 "what was said, not whether it was said: a later statement that changes an earlier one is not "
+                 "unrelated because both statements were made.",
 }
 
 
@@ -126,14 +128,14 @@ class Fact(Registered, ModelCalls):
     #: When a new fact is a duplicate of one stored fact and also supersedes, ends, or corrects another, apply those
     #: changes too, made by the stored fact it confirms and dated at the new fact's date (issue #25). Off, a duplicate
     #: drops them.
-    duplicate_applies_changes: ClassVar[bool] = False
+    duplicate_applies_changes: ClassVar[bool] = True
     #: Markers in fact text that stand for a redacted value, such as "[*]" in filed contracts. Resolve shows each one to
     #: the decision model as "[redacted]", so a model that reads "[*]" as part of the text still sees that a hidden
     #: value can differ (issue #26). Stored text and quotes are unchanged.
     redaction_markers: ClassVar[list[str]] = []
     #: When "supersedes" and "corrects" together reach `resolve_threshold` but neither does alone, and the new fact is
     #: newer and from another document, take the larger of the two (issue #25): both say the old value no longer holds.
-    pool_changes: ClassVar[bool] = False
+    pool_changes: ClassVar[bool] = True
     #: How sure the decision model must be that a new fact replaces an older one in a section replaced as a whole.
     replace_threshold: ClassVar[float] = 0.6
     #: Run one repair (a rewording) on a near miss.

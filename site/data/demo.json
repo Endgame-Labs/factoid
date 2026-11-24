@@ -279,6 +279,7 @@
       "sentence": "Elena Ortiz said that Kestrel Health is targeting December 1, 2026 to cut over to a new analytics platform.",
       "factClass": "CustomerFact",
       "traits": [
+        "PainPoint",
         "Timeline",
         "Commitment"
       ],
@@ -314,12 +315,51 @@
       },
       "relation": {
         "type": "superseded",
-        "targetFactId": "fact_13",
-        "label": "superseded by fact_13"
+        "targetFactId": "fact_12",
+        "label": "superseded by fact_12"
       }
     },
     {
       "id": "fact_04",
+      "sentence": "Elena Ortiz said that Kestrel Health planned 45 analyst seats for the initial rollout of the new analytics platform.",
+      "factClass": "CustomerFact",
+      "traits": [
+        "PainPoint",
+        "Pricing"
+      ],
+      "status": "superseded",
+      "quotes": [
+        {
+          "sentenceId": "s4-1",
+          "speaker": "Elena Ortiz",
+          "timestamp": "02:05"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Elena Ortiz",
+          "kind": "Person",
+          "role": "speaker"
+        },
+        {
+          "name": "Kestrel Health",
+          "kind": "Company",
+          "role": "about"
+        }
+      ],
+      "time": {
+        "validFrom": "2026-10-14",
+        "validUntil": "2026-10-15",
+        "expires": "estimated"
+      },
+      "relation": {
+        "type": "superseded",
+        "targetFactId": "fact_10",
+        "label": "superseded by fact_10"
+      }
+    },
+    {
+      "id": "fact_05",
       "sentence": "Elena Ortiz said that Kestrel Health needs annual fixed pricing rather than metered billing because Kestrel Health's finance team dislikes surprise overage invoices at quarter end.",
       "factClass": "CustomerFact",
       "traits": [
@@ -357,40 +397,8 @@
       }
     },
     {
-      "id": "fact_05",
-      "sentence": "Elena Ortiz said that Kestrel Health planned 45 analyst seats for the initial rollout of the new analytics platform.",
-      "factClass": "CustomerFact",
-      "traits": [
-        "Pricing"
-      ],
-      "status": "current",
-      "quotes": [
-        {
-          "sentenceId": "s4-1",
-          "speaker": "Elena Ortiz",
-          "timestamp": "02:05"
-        }
-      ],
-      "entities": [
-        {
-          "name": "Elena Ortiz",
-          "kind": "Person",
-          "role": "speaker"
-        },
-        {
-          "name": "Kestrel Health",
-          "kind": "Company",
-          "role": "about"
-        }
-      ],
-      "time": {
-        "validFrom": "2026-10-14",
-        "expires": "estimated"
-      }
-    },
-    {
       "id": "fact_06",
-      "sentence": "Maya Lin, the account executive at Northstar Data, said that Northstar Data's Enterprise tier includes SAML SSO and full audit logs.",
+      "sentence": "Maya Lin said that Northstar Data's Enterprise tier pricing is $96,000 a year for 45 seats and includes SAML SSO and full audit logs.",
       "factClass": "VendorFact",
       "traits": [
         "Pricing",
@@ -433,48 +441,6 @@
     },
     {
       "id": "fact_07",
-      "sentence": "Maya Lin, the account executive at Northstar Data, said that Northstar Data's Enterprise tier pricing is $96,000 a year for 45 seats.",
-      "factClass": "VendorFact",
-      "traits": [
-        "Pricing"
-      ],
-      "status": "current",
-      "quotes": [
-        {
-          "sentenceId": "s5-1",
-          "speaker": "Maya Lin",
-          "timestamp": "02:51"
-        },
-        {
-          "sentenceId": "s5-2",
-          "speaker": "Maya Lin",
-          "timestamp": "02:51"
-        }
-      ],
-      "entities": [
-        {
-          "name": "Maya Lin",
-          "kind": "Person",
-          "role": "speaker"
-        },
-        {
-          "name": "Northstar Data",
-          "kind": "Company",
-          "role": "about"
-        },
-        {
-          "name": "Enterprise tier",
-          "kind": "Product",
-          "role": "subject"
-        }
-      ],
-      "time": {
-        "validFrom": "2026-10-14",
-        "expires": "estimated"
-      }
-    },
-    {
-      "id": "fact_08",
       "sentence": "Samir Patel said that Kestrel Health requires Northstar Data's current SOC 2 Type II report before Kestrel Health's legal team can countersign anything.",
       "factClass": "CustomerFact",
       "traits": [
@@ -516,7 +482,7 @@
       }
     },
     {
-      "id": "fact_09",
+      "id": "fact_08",
       "sentence": "Samir Patel said that Kestrel Health requires customer-managed encryption keys in AWS KMS for any production patient-billing data.",
       "factClass": "CustomerFact",
       "traits": [
@@ -545,11 +511,6 @@
           "name": "AWS KMS",
           "kind": "Product",
           "role": "subject"
-        },
-        {
-          "name": "AWS KMS architecture brief",
-          "kind": "Entity",
-          "role": "about"
         }
       ],
       "time": {
@@ -558,10 +519,12 @@
       }
     },
     {
-      "id": "fact_10",
+      "id": "fact_09",
       "sentence": "Samir Patel said that Kestrel Health's internal security review usually takes three weeks once the required documents are received.",
       "factClass": "CustomerFact",
-      "traits": [],
+      "traits": [
+        "SecurityRequirement"
+      ],
       "status": "current",
       "quotes": [
         {
@@ -588,7 +551,7 @@
       }
     },
     {
-      "id": "fact_11",
+      "id": "fact_10",
       "sentence": "Samir Patel said that Kestrel Health's finance team only approved 30 analyst seats for the initial rollout in the morning of October 14, 2026 budget check, not 45.",
       "factClass": "CustomerFact",
       "traits": [
@@ -617,17 +580,22 @@
       "time": {
         "validFrom": "2026-10-14",
         "expires": "never"
+      },
+      "relation": {
+        "type": "supersedes",
+        "targetFactId": "fact_04",
+        "label": "supersedes fact_04"
       }
     },
     {
-      "id": "fact_12",
-      "sentence": "Elena Ortiz said she would reconcile the seat count with Kestrel Health's finance team after the call of October 14, 2026.",
+      "id": "fact_11",
+      "sentence": "Elena Ortiz, VP of Data Platform at Kestrel Health, said she would reconcile the number of analyst seats for the initial rollout (45 planned versus 30 approved by finance) with Kestrel Health's finance team after the call of October 14, 2026.",
       "factClass": "VendorFact",
       "traits": [
         "Pricing",
         "Commitment"
       ],
-      "status": "current",
+      "status": "superseded",
       "quotes": [
         {
           "sentenceId": "s8-2",
@@ -649,11 +617,17 @@
       ],
       "time": {
         "validFrom": "2026-10-14",
+        "validUntil": "2026-10-15",
         "expires": "never"
+      },
+      "relation": {
+        "type": "superseded",
+        "targetFactId": "fact_10",
+        "label": "superseded by fact_10"
       }
     },
     {
-      "id": "fact_13",
+      "id": "fact_12",
       "sentence": "Elena Ortiz said that Kestrel Health would move its target cutover date to January 18, 2027, given the three-week security review and the December freeze.",
       "factClass": "CustomerFact",
       "traits": [
@@ -693,7 +667,7 @@
       }
     },
     {
-      "id": "fact_14",
+      "id": "fact_13",
       "sentence": "Devon Brooks said he would send Northstar Data's SOC 2 Type II report and AWS KMS architecture brief to Samir Patel by this Friday.",
       "factClass": "VendorFact",
       "traits": [
