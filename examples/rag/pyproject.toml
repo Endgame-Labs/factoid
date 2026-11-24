@@ -1,0 +1,12 @@
+[project]
+name = "factoid-rag"
+version = "0.1.0"
+description = "A docs assistant: retrieval-augmented answers about Python's standard library, from Factoid facts or plain chunks."
+requires-python = ">=3.13"
+dependencies = ["factoid"]
+
+[tool.uv.sources]
+factoid = { path = "../..", editable = true }
+
+[tool.factoid]
+package = "app"

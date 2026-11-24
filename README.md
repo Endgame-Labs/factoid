@@ -11,7 +11,7 @@
 **Website:** https://endgame-labs.github.io/factoid/, with an interactive
 [What is a fact?](https://endgame-labs.github.io/factoid/what-is-a-fact.html) page.
 
-> **Status: Version 0.1.26.** Factoid runs end to end, and four example apps publish their eval results. It covers
+> **Status: Version 0.1.26.** Factoid runs end to end, and five example apps publish their eval results. It covers
 > ingest, fact extraction with evals, entities, supersession and as-of search, settling contradictions, eval suites,
 > exports, an HTTP API, and an MCP server. [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) section 17 lists what is built.
 > [CHANGELOG.md](https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md) lists what changed in each version.
@@ -1074,8 +1074,10 @@ published papers by Kyle Wild, Yusuke Takahashi, and Asako Uraki.
 - [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) has every design decision, how settled each one
   is, and what is built (section 17).
 - [docs/cli.md](https://github.com/Endgame-Labs/factoid/blob/main/docs/cli.md) is the command reference.
-- [examples/](https://github.com/Endgame-Labs/factoid/tree/main/examples/) has four apps: `demo` (a sales call and two
-  emails, the place to start: it runs in a minute for under a cent), `legal` (contracts and amendments), `nba` (game
-  recaps and box scores), and `mediasum` (news transcripts, with a question-answering eval). Each has a README.
+- [examples/](https://github.com/Endgame-Labs/factoid/tree/main/examples/) has five apps: `demo` (a sales call and two
+  emails, the place to start: it runs in a minute for under a cent), `rag` (a docs assistant for Python's standard
+  library: a whole RAG pipeline in one file, with facts, chunks, or both as the retriever), `legal` (contracts and
+  amendments), `nba` (game recaps and box scores), and `mediasum` (news transcripts, with a question-answering eval).
+  Each has a README.
 - [docs/archive/](https://github.com/Endgame-Labs/factoid/tree/main/docs/archive/) holds docs from an earlier design; do
   not follow them.

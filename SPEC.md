@@ -1401,6 +1401,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
 - **Example layout** (decision 125): each example app keeps its code in `app/` (`settings.py`, `documents.py`,
   `entities.py`, and `facts.py`), with `package = "app"` under `[tool.factoid]`, so every example looks the same. Its
   evals import from `app`. `factoid init` writes `app/` too (decision 137).
+- **RAG example** (decision 142): `examples/rag` answers questions about Python's standard library from its "What's
+  New" pages. `rag.py` is a whole RAG pipeline in one file, with facts, chunks, or both as the retriever, and
+  `evals/qa.py` scores the three on 45 questions.
 - **Keys:** a call needs the provider's key or its base URL (`<PROVIDER>_BASE_URL`, for a gateway that adds
   credentials). With neither, it fails at once and names both. The key is sent whenever it is set. The code names no
   hosting platform or gateway (decision 83): a machine behind one sets the base URLs in `~/.factoid/.env`.
@@ -1824,3 +1827,11 @@ All dates are 2026-11-13 unless noted.
      the Pages workflow publishes that. The version comes from `pyproject.toml`, so releases no longer edit the site
      by hand. The "What is a fact?" page's data is `site/data/demo.json`. The built home page is pixel for pixel the
      same as the hand-written one; the "What is a fact?" page now has the home page's nav and footer.
+142. `examples/rag` is a docs assistant for Python's standard library (Kyle, 2026-11-23: an example with a RAG pipeline
+     in it). It ingests the "What's New" pages for 3.9 to 3.14 in release order, and `rag.py` retrieves facts as of a
+     version's release, plain 2,000-character windows of the pages released by then, or both, packs them into a
+     budget, and answers in one call. On 45 questions (2026-11-24), facts answered all 45 from about 470 tokens; chunks
+     answered 37 at 500 tokens, 44 at 2,000, and 45 only at about 7,700. No retriever gave an outdated answer, because
+     each source names its release, so the eval shows the token saving, not a staleness gap. The pages are downloaded
+     by `fetch.py`, not committed. The legal and MediaSum answer steps were not moved into a shared helper; `rag.py`
+     is the reference for now.

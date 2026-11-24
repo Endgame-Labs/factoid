@@ -2,6 +2,12 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## Unreleased
+
+- **A RAG example.** `examples/rag` answers questions about Python's standard library from its "What's New" pages,
+  with facts, chunks, or both as the retriever. Facts answered all 45 eval questions from about 470 tokens of
+  sources; chunks needed about 7,700 for the same score.
+
 ## 0.1.26 (2026-11-23)
 
 - **Rune links and flags contradictions more carefully.** With Rune as the decision model (the `fireworks` preset), a
