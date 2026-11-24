@@ -900,3 +900,21 @@ def test_a_change_split_between_supersedes_and_corrects_can_be_pooled(make_app, 
         old = _cap(app, "Vega's liability to Orion is capped at $1M.", "2025-01-01T00:00:00Z", "a.txt").facts[0]
         _cap(app, "Vega's liability to Orion is capped at $2M.", "2025-06-01T00:00:00Z", "b.txt")
         assert Fact.get(old.id).status == ("superseded" if on else "current")
+
+
+def test_resolve_shows_redaction_markers_as_redacted(make_app, fake, monkeypatch):
+    app = build(make_app, fake)
+    seen = []
+    inner = fake.choice
+
+    def choice(question, state, name):
+        if name.startswith("F"):
+            seen.append(json.dumps(state))
+        return inner(question, state, name)
+
+    fake.choice = choice
+    monkeypatch.setattr(SourceFact, "redaction_markers", ["[*]"])
+    _cap(app, "Vega's liability to Orion is capped at $1M and [*].", "2025-01-01T00:00:00Z", "a.txt")
+    _cap(app, "Vega's liability to Orion is capped at $2M and [*].", "2025-06-01T00:00:00Z", "b.txt")
+    assert seen and all("[*]" not in s for s in seen) and any("[redacted]" in s for s in seen)
+    assert any("[*]" in f.text for f in app.list_facts())  # stored text is unchanged

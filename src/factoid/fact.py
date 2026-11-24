@@ -127,6 +127,10 @@ class Fact(Registered, ModelCalls):
     #: changes too, made by the stored fact it confirms and dated at the new fact's date (issue #25). Off, a duplicate
     #: drops them.
     duplicate_applies_changes: ClassVar[bool] = False
+    #: Markers in fact text that stand for a redacted value, such as "[*]" in filed contracts. Resolve shows each one to
+    #: the decision model as "[redacted]", so a model that reads "[*]" as part of the text still sees that a hidden
+    #: value can differ (issue #26). Stored text and quotes are unchanged.
+    redaction_markers: ClassVar[list[str]] = []
     #: When "supersedes" and "corrects" together reach `resolve_threshold` but neither does alone, and the new fact is
     #: newer and from another document, take the larger of the two (issue #25): both say the old value no longer holds.
     pool_changes: ClassVar[bool] = False
@@ -425,13 +429,19 @@ class Fact(Registered, ModelCalls):
             return []
         klass = type(self)
         batch, verify = klass.resolve_settings(app)
-        new_fact = {"text": self.text, "date": _fmt(self.valid_from or self.source_datetime),
+
+        def shown(text: str) -> str:
+            for marker in klass.redaction_markers:
+                text = text.replace(marker, "[redacted]")
+            return text
+
+        new_fact = {"text": shown(self.text), "date": _fmt(self.valid_from or self.source_datetime),
                     "source": app.document_title(self.document_id)}
 
         def ask(group: list[Fact], make: Any) -> list[Any]:
             keys = [f"F{i + 1}" for i in range(len(group))]
             state = {"new_fact": new_fact, "stored_facts": {
-                key: {"text": other.text, "date": _fmt(other.valid_from or other.source_datetime),
+                key: {"text": shown(other.text), "date": _fmt(other.valid_from or other.source_datetime),
                       "source": app.document_title(other.document_id)} for key, other in zip(keys, group)}}
             judgments = app.client.ask(state, {key: make(key) for key in keys})
             return [judgments[key] for key in keys]

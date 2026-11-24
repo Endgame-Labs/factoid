@@ -11,6 +11,8 @@ Features and fixes that change what Factoid does, by version. `SPEC.md` has the 
   (`MODEL_TRAIT`). CUAD F1 on held-out contracts went from 0.80 to 0.83, level with Jev 1.14. A trait's own
   `threshold` still wins; `FactTrait.threshold` is now None by default, and `FactTrait.bar()` gives the value in use.
 - **Two resolve settings for issue #25, off by default:** `duplicate_applies_changes` and `pool_changes`.
+- **`redaction_markers`**, off by default: resolve shows markers such as `[*]` to the decision model as "[redacted]"
+  (issue #26).
 - **`generate_field`** in `factoid.evals` asks a model for JSON and returns one field, with a fallback: what an
   eval's reader or judge needs. The legal, MediaSum, and RAG evals use it, with the same requests as before.
 

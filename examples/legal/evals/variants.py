@@ -52,3 +52,9 @@ RESOLVE_DEFAULT = dict(_RESOLVE)
 RESOLVE_SAID = {**_RESOLVE, "unrelated": _RESOLVE["unrelated"] + (
     " When the facts report what someone said, compare what was said, not whether it was said: a later statement "
     "that changes an earlier one is not unrelated because both statements were made.")}
+
+
+# Issue #26: redaction markers shown as "[redacted]" in resolve. Run with
+# --vary redaction_markers=@evals.variants:NO_MARKERS,@evals.variants:MARKERS.
+NO_MARKERS: list[str] = []
+MARKERS = ["[*]", "[***]"]
