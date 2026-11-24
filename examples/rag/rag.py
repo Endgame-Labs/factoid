@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -71,23 +72,27 @@ def facts(app: Any, question: str, python: str) -> list[str]:
 
 
 _windows: dict[str, dict[str, Any]] = {}
+_indexing = threading.Lock()
 
 
 def _index_windows(app: Any) -> None:
     """Cut every page into windows and index them once per process. Embeddings are cached, so this is free after
-    the first run."""
-    if _windows:
-        return
-    for version, meta in releases().items():
-        text = (DATA / f"whatsnew-{version}.md").read_text()
-        for start in range(0, max(1, len(text) - WINDOW + STEP), STEP):
-            body = text[start:start + WINDOW].strip()
-            if body:
-                _windows[f"{version}:{start}"] = {"id": f"{version}:{start}", "text": body, "version": version,
-                                                   "title": meta["title"]}
-    rows = list(_windows.values())
-    vectors = app.client.embed([w["text"] for w in rows])
-    app.index.upsert(app.ns("rag-windows"), [{**w, "vector": v} for w, v in zip(rows, vectors)])
+    the first run. Questions are answered in parallel threads, so the others wait until the index is written."""
+    with _indexing:
+        if _windows:
+            return
+        windows = {}
+        for version, meta in releases().items():
+            text = (DATA / f"whatsnew-{version}.md").read_text()
+            for start in range(0, max(1, len(text) - WINDOW + STEP), STEP):
+                body = text[start:start + WINDOW].strip()
+                if body:
+                    windows[f"{version}:{start}"] = {"id": f"{version}:{start}", "text": body, "version": version,
+                                                      "title": meta["title"]}
+        rows = list(windows.values())
+        vectors = app.client.embed([w["text"] for w in rows])
+        app.index.upsert(app.ns("rag-windows"), [{**w, "vector": v} for w, v in zip(rows, vectors)])
+        _windows.update(windows)
 
 
 def chunks(app: Any, question: str, python: str) -> list[str]:

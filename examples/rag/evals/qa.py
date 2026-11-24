@@ -16,13 +16,12 @@ about them, so the answer has to come from the right older page, and pages that 
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 from typing import Any
 
 from factoid import Raw
-from factoid.evals import Suite
+from factoid.evals import Suite, generate_field
 from factoid.models import Model, ModelClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -176,14 +175,10 @@ class QA(Suite):
 
         def verdict(q: tuple[str, str, str, str], said: str) -> str:
             question, python, current, outdated = q
-            raw = judge.generate(
-                f"Python version: {python}\nQuestion: {question}\n\nRight answer: {current}\n\n"
-                f"Outdated answer: {outdated}\n\nAnswer to judge: {said}", json_mode=True, max_tokens=200,
-                system=JUDGE_SYSTEM)
-            try:
-                return str(json.loads(raw).get("verdict"))
-            except (json.JSONDecodeError, AttributeError):
-                return "neither"
+            return generate_field(
+                judge, f"Python version: {python}\nQuestion: {question}\n\nRight answer: {current}\n\n"
+                f"Outdated answer: {outdated}\n\nAnswer to judge: {said}", "verdict", "neither",
+                system=JUDGE_SYSTEM, max_tokens=200)
 
         out: dict[str, Any] = {"questions": len(ALL)}
         rows = [{"python": q[1], "question": q[0], "set": "latest" if i >= len(QUESTIONS) else "release"}

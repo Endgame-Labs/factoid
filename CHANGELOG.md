@@ -7,6 +7,8 @@ Features and fixes that change what Factoid does, by version. `SPEC.md` has the 
 - **A RAG example.** `examples/rag` answers questions about Python's standard library from its "What's New" pages,
   with facts, chunks, or both as the retriever. Facts answered all 45 eval questions from about 470 tokens of
   sources; chunks needed about 7,700 for the same score.
+- **`generate_field`** in `factoid.evals` asks a model for JSON and returns one field, with a fallback: what an
+  eval's reader or judge needs. The legal, MediaSum, and RAG evals use it, with the same requests as before.
 
 ## 0.1.26 (2026-11-23)
 

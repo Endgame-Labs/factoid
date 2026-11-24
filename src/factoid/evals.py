@@ -31,6 +31,7 @@ __all__ = [
     "Suite",
     "Variant",
     "aupr",
+    "generate_field",
     "load_suites",
     "parse_vary",
     "precision_at_recall",
@@ -303,6 +304,20 @@ def load_suites(project: Project) -> dict[str, type[Suite]]:
 
 
 # -- metrics ------------------------------------------------------------------------------------------------
+
+
+def generate_field(client: Any, prompt: str, field: str, default: str, *, system: str, max_tokens: int = 3000) -> str:
+    """Ask `client` for JSON and return one field as text: what a reader's answer or a judge's verdict needs.
+
+    `default` when the reply is not JSON, or the field is missing or empty. Readers that think count their thinking
+    against `max_tokens`, so keep it well above the answer's length."""
+    raw = client.generate(prompt, json_mode=True, max_tokens=max_tokens, system=system)
+    try:
+        value = json.loads(raw).get(field)
+    except (json.JSONDecodeError, AttributeError):
+        return default
+    text = str(value).strip() if value is not None else ""
+    return text or default
 
 
 def prf(tp: int, fp: int, fn: int) -> dict[str, float]:

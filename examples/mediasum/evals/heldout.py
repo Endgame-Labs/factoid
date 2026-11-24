@@ -26,7 +26,7 @@ from typing import Any
 import tiktoken
 
 from factoid import Model
-from factoid.evals import Suite
+from factoid.evals import Suite, generate_field
 from factoid.models import ModelClient
 
 HERE = Path(__file__).resolve().parent
@@ -140,22 +140,13 @@ class HeldOut(Suite):
             return {"facts": facts, "chunks": chunks}
 
         def answer(question: dict[str, Any], context: str) -> str:
-            raw = reader.generate(f"Question: {question['text']}\n\nSources:\n{context}", json_mode=True,
-                                  max_tokens=3000, system=ANSWER_SYSTEM)  # thinking counts against the cap
-            try:
-                text = str(json.loads(raw).get("answer") or "").strip()
-            except (json.JSONDecodeError, AttributeError):
-                text = ""
-            return text or "Insufficient source evidence."
+            return generate_field(reader, f"Question: {question['text']}\n\nSources:\n{context}", "answer",
+                                  "Insufficient source evidence.", system=ANSWER_SYSTEM)
 
         def correct(question: dict[str, Any], generated: str) -> bool:
-            raw = judge.generate(
-                f"Question: {question['text']}\n\nReference answer: {question['reference_answer']}\n\n"
-                f"Generated answer: {generated}", json_mode=True, max_tokens=200, system=JUDGE_SYSTEM)
-            try:
-                return json.loads(raw).get("verdict") == "correct"
-            except (json.JSONDecodeError, AttributeError):
-                return False
+            return generate_field(
+                judge, f"Question: {question['text']}\n\nReference answer: {question['reference_answer']}\n\n"
+                f"Generated answer: {generated}", "verdict", "", system=JUDGE_SYSTEM, max_tokens=200) == "correct"
 
         retrieved = app.map(sources_for, questions)
         cells: dict[str, Any] = {}

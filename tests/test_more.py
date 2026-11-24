@@ -595,3 +595,21 @@ def test_every_listed_version_is_the_current_one():
     spec = re.search(r"\*\*PyPI:\*\* ([\d.]+) is the latest release", (root / "SPEC.md").read_text())
     assert status and fallback and spec
     assert (status[1], fallback[1], spec[1]) == (current, current, current)
+
+
+def test_generate_field_reads_one_field_or_falls_back():
+    from factoid.evals import generate_field
+
+    class Client:
+        def __init__(self, reply):
+            self.reply = reply
+
+        def generate(self, prompt, **kwargs):
+            assert kwargs["json_mode"] is True
+            return self.reply
+
+    assert generate_field(Client('{"answer": " yes "}'), "q", "answer", "none", system="s") == "yes"
+    assert generate_field(Client('{"answer": ""}'), "q", "answer", "none", system="s") == "none"
+    assert generate_field(Client('{"other": 1}'), "q", "answer", "none", system="s") == "none"
+    assert generate_field(Client("not json"), "q", "answer", "none", system="s") == "none"
+    assert generate_field(Client("[1]"), "q", "answer", "none", system="s") == "none"

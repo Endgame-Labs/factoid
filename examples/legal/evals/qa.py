@@ -19,9 +19,9 @@ from the two clauses the chain's labels point at.
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
+from factoid.evals import generate_field
 from factoid.models import Model, ModelClient
 
 READER = Model("fireworks/glm-5p3-flash", reasoning_effort="low")  # the ISC-RAG reader; thinking cannot be turned off
@@ -115,22 +115,14 @@ def qa_scores(suite: Any, app: Any) -> dict[str, Any]:
                 for i, w in enumerate(hits[:TOP_K])]
 
     def answer(q: dict[str, Any], context: str) -> str:
-        raw = reader.generate(f"Date: {q['as_of'][:10]}\nQuestion: {q['query']}\n\nSources:\n{context}",
-                              json_mode=True, max_tokens=3000, system=ANSWER_SYSTEM)
-        try:
-            return str(json.loads(raw).get("answer") or "").strip() or "Insufficient source evidence."
-        except (json.JSONDecodeError, AttributeError):
-            return "Insufficient source evidence."
+        return generate_field(reader, f"Date: {q['as_of'][:10]}\nQuestion: {q['query']}\n\nSources:\n{context}",
+                              "answer", "Insufficient source evidence.", system=ANSWER_SYSTEM)
 
     def verdict(q: dict[str, Any], generated: str) -> str:
-        raw = judge.generate(
-            f"Date: {q['as_of'][:10]}\nQuestion: {q['query']}\n\nClause in force: {q['current']}\n\n"
-            f"Outdated clause: {q['outdated']}\n\nAnswer: {generated}", json_mode=True, max_tokens=200,
-            system=JUDGE_SYSTEM)
-        try:
-            return str(json.loads(raw).get("verdict"))
-        except (json.JSONDecodeError, AttributeError):
-            return "neither"
+        return generate_field(
+            judge, f"Date: {q['as_of'][:10]}\nQuestion: {q['query']}\n\nClause in force: {q['current']}\n\n"
+            f"Outdated clause: {q['outdated']}\n\nAnswer: {generated}", "verdict", "neither", system=JUDGE_SYSTEM,
+            max_tokens=200)
 
     out: dict[str, Any] = {}
     rows = [{"as_of": q["as_of"][:10], "query": q["query"][:80]} for q in questions]
