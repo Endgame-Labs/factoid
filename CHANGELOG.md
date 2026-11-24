@@ -7,6 +7,10 @@ Features and fixes that change what Factoid does, by version. `SPEC.md` has the 
 - **A RAG example.** `examples/rag` answers questions about Python's standard library from its "What's New" pages,
   with facts, chunks, or both as the retriever. Facts answered all 45 eval questions from about 470 tokens of
   sources; chunks needed about 7,700 for the same score.
+- **Rune tags clauses more carefully.** With Rune as the decision model, a trait needs 0.85 instead of 0.5
+  (`MODEL_TRAIT`). CUAD F1 on held-out contracts went from 0.80 to 0.83, level with Jev 1.14. A trait's own
+  `threshold` still wins; `FactTrait.threshold` is now None by default, and `FactTrait.bar()` gives the value in use.
+- **Two resolve settings for issue #25, off by default:** `duplicate_applies_changes` and `pool_changes`.
 - **`generate_field`** in `factoid.evals` asks a model for JSON and returns one field, with a fallback: what an
   eval's reader or judge needs. The legal, MediaSum, and RAG evals use it, with the same requests as before.
 

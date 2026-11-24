@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import contextvars
+import copy
 import hashlib
 import json
 from collections import Counter
@@ -341,6 +342,8 @@ class Factoid:
         if duplicate is not None:
             self._confirm(duplicate, fact)
             self._duplicates[fact.document_id] += 1
+            if type(fact).duplicate_applies_changes:
+                self._apply_changes_as(duplicate, fact, outcome)
             return False
         for answer, other, _ in outcome:
             step = {"supersedes": "supersede", "ends": "end", "corrects": "correct",
@@ -349,6 +352,17 @@ class Factoid:
             if answer != "contradicts":
                 self._settle_by_evidence(other, fact, answer)
         return True
+
+    def _apply_changes_as(self, confirmed: Fact, fact: Fact, outcome: list[tuple[str, Fact, float]]) -> None:
+        """A duplicate's other changes, made by the stored fact it confirms, dated at the duplicate's date."""
+        by = copy.copy(confirmed)
+        by.valid_from = fact.valid_from or fact.source_datetime
+        for answer, other, _ in outcome:
+            step = {"supersedes": "supersede", "ends": "end", "corrects": "correct"}.get(answer)
+            if step is None or other.id == confirmed.id:
+                continue
+            run_step(by, step, other)
+            self._settle_by_evidence(other, by, answer)
 
     def _restate_by_judge(self, fact: Fact, other: Fact) -> None:
         document = self._revising.get(fact.document_id or "")

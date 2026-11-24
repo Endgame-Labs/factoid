@@ -20,7 +20,12 @@ from .runtime import Registered
 if TYPE_CHECKING:
     from .fact import Fact
 
-__all__ = ["FactTrait", "snake"]
+__all__ = ["MODEL_TRAIT", "FactTrait", "snake"]
+
+
+#: The trait bar for decision models whose probabilities sit closer to 1 than Jev's. Rune answers yes at 0.85 or more
+#: for many facts without the trait; at 0.85 it keeps Jev's recall on CUAD with better precision (SPEC decision 143).
+MODEL_TRAIT: dict[str, float] = {"fireworks/rune": 0.85}
 
 
 def snake(name: str) -> str:
@@ -32,8 +37,9 @@ class FactTrait(Registered):
 
     _registry: ClassVar[list[type]] = []
 
-    #: The probability the yes-or-no answer must reach.
-    threshold: ClassVar[float] = 0.5
+    #: The probability the yes-or-no answer must reach. None takes the decision model's value from `MODEL_TRAIT`, else
+    #: 0.5. A `decide` that reads `cls.threshold` should set it, or call `cls.bar()`.
+    threshold: ClassVar[float | None] = None
     #: Example fact sentences that have the trait. They are shown to the model with the definition.
     examples: ClassVar[list[str]] = []
     #: Sentences that look close but do not have the trait.
@@ -65,9 +71,19 @@ class FactTrait(Registered):
         return asked
 
     @classmethod
+    def bar(cls) -> float:
+        """`threshold` for the decision model: the class's own value, else the model's, else 0.5."""
+        if cls.threshold is not None:
+            return cls.threshold
+        from .runtime import current
+
+        model = current().client.models.get("choose")
+        return MODEL_TRAIT.get(getattr(model, "name", model) or "", 0.5)
+
+    @classmethod
     def decide(cls, fact: Fact, judgments: Judgments) -> bool | float:
         """True when the fact has the trait. Override to add factor questions and logic."""
-        return judgments[cls.key()] >= cls.threshold
+        return judgments[cls.key()] >= cls.bar()
 
     @classmethod
     def call_hook(cls, name: str, fact: Fact, *args: Any) -> None:

@@ -123,6 +123,13 @@ class Fact(Registered, ModelCalls):
     #: another document supersedes, but only if "supersedes" got at least this much. A restatement the model calls a
     #: duplicate at 0.78 and a change at 0 is not a change.
     resolve_split_floor: ClassVar[float] = 0.2
+    #: When a new fact is a duplicate of one stored fact and also supersedes, ends, or corrects another, apply those
+    #: changes too, made by the stored fact it confirms and dated at the new fact's date (issue #25). Off, a duplicate
+    #: drops them.
+    duplicate_applies_changes: ClassVar[bool] = False
+    #: When "supersedes" and "corrects" together reach `resolve_threshold` but neither does alone, and the new fact is
+    #: newer and from another document, take the larger of the two (issue #25): both say the old value no longer holds.
+    pool_changes: ClassVar[bool] = False
     #: How sure the decision model must be that a new fact replaces an older one in a section replaced as a whole.
     replace_threshold: ClassVar[float] = 0.6
     #: Run one repair (a rewording) on a near miss.
@@ -382,7 +389,7 @@ class Fact(Registered, ModelCalls):
         for trait in type(self).traits:
             decided = trait.decide(self, judgments)
             scores[trait.key()] = float(judgments[trait.key()])
-            if decided is True or (not isinstance(decided, bool) and float(decided) >= trait.threshold):
+            if decided is True or (not isinstance(decided, bool) and float(decided) >= trait.bar()):
                 carried.append(trait.key())
         self.trait_names, self.trait_scores = carried, scores
         run_step(self, "expiration", judgments)
@@ -476,6 +483,13 @@ class Fact(Registered, ModelCalls):
                 # Sure it is the same claim, unsure whether the value changed, and newer from another source:
                 # the newer version supersedes. Superseding a true duplicate only ends the old one at the new date.
                 out.append(("supersedes", other, same_subject))
+                continue
+            change = answer.get("supersedes", 0) + answer.get("corrects", 0)
+            top = max(answer, key=answer.get)
+            if (klass.pool_changes and top in ("supersedes", "corrects") and answer[top] < klass.resolve_threshold
+                    and change >= klass.resolve_threshold and other.document_id != self.document_id
+                    and mine is not None and theirs is not None and mine > theirs):
+                out.append((top, other, change))
                 continue
             for choice in sorted(answer, key=answer.get, reverse=True):
                 if answer[choice] >= bars.get(choice, klass.resolve_threshold):

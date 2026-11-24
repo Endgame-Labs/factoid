@@ -1398,6 +1398,12 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
   Pages at https://endgame-labs.github.io/factoid/; `.github/workflows/pages.yml` builds and publishes it on every
   push to `main` that changes it. `site/README.md` says how to change, publish, and roll it back. A second page, `what-is-a-fact.html`,
   shows a call beside the facts Factoid kept from it, from `examples/demo`'s real output (decision 138).
+- **Per-model bars** (decisions 140 and 143): a decision model whose probabilities run high gets its own bars, in
+  `MODEL_LINK` (entity.py), `MODEL_RESOLVE` (fact.py), and `MODEL_TRAIT` (trait.py). Rune has all three. A project's
+  own `link_threshold`, `contradiction_threshold`, or trait `threshold` still wins.
+- **Issue #25 settings, off while evals decide:** `Fact.duplicate_applies_changes` (a duplicate still supersedes,
+  ends, or corrects other stored facts, as the stored fact it confirms) and `Fact.pool_changes` (supersedes plus
+  corrects reaching `resolve_threshold`, for a newer fact from another document).
 - **Example layout** (decision 125): each example app keeps its code in `app/` (`settings.py`, `documents.py`,
   `entities.py`, and `facts.py`), with `package = "app"` under `[tool.factoid]`, so every example looks the same. Its
   evals import from `app`. `factoid init` writes `app/` too (decision 137).
@@ -1835,3 +1841,12 @@ All dates are 2026-11-13 unless noted.
      each source names its release, so the eval shows the token saving, not a staleness gap. The pages are downloaded
      by `fetch.py`, not committed. The legal and MediaSum answer steps were not moved into a shared helper; `rag.py`
      is the reference for now.
+143. Rune gets its own trait bar, 0.85 (`MODEL_TRAIT`, 2026-11-24; issue #26). Rune's yes-or-no answers sit closer to 1
+     than Jev's, as its link answers do (decision 140), so at the default 0.5 it tags many clauses it should not: CUAD
+     precision 0.68 against Jev 1.14's 0.72, at the same recall. A sweep of the stored trait scores on `cuad_fresh`
+     put the bar where Rune keeps Jev's recall (0.95) with the best precision: 0.85. Rerun on the code, `cuad_fresh` F1
+     went from 0.786 to 0.813 (Jev 1.14 0.809), and `cuad_heldout`, checked once, from 0.801 to 0.825 (Jev 1.14
+     0.826). Mean AUPR is unchanged (0.92 and 0.93), since a bar does not change the order. `FactTrait.threshold` is
+     now None by default and `FactTrait.bar()` returns the class's own value, else the model's, else 0.5. A trait
+     whose `decide` reads `cls.threshold` must set it. Jev's F1 would also rise with a higher bar (0.86 at 0.9 on
+     `cuad_fresh`), but that trades recall for precision, so the default stays 0.5 until Kyle decides.

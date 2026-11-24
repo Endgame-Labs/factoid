@@ -831,3 +831,72 @@ def test_assess_can_ride_along_with_the_fact_evals(make_app, fake):
         counts.append(len(asks))
         assert fact.trait_names == ["liability_cap"] and fact.expires is not None
     assert counts[1] == counts[0] - 1  # one request fewer for the one fact
+
+
+def test_rune_gets_its_own_trait_bar(make_app, fake, monkeypatch):
+    from factoid import FactTrait
+    from factoid.runtime import active
+
+    class Plain(FactTrait):
+        """A plain trait."""
+
+    class Own(FactTrait):
+        """A trait with its own bar."""
+
+        threshold = 0.6
+
+    app = build(make_app, fake)
+    with active(app):
+        fake.models["choose"] = type("M", (), {"name": "fireworks/rune"})()
+        assert (Plain.bar(), Own.bar()) == (0.85, 0.6)
+        assert not Plain.decide(None, {"plain": 0.8}) and Plain.decide(None, {"plain": 0.9})
+        fake.models["choose"] = "fake"
+        assert (Plain.bar(), Own.bar()) == (0.5, 0.6)
+
+
+def _resolve_as(fake, table):
+    """Resolve answers by (text in the new fact, text in the stored fact): a dict of answer probabilities."""
+    inner = fake.choice
+
+    def choice(question, state, name):
+        if name.startswith("F"):
+            new, old = state["new_fact"]["text"], json.dumps(state["stored_facts"][name])
+            for (new_has, old_has), probs in table.items():
+                if new_has in new and old_has in old:
+                    return {k: probs.get(k, 0.0) for k, _ in question.options}
+            return {k: (1.0 if k == "unrelated" else 0.0) for k, _ in question.options}
+        return inner(question, state, name)
+
+    fake.choice = choice
+
+
+def test_a_duplicate_can_still_apply_its_other_changes(make_app, fake, monkeypatch):
+    # Issue #25: the new fact repeats the $2M cap and also replaces the $1M cap.
+    table = {("liability is capped at $2M", "$2M"): {"duplicate": 0.9},
+             ("liability is capped at $2M", "$1M"): {"supersedes": 0.9}}
+    for on in (False, True):
+        app = build(make_app, fake)
+        _resolve_as(fake, table)
+        monkeypatch.setattr(SourceFact, "duplicate_applies_changes", on)
+        old = _cap(app, "Vega's liability to Orion is capped at $1M.", "2025-01-01T00:00:00Z", "a.txt").facts[0]
+        dup = _cap(app, "Orion's liability to Vega is capped at $2M.", "2025-02-01T00:00:00Z", "b.txt").facts[0]
+        later = _cap(app, "Vega's liability is capped at $2M.", "2025-06-01T00:00:00Z", "c.txt")
+        assert later.facts == [] and later.duplicates == 1
+        old = Fact.get(old.id)
+        if not on:
+            assert old.status == "current"
+            continue
+        assert old.status == "superseded" and old.valid_until.date().isoformat() == "2025-06-01"
+        assert (dup.id, "supersedes", old.id) in [(r["fact_id"], r["relation"], r["other_id"])
+                                                  for r in app.store.relations(old.id)]
+
+
+def test_a_change_split_between_supersedes_and_corrects_can_be_pooled(make_app, fake, monkeypatch):
+    # Issue #25: supersedes 0.45 and corrects 0.25 each miss the 0.6 bar, but together say the old value is gone.
+    for on in (False, True):
+        app = build(make_app, fake)
+        _resolve_as(fake, {("$2M", "$1M"): {"supersedes": 0.45, "corrects": 0.25, "unrelated": 0.3}})
+        monkeypatch.setattr(SourceFact, "pool_changes", on)
+        old = _cap(app, "Vega's liability to Orion is capped at $1M.", "2025-01-01T00:00:00Z", "a.txt").facts[0]
+        _cap(app, "Vega's liability to Orion is capped at $2M.", "2025-06-01T00:00:00Z", "b.txt")
+        assert Fact.get(old.id).status == ("superseded" if on else "current")

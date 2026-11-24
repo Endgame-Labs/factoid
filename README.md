@@ -387,10 +387,11 @@ A fact is one self-contained sentence, exact source quotes (with who said each q
 entities, zero or more traits, and properties that say how it ages. A fact has no typed fields; the sentence carries the
 meaning.
 
-A trait is a `FactTrait` subclass whose docstring is the definition the model reads. With no `decide` method, the
-trait is one yes-or-no question built from the docstring and compared against `threshold`; `decide` gets that answer
-(such as `judgments.liability_cap`) plus any factor questions it declares with `@judge`. Traits can also define
-`after_` hooks for facts that carry them. A fact can carry several traits, and a fact that matches no trait is kept.
+A trait is a `FactTrait` subclass whose docstring is the definition the model reads. With no `decide` method, the trait
+is one yes-or-no question built from the docstring and compared against `threshold` (0.5 unless the class or the
+decision model sets another; `cls.bar()` gives it); `decide` gets that answer (such as `judgments.liability_cap`) plus
+any factor questions it declares with `@judge`. Traits can also define `after_` hooks for facts that carry them. A fact
+can carry several traits, and a fact that matches no trait is kept.
 
 In the same `assess` request, Factoid fills in each fact's time properties:
 
