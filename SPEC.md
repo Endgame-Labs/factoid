@@ -1850,3 +1850,11 @@ All dates are 2026-11-13 unless noted.
      now None by default and `FactTrait.bar()` returns the class's own value, else the model's, else 0.5. A trait
      whose `decide` reads `cls.threshold` must set it. Jev's F1 would also rise with a higher bar (0.86 at 0.9 on
      `cuad_fresh`), but that trades recall for precision, so the default stays 0.5 until Kyle decides.
+144. Proposed (2026-11-24; issue #25): turn on `duplicate_applies_changes` and `pool_changes`, and add to the
+     "unrelated" resolve answer that two reports are compared on what was said, not on whether both were said. With
+     Jev 1.14 the demo's 45-seat plan stayed current because Jev called it unrelated to "starting with 30, not the 45 I
+     mentioned" (0.50): both statements were made, so both "can be true". All three together fix the demo (5 of 5),
+     raise supersede recall on `amendments_fresh` from 0.50 to 0.75 and as-of accuracy from 0.909 to 1.0, keep false
+     changes level on every amendment chain, keep NBA at 11 of 11, and keep MediaSum within two questions. Waiting on
+     one `amendments_heldout` run, which failed when TypeSafe ran out of credits. Issue #25 has the table.
+
