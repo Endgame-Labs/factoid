@@ -1857,4 +1857,11 @@ All dates are 2026-11-13 unless noted.
      raise supersede recall on `amendments_fresh` from 0.50 to 0.75 and as-of accuracy from 0.909 to 1.0, keep false
      changes level on every amendment chain, keep NBA at 11 of 11, and keep MediaSum within two questions. Waiting on
      one `amendments_heldout` run, which failed when TypeSafe ran out of credits. Issue #25 has the table.
+145. `redaction_markers` stays off (2026-11-24; issue #26). Showing "[*]" to the decision model as "[redacted]" made
+     Rune answer "supersedes" (0.92) for the territory amendment it missed, but its verify step still dropped the
+     change (0.41): with both values hidden it cannot tell they differ. On the three amendment chains, recall did not
+     move and false changes rose slightly (0.2% to 0.5% on the tuning chain). The setting stays for other projects.
+     Rune's other miss, the NBA "earlier Finals standings replaced" check, is Rune calling a standing that follows
+     from a game result a duplicate of it (0.955); a per-model duplicate bar cannot separate those from true
+     duplicates, so no change.
 
