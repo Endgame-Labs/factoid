@@ -5,15 +5,16 @@
 
 This is a whole retrieval-augmented generation (RAG) pipeline in one file: retrieve sources for the question, pack
 them into a budget, and ask a model to answer from them alone, citing the ones it used. Only the retriever changes
-between the three ways it can run:
+between the ways it can run:
 
 - `facts`: Factoid's facts, searched as of the version's release date. A fact that a later release changed (a module
   that was deprecated, then removed) is shown as it stood then, and a fact from a later release is left out.
 - `chunks`: plain RAG, the usual baseline. The pages are cut into overlapping windows of about 500 tokens, and the
   best windows by hybrid search (BM25 and embeddings) are shown, from the pages released by that version.
 - `both`: facts first, then windows in the space left, for detail a fact leaves out.
+- `undated`: the same windows as `chunks`, without the release each came from. It shows what the label is worth.
 
-`evals/qa.py` scores all three on the same questions.
+`evals/qa.py` scores each on the same questions.
 """
 
 from __future__ import annotations
@@ -110,7 +111,12 @@ def both(app: Any, question: str, python: str) -> list[str]:
     return facts(app, question, python) + chunks(app, question, python)
 
 
-RETRIEVERS = {"facts": facts, "chunks": chunks, "both": both}
+def undated(app: Any, question: str, python: str) -> list[str]:
+    """The same windows as `chunks`, without the release each came from: how many RAG setups see their docs."""
+    return [w.split(": ", 1)[1] for w in chunks(app, question, python)]
+
+
+RETRIEVERS = {"facts": facts, "chunks": chunks, "both": both, "undated": undated}
 
 
 # -- pack and answer ---------------------------------------------------------------------------------------------------

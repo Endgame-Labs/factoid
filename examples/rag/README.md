@@ -3,7 +3,7 @@
 A retrieval-augmented generation (RAG) app built on Factoid. It answers questions like "Can I use distutils on
 Python 3.12?" from Python's "What's New" pages, and cites its sources. `rag.py` is the whole pipeline in one file:
 retrieve, pack the sources into a budget, and answer from them. It can retrieve Factoid's facts, plain chunks of the
-pages, or both, and the eval scores all three on the same questions.
+pages, or both, and the eval scores each on the same questions.
 
 Docs change between releases: the 3.10 page says distutils is deprecated, and the 3.12 page says it is removed.
 Factoid resolves the two facts when the 3.12 page is ingested, so a search as of 3.12 finds the removal, and a search
@@ -12,7 +12,7 @@ as of 3.11 finds the deprecation. Each fact is one short sentence, so many of th
 | File | What it is |
 | --- | --- |
 | `fetch.py` | Downloads the "What's New" pages for 3.9 to 3.14 into `data/` and keeps New Modules, Deprecated, and Removed |
-| `rag.py` | The pipeline and a command line: `facts`, `chunks`, and `both` retrievers, `pack`, and `answer` |
+| `rag.py` | The pipeline and a command line: `facts`, `chunks`, `both`, and `undated` retrievers, `pack`, and `answer` |
 | `app/` | `ReleaseNotes` (one page per release, dated by its release), `ChangeFact` with traits `added`, `deprecated`, `removed`, and `replacement`, and `StdlibApi` and `Pep` entities |
 | `evals/qa.py` | 45 questions, each with the answer for its version and an outdated answer, checked against the pages |
 
@@ -29,7 +29,7 @@ for v in 3.9 3.10 3.11 3.12 3.13 3.14; do uv run factoid ingest data/whatsnew-$v
 uv run python rag.py "Is the distutils package available?" --python 3.12
 uv run python rag.py "Is the distutils package available?" --python 3.11
 uv run python rag.py "Is the distutils package available?" --python 3.12 --retriever chunks
-uv run factoid eval qa                     # all three retrievers on the 45 questions
+uv run factoid eval qa                     # every retriever on the 45 questions
 ```
 
 Ingest the pages oldest first, so each one is resolved against what came before it. All six cost about 30 cents at
@@ -66,6 +66,8 @@ The run on 2026-11-24, with the default settings (Jev 1.14, GLM 5.3 Flash, and Q
 | chunks | 8,000 | 45 of 45 | 0 | 15 of 15 | 7,711 |
 | both | 500 | 45 of 45 | 0 | 15 of 15 | 473 |
 | both | 2,000 | 45 of 45 | 0 | 15 of 15 | 1,903 |
+| undated | 500 | 38 of 45 | 0 | 13 of 15 | 500 |
+| undated | 2,000 | 44 of 45 | 0 | 14 of 15 | 1,958 |
 
 Facts answer every question from about 470 tokens. Chunks need about 7,700 for the same score, 16 times as much.
 Below that, chunks miss the window that holds the answer, and the reader says "The sources do not say", as it should.
@@ -73,9 +75,10 @@ At 500 tokens, a window of about 500 tokens sometimes does not fit, so chunks re
 reads the same 1,439 tokens as at 2,000, because the 40 facts considered all fit, and both reads 7,700; each scores 45
 of 45.
 
-No retriever gave an outdated answer. Each source is labelled with its release, and the reader is told the version,
-so it does not mistake a 3.10 deprecation for the state in 3.12. Stale answers may still be a risk with sources that do
-not say when they were written. This eval does not test that.
+No retriever gave an outdated answer, not even `undated`, which shows the same windows as `chunks` without the
+release each came from. "What's New" pages date themselves: a window says "deprecated since 3.10" or "removed in
+3.12", and the reader is told the version, so it never mistakes an old page for the current state. Docs that do not
+say when they were written may still give stale answers, but these pages do not show it.
 
-The whole run (ingesting the six pages, 405 answers, and 405 judgments) cost $0.81 at list prices. Rerunning it
+The whole run (ingesting the six pages, 540 answers, and 540 judgments) cost $0.95 at list prices. Rerunning it
 replays saved calls and costs nothing.

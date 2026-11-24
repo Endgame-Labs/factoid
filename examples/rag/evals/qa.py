@@ -1,8 +1,8 @@
 """The docs assistant's questions, answered by each retriever in `rag.py`, and judged.
 
-`factoid eval qa` ingests the six "What's New" pages in release order, then asks every question three ways (facts,
-chunks, and both) at three source budgets, about 500, 2,000, and 8,000 tokens. The reader and the prompt are the same each
-time; only the sources differ.
+`factoid eval qa` ingests the six "What's New" pages in release order, then asks every question four ways (facts,
+chunks, both, and undated chunks) at three source budgets, about 500, 2,000, and 8,000 tokens. The reader and the
+prompt are the same each time; only the sources differ.
 
 Each question is about one Python version and has two reference answers, both checked against the pages: the answer
 for that version, and an outdated one, true in an earlier or later release. A judge decides which one each answer
