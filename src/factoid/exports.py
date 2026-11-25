@@ -72,12 +72,9 @@ def changes(app: Any, since: int, until: int, full: bool = False) -> Batch:
     """The facts, entities, documents, and events that changed after event `since`, up to event `until`.
     With `since` 0, everything. `full` marks a batch that replaces what the export holds."""
     store = app.store
-    events = [dict(r) for r in store.query("select seq, at, type, subject, data from events where seq > ? and seq <= ? "
-                                           "order by seq", (since, until))]
+    events = [dict(r) for r in store.events_after(since, until=until)]
     if since == 0:
-        fact_ids = [r["id"] for r in store.query("select id from facts order by created_at, id")]
-        entity_ids = [r["id"] for r in store.query("select id from entities order by created_at, id")]
-        document_ids = [r["id"] for r in store.query("select id from documents order by ingested_at, id")]
+        fact_ids, entity_ids, document_ids = store.all_fact_ids(), store.all_entity_ids(), store.all_document_ids()
     else:
         facts: dict[str, None] = {}
         entities: dict[str, None] = {}
@@ -95,23 +92,22 @@ def changes(app: Any, since: int, until: int, full: bool = False) -> Batch:
                     if data.get("merged"):
                         entities[data["merged"]] = None
                     # The merge moved mentions to the kept entity, so its facts changed too.
-                    for row in store.query("select distinct fact_id from mentions where entity_id = ?", (subject,)):
-                        facts[row["fact_id"]] = None
+                    for fact_id in store.linked_fact_ids(subject):
+                        facts[fact_id] = None
             elif kind.startswith("document."):
                 documents[subject] = None
         fact_ids, entity_ids, document_ids = list(facts), list(entities), list(documents)
     batch = Batch(start=since, end=until, full=full, events=[_event_row(e) for e in events])
     batch.facts = _fact_rows(store, fact_ids)
-    batch.entities = _rows(store, "entities", entity_ids, _entity_row)
-    batch.documents = _rows(store, "documents", document_ids, _document_row)
+    batch.entities = _rows(store.entity_rows, entity_ids, _entity_row)
+    batch.documents = _rows(store.document_rows, document_ids, _document_row)
     return batch
 
 
-def _rows(store: Any, table: str, ids: list[str], shape: Any) -> list[dict[str, Any]]:
+def _rows(read: Any, ids: list[str], shape: Any) -> list[dict[str, Any]]:
     out = []
     for part in _parts(ids):
-        rows = store.query(f"select * from {table} where id in ({','.join('?' * len(part))})", part)
-        by_id = {r["id"]: r for r in rows}
+        by_id = {r["id"]: r for r in read(part)}
         out.extend(shape(by_id[i]) for i in part if i in by_id)
     return out
 
@@ -123,14 +119,13 @@ def _parts(ids: list[str], size: int = 500) -> list[list[str]]:
 def _fact_rows(store: Any, ids: list[str]) -> list[dict[str, Any]]:
     out = []
     for part in _parts(ids):
-        marks = ",".join("?" * len(part))
-        rows = {r["id"]: r for r in store.query(f"select * from facts where id in ({marks})", part)}
+        rows = {r["id"]: r for r in store.fact_rows(part)}
         mentions: dict[str, list[dict[str, Any]]] = {}
-        for m in store.query(f"select * from mentions where fact_id in ({marks}) order by rowid", part):
+        for m in store.mentions_of(part):
             mentions.setdefault(m["fact_id"], []).append(
                 {"entity_id": m["entity_id"], "role": m["role"], "text": m["text"], "kind": m["kind"]})
         quotes: dict[str, list[dict[str, Any]]] = {}
-        for q in store.query(f"select * from quotes where fact_id in ({marks}) order by rowid", part):
+        for q in store.quotes_of(part):
             quotes.setdefault(q["fact_id"], []).append(
                 {"document_id": q["document_id"], "passage": q["passage_n"], "section": q["section"],
                  "text": q["text"]})
@@ -189,22 +184,26 @@ def export(app: Any, exports: dict[str, Export], names: list[str] | None = None,
     unknown = [n for n in chosen if n not in exports]
     if unknown:
         raise KeyError(f"unknown exports {unknown}; settings.py declares {sorted(exports)}")
-    until = app.store.last_event()
     results = []
     for name in chosen:
-        target = exports[name]
-        since = 0 if full else app.store.cursor(name)
-        if since >= until and not full:
-            results.append(ExportResult(name, Batch(start=since, end=until, full=False), skipped=True))
-            continue
-        batch = changes(app, since, until, full)
-        batch.root = getattr(app, "root", None)
-        if target.wants_vectors and batch.facts:
-            batch.vectors, batch.embedding_model = _vectors(app, batch.facts)
-        target.send(batch)
-        app.store.set_cursor(name, until)
-        results.append(ExportResult(name, batch))
+        # Two runs of one export (two processes, say) take turns, so the second sends only what the first did not.
+        with app.store.exporting(name):
+            results.append(_export_one(app, name, exports[name], full))
     return results
+
+
+def _export_one(app: Any, name: str, target: Export, full: bool) -> ExportResult:
+    until = app.store.last_event()
+    since = 0 if full else app.store.cursor(name)
+    if since >= until and not full:
+        return ExportResult(name, Batch(start=since, end=until, full=False), skipped=True)
+    batch = changes(app, since, until, full)
+    batch.root = getattr(app, "root", None)
+    if target.wants_vectors and batch.facts:
+        batch.vectors, batch.embedding_model = _vectors(app, batch.facts)
+    target.send(batch)
+    app.store.set_cursor(name, until)
+    return ExportResult(name, batch)
 
 
 def _vectors(app: Any, facts: list[dict[str, Any]]) -> tuple[dict[str, list[float]], str]:

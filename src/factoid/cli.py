@@ -532,12 +532,7 @@ def entities() -> None:
 def entities_list(class_name: str | None, data_dir: Path | None) -> None:
     """Entities by name, with their class, untyped kind, and other names."""
     app = _app_for(data_dir)
-    sql = "select id, class, kind, name, aliases from entities where merged_into is null"
-    params: list[Any] = []
-    if class_name:
-        sql += " and class = ?"
-        params.append(class_name)
-    for row in app.store.query(sql + " order by name", params):
+    for row in app.store.entity_list(class_name=class_name, by="name"):
         aliases = json.loads(row["aliases"] or "[]")
         also = f"  (also: {'; '.join(aliases)})" if aliases else ""
         click.echo(f"{row['id']}  {row['class']:<12} {row['kind'] or '':<14} {row['name']}{also}")
@@ -560,22 +555,7 @@ def facts_list(document: str | None, trait: str | None, status: str, limit: int,
                data_dir: Path | None) -> None:
     """Facts in the order they were added, with their ids, traits, and documents."""
     app = _app_for(data_dir)
-    sql = ("select f.id, f.text, f.status, f.traits, d.title, d.uri from facts f "
-           "left join documents d on d.id = f.document_id where 1 = 1")
-    params: list[Any] = []
-    if status != "all":
-        sql += " and f.status = ?"
-        params.append(status)
-    if document:
-        sql += " and (d.id = ? or d.title = ? or d.uri = ? or d.uri like ?)"
-        params += [document, document, document, f"%/{document}"]
-    if trait:
-        sql += " and exists (select 1 from json_each(f.traits) t where t.value = ?)"
-        params.append(trait)
-    sql += " order by f.created_at, f.rowid"
-    if limit:
-        sql += f" limit {int(limit)}"
-    rows = app.store.query(sql, params)
+    rows = app.store.fact_list(status=status, document=document, trait=trait, limit=limit)
     if as_json:
         return _echo_json([{"id": r["id"], "text": r["text"], "status": r["status"],
                             "traits": json.loads(r["traits"] or "[]"), "document": r["title"] or r["uri"]}
@@ -639,11 +619,7 @@ def contradictions_settle(fact_id: str, other_id: str, keep: str, reason: str, b
 def entities_kinds() -> None:
     """Untyped kinds by entity and fact count."""
     _, app = _project()
-    rows = app.store.query(
-        "select e.kind, count(distinct e.id) entities, count(distinct m.fact_id) facts from entities e "
-        "left join mentions m on m.entity_id = e.id where e.class = 'Entity' and e.merged_into is null "
-        "group by e.kind order by facts desc")
-    for row in rows:
+    for row in app.store.kind_counts():
         click.echo(f"{row['kind'] or '(none)':<24} {row['entities']:>6} entities {row['facts']:>7} facts")
 
 

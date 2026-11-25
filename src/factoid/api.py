@@ -53,44 +53,19 @@ def facts(app: Any, *, document: str | None = None, trait: str | None = None, st
           limit: int = 50) -> list[dict[str, Any]]:
     """Facts in the order they were added. `document` is a document's id, title, or file name; `status` is one
     status or `all`; `limit` 0 means every fact."""
-    sql = ("select f.id, f.class, f.text, f.status, f.traits, f.document_id, d.title, d.uri from facts f "
-           "left join documents d on d.id = f.document_id where 1 = 1")
-    params: list[Any] = []
-    if status != "all":
-        sql += " and f.status = ?"
-        params.append(status)
-    if document:
-        sql += " and (d.id = ? or d.title = ? or d.uri = ? or d.uri like ?)"
-        params += [document, document, document, f"%/{document}"]
-    if trait:
-        sql += " and exists (select 1 from json_each(f.traits) t where t.value = ?)"
-        params.append(trait)
-    sql += " order by f.created_at, f.rowid"
-    if limit:
-        sql += f" limit {int(limit)}"
+    rows = app.store.fact_list(status=status, document=document, trait=trait, limit=limit)
     return [{"id": r["id"], "class": r["class"], "text": r["text"], "status": r["status"],
              "traits": json.loads(r["traits"] or "[]"),
              "document": {"id": r["document_id"], "title": r["title"], "uri": r["uri"]}}
-            for r in app.store.query(sql, params)]
+            for r in rows]
 
 
 def entities(app: Any, *, class_name: str | None = None, name: str | None = None,
              limit: int = 100) -> list[dict[str, Any]]:
     """Entities with their fact counts, most facts first. `name` matches part of a name or another name."""
-    sql = ("select e.id, e.class, e.kind, e.name, e.aliases, count(distinct m.fact_id) facts from entities e "
-           "left join mentions m on m.entity_id = e.id where e.merged_into is null")
-    params: list[Any] = []
-    if class_name:
-        sql += " and e.class = ?"
-        params.append(class_name)
-    if name:
-        sql += " and (lower(e.name) like ? or lower(e.aliases) like ?)"
-        params += [f"%{name.lower()}%"] * 2
-    sql += " group by e.id order by facts desc, e.name"
-    if limit:
-        sql += f" limit {int(limit)}"
+    rows = app.store.entity_list(class_name=class_name, name=name, limit=limit)
     return [{"id": r["id"], "class": r["class"], "kind": r["kind"], "name": r["name"],
-             "aliases": json.loads(r["aliases"] or "[]"), "facts": r["facts"]} for r in app.store.query(sql, params)]
+             "aliases": json.loads(r["aliases"] or "[]"), "facts": r["facts"]} for r in rows]
 
 
 def entity(app: Any, name_or_id: str, *, limit: int = 50) -> dict[str, Any]:

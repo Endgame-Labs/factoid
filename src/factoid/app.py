@@ -107,10 +107,7 @@ class Factoid:
         self.project_id = project_id or self.root.name or "factoid"
         data = Path(data_dir) if data_dir else settings.data_path(self.root)
         self.data_dir = None if in_memory else data
-        store_path = data / "store.db"
-        if settings.store is not None and data_dir is None:
-            store_path = settings.store.resolve(self.root)
-        self.store = _store(None if in_memory else store_path)
+        self.store = _store(settings.store, self.root, data, in_memory=in_memory, data_dir_given=data_dir is not None)
         self.calls = CallLog(Path(calls_path) if calls_path else None if in_memory else data / "calls.db",
                              mode=settings.call_log)
         self.meter = Meter()
@@ -234,9 +231,8 @@ class Factoid:
             raise TypeError(f"cannot ingest {item!r}")
         if not again and self.store.has_document(item.id, item.content_hash, stored_name(type(item)),
                                                  item.metadata):
-            current = self.store.query("select id from facts where document_id = ? and status = 'current'",
-                                       (item.id,))
-            facts = [f for f in (self.load_fact(r["id"]) for r in current) if f is not None]
+            current = self.store.fact_ids(document_id=item.id, status="current")
+            facts = [f for f in (self.load_fact(i) for i in current) if f is not None]
             return IngestResult(item, facts, [], 0, unchanged=True)
         # Documents can ingest in parallel threads, so rejects and duplicates are kept by document.
         before = len(self.rejected)
@@ -450,13 +446,8 @@ class Factoid:
                 entity_ids = sorted({m.entity_id for f in scope for m in f.mentions if m.entity_id})
                 if not entity_ids:
                     continue
-                marks = ",".join("?" * len(entity_ids))
-                rows = self.store.query(
-                    f"select distinct f.id from facts f join mentions m on m.fact_id = f.id "
-                    f"where m.entity_id in ({marks}) and f.document_id != ? "
-                    "and f.status in ('current', 'contradicted')", (*entity_ids, document.id))
-                for row in rows:
-                    old = self.load_fact(row["id"])
+                for old_id in self.store.standing_fact_ids_about(entity_ids, outside=document.id):
+                    old = self.load_fact(old_id)
                     if old is None or not in_section(old, section):
                         continue
                     theirs = old.valid_from or old.source_datetime
@@ -563,12 +554,7 @@ class Factoid:
 
     def _confirm(self, existing: Fact, new: Fact) -> None:
         """A duplicate confirms a stored fact: its quotes are added, which restarts the clock."""
-        with self.store.tx() as db:
-            for q in new.quotes:
-                db.execute("insert into quotes (fact_id, document_id, passage_n, start, \"end\", text, speaker, "
-                           "said_at, section, attrs) values (?,?,?,?,?,?,?,?,?,?)",
-                           (existing.id, q.document_id, q.passage_n, q.start, q.end, q.text, q.speaker, q.said_at,
-                            q.section, json.dumps(q.attrs) if q.attrs else None))
+        self.store.add_quotes(existing.id, [vars(q) for q in new.quotes])
 
     # -- saving and loading ---------------------------------------------------------------------------------
 
@@ -617,12 +603,9 @@ class Factoid:
         previous = self._revising.get(document.id, {})
         if not previous or not facts:
             return
-        old = {row["id"]: row for row in self.store.query(
-            f"select id, text, traits from facts where id in ({','.join('?' * len(previous))})",
-            list(previous.values()))}
+        old = {row["id"]: row for row in self.store.fact_rows(list(previous.values()))}
         quotes: dict[str, set[str]] = {}
-        for row in self.store.query(f"select fact_id, text from quotes where fact_id in "
-                                    f"({','.join('?' * len(old))})", list(old)):
+        for row in self.store.quotes_of(list(old)):
             quotes.setdefault(row["fact_id"], set()).add(row["text"])
         free = dict(old)
         for fact in facts:
@@ -811,23 +794,21 @@ class Factoid:
 
     def document(self, document_id: str) -> dict[str, Any] | None:
         """A stored document's id, class, uri, title, date, metadata, and how many earlier revisions it has."""
-        row = self.store.one("select id, class, uri, title, source_datetime, metadata, ingested_at from documents "
-                             "where id = ?", (document_id,))
+        row = self.store.document_row(document_id)
         if row is None:
             return None
-        revisions = self.store.one("select count(*) n from revisions where document_id = ?", (document_id,))["n"]
+        revisions = self.store.revision_count(document_id)
         return {**dict(row), "metadata": json.loads(row["metadata"] or "{}"), "revisions": revisions}
 
     def events(self, after: int = 0, limit: int = 100) -> list[dict[str, Any]]:
         """Events after sequence number `after`, oldest first: pass the last `seq` back to read on."""
-        rows = self.store.query("select seq, at, type, subject, data from events where seq > ? order by seq limit ?",
-                                (int(after), max(1, min(int(limit), 1000))))
+        rows = self.store.events_after(int(after), limit=max(1, min(int(limit), 1000)))
         return [{**dict(r), "data": json.loads(r["data"] or "{}")} for r in rows]
 
     def document_title(self, document_id: str | None) -> str | None:
         if not document_id:
             return None
-        row = self.store.one("select title, uri from documents where id = ?", (document_id,))
+        row = self.store.document_row(document_id)
         return (row["title"] or row["uri"]) if row else None
 
     @activates
@@ -845,8 +826,7 @@ class Factoid:
     def claim(self, entity: Entity, limit: int = 8) -> int:
         """Search stored facts for a new entity's names, and confirm each hit with the decision model."""
         ids = self.index.bm25(self.ns("facts"), entity.name, limit)
-        linked = {r["fact_id"] for r in self.store.query("select fact_id from mentions where entity_id = ?",
-                                                         (entity.id,))}
+        linked = set(self.store.linked_fact_ids(entity.id))
         facts = [f for f in (self.load_fact(i) for i in ids if i not in linked) if f is not None
                  and f.status not in ("retracted", "corrected", "replaced")]
         if not facts:
@@ -859,15 +839,14 @@ class Factoid:
             judgments = self.client.ask(state, questions)
         claimed = 0
         bar = type(entity).link_bar(self)
-        with self.store.tx() as db:
-            for key, fact in zip(keys, facts):
-                if judgments[key] >= bar:
-                    db.execute("insert into mentions values (?,?,?,?,?,?,?)",
-                               (fact.id, entity.name, entity.kind, "about", entity.id, "claim",
-                                round(judgments[key], 4)))
-                    self.store.event(db, "entity.linked", entity.id, fact=fact.id, method="claim")
-                    claimed += 1
-                    fact.mentions.append(Mention(entity.name, kind=entity.kind, entity_id=entity.id, method="claim"))
+        links = [{"fact_id": fact.id, "text": entity.name, "kind": entity.kind, "role": "about",
+                  "entity_id": entity.id, "method": "claim", "confidence": round(judgments[key], 4)}
+                 for key, fact in zip(keys, facts) if judgments[key] >= bar]
+        self.store.add_mentions(links)
+        for key, fact in zip(keys, facts):
+            if judgments[key] >= bar:
+                claimed += 1
+                fact.mentions.append(Mention(entity.name, kind=entity.kind, entity_id=entity.id, method="claim"))
         # The index filters facts by entity, so a claimed fact must be indexed under its new entity too, or
         # `related_facts` and `search_facts(about=...)` never find it there.
         for key, fact in zip(keys, facts):
@@ -975,16 +954,14 @@ class Factoid:
     def search_chunks(self, query: str, *, about: Entity | None = None, top_k: int = 10) -> list[dict[str, Any]]:
         filters = None
         if about is not None:
-            docs = [r["document_id"] for r in self.store.query(
-                "select distinct f.document_id from facts f join mentions m on m.fact_id = f.id "
-                "where m.entity_id = ?", (about.id,))]
+            docs = self.store.documents_mentioning(about.id)
             if not docs:
                 return []
             filters = {"document_id": docs}
         vector = self.client.embed([query])[0]
         out = []
         for chunk_id, score in self.index.hybrid(self.ns("chunks"), query, vector, top_k, filters):
-            row = self.store.one("select * from chunks where id = ?", (chunk_id,))
+            row = self.store.chunk_row(chunk_id)
             if row is not None:
                 out.append({"id": row["id"], "document_id": row["document_id"], "text": row["text"],
                             "situation": row["situation"], "score": score})
@@ -993,18 +970,9 @@ class Factoid:
     @activates
     def entity_facts(self, entity: Entity, *, traits: list[Any] | None = None, since: str | None = None,
                      role: str | None = None, include_retired: bool = False) -> list[Fact]:
-        sql = ("select distinct f.id from facts f join mentions m on m.fact_id = f.id where m.entity_id = ?")
-        params: list[Any] = [entity.id]
-        if role:
-            sql += " and m.role = ?"
-            params.append(role)
-        if not include_retired:
-            sql += " and f.status in ('current', 'contradicted')"
-        if since:
-            sql += " and coalesce(f.valid_from, f.source_datetime, f.extracted_at) >= ?"
-            params.append(_since(since))
-        sql += " order by coalesce(f.valid_from, f.source_datetime, f.extracted_at) desc"
-        facts = [f for f in (self.load_fact(r["id"]) for r in self.store.query(sql, params)) if f is not None]
+        ids = self.store.fact_ids_about(entity.id, role=role, include_retired=include_retired,
+                                        since=_since(since) if since else None)
+        facts = [f for f in (self.load_fact(i) for i in ids) if f is not None]
         if traits:
             keys = {t if isinstance(t, str) else t.key() for t in traits}
             facts = [f for f in facts if keys & set(f.trait_names)]
@@ -1012,11 +980,7 @@ class Factoid:
 
     @activates
     def related_entities(self, entity: Entity) -> list[dict[str, Any]]:
-        rows = self.store.query(
-            "select m2.entity_id as other, f.id as fact_id from mentions m1 join mentions m2 "
-            "on m1.fact_id = m2.fact_id and m2.entity_id != m1.entity_id join facts f on f.id = m1.fact_id "
-            "where m1.entity_id = ? and m2.entity_id is not null and f.status in ('current', 'contradicted')",
-            (entity.id,))
+        rows = self.store.co_mentions(entity.id)
         by_other: dict[str, set[str]] = {}
         for row in rows:
             by_other.setdefault(row["other"], set()).add(row["fact_id"])
@@ -1035,30 +999,18 @@ class Factoid:
 
     @activates
     def unlinked_facts(self, since: str | None = None) -> list[Fact]:
-        sql = ("select distinct f.id from facts f join mentions m on m.fact_id = f.id "
-               "where m.entity_id is null and f.status in ('current', 'contradicted')")
-        params: list[Any] = []
-        if since:
-            sql += " and f.extracted_at >= ?"
-            params.append(_since(since))
-        return [f for f in (self.load_fact(r["id"]) for r in self.store.query(sql, params)) if f is not None]
+        ids = self.store.unlinked_fact_ids(_since(since) if since else None)
+        return [f for f in (self.load_fact(i) for i in ids) if f is not None]
 
     @activates
     def list_facts(self, *, fact_class: type[Fact] | None = None, document_id: str | None = None,
                    status: str | None = None) -> list[Fact]:
-        sql, params = "select id from facts where 1=1", []
+        names = None
         if fact_class is not None:
             names = [stored_name(k) for k in self.fact_classes if issubclass(k, fact_class)] or \
                 [stored_name(fact_class)]
-            sql += f" and class in ({','.join('?' * len(names))})"
-            params += names
-        if document_id:
-            sql += " and document_id = ?"
-            params.append(document_id)
-        if status:
-            sql += " and status = ?"
-            params.append(status)
-        return [f for f in (self.load_fact(r["id"]) for r in self.store.query(sql, params)) if f is not None]
+        ids = self.store.fact_ids(document_id=document_id, status=status, classes=names)
+        return [f for f in (self.load_fact(i) for i in ids) if f is not None]
 
     # -- contradictions -------------------------------------------------------------------------------------
 
@@ -1068,7 +1020,7 @@ class Factoid:
         contradicted."""
         moment = now()
         out = []
-        rows = self.store.query("select * from relations where relation = 'contradicts' order by at desc, rowid desc")
+        rows = self.store.contradiction_relations()
         for r in rows:
             fact, other = self.load_fact(r["fact_id"]), self.load_fact(r["other_id"])
             if fact is None or other is None or not {fact.status, other.status} <= {"current", "contradicted"}:
@@ -1098,32 +1050,15 @@ class Factoid:
     def stats(self, examples: int = 0) -> dict[str, Any]:
         """Counts for the store. With `examples`, also that many sample facts per fact class and the most connected
         entities per entity class."""
-        q = self.store.query
-        by_status = {r["status"]: r["n"] for r in q("select status, count(*) n from facts group by status")}
-        current_ids = [r["id"] for r in q("select id from facts where status in ('current', 'contradicted')")]
-        no_trait = q("select count(*) n from facts where status in ('current','contradicted') and traits = '[]'")[0]
-        unlinked = q("select count(*) n from mentions where entity_id is null")[0]["n"]
-        single = q("select count(*) n from (select entity_id from mentions where entity_id is not null "
-                   "group by entity_id having count(distinct fact_id) = 1)")[0]["n"]
-        stale = sum(1 for i in current_ids if (f := self.load_fact(i)) is not None and f.valid_at() < 0.5)
-        contradictions = len(self.contradictions())
-        entities = q("select count(*) n from entities where merged_into is null")[0]["n"]
-        live = "status in ('current', 'contradicted', 'superseded', 'ended')"
+        counts = self.store.counts()
+        standing = [*self.store.fact_ids(status="current"), *self.store.fact_ids(status="contradicted")]
+        stale = sum(1 for i in standing if (f := self.load_fact(i)) is not None and f.valid_at() < 0.5)
         out = {
-            "documents": q("select count(*) n from documents")[0]["n"],
-            "documents_by_class": {r["class"]: r["n"] for r in q(
-                "select class, count(*) n from documents group by class order by n desc")},
-            "facts": by_status,
-            "facts_by_class": {r["class"]: r["n"] for r in q(
-                f"select class, count(*) n from facts where {live} group by class order by n desc")},
-            "entities_by_class": {r["class"]: r["n"] for r in q(
-                "select class, count(*) n from entities where merged_into is null group by class order by n desc")},
-            "facts_with_no_trait": no_trait["n"],
-            "unlinked_mentions": unlinked,
-            "entities": entities,
-            "single_fact_entities": single,
+            **{k: counts[k] for k in ("documents", "documents_by_class", "facts", "facts_by_class",
+                                      "entities_by_class", "facts_with_no_trait", "unlinked_mentions", "entities",
+                                      "single_fact_entities")},
             "facts_past_expected_validity": stale,
-            "open_contradictions": contradictions,
+            "open_contradictions": len(self.contradictions()),
         }
         if examples:
             out["examples"] = self._examples(examples)
@@ -1132,9 +1067,7 @@ class Factoid:
     def _examples(self, n: int) -> dict[str, Any]:
         """Sample facts per fact class (current, with a trait, from different documents, of readable length) and the
         entities with the most facts per entity class."""
-        q = self.store.query
-        rows = q("select class, text, document_id, traits from facts where status = 'current' "
-                 "and length(text) between 60 and 220 order by traits = '[]', document_id, id")
+        rows = self.store.sample_facts()
         facts: dict[str, list[str]] = {}
         seen: dict[str, set[str]] = {}
         # One fact per document first, then more from the same documents when there are fewer documents than n.
@@ -1147,18 +1080,25 @@ class Factoid:
                 picked.append(row["text"])
                 docs.add(row["document_id"])
         entities: dict[str, list[dict[str, Any]]] = {}
-        for row in q("select e.class, e.name, count(distinct m.fact_id) n from entities e join mentions m "
-                     "on m.entity_id = e.id where e.merged_into is null group by e.id order by n desc, e.name"):
+        for row in self.store.top_entities():
             picked_entities = entities.setdefault(row["class"], [])
             if len(picked_entities) < n:
                 picked_entities.append({"name": row["name"], "facts": row["n"]})
         return {"facts": facts, "entities": entities}
 
 
-def _store(path: Path | None) -> Any:
+def _store(setting: Any, root: Path, data: Path, *, in_memory: bool, data_dir_given: bool) -> Any:
+    """The store `settings.store` names. In memory, or with a data folder given (as evals and `--data-dir` do), a
+    SQLite file in that folder, so a test run never writes to the project's shared store."""
     from .store import Store
 
-    return Store(path)
+    if in_memory:
+        return Store(None)
+    if setting is None or data_dir_given:
+        return Store(data / "store.db")
+    if hasattr(setting, "open"):
+        return setting.open(root)
+    return Store(setting.resolve(root))
 
 
 def _recast(fact: Fact, klass: type[Fact]) -> Fact:

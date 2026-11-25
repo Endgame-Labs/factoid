@@ -178,9 +178,7 @@ class Entity(Registered, ModelCalls):
     def where(cls, **props: Any) -> list[Entity]:
         """Entities of this class whose properties equal the given values."""
         app = current()
-        marks = ",".join("?" * len(_class_names(cls)))
-        rows = app.store.query(f"select id, props from entities where merged_into is null and class in ({marks})",
-                               _class_names(cls))
+        rows = app.store.entities_of_classes(_class_names(cls))
         out = []
         for row in rows:
             data = json.loads(row["props"])
