@@ -12,9 +12,9 @@ import copy
 import hashlib
 import json
 from collections import Counter
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Generator, Iterable
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import AbstractContextManager
+from contextlib import AbstractContextManager, closing
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -158,7 +158,7 @@ class Factoid:
     def map(self, fn: Callable[[T], R], items: Iterable[T]) -> list[R]:
         return list(self.imap(fn, items))
 
-    def imap(self, fn: Callable[[T], R], items: Iterable[T]) -> Iterator[R]:
+    def imap(self, fn: Callable[[T], R], items: Iterable[T]) -> Generator[R]:
         """Like `map`, but it starts every item now and yields each result, in order, as soon as it is ready."""
         items = list(items)
 
@@ -167,11 +167,12 @@ class Factoid:
                 return fn(item)
 
         if len(items) <= 1:
-            return (run(item) for item in items)
+            done = [run(item) for item in items]
+            return (result for result in done)
         # Pool threads do not inherit the caller's context: the active app, and the step that labels model calls.
         futures = [self._pool.submit(contextvars.copy_context().run, run, item) for item in items]
 
-        def results() -> Iterator[R]:
+        def results() -> Generator[R]:
             try:
                 for future in futures:
                     yield future.result()
@@ -309,18 +310,19 @@ class Factoid:
             passed = [f for group in self.map(self._evaluate, kept) for f in group]
             self.map(lambda f: run_step(f, "assess"), passed)
             self._reuse_ids(document, passed)
-            checked: Iterable[list[Fact]] = [passed]
+            checked = (group for group in [passed])
         else:  # each fact is linked, resolved, and saved, in order, once it and every fact before it is checked
             checked = self.imap(check, kept)
         saved = []
         context = self._context_mentions(document)
-        for fact in (f for group in checked for f in group):
-            run_step(fact, "link")
-            linked = {m.entity_id for m in fact.mentions if m.entity_id}
-            fact.mentions += [replace(m) for m in context if m.entity_id not in linked]
-            if self._resolve(fact):
-                run_step(fact, "save")
-                saved.append(fact)
+        with closing(checked):  # a failure here cancels the checks not yet started
+            for fact in (f for group in checked for f in group):
+                run_step(fact, "link")
+                linked = {m.entity_id for m in fact.mentions if m.entity_id}
+                fact.mentions += [replace(m) for m in context if m.entity_id not in linked]
+                if self._resolve(fact):
+                    run_step(fact, "save")
+                    saved.append(fact)
         return saved
 
     def _context_mentions(self, document: Document) -> list[Mention]:

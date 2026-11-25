@@ -11,7 +11,8 @@ Features and fixes that change what Factoid does, by version. `SPEC.md` has the 
   replayed with each request's recorded latency, a call took 99 s and 101 s instead of 137 s and 136 s, with the same
   636 facts and no fresh calls; a live run of one call took 93 s instead of 138 s. A document being revised still
   checks every fact first, since reusing its old ids compares them all at once. If a model call fails partway through
-  a document, the facts saved before it stay saved, as before; they are just saved sooner.
+  a document, the facts saved before it stay saved. A failure in link, resolve, or save already left those facts; a
+  failure while checking used to leave none of the document's facts, and now leaves the ones saved before it.
 
 ## 0.1.28 (2026-11-25)
 
