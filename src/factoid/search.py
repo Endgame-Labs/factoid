@@ -12,6 +12,8 @@ import json
 import os
 import sqlite3
 import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -77,28 +79,46 @@ class LocalIndex(Index):
                create virtual table if not exists fts using fts5(ns unindexed, id unindexed, text);"""
         )
         self.db.commit()
-        self._vectors: dict[str, tuple[list[str], np.ndarray | None]] = {}
+        self._vectors: dict[str, _Vectors] = {}
 
     def upsert(self, namespace: str, rows: list[dict[str, Any]]) -> None:
-        with self._lock:
+        with self._lock, self._dropped_on_error(namespace):
+            saved: dict[str, tuple[bytes | None, str]] = {}
             for row in rows:
                 vector = row.get("vector")
                 blob = np.asarray(vector, dtype=np.float32).tobytes() if vector is not None else None
-                attrs = {k: v for k, v in row.items() if k not in ("id", "text", "vector")}
+                attrs = json.dumps({k: v for k, v in row.items() if k not in ("id", "text", "vector")})
                 self.db.execute("insert or replace into rows values (?,?,?,?,?)",
-                                (namespace, row["id"], row.get("text", ""), json.dumps(attrs), blob))
+                                (namespace, row["id"], row.get("text", ""), attrs, blob))
                 self.db.execute("delete from fts where ns = ? and id = ?", (namespace, row["id"]))
                 self.db.execute("insert into fts values (?,?,?)", (namespace, row["id"], row.get("text", "")))
+                saved[row["id"]] = (blob, attrs)
             self.db.commit()
-            self._vectors.pop(namespace, None)
+            if (cached := self._vectors.get(namespace)) is not None:
+                cached.drop(list(saved))
+                try:
+                    cached.add([(id_, np.frombuffer(blob, dtype=np.float32), json.loads(attrs))
+                                for id_, (blob, attrs) in saved.items() if blob is not None])
+                except ValueError:  # vectors of another length: the next search loads them all, as it did before
+                    del self._vectors[namespace]
 
     def delete(self, namespace: str, ids: list[str]) -> None:
-        with self._lock:
+        with self._lock, self._dropped_on_error(namespace):
             for id_ in ids:
                 self.db.execute("delete from rows where ns = ? and id = ?", (namespace, id_))
                 self.db.execute("delete from fts where ns = ? and id = ?", (namespace, id_))
             self.db.commit()
+            if (cached := self._vectors.get(namespace)) is not None:
+                cached.drop(ids)
+
+    @contextmanager
+    def _dropped_on_error(self, namespace: str) -> Iterator[None]:
+        """A write that fails may leave rows that the next commit saves, so the next search loads them all."""
+        try:
+            yield
+        except BaseException:
             self._vectors.pop(namespace, None)
+            raise
 
     def vectors(self, namespace: str, ids: list[str]) -> dict[str, list[float]]:
         out: dict[str, list[float]] = {}
@@ -146,35 +166,72 @@ class LocalIndex(Index):
     def nearest(self, namespace: str, vector: list[float], top_k: int,
                 filters: dict[str, Any] | None = None) -> list[str]:
         with self._lock:
+            # data_version moves only when another connection writes, which this cache would not see
+            version = self.db.execute("pragma data_version").fetchone()[0]
             cached = self._vectors.get(namespace)
-            if cached is None:
+            if cached is None or cached.version != version:
                 rows = self.db.execute("select id, vector, attrs from rows where ns = ? and vector is not null",
                                        (namespace,)).fetchall()
-                ids = [r[0] for r in rows]
-                matrix = np.stack([np.frombuffer(r[1], dtype=np.float32) for r in rows]) if rows else None
-                if matrix is not None:
-                    norms = np.linalg.norm(matrix, axis=1, keepdims=True)
-                    matrix = matrix / np.where(norms == 0, 1, norms)
-                attrs = {r[0]: json.loads(r[2]) for r in rows}
-                cached = (ids, matrix)
+                cached = _Vectors(version)
+                cached.add([(r[0], np.frombuffer(r[1], dtype=np.float32), json.loads(r[2])) for r in rows])
                 self._vectors[namespace] = cached
-                self._attrs = getattr(self, "_attrs", {})
-                self._attrs[namespace] = attrs
-        ids, matrix = cached
-        if matrix is None:
-            return []
-        query = np.asarray(vector, dtype=np.float32)
-        query = query / (np.linalg.norm(query) or 1.0)
-        scores = matrix @ query
-        order = np.argsort(-scores)
-        attrs = self._attrs[namespace]
-        out = []
-        for i in order:
-            if self._passes(attrs[ids[i]], filters):
-                out.append(ids[i])
-                if len(out) >= top_k:
+            if not cached.ids:
+                return []
+            top_k = max(top_k, 1)  # as it always gave: at least one row
+            query = np.asarray(vector, dtype=np.float32)
+            query = query / (np.linalg.norm(query) or 1.0)
+            scores = cached.matrix[:len(cached.ids)] @ query
+            picked: list[int] = []
+            for i in np.argsort(-scores):
+                if len(picked) >= top_k and scores[i] < scores[picked[top_k - 1]] - 1e-4:
                     break
-        return out
+                if self._passes(cached.attrs[cached.ids[i]], filters):
+                    picked.append(i)
+            # BLAS rounds a row's score by where the row sits, so near ties are scored again row by row, then by id
+            exact = np.einsum("ij,j->i", cached.matrix[picked], query)
+            ranked = sorted(zip(exact.tolist(), (cached.ids[i] for i in picked)), key=lambda p: (-p[0], p[1]))
+        return [id_ for _, id_ in ranked[:top_k]]
+
+
+class _Vectors:
+    """One namespace's stored vectors, normalized, in a matrix with room to grow, so a save need not load them all
+    again. Row order is not the database's: a dropped row takes the last row's place."""
+
+    def __init__(self, version: int):
+        self.version = version
+        self.ids: list[str] = []
+        self.at: dict[str, int] = {}
+        self.attrs: dict[str, dict[str, Any]] = {}
+        self.matrix = np.empty((0, 0), dtype=np.float32)
+
+    def add(self, rows: list[tuple[str, np.ndarray, dict[str, Any]]]) -> None:
+        if not rows:
+            return
+        new = np.stack([vector for _, vector, _ in rows])
+        norms = np.linalg.norm(new, axis=1, keepdims=True)
+        new = new / np.where(norms == 0, 1, norms)
+        held = len(self.ids)
+        if held + len(new) > len(self.matrix):
+            grown = np.empty((max(2 * len(self.matrix), held + len(new)), new.shape[1]), dtype=np.float32)
+            if held:
+                grown[:held] = self.matrix[:held]
+            self.matrix = grown
+        self.matrix[held:held + len(new)] = new
+        for id_, _, attrs in rows:
+            self.at[id_] = len(self.ids)
+            self.ids.append(id_)
+            self.attrs[id_] = attrs
+
+    def drop(self, ids: list[str]) -> None:
+        for id_ in ids:
+            i = self.at.pop(id_, None)
+            if i is None:
+                continue
+            last = self.ids.pop()
+            if last != id_:
+                self.matrix[i] = self.matrix[len(self.ids)]
+                self.ids[i], self.at[last] = last, i
+            del self.attrs[id_]
 
 
 #: Attributes the index stores as lists, which filter by membership.
