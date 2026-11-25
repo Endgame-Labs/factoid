@@ -89,9 +89,9 @@ needs. Not every provider serves every workload:
 decision model, is planned and not built yet.
 
 Search needs no service to start. With no `search` setting, Factoid keeps a local index in the project's SQLite store.
-Using turbopuffer, or a turbopuffer-compatible endpoint, is optional. We made
-[blowfish](https://github.com/Endgame-Labs/blowfish) for this: a self-hostable search engine that speaks the turbopuffer
-API on any S3-compatible bucket, so a project can run turbopuffer search without an account. Configure either one in
+Using turbopuffer, or a turbopuffer-compatible endpoint, is optional. Factoid works with
+[blowfish](https://github.com/Endgame-Labs/blowfish), our self-hostable search engine that speaks the turbopuffer API on
+any S3-compatible bucket, so a project can run turbopuffer search without an account. Configure either one in
 `settings.py`, and set its key with `factoid keys set turbopuffer` (keys at <https://turbopuffer.com/dashboard>), or point
 `TURBOPUFFER_BASE_URL` at a blowfish server.
 
