@@ -2,7 +2,7 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
-## Unreleased
+## 0.1.29 (2026-11-25)
 
 - **One decision request fewer per fact (issue #7).** `assess_with_evaluate` is now on by default: the trait and time
   questions ride in the fact evals' request, for about 20% fewer decision calls. Replays showed that the as-of answers

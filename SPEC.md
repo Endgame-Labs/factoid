@@ -1411,7 +1411,7 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
   supersession 1 of 2. Details are in `examples/legal/README.md`.
 - **Default decision model** (decision 139): `typesafe/jev-1.14.0`, in `settings.py`, the `jev` preset, and the
   example apps.
-- **PyPI:** 0.1.28 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
+- **PyPI:** 0.1.29 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
 - **Landing page** (decisions 124, 126, 131, 136, and 141): Jinja templates in `site/` with one shared header, nav, and
   footer, served by Flask while you work and built to self-contained static pages (`site/app.py`). Hosted on GitHub
   Pages at https://endgame-labs.github.io/factoid/; `.github/workflows/pages.yml` builds and publishes it on every
