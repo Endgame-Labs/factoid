@@ -4,6 +4,13 @@ Features and fixes that change what Factoid does, by version. `SPEC.md` has the 
 
 ## Unreleased
 
+- **A document's facts are saved as they are checked.** Inside one document, Factoid used to check every fact
+  (evaluate, repair, and assess) before it linked, resolved, and saved the first one. Now each fact is linked,
+  resolved, and saved in document order as soon as it and every fact before it is checked, while the rest are still
+  being checked. The requests and the stored facts are the same. On two real-length synthetic sales calls, replayed
+  with each request's recorded latency, a call took 99 s and 101 s instead of 137 s and 136 s. A document being revised
+  still checks every fact first. If a check fails partway through a document, the facts saved before it stay saved.
+  Thanks to Dustin Larimer (PR #28).
 - **Postgres as a store (issue #21).** `store = Postgres()` from `factoid.stores` keeps a project's facts in Postgres,
   with `factoid[postgres]`, for many processes writing at once. The URL comes from `FACTOID_POSTGRES_URL`. Writes take
   turns under a lock, so events are numbered in commit order and exports never skip one. Every read and write the

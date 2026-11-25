@@ -12,9 +12,9 @@ import copy
 import hashlib
 import json
 from collections import Counter
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Generator, Iterable
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import AbstractContextManager
+from contextlib import AbstractContextManager, closing
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -153,6 +153,10 @@ class Factoid:
         return _active(self)
 
     def map(self, fn: Callable[[T], R], items: Iterable[T]) -> list[R]:
+        return list(self.imap(fn, items))
+
+    def imap(self, fn: Callable[[T], R], items: Iterable[T]) -> Generator[R]:
+        """Like `map`, but it starts every item now and yields each result, in order, as soon as it is ready."""
         items = list(items)
 
         def run(item: T) -> R:
@@ -160,10 +164,20 @@ class Factoid:
                 return fn(item)
 
         if len(items) <= 1:
-            return [run(item) for item in items]
+            done = [run(item) for item in items]
+            return (result for result in done)
         # Pool threads do not inherit the caller's context: the active app, and the step that labels model calls.
-        contexts = [contextvars.copy_context() for _ in items]
-        return list(self._pool.map(lambda pair: pair[0].run(run, pair[1]), zip(contexts, items)))
+        futures = [self._pool.submit(contextvars.copy_context().run, run, item) for item in items]
+
+        def results() -> Generator[R]:
+            try:
+                for future in futures:
+                    yield future.result()
+            finally:
+                for future in futures:
+                    future.cancel()
+
+        return results()
 
     def entity_class(self, name: str) -> type[Entity]:
         for klass in self.entity_classes:
@@ -281,19 +295,30 @@ class Factoid:
         for fact, vector in zip(kept, vectors):
             fact.vector = vector
             fact.similar = self._similar_facts(fact, vector, limit=3)
-        evaluated = self.map(self._evaluate, kept)
-        passed = [f for group in evaluated for f in group]
-        self.map(lambda f: run_step(f, "assess"), passed)
+
+        def check(fact: Fact) -> list[Fact]:
+            group = self._evaluate(fact)
+            for one in group:
+                run_step(one, "assess")
+            return group
+
+        if document.id in self._revising:  # reusing old ids needs every checked fact at once
+            passed = [f for group in self.map(self._evaluate, kept) for f in group]
+            self.map(lambda f: run_step(f, "assess"), passed)
+            self._reuse_ids(document, passed)
+            checked = (group for group in [passed])
+        else:  # each fact is linked, resolved, and saved, in order, once it and every fact before it is checked
+            checked = self.imap(check, kept)
         saved = []
-        self._reuse_ids(document, passed)
         context = self._context_mentions(document)
-        for fact in passed:
-            run_step(fact, "link")
-            linked = {m.entity_id for m in fact.mentions if m.entity_id}
-            fact.mentions += [replace(m) for m in context if m.entity_id not in linked]
-            if self._resolve(fact):
-                run_step(fact, "save")
-                saved.append(fact)
+        with closing(checked):  # a failure here cancels the checks not yet started
+            for fact in (f for group in checked for f in group):
+                run_step(fact, "link")
+                linked = {m.entity_id for m in fact.mentions if m.entity_id}
+                fact.mentions += [replace(m) for m in context if m.entity_id not in linked]
+                if self._resolve(fact):
+                    run_step(fact, "save")
+                    saved.append(fact)
         return saved
 
     def _context_mentions(self, document: Document) -> list[Mention]:

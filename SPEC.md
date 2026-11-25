@@ -1072,6 +1072,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
   full text search) passes the index contract but is opt-in until an eval compares its ranking with BM25.
   `tests/test_store_contract.py` and `tests/test_index_contract.py` run each backend; Postgres runs when
   `FACTOID_TEST_POSTGRES_URL` is set.
+- **Saved as checked** (decision 149): inside one document, facts are checked (evaluate, repair, and assess) in
+  parallel, and each is linked, resolved, and saved in document order as soon as it and every fact before it is
+  checked. A document being revised checks every fact first, because reusing old ids compares them all at once.
 - **Search backend:** with no `search` setting, a project uses `LocalIndex`, a SQLite file with FTS5 for BM25 and
   exact vector search. `Turbopuffer` is built and used when set, and is optional. Decision 23 said a project needs
   turbopuffer; the local index replaced that, so tests and small projects work without it. It keeps each namespace's
@@ -1902,4 +1905,12 @@ All dates are 2026-11-13 unless noted.
      index, or both on Postgres, and the demo replayed on Postgres gave the same facts as on SQLite. `PostgresIndex`
      stays opt-in until an eval compares its keyword ranking (`ts_rank`) with BM25. Not yet: reconnecting after a
      dropped connection, and an approximate vector index.
+149. A document's facts are saved as they are checked (Kyle, 2026-11-25: "yes"; PR #28 from Dustin Larimer). Every
+     fact in a document used to be checked before the first was linked, resolved, and saved, so for about two thirds
+     of a call's ingest only one model request was in flight: resolve asks the decision model once per fact, in order.
+     Now link, resolve, and save start on each fact as soon as it and every fact before it is checked, in document
+     order, so each fact still resolves against the same stored facts. A document being revised keeps the old order,
+     since `_reuse_ids` matches all of its checked facts at once. Two real-length synthetic calls replayed with each
+     request's recorded latency gave the same 636 facts in 99 s and 101 s instead of 137 s and 136 s, and the demo
+     replayed offline stored the same facts with no fresh calls.
 
