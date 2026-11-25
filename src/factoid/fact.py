@@ -145,8 +145,9 @@ class Fact(Registered, ModelCalls):
     #: Run one repair (a rewording) on a near miss.
     repair_enabled: ClassVar[bool] = True
     #: Ask the assess questions (traits and time) in the same decision request as the fact evals, instead of in a
-    #: second request with the same fact. Off by default while evals decide (issue #7).
-    assess_with_evaluate: ClassVar[bool] = False
+    #: second request with the same fact (decision 150). False asks them in a request of their own, which sees only the
+    #: fact and its quotes.
+    assess_with_evaluate: ClassVar[bool] = True
     #: The longest fact sentence `validate` accepts, in characters.
     max_length: ClassVar[int] = 600
 

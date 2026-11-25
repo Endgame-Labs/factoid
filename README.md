@@ -655,8 +655,8 @@ evaluates the repaired sentences again. The repair names what pronouns and relat
 fact. `repair_guidance` on a document or fact class adds rules to the repair prompt, and the prompt's `guidance` and
 `references` blocks can be replaced by a project template that extends `factoid/repair.md.j2`. A fact that fails
 `grounded` gets one repair too, which trims it to what its passages say; `DecisionFloors(repair_grounded=False)` turns
-that off. `assess_with_evaluate = True` on a fact class asks the trait and time questions in the fact evals' request,
-which saves one decision request per fact; it is off by default while evals decide. The fact evals and repair see the
+that off. The trait and time questions ride in the fact evals' request, which saves one decision request per fact;
+`assess_with_evaluate = False` on a fact class asks them in a request of their own. The fact evals and repair see the
 document text just before the fact's first cited passage (`evidence_context`, 1,200 characters by default; 0 for
 structured documents). The extractor resolves "he" or "this aircraft" from earlier text, so the checks need that text to
 confirm the name. A project can change one floor or add a custom fact eval without replacing the default chain:

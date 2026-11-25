@@ -4,6 +4,10 @@ Features and fixes that change what Factoid does, by version. `SPEC.md` has the 
 
 ## Unreleased
 
+- **One decision request fewer per fact (issue #7).** `assess_with_evaluate` is now on by default: the trait and time
+  questions ride in the fact evals' request, for about 20% fewer decision calls. Replays showed that the as-of answers
+  that kept it off were mostly noise, and CUAD F1 held. `assess_with_evaluate = False` on a fact class restores the
+  separate request.
 - **A store that keeps no document text (issue #22).** `keep_document_text = False` in settings stores documents,
   chunks, revisions, and quotes with no text. Offsets, vectors, facts, and entities are kept, and each quote keeps a
   sha256 of its text in a new `text_hash` column, written in both modes. Chunk search is by vector only. Re-ingest

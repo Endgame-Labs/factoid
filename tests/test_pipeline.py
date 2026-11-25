@@ -57,7 +57,8 @@ def build(make_app, fake):
         if "same company" in question.instructions:
             return 0.95
         if "trait" in question.instructions:
-            return 0.9 if "cap" in json.dumps(state) else 0.1
+            own = {k: state.get(k) for k in ("fact", "quotes", "cited_passages")}  # not the text around the fact
+            return 0.9 if "cap" in json.dumps(own) else 0.1
         return 0.9
 
     def choice(question, state, name):

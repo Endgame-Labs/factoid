@@ -48,8 +48,8 @@ class FakeClient:
         for name, q in questions.items():
             if isinstance(q, Noul):
                 out[name] = self.noul(q, state)
-            elif isinstance(q, Choice):
-                out[name] = self.choice(q, state, name)
+            elif isinstance(q, Choice):  # assess questions asked with the fact evals are prefixed "assess."
+                out[name] = self.choice(q, state, name.removeprefix("assess."))
             elif isinstance(q, Score):
                 out[name] = ScoreAnswer(1.0, {0: 0.0, 1: 1.0})
         return Judgments(out)

@@ -1795,12 +1795,12 @@ All dates are 2026-11-13 unless noted.
      what went live.
 132. `examples/iscrag` is renamed `examples/mediasum`, after its corpus (Kyle, 2026-11-23). "ISC-RAG" names the study
      the questions came from, which a reader outside it would not know. Entries above keep the old name.
-133. `assess_with_evaluate` stays off by default (2026-11-23, issue #7). It cut decision calls by about 20% on all three
-     example apps (mediasum 35,379 to 28,550; NBA 17,719 to 14,220; legal's sets 20 to 25%), and QA and CUAD held. But
-     it asks the time questions alongside the fact evals, and the amendment as-of answers, which rest on those
-     answers, slipped: 2 lost to outdated facts (amendments_heldout at 2,000 tokens, amendments_sec as-of) and 1 gained,
-     with false changes up slightly on two sets. With nothing gained to offset it, the saving waits for a version that
-     keeps the as-of answers.
+133. `assess_with_evaluate` stays off by default (2026-11-23, issue #7; replaced by decision 150). It cut decision calls
+     by about 20% on all three example apps (mediasum 35,379 to 28,550; NBA 17,719 to 14,220; legal's sets 20 to 25%),
+     and QA and CUAD held. But it asks the time questions alongside the fact evals, and the amendment as-of answers,
+     which rest on those answers, slipped: 2 lost to outdated facts (amendments_heldout at 2,000 tokens, amendments_sec
+     as-of) and 1 gained, with false changes up slightly on two sets. With nothing gained to offset it, the saving waits
+     for a version that keeps the as-of answers.
 134. The repair prompt's default reference rule is unchanged (2026-11-23, issue #24). A rule to keep a reference the
      text leaves open as worded fixed END-10179's case (3 of 140 repairs guessed wrong without it, 0 of 100 with it),
      so it was run against the default on all three example apps. Nothing moved past noise: calls the same, rejected
@@ -1920,7 +1920,7 @@ All dates are 2026-11-13 unless noted.
      since `_reuse_ids` matches all of its checked facts at once. Two real-length synthetic calls replayed with each
      request's recorded latency gave the same 636 facts in 99 s and 101 s instead of 137 s and 136 s, and the demo
      replayed offline stored the same facts with no fresh calls.
-150. Proposed (2026-11-25; issue #7): turn on `assess_with_evaluate` by default, for about 20% fewer decision calls.
+150. Decided (Kyle, 2026-11-25: "yes"; issue #7): turn on `assess_with_evaluate` by default, for about 20% fewer decision calls.
      Decision 133 kept it off for two lost as-of answers, but replays of both arms on 0.1.19 show they were mostly
      noise. Heldout's payment-days question fails with the base's time answers too. The sec loss was the eval's
      search: the wanted fact is the same in both arms and passes on the reloaded store, but in-run searches sent the

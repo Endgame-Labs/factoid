@@ -221,7 +221,7 @@ class DecisionFloors(FactEval):
         app = current()
         state: dict[str, Any] = fact.eval_state()
         asked: dict[str, Any] = dict(self.questions)
-        early = getattr(type(fact), "assess_with_evaluate", False)
+        early = getattr(type(fact), "assess_with_evaluate", True)
         if early:  # one request instead of two: the assess questions ride along, prefixed so names cannot clash
             asked.update({f"assess.{k}": q for k, q in type(fact).assess_questions().items()})
         judgments = app.client.ask(state, asked)
