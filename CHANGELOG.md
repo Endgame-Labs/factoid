@@ -2,6 +2,13 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.28 (2026-11-25)
+
+- **A save no longer slows down as the store grows.** The local index keeps its vectors in memory and updates them on
+  each save or delete, where it used to load every stored vector again on the next search. On a store of 77,000
+  facts, a record's turn went from 1,404 s to 97 s, with the same facts. A save, delete, or load that fails drops the
+  copy in memory, so the next search loads from disk.
+
 ## 0.1.27 (2026-11-24)
 
 - **A repeat no longer drops the change it carries (issue #25).** When a new fact repeats one stored fact and
