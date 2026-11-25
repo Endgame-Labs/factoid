@@ -42,17 +42,21 @@ def new_id(prefix: str) -> str:
 
 @dataclass
 class Quote:
-    """An exact passage a fact cites. Code attaches it; models never write evidence."""
+    """An exact passage a fact cites. Code attaches it; models never write evidence.
+
+    `text` is None on a quote read from a store that keeps no document text (`Settings.keep_document_text = False`)
+    when `Document.fetch_text` could not supply it; `start`, `end`, and `text_hash` still say what it quotes."""
 
     document_id: str
     passage_n: int
     start: int
     end: int
-    text: str
+    text: str | None
     speaker: str | None = None
     said_at: str | None = None
     section: str | None = None
     attrs: dict[str, Any] = field(default_factory=dict)  # copied from the passage
+    text_hash: str | None = None  # sha256 of the text, as the store keeps it
 
 
 @dataclass

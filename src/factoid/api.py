@@ -146,6 +146,9 @@ def document(app: Any, document_id: str) -> dict[str, Any]:
 
 
 def _fact(app: Any, f: Any) -> dict[str, Any]:
+    """A fact as a dict. A quote the store keeps no text for, and `Document.fetch_text` cannot supply, has text None
+    and its offsets."""
+    app.fill_quotes(f)
     doc = app.document(f.document_id) if f.document_id else None
     return {
         "id": f.id, "class": stored_name(type(f)), "text": f.text, "status": f.status, "traits": f.trait_names,
@@ -154,7 +157,8 @@ def _fact(app: Any, f: Any) -> dict[str, Any]:
         "document": {"id": f.document_id, "title": app.document_title(f.document_id),
                      **({k: doc[k] for k in ("uri", "source_datetime", "metadata")} if doc else {})},
         "quotes": [{"document_id": q.document_id, "passage": q.passage_n, "section": q.section, "text": q.text,
-                    "speaker": q.speaker, "said_at": q.said_at, **({"attrs": q.attrs} if q.attrs else {})}
+                    "start": q.start, "end": q.end, "speaker": q.speaker, "said_at": q.said_at,
+                    **({"attrs": q.attrs} if q.attrs else {})}
                    for q in f.quotes],
         "mentions": [{"text": m.text, "role": m.role, "entity_id": m.entity_id} for m in f.mentions],
     }

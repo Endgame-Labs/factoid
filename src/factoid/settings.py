@@ -43,6 +43,10 @@ class Settings:
     #: What `.factoid/calls.db` keeps of each model call: "full" (requests and responses, so identical calls replay),
     #: "metadata" (model, step, and tokens, with no document text; nothing replays), or "none".
     call_log: ClassVar[str] = "full"
+    #: Keep each document's text in the store. False keeps no document, chunk, revision, or quote text: offsets, a
+    #: hash of each quote, vectors, facts, and entities stay, and `Document.fetch_text` can supply the text on a read.
+    #: A change applies to documents saved after it.
+    keep_document_text: ClassVar[bool] = True
     #: How many times one model call is tried. Rate limits during a big eval can last minutes, so the default is
     #: generous; an app that answers people may want 3.
     model_attempts: ClassVar[int] = 12

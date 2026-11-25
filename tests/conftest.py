@@ -83,8 +83,8 @@ def make_app(fake: FakeClient) -> Iterator[Callable[..., Factoid]]:
     does the same for the search index."""
     schemas: list[tuple[Any, str]] = []
 
-    def build(**kwargs: Any) -> Factoid:
-        app = Factoid(Settings, in_memory=True, **kwargs)
+    def build(settings: type[Settings] = Settings, **kwargs: Any) -> Factoid:
+        app = Factoid(settings, in_memory=True, **kwargs)
         app.client = fake  # type: ignore[assignment]
         if os.environ.get("FACTOID_TEST_STORE") == "postgres":
             from factoid.postgres import PostgresStore

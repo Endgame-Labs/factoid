@@ -4,6 +4,13 @@ Features and fixes that change what Factoid does, by version. `SPEC.md` has the 
 
 ## Unreleased
 
+- **A store that keeps no document text (issue #22).** `keep_document_text = False` in settings stores documents,
+  chunks, revisions, and quotes with no text. Offsets, vectors, facts, and entities are kept, and each quote keeps a
+  sha256 of its text in a new `text_hash` column, written in both modes. Chunk search is by vector only. Re-ingest
+  matches old facts' quotes by hash, so old ids are kept either way. On a read, `Document.fetch_text(uri)` can supply
+  the text again: quotes are filled from it when its hash matches, and are null otherwise. API and MCP quotes now
+  include `start` and `end`, and a document read includes its `content_hash`. The setting applies to what is saved
+  after it changes. With `call_log = "full"`, the app warns at start that the call log still keeps request text.
 - **A document's facts are saved as they are checked.** Inside one document, Factoid used to check every fact
   (evaluate, repair, and assess) before it linked, resolved, and saved the first one. Now each fact is linked,
   resolved, and saved in document order as soon as it and every fact before it is checked, while the rest are still

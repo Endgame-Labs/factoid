@@ -431,8 +431,12 @@ def read(fact_id: str, data_dir: Path | None) -> None:
     if fact.lifetime:
         click.echo(f"  lifetime: {fact.lifetime}")
     click.echo(f"  still valid now: {fact.valid_at():.2f}  ({_validity_note(fact)})")
+    app.fill_quotes(fact)
     for q in fact.quotes:
-        click.echo(f"  quote [{q.document_id} #{q.passage_n}]: {q.text[:300]}")
+        if q.text is None:  # the store keeps no document text, and fetch_text did not supply it
+            click.echo(f"  quote [{q.document_id} #{q.passage_n}]: characters {q.start} to {q.end} (no text kept)")
+        else:
+            click.echo(f"  quote [{q.document_id} #{q.passage_n}]: {q.text[:300]}")
     for m in fact.mentions:
         click.echo(f"  mention {m.text!r} ({m.role}) -> {m.entity_id or 'unlinked'} via {m.method}")
     for row in app.store.relations(fact.id):

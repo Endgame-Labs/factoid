@@ -11,6 +11,7 @@ import contextvars
 import copy
 import hashlib
 import json
+import sys
 from collections import Counter
 from collections.abc import Callable, Generator, Iterable
 from concurrent.futures import ThreadPoolExecutor
@@ -32,6 +33,7 @@ from .runtime import active as _active
 from .search import Index, LocalIndex
 from .settings import Settings
 from .steps import SKIPPED, labelled, run_step
+from .store import text_hash
 from .structured import StructuredDocument, header_of
 from .validity import LIFETIME_RANGES
 
@@ -110,6 +112,10 @@ class Factoid:
         self.store = _store(settings.store, self.root, data, in_memory=in_memory, data_dir_given=data_dir is not None)
         self.calls = CallLog(Path(calls_path) if calls_path else None if in_memory else data / "calls.db",
                              mode=settings.call_log)
+        if not settings.keep_document_text and settings.call_log == "full":
+            print("warning: keep_document_text is False, but call_log is \"full\", so .factoid/calls.db still keeps "
+                  "the text of every model request. Set call_log to \"metadata\" or \"none\" to keep no document "
+                  "text.", file=sys.stderr)
         self.meter = Meter()
         self.client = ModelClient(settings.all_models(), self.calls, self.meter,
                                   replay=settings.replay if replay is None else replay,
@@ -141,6 +147,16 @@ class Factoid:
         use(self)
 
     # -- plumbing -------------------------------------------------------------------------------------------
+
+    @property
+    def store(self) -> Any:
+        return self._store
+
+    @store.setter
+    def store(self, value: Any) -> None:
+        """Any store the app uses keeps document text or not as the settings say, one swapped in later too."""
+        value.keep_text = bool(self.settings.keep_document_text)
+        self._store = value
 
     def ns(self, name: str) -> str:
         if isinstance(self.index, LocalIndex):
@@ -270,8 +286,9 @@ class Factoid:
             return
         texts = [(f"{c.situation}\n\n" if c.situation else "") + c.text for c in chunks]
         vectors = self.client.embed(texts)
+        keep = self.settings.keep_document_text  # without text, chunks are found by vector only
         self.index.upsert(self.ns("chunks"), [
-            {"id": c.id, "text": t, "vector": v, "document_id": document.id}
+            {"id": c.id, "text": t if keep else "", "vector": v, "document_id": document.id}
             for c, t, v in zip(chunks, texts, vectors)
         ])
 
@@ -624,14 +641,17 @@ class Factoid:
     def _reuse_ids(self, document: Document, facts: list[Fact]) -> None:
         """When a document is re-ingested, a fact that says what one of its old facts said takes the old id,
         so ids saved elsewhere keep working. Same sentence, or the same traits, a shared quote, and a close embedding.
-        Extraction rewords sentences from run to run, so matching on the sentence alone keeps few ids."""
+        Extraction rewords sentences from run to run, so matching on the sentence alone keeps few ids. Quotes match
+        by the hash of their text, which the store keeps whether or not it keeps the text."""
         previous = self._revising.get(document.id, {})
         if not previous or not facts:
             return
         old = {row["id"]: row for row in self.store.fact_rows(list(previous.values()))}
         quotes: dict[str, set[str]] = {}
         for row in self.store.quotes_of(list(old)):
-            quotes.setdefault(row["fact_id"], set()).add(row["text"])
+            digest = row["text_hash"] or (text_hash(row["text"]) if row["text"] else None)
+            if digest:
+                quotes.setdefault(row["fact_id"], set()).add(digest)
         free = dict(old)
         for fact in facts:
             if fact.text in previous and previous[fact.text] in free:
@@ -644,7 +664,7 @@ class Factoid:
         vectors = dict(zip(ids, self.client.embed([free[i]["text"] for i in ids])))
         pairs = []
         for fact in rest:
-            mine = {q.text for q in fact.quotes}
+            mine = {text_hash(q.text) for q in fact.quotes if q.text}
             for old_id in ids:
                 if sorted(json.loads(free[old_id]["traits"] or "[]")) != sorted(fact.trait_names):
                     continue
@@ -709,13 +729,46 @@ class Factoid:
             lifetime=json.loads(row["lifetime"]) if row["lifetime"] else None,
             source_datetime=_parse(row["source_datetime"]), extracted_at=_parse(row["extracted_at"]),
             scores=json.loads(row["scores"]),
-            quotes=[Quote(r["document_id"], r["passage_n"], r["start"], r["end"], r["text"], r["speaker"],
-                          r["said_at"], r["section"], json.loads(r["attrs"]) if r["attrs"] else {})
+            quotes=[Quote(r["document_id"], r["passage_n"], r["start"], r["end"], r["text"] or None, r["speaker"],
+                          r["said_at"], r["section"], json.loads(r["attrs"]) if r["attrs"] else {}, r["text_hash"])
                     for r in self.store.quotes(fact_id)],
             mentions=[Mention(r["text"], r["kind"], r["role"], r["entity_id"], r["method"], r["confidence"])
                       for r in self.store.mentions(fact_id)],
         )
         return fact
+
+    def fill_quotes(self, facts: Fact | Iterable[Fact]) -> None:
+        """Fill in the text of quotes the store keeps none for, from each document class's `fetch_text`. A document's
+        text is used only when its hash matches the stored document's, and a quote only when its own hash matches;
+        any other quote keeps text None and its offsets. Each document is fetched at most once per call."""
+        texts: dict[str, str | None] = {}
+        for fact in [facts] if isinstance(facts, Fact) else facts:
+            for quote in fact.quotes:
+                if quote.text is not None:
+                    continue
+                if quote.document_id not in texts:
+                    texts[quote.document_id] = self._fetched_text(quote.document_id)
+                text = texts[quote.document_id]
+                if text is None or quote.start is None or quote.end is None or \
+                        not 0 <= quote.start <= quote.end <= len(text):
+                    continue
+                cut = text[quote.start:quote.end]
+                if quote.text_hash is None or text_hash(cut) == quote.text_hash:
+                    quote.text = cut
+
+    def _fetched_text(self, document_id: str) -> str | None:
+        """A stored document's text from its class's `fetch_text`, when its hash matches the stored content hash."""
+        row = self.store.document_row(document_id)
+        if row is None or not row["uri"] or not row["content_hash"]:
+            return None
+        try:
+            klass = self.document_class(row["class"])
+        except KeyError:
+            return None
+        text = klass.fetch_text(row["uri"])
+        if not isinstance(text, str) or hashlib.sha256(text.encode()).hexdigest() != row["content_hash"]:
+            return None
+        return text
 
     def save_entity(self, entity: Entity, keys: dict[str, str]) -> None:
         self.store.save_entity({"id": entity.id, "class": stored_name(type(entity)), "kind": entity.kind,
@@ -988,7 +1041,7 @@ class Factoid:
         for chunk_id, score in self.index.hybrid(self.ns("chunks"), query, vector, top_k, filters):
             row = self.store.chunk_row(chunk_id)
             if row is not None:
-                out.append({"id": row["id"], "document_id": row["document_id"], "text": row["text"],
+                out.append({"id": row["id"], "document_id": row["document_id"], "text": row["text"] or None,
                             "situation": row["situation"], "score": score})
         return out
 

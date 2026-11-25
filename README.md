@@ -175,6 +175,29 @@ The cache holds the text of every request and answer, document text included. A 
 text sets `call_log = "metadata"` in its settings, which keeps only the model, step, and tokens of each call, or
 `call_log = "none"`, which keeps nothing. Either way, nothing replays.
 
+The store keeps each document's text too, in its documents, chunks, revisions, and quotes. Set
+`keep_document_text = False` to keep none of it. The store then keeps each document's uri, title, metadata, and content
+hash, the offsets of its passages and quotes, a hash of each quote's text, its chunks' situations and vectors, and all
+facts and entities. Chunk search works by vector only. Ingest still reads the whole text while it runs, so it makes the
+same facts. Factoid warns at start when `call_log` is still "full", because the call log then keeps the text of every
+request; a project that must keep no third-party text sets both. The setting applies to what is saved after it
+changes: text saved before stays, and a document ingested again drops it from that document's row, chunks, and new
+quotes.
+
+With no text kept, a read that shows quotes (`factoid read`, the HTTP API, and MCP) calls the document class's
+`fetch_text(uri)`, if it defines one, to get the text from its source:
+
+```python
+class Ticket(ProseDocument):
+    @classmethod
+    def fetch_text(cls, uri: str) -> str | None:
+        return helpdesk.ticket_body(uri)  # None when the source no longer has it
+```
+
+When the text's hash matches the stored document's, quotes are cut from it by their offsets. Otherwise a quote's text is
+null, and `factoid read` prints its offsets. The Parquet export does not call `fetch_text`: it writes null for quote and
+document text.
+
 An eval never reads the project store. Each run builds its own store under `runs/` from the same documents. Evals replay
 saved answers, including those from a `--fresh` run. Because of this, an eval after `eval --fresh` scores that run's
 answers. Those results can differ from the facts `ingest` stored in the project.

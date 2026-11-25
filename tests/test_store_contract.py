@@ -138,6 +138,31 @@ def test_revisions_are_numbered_and_facts_record_theirs(store):
         ['{"revision": 1}', '{"revision": 2}']
 
 
+def test_a_store_that_keeps_no_text_keeps_offsets_and_hashes(store):
+    from factoid.store import text_hash
+
+    _doc(store, text="text kept before the change")
+    store.keep_text = False
+    assert store.archive_revision("doc_1")
+    _doc(store)
+    _fact(store, "f1", "Vega pays Orion.")
+    store.add_quotes("f1", [{"document_id": "doc_1", "passage_n": 0, "start": 0, "end": 4, "text": "Vega"}])
+    store.add_quotes("f1", [{"document_id": "doc_1", "passage_n": 0, "start": 0, "end": 4, "text": None,
+                             "text_hash": "kept"}])  # a quote read back from the store, saved again
+    assert store.document_text("doc_1") is None and store.document_text("doc_1", 0) is None
+    assert store.chunk_row("doc_1_c0")["text"] == "" and store.chunk_row("doc_1_c0")["situation"] == "s"
+    assert [d["text"] for d in store.document_rows(["doc_1"])] == [""]
+    quotes = store.quotes_of(["f1"])
+    assert {q["text"] for q in quotes} == {""}
+    assert [(q["start"], q["end"]) for q in quotes] == [(17, 29), (0, 16), (0, 4), (0, 4)]
+    assert [q["text_hash"] for q in quotes] == [text_hash("Orion ships."), text_hash("Vega pays Orion."),
+                                                text_hash("Vega"), "kept"]
+    store.keep_text = True
+    _fact(store, "f2", "Orion ships.")
+    assert [(q["text"], q["text_hash"]) for q in store.quotes("f2")] == [
+        ("Vega pays Orion.", text_hash("Vega pays Orion.")), ("Orion ships.", text_hash("Orion ships."))]
+
+
 # -- facts ------------------------------------------------------------------------------------------------------
 
 

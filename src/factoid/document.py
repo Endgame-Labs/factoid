@@ -228,6 +228,13 @@ class Document(Registered, ModelCalls):
     def ingest(self, app: Factoid) -> list[Fact]:
         raise NotImplementedError
 
+    @classmethod
+    def fetch_text(cls, uri: str) -> str | None:
+        """The text of the document at `uri`, from its source, or None. A store that keeps no document text
+        (`Settings.keep_document_text = False`) calls it on a read that shows quotes. When the text's hash matches the
+        stored document's, quotes are cut from it by their offsets; otherwise they show their offsets only."""
+        return None
+
     def record(self, passages: list[Passage], chunks: list[Chunk]) -> tuple[dict[str, Any], list[dict[str, Any]],
                                                                             list[dict[str, Any]]]:
         dated = self.dated()

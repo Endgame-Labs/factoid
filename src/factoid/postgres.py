@@ -63,9 +63,10 @@ create index if not exists facts_status on facts(status);
 create table if not exists quotes (
     fact_id {_T} not null, document_id {_T} not null, passage_n integer not null, start integer not null,
     "end" integer not null, text {_T} not null, speaker {_T}, said_at {_T}, section {_T}, attrs {_T},
-    rowid bigint generated always as identity
+    rowid bigint generated always as identity, text_hash {_T}
 );
 create index if not exists quotes_fact on quotes(fact_id);
+alter table quotes add column if not exists text_hash {_T};
 create table if not exists mentions (
     fact_id {_T} not null, text {_T} not null, kind {_T}, role {_T} not null default 'about', entity_id {_T},
     method {_T}, confidence double precision, rowid bigint generated always as identity

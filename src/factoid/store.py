@@ -11,6 +11,7 @@ project code and tests that want a read the methods do not cover; their SQL uses
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 import threading
@@ -48,7 +49,7 @@ create index if not exists facts_document on facts(document_id);
 create index if not exists facts_status on facts(status);
 create table if not exists quotes (
     fact_id text not null, document_id text not null, passage_n integer not null, start integer not null,
-    "end" integer not null, text text not null, speaker text, said_at text, section text
+    "end" integer not null, text text not null, speaker text, said_at text, section text, attrs text, text_hash text
 );
 create index if not exists quotes_fact on quotes(fact_id);
 create table if not exists mentions (
@@ -82,7 +83,7 @@ create table if not exists export_cursors (
 STANDING = "('current', 'contradicted')"
 
 _QUOTE_COLUMNS = ("fact_id", "document_id", "passage_n", "start", '"end"', "text", "speaker", "said_at", "section",
-                  "attrs")
+                  "attrs", "text_hash")
 _MENTION_COLUMNS = ("fact_id", "text", "kind", "role", "entity_id", "method", "confidence")
 
 
@@ -96,7 +97,13 @@ class Store:
     """SQLite store. One writer per process; WAL mode on.
 
     Backends differ only in how they connect, in `tx`, and in the few statements SQL dialects spell differently
-    (`_replace`, `_insert_ignore`, and `_has_trait`)."""
+    (`_replace`, `_insert_ignore`, and `_has_trait`).
+
+    With `keep_text` false (the app sets it from `Settings.keep_document_text`), documents, chunks, revisions, and
+    quotes are saved with empty text. Quotes keep `text_hash`, the sha256 of their text, either way."""
+
+    #: Keep document, chunk, revision, and quote text. The app sets it from `Settings.keep_document_text`.
+    keep_text: bool = True
 
     def __init__(self, path: Path | None):
         self.path = path
@@ -114,6 +121,8 @@ class Store:
             self.db.execute("alter table quotes add column section text")
         if "attrs" not in columns:  # stores made before quotes carried attrs
             self.db.execute("alter table quotes add column attrs text")
+        if "text_hash" not in columns:  # stores made before quotes carried a hash of their text
+            self.db.execute("alter table quotes add column text_hash text")
         if "revision" not in {row[1] for row in self.db.execute("pragma table_info(facts)")}:
             self.db.execute("alter table facts add column revision integer")  # stores made before revisions
         self.db.commit()
@@ -195,6 +204,7 @@ class Store:
             db.execute("update documents set content_hash = ? where id = ?", (content_hash, document_id))
 
     def save_document(self, doc: dict[str, Any], passages: list[dict[str, Any]], chunks: list[dict[str, Any]]) -> None:
+        keep = self.keep_text
         with self.tx() as db:
             db.execute("delete from passages where document_id = ?", (doc["id"],))
             db.execute("delete from chunks where document_id = ?", (doc["id"],))
@@ -203,7 +213,8 @@ class Store:
                 ("id", "class", "uri", "title", "source_datetime", "metadata", "text", "content_hash", "ingested_at"),
                 ("id",),
                 [(doc["id"], doc["class"], doc.get("uri"), doc.get("title"), doc.get("source_datetime"),
-                  json.dumps(doc.get("metadata") or {}, default=str), doc["text"], doc.get("content_hash"), _now())],
+                  json.dumps(doc.get("metadata") or {}, default=str), doc["text"] if keep else "",
+                  doc.get("content_hash"), _now())],
             )
             db.executemany(
                 'insert into passages (document_id, n, start, "end", speaker, said_at) values (?,?,?,?,?,?)',
@@ -212,14 +223,16 @@ class Store:
             db.executemany(
                 "insert into chunks (id, document_id, n, first_passage, last_passage, text, situation) "
                 "values (?,?,?,?,?,?,?)",
-                [(c["id"], doc["id"], c["n"], c["first_passage"], c["last_passage"], c["text"], c.get("situation"))
+                [(c["id"], doc["id"], c["n"], c["first_passage"], c["last_passage"], c["text"] if keep else "",
+                  c.get("situation"))
                  for c in chunks],
             )
             self.event(db, "document.saved", doc["id"], uri=doc.get("uri"))
 
     def archive_revision(self, document_id: str) -> bool:
         """Keep a document's stored text as a numbered revision before a new version replaces it. Facts record the
-        revision they came from, so the quotes of a replaced fact still point at the text they quote."""
+        revision they came from, so the quotes of a replaced fact still point at the text they quote. With `keep_text`
+        false, the revision is kept with empty text."""
         with self.tx() as db:
             row = db.execute("select text, metadata, source_datetime from documents where id = ?",
                              (document_id,)).fetchone()
@@ -228,23 +241,26 @@ class Store:
             n = db.execute("select count(*) as n from revisions where document_id = ?", (document_id,)).fetchone()["n"]
             db.execute("insert into revisions (document_id, n, text, metadata, source_datetime, saved_at) "
                        "values (?,?,?,?,?,?)",
-                       (document_id, n, row["text"], row["metadata"], row["source_datetime"], _now()))
+                       (document_id, n, row["text"] if self.keep_text else "", row["metadata"], row["source_datetime"],
+                        _now()))
             self.event(db, "document.revised", document_id, revision=n + 1)
             return True
 
     def document_text(self, document_id: str, revision: int | None = None) -> str | None:
-        """A document's text: the current version, or an earlier revision by number (0 is the first)."""
+        """A document's text: the current version, or an earlier revision by number (0 is the first). None when the
+        store keeps no text for it."""
         if revision is not None:
             row = self.one("select text from revisions where document_id = ? and n = ?", (document_id, revision))
             if row is not None:
-                return row["text"]
+                return row["text"] or None
         row = self.one("select text from documents where id = ?", (document_id,))
-        return row["text"] if row else None
+        return (row["text"] or None) if row else None
 
     def document_row(self, document_id: str) -> Any | None:
-        """A document's id, class, uri, title, source_datetime, metadata (JSON), and ingested_at, without its text."""
-        return self.one("select id, class, uri, title, source_datetime, metadata, ingested_at from documents "
-                        "where id = ?", (document_id,))
+        """A document's id, class, uri, title, source_datetime, metadata (JSON), content_hash, and ingested_at,
+        without its text."""
+        return self.one("select id, class, uri, title, source_datetime, metadata, content_hash, ingested_at "
+                        "from documents where id = ?", (document_id,))
 
     def revision_count(self, document_id: str) -> int:
         """How many earlier versions of a document are kept."""
@@ -319,10 +335,13 @@ class Store:
                     self.event(db, "entity.linked", m["entity_id"], fact=row["id"], method=m.get("method"))
 
     def _write_quotes(self, db: Any, fact_id: str, quotes: list[dict[str, Any]]) -> None:
+        """A quote with text gets its hash from it; one without (loaded from a store that keeps none) keeps its own."""
         db.executemany(
             f"insert into quotes ({', '.join(_QUOTE_COLUMNS)}) values ({_marks(len(_QUOTE_COLUMNS))})",
-            [(fact_id, q["document_id"], q["passage_n"], q["start"], q["end"], q["text"], q.get("speaker"),
-              q.get("said_at"), q.get("section"), json.dumps(q["attrs"]) if q.get("attrs") else None)
+            [(fact_id, q["document_id"], q["passage_n"], q["start"], q["end"],
+              (q.get("text") or "") if self.keep_text else "", q.get("speaker"), q.get("said_at"), q.get("section"),
+              json.dumps(q["attrs"]) if q.get("attrs") else None,
+              text_hash(q["text"]) if q.get("text") else q.get("text_hash"))
              for q in quotes],
         )
 
@@ -715,6 +734,11 @@ class Store:
 
 _EXPORT_LOCKS: dict[tuple[Any, str], threading.Lock] = {}
 _EXPORT_LOCKS_LOCK = threading.Lock()
+
+
+def text_hash(text: str) -> str:
+    """The sha256 hex digest of a quote's text, which the store keeps in place of the text when it keeps none."""
+    return hashlib.sha256(text.encode()).hexdigest()
 
 
 def _marks(n: int) -> str:

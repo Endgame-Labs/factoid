@@ -128,7 +128,7 @@ def _fact_rows(store: Any, ids: list[str]) -> list[dict[str, Any]]:
         for q in store.quotes_of(part):
             quotes.setdefault(q["fact_id"], []).append(
                 {"document_id": q["document_id"], "passage": q["passage_n"], "section": q["section"],
-                 "text": q["text"]})
+                 "text": q["text"] or None})  # None when the store keeps no document text
         for id_ in part:
             row = rows.get(id_)
             if row is None:
@@ -156,7 +156,7 @@ def _entity_row(row: Any) -> dict[str, Any]:
 
 def _document_row(row: Any) -> dict[str, Any]:
     return {"id": row["id"], "class": row["class"], "uri": row["uri"], "title": row["title"],
-            "source_datetime": _time(row["source_datetime"]), "metadata": row["metadata"], "text": row["text"],
+            "source_datetime": _time(row["source_datetime"]), "metadata": row["metadata"], "text": row["text"] or None,
             "ingested_at": _time(row["ingested_at"])}
 
 
