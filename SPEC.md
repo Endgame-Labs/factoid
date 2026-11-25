@@ -1913,4 +1913,14 @@ All dates are 2026-11-13 unless noted.
      since `_reuse_ids` matches all of its checked facts at once. Two real-length synthetic calls replayed with each
      request's recorded latency gave the same 636 facts in 99 s and 101 s instead of 137 s and 136 s, and the demo
      replayed offline stored the same facts with no fresh calls.
+150. Proposed (2026-11-25; issue #7): turn on `assess_with_evaluate` by default, for about 20% fewer decision calls.
+     Decision 133 kept it off for two lost as-of answers, but replays of both arms on 0.1.19 show they were mostly
+     noise. Heldout's payment-days question fails with the base's time answers too. The sec loss was the eval's
+     search: the wanted fact is the same in both arms and passes on the reloaded store, but in-run searches sent the
+     reranker different candidates, and the reranker scores the same text differently by batch. The one real effect
+     was heldout's royalty question: the earlier text the fold carries, a quarterly royalty schedule, put 0.24 on a
+     quarter lifetime. In 400 facts the fold moved `expires` about as often as Jev does on a repeat (5 against 4) and
+     moved traits 7 times as often (107 against 14), mostly to off, with CUAD F1 unchanged (0.807 to 0.813, 0.837 to
+     0.838). Telling the time questions to ignore the extra context made it worse, and one request has one state, so
+     there is no cheaper fix. A separate finding: the reranker's scores depend on what else is in its batch.
 
