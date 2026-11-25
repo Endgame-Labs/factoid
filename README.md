@@ -1,6 +1,6 @@
 # Factoid 📚
 
-[![Website](https://img.shields.io/badge/website-endgame--labs.github.io%2Ffactoid-2563eb.svg)](https://endgame-labs.github.io/factoid/)
+[![Website](https://img.shields.io/badge/website-open.endgame.io%2Ffactoid-2563eb.svg)](https://open.endgame.io/factoid)
 [![PyPI](https://img.shields.io/pypi/v/factoid.svg)](https://pypi.org/project/factoid/)
 [![tests](https://github.com/Endgame-Labs/factoid/actions/workflows/test.yml/badge.svg)](https://github.com/Endgame-Labs/factoid/actions/workflows/test.yml)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org)
@@ -8,7 +8,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2608.20845-b31b1b.svg)](https://arxiv.org/abs/2608.20845)
 [![arXiv](https://img.shields.io/badge/arXiv-2609.29661-b31b1b.svg)](https://arxiv.org/abs/2609.29661)
 
-**Website:** https://endgame-labs.github.io/factoid/, with an interactive
+**Website:** https://open.endgame.io/factoid, with an interactive
 [What is a fact?](https://endgame-labs.github.io/factoid/what-is-a-fact.html) page.
 
 > **Status: Version 0.1.29.** Factoid runs end to end, and five example apps publish their eval results. It covers
@@ -90,7 +90,7 @@ decision model, is planned and not built yet.
 
 Search needs no service to start. With no `search` setting, Factoid keeps a local index in the project's SQLite store.
 Using turbopuffer, or a turbopuffer-compatible endpoint, is optional. Factoid works with
-[blowfish](https://github.com/Endgame-Labs/blowfish), our self-hostable search engine that speaks the turbopuffer API on
+[blowfish](https://open.endgame.io/blowfish), our self-hostable search engine that speaks the turbopuffer API on
 any S3-compatible bucket, so a project can run turbopuffer search without an account. Configure either one in
 `settings.py`, and set its key with `factoid keys set turbopuffer` (keys at <https://turbopuffer.com/dashboard>), or point
 `TURBOPUFFER_BASE_URL` at a blowfish server.

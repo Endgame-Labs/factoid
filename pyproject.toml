@@ -25,7 +25,7 @@ parquet = ["pyarrow>=18"]
 postgres = ["psycopg[binary]>=3.2"]
 
 [project.urls]
-Homepage = "https://github.com/Endgame-Labs/factoid"
+Homepage = "https://open.endgame.io/factoid"
 Source = "https://github.com/Endgame-Labs/factoid"
 Issues = "https://github.com/Endgame-Labs/factoid/issues"
 
