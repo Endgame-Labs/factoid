@@ -2,6 +2,15 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## Unreleased
+
+- **Postgres as a store (issue #21).** `store = Postgres()` from `factoid.stores` keeps a project's facts in Postgres,
+  with `factoid[postgres]`, for many processes writing at once. The URL comes from `FACTOID_POSTGRES_URL`. Writes take
+  turns under a lock, so events are numbered in commit order and exports never skip one. Every read and write the
+  framework makes is now a named `Store` method, and a contract suite runs each one against SQLite and, when
+  `FACTOID_TEST_POSTGRES_URL` is set, Postgres. SQLite writes now take the write lock when they start, so two processes
+  cannot lose each other's aliases, and an export's cursor only moves forward.
+
 ## 0.1.28 (2026-11-25)
 
 - **A save no longer slows down as the store grows.** The local index keeps its vectors in memory and updates them on

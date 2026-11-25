@@ -830,6 +830,35 @@ Class reads such as `Fact.search` and `Company.find` use the active app: the las
 another. With several apps in one process, wrap class reads in `with app.active():`. App methods (`app.ingest`,
 `app.search_facts`, and the rest) always use their own app in every worker thread.
 
+## Postgres
+
+A project keeps its facts in a SQLite file by default. For many processes writing at once, or a hosted service, keep
+them in Postgres instead. Install `factoid[postgres]` (psycopg 3) and set the store in `settings.py`:
+
+```python
+from factoid import Settings
+from factoid.stores import Postgres
+
+class Project(Settings):
+    store = Postgres()                  # the URL comes from FACTOID_POSTGRES_URL
+    # store = Postgres(schema="acme")   # one schema per project, so projects can share a database
+```
+
+Put the URL in the environment, not in `settings.py`: `FACTOID_POSTGRES_URL=postgresql://user:pass@host/db`. With no
+URL at all, libpq's own variables (`PGHOST`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD`) and `~/.pgpass` apply.
+Factoid creates the schema (`factoid` unless you name one) and its tables on first use.
+
+Postgres holds the same tables as SQLite: documents, facts, quotes, mentions, entities, relations, and the event log.
+Every write takes a lock for the schema before it starts, so writes from all processes apply one at a time. Each write
+is short, and model calls happen outside it, so ingest from several processes still runs side by side. Events are
+numbered under the same lock, so an export never skips an event that committed late, and two runs of one export take
+turns. The call cache (`.factoid/calls.db`) and the local search index (`.factoid/index.db`) stay in the project
+folder. An eval run, or a command given `--data-dir`, uses a SQLite file in its own folder, so it never writes to the
+shared store.
+
+To run the store tests against Postgres, set `FACTOID_TEST_POSTGRES_URL` to a database they may create schemas in.
+`FACTOID_TEST_STORE=postgres` also runs the rest of the suite with a Postgres store.
+
 ## Exports
 
 An export sends a project's facts to another system. There are two kinds. `Parquet` writes files to a local folder or
@@ -1001,8 +1030,8 @@ recent = orion.facts(since="30d")      # every recent fact linked to Orion
   `assess`, `link`, and `resolve` come from eval results. `factoid eval` measures accuracy, cost, and latency on labeled
   data.
 - **Pluggable backends.** Storage, search, sources (`folder`, `jsonl`, `imap`, and `mcp`), models, and fact evals share
-  small base classes that projects can subclass. Today, Factoid stores data in SQLite and searches with a local index or
-  turbopuffer, and either can be replaced.
+  small base classes that projects can subclass. Today, Factoid stores data in SQLite or Postgres and searches with a
+  local index or turbopuffer, and either can be replaced.
 - **Emergent entities and kept facts.** Every extracted entity is kept and linked, even with no declared class, and a
   placeholder mention that matches nothing stays on the fact as an unlinked mention so the fact is still kept. When a
   new entity is stored, Factoid searches stored facts for the entity's names and asks the decision model to confirm each
