@@ -1072,6 +1072,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
   full text search) passes the index contract but is opt-in until an eval compares its ranking with BM25.
   `tests/test_store_contract.py` and `tests/test_index_contract.py` run each backend; Postgres runs when
   `FACTOID_TEST_POSTGRES_URL` is set.
+- **No document text** (decision 147, issue #22): `keep_document_text = False` keeps no document, chunk, revision, or
+  quote text, on SQLite and Postgres. Quotes keep `text_hash`, re-ingest reuses ids by hash, `Document.fetch_text`
+  fills quotes on reads, and Parquet writes null quote text.
 - **Saved as checked** (decision 149): inside one document, facts are checked (evaluate, repair, and assess) in
   parallel, and each is linked, resolved, and saved in document order as soon as it and every fact before it is
   checked. A document being revised checks every fact first, because reusing old ids compares them all at once.
@@ -1888,15 +1891,19 @@ All dates are 2026-11-13 unless noted.
      write from another connection reloads it, and a failed write drops it. Near ties are scored again row by row and
      ordered by id, so results do not depend on where a row sits in memory. Searches match a fresh load in the new
      tests, and 17 replayed records gave the same 3,062 facts in 97 s instead of 1,404 s.
-147. Proposed (2026-11-25; issue #22): `Settings.keep_document_text = False` keeps no document text in the store. Facts,
-     entities, and each document's uri, title, metadata, and content hash are kept. The store keeps passage and quote
-     offsets, with a hash of each quote's text in place of the text; chunks keep their vectors and situations but no
-     text, so chunk search is by vector only; revisions keep their hash only. Ingest still reads the whole text while
-     it runs: quotes, the text before a fact that fact evals read, and resolve work as before. Re-ingest keeps old ids
-     by matching quote hashes. On a read, `Document.fetch_text(uri)`, a hook an app may define, supplies the text
-     again; when its hash matches, quotes are filled in from it, and otherwise a quote shows its offsets only. The
-     call log keeps request bodies unless `call_log` is "metadata" or "none", so a project that must keep no
-     third-party text sets both.
+147. `Settings.keep_document_text = False` keeps no document text in the store (Kyle, 2026-11-25: "tackle all three";
+     issue #22). Documents, chunks, revisions, and quotes are saved with empty text. Facts, entities, each document's
+     uri, title, metadata, and content hash, passage and quote offsets, and chunk situations and vectors are kept. Each
+     quote keeps a sha256 of its text (`text_hash`), written in both modes. Chunks go to the index with no text, so
+     chunk search is by vector only. Ingest still reads the whole text while it runs, so quotes, the text before a fact
+     that fact evals read, and resolve work as before. Re-ingest keeps old ids by matching quote hashes, in both modes.
+     On a read that shows quotes (`factoid read`, HTTP, and MCP), `Document.fetch_text(uri)`, a hook an app may define,
+     supplies the text again: when its hash matches the stored content hash, and each quote's slice matches that quote's
+     hash, the quote is filled in; otherwise its text is null and it shows its offsets. Parquet writes null for quote
+     and document text. The call log keeps request bodies unless `call_log` is "metadata" or "none", so the app warns at
+     start when the setting is off and `call_log` is "full"; a project that must keep no third-party text sets both. The
+     setting applies to what is saved after it changes. A future `factoid rebuild` must skip chunks with no text unless
+     `fetch_text` supplies it.
 148. Postgres is a second store behind the same `Store` interface (Kyle, 2026-11-25: "tackle all three"; issue #21).
      First every read and write outside `store.py` became a named `Store` method, then a contract suite runs on SQLite
      and Postgres, then `store = Postgres()`. Writes from many processes take turns under a per-schema advisory lock,
