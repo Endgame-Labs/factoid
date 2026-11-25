@@ -10,6 +10,9 @@ Features and fixes that change what Factoid does, by version. `SPEC.md` has the 
   framework makes is now a named `Store` method, and a contract suite runs each one against SQLite and, when
   `FACTOID_TEST_POSTGRES_URL` is set, Postgres. SQLite writes now take the write lock when they start, so two processes
   cannot lose each other's aliases, and an export's cursor only moves forward.
+- **Search in Postgres.** `search = PostgresIndex()` from `factoid.postgres` keeps the index in Postgres: pgvector for
+  exact cosine search, and full text search ranked with `ts_rank` for keywords. It passes the same index contract as
+  the local index.
 
 ## 0.1.28 (2026-11-25)
 

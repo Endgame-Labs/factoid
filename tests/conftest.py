@@ -79,7 +79,8 @@ def fake() -> FakeClient:
 @pytest.fixture
 def make_app(fake: FakeClient) -> Iterator[Callable[..., Factoid]]:
     """Apps in memory. With `FACTOID_TEST_STORE=postgres` (and `FACTOID_TEST_POSTGRES_URL`), each app's store is a
-    fresh Postgres schema instead, so the whole suite can run against the Postgres store."""
+    fresh Postgres schema instead, so the whole suite can run against the Postgres store. `FACTOID_TEST_SEARCH=postgres`
+    does the same for the search index."""
     schemas: list[tuple[Any, str]] = []
 
     def build(**kwargs: Any) -> Factoid:
@@ -91,6 +92,12 @@ def make_app(fake: FakeClient) -> Iterator[Callable[..., Factoid]]:
             schema = f"factoid_test_{uuid.uuid4().hex[:12]}"
             app.store = PostgresStore(os.environ["FACTOID_TEST_POSTGRES_URL"], schema=schema)
             schemas.append((app.store, schema))
+        if os.environ.get("FACTOID_TEST_SEARCH") == "postgres":
+            from factoid.postgres import PostgresIndex
+
+            schema = f"factoid_test_{uuid.uuid4().hex[:12]}"
+            app.index = PostgresIndex(os.environ["FACTOID_TEST_POSTGRES_URL"], schema=schema)
+            schemas.append((app.index, schema))
         return app
 
     yield build

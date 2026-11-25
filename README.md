@@ -856,8 +856,14 @@ turns. The call cache (`.factoid/calls.db`) and the local search index (`.factoi
 folder. An eval run, or a command given `--data-dir`, uses a SQLite file in its own folder, so it never writes to the
 shared store.
 
-To run the store tests against Postgres, set `FACTOID_TEST_POSTGRES_URL` to a database they may create schemas in.
-`FACTOID_TEST_STORE=postgres` also runs the rest of the suite with a Postgres store.
+Search can live in Postgres too, with `search = PostgresIndex()` from `factoid.postgres`. It needs the pgvector
+extension. Vector search is exact cosine search, as in the local index. The keyword side is Postgres full text search
+ranked with `ts_rank`, which ranks close to BM25 but not the same, so a project that moves its index can see different
+search results and decisions.
+
+To run the store and index tests against Postgres, set `FACTOID_TEST_POSTGRES_URL` to a database they may create
+schemas in. `FACTOID_TEST_STORE=postgres` and `FACTOID_TEST_SEARCH=postgres` also run the rest of the suite with a
+Postgres store and index.
 
 ## Exports
 

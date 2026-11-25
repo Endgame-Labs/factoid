@@ -18,15 +18,17 @@ goes. Because events are numbered under that lock, an event with a lower `seq` a
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import threading
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from typing import Any
 
+from .search import Index
 from .store import Store
 
-__all__ = ["PostgresStore"]
+__all__ = ["PostgresIndex", "PostgresStore"]
 
 _T = 'text collate "C"'  # byte order, as SQLite sorts text
 
@@ -197,3 +199,138 @@ class PostgresStore(Store):
                 yield
             finally:
                 conn.execute("select pg_advisory_unlock(%s)", (_key("export", self.schema, name),))
+
+
+# -- search ------------------------------------------------------------------------------------------------------
+
+_INDEX_SCHEMA = f"""
+create table if not exists index_rows (
+    ns {_T} not null, id {_T} not null, text {_T} not null default '', attrs jsonb not null default '{{}}',
+    vector vector, tsv tsvector generated always as (to_tsvector('simple', text)) stored, primary key (ns, id)
+);
+create index if not exists index_rows_tsv on index_rows using gin (tsv);
+"""
+
+_WORD = re.compile(r"[A-Za-z0-9]+")
+
+
+class PostgresIndex(Index):
+    """A search index in Postgres: full text search (the `simple` configuration, ranked with `ts_rank`) for the
+    keyword side, and exact cosine search with pgvector for the vector side. It needs the `vector` extension, which
+    Factoid creates if the user may.
+
+    The URL works as for `factoid.stores.Postgres`: `url`, or the `env` variable, or libpq's own variables. It connects
+    on first use, so a `settings.py` that names it can be imported without a database."""
+
+    def __init__(self, url: str | None = None, *, schema: str = "factoid", env: str = "FACTOID_POSTGRES_URL"):
+        if not _SCHEMA_NAME.fullmatch(schema):
+            raise ValueError(f"schema must be a lowercase name of letters, digits, and _; got {schema!r}")
+        self.url, self.schema, self.env = url, schema, env
+        self._lock = threading.RLock()
+        self._conn: Any = None
+
+    def __repr__(self) -> str:
+        return f"PostgresIndex(schema={self.schema!r})"
+
+    def _db(self) -> Any:
+        with self._lock:
+            if self._conn is None:
+                import psycopg
+
+                conn = psycopg.connect(self.url or os.environ.get(self.env, ""), autocommit=True,
+                                       application_name="factoid")
+                with conn.transaction():
+                    conn.execute("select pg_advisory_xact_lock(%s)", (_key("write", self.schema),))
+                    conn.execute("create extension if not exists vector")
+                    conn.execute(f'create schema if not exists "{self.schema}"')
+                    conn.execute(f'set search_path to "{self.schema}", public')
+                    for statement in _INDEX_SCHEMA.split(";"):
+                        if statement.strip():
+                            conn.execute(statement)
+                self._conn = conn
+            return self._conn
+
+    def close(self) -> None:
+        with self._lock:
+            if self._conn is not None:
+                self._conn.close()
+                self._conn = None
+
+    def upsert(self, namespace: str, rows: list[dict[str, Any]]) -> None:
+        from psycopg.types.json import Jsonb
+
+        last = {row["id"]: row for row in rows}  # a row named twice in one save: the last one holds
+        values = [(namespace, id_, row.get("text", "") or "",
+                   Jsonb({k: v for k, v in row.items() if k not in ("id", "text", "vector")}),
+                   _vector_text(row.get("vector"))) for id_, row in last.items()]
+        if not values:
+            return
+        with self._lock:
+            db = self._db()
+            with db.transaction(), db.cursor() as cur:
+                cur.executemany(
+                    "insert into index_rows (ns, id, text, attrs, vector) values (%s, %s, %s, %s, %s::vector) "
+                    "on conflict (ns, id) do update set text = excluded.text, attrs = excluded.attrs, "
+                    "vector = excluded.vector", values)
+
+    def delete(self, namespace: str, ids: list[str]) -> None:
+        if not ids:
+            return
+        with self._lock:
+            self._db().execute("delete from index_rows where ns = %s and id = any(%s)", (namespace, list(ids)))
+
+    def vectors(self, namespace: str, ids: list[str]) -> dict[str, list[float]]:
+        if not ids:
+            return {}
+        with self._lock:
+            rows = self._db().execute(
+                "select id, vector::real[] from index_rows where ns = %s and id = any(%s) and vector is not null",
+                (namespace, list(ids))).fetchall()
+        return {id_: [float(x) for x in vector] for id_, vector in rows}
+
+    def _where(self, filters: dict[str, Any] | None) -> tuple[str, list[Any]]:
+        """Filters as LocalIndex reads them: a row passes when any of its values (one, or a list) is one of the
+        wanted values (one, or a list)."""
+        from psycopg.types.json import Jsonb
+
+        sql, params = "", []
+        for key, want in (filters or {}).items():
+            wanted = list(want) if isinstance(want, (list, tuple, set)) else [want]
+            sql += (" and exists (select 1 from jsonb_array_elements(case jsonb_typeof(attrs -> %s) "
+                    "when 'array' then attrs -> %s else jsonb_build_array(attrs -> %s) end) e(v) "
+                    "where e.v = any(%s::jsonb[]))")
+            params += [key, key, key, [Jsonb(v) for v in wanted]]
+        return sql, params
+
+    def bm25(self, namespace: str, text: str, top_k: int, filters: dict[str, Any] | None = None) -> list[str]:
+        words = _WORD.findall(text)
+        if not words:
+            return []
+        where, params = self._where(filters)
+        query = " | ".join(w.lower() for w in words)
+        with self._lock:
+            rows = self._db().execute(
+                "select id from index_rows, to_tsquery('simple', %s) q where ns = %s and tsv @@ q" + where +
+                " order by ts_rank(tsv, q) desc, id limit %s", (query, namespace, *params, top_k)).fetchall()
+        return [r[0] for r in rows]
+
+    def nearest(self, namespace: str, vector: list[float], top_k: int,
+                filters: dict[str, Any] | None = None) -> list[str]:
+        import psycopg
+
+        where, params = self._where(filters)
+        try:
+            with self._lock:
+                rows = self._db().execute(
+                    "select id from index_rows where ns = %s and vector is not null" + where +
+                    " order by vector <=> %s::vector, id limit %s",
+                    (namespace, *params, _vector_text(vector), max(top_k, 1))).fetchall()
+        except psycopg.errors.DataException as err:  # vectors of another length
+            raise ValueError(str(err)) from err
+        return [r[0] for r in rows]
+
+
+def _vector_text(vector: Any) -> str | None:
+    if vector is None:
+        return None
+    return "[" + ",".join(repr(float(x)) for x in vector) + "]"
