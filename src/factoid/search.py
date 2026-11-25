@@ -12,6 +12,8 @@ import json
 import os
 import sqlite3
 import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -80,7 +82,7 @@ class LocalIndex(Index):
         self._vectors: dict[str, _Vectors] = {}
 
     def upsert(self, namespace: str, rows: list[dict[str, Any]]) -> None:
-        with self._lock:
+        with self._lock, self._dropped_on_error(namespace):
             saved: dict[str, tuple[bytes | None, str]] = {}
             for row in rows:
                 vector = row.get("vector")
@@ -101,13 +103,22 @@ class LocalIndex(Index):
                     del self._vectors[namespace]
 
     def delete(self, namespace: str, ids: list[str]) -> None:
-        with self._lock:
+        with self._lock, self._dropped_on_error(namespace):
             for id_ in ids:
                 self.db.execute("delete from rows where ns = ? and id = ?", (namespace, id_))
                 self.db.execute("delete from fts where ns = ? and id = ?", (namespace, id_))
             self.db.commit()
             if (cached := self._vectors.get(namespace)) is not None:
                 cached.drop(ids)
+
+    @contextmanager
+    def _dropped_on_error(self, namespace: str) -> Iterator[None]:
+        """A write that fails may leave rows that the next commit saves, so the next search loads them all."""
+        try:
+            yield
+        except BaseException:
+            self._vectors.pop(namespace, None)
+            raise
 
     def vectors(self, namespace: str, ids: list[str]) -> dict[str, list[float]]:
         out: dict[str, list[float]] = {}
@@ -161,10 +172,12 @@ class LocalIndex(Index):
             if cached is None or cached.version != version:
                 rows = self.db.execute("select id, vector, attrs from rows where ns = ? and vector is not null",
                                        (namespace,)).fetchall()
-                cached = self._vectors[namespace] = _Vectors(version)
+                cached = _Vectors(version)
                 cached.add([(r[0], np.frombuffer(r[1], dtype=np.float32), json.loads(r[2])) for r in rows])
-            if not cached.ids or top_k < 1:
+                self._vectors[namespace] = cached
+            if not cached.ids:
                 return []
+            top_k = max(top_k, 1)  # as it always gave: at least one row
             query = np.asarray(vector, dtype=np.float32)
             query = query / (np.linalg.norm(query) or 1.0)
             scores = cached.matrix[:len(cached.ids)] @ query
