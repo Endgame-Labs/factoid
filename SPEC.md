@@ -874,7 +874,8 @@ assignment a provider cannot serve, before any call: TypeSafe serves `choose`; F
   failed run is ingested again next time.
 - WAL mode is on, so reads and searches are not blocked by ingest.
 - A second process writing to the same project waits its turn through SQLite's busy timeout.
-- Many processes writing at once, or a hosted deployment, is the case for a Postgres backend. It is not built in v1.
+- Many processes writing at once, or a hosted deployment, is the case for a Postgres backend, built in 0.1.29
+  (decision 148).
 - Later back ends behind the same interfaces: Postgres (pgvector and pgvectorscale) for the system of record and for
   search, and LanceDB on a bucket.
 
@@ -1061,6 +1062,16 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
   CLI commands (`init`, `ingest`, `search`, `read`, `stats`, `entities`, `steps show`, `classifiers show`,
   `prompts show`, `keys set`, `keys list`, `models`, `doctor`, and `eval`), the eval harness with `--vary`, and three
   decision models for `choose`: Jev, Fireworks' Rune, and OpenAI's Decisions API.
+- **Postgres** (decision 148, issue #21): `store = Postgres()` from `factoid.stores` keeps the system of record in
+  Postgres, with `factoid[postgres]` (psycopg 3). The URL comes from `FACTOID_POSTGRES_URL` or libpq's variables, never
+  `settings.py`, and a project's tables live in one schema (`factoid` by default). Every read and write the framework
+  makes is a named `Store` method; `query` and `one` remain for project code. Each write transaction first takes an
+  advisory lock for the schema, so writes apply one at a time across processes and event numbers follow commit order.
+  An export holds a lock of its own while it runs, and its cursor only moves forward. SQLite writes begin with `begin
+  immediate`. An eval or `--data-dir` run uses a SQLite file in its own folder. `PostgresIndex` (pgvector cosine and
+  full text search) passes the index contract but is opt-in until an eval compares its ranking with BM25.
+  `tests/test_store_contract.py` and `tests/test_index_contract.py` run each backend; Postgres runs when
+  `FACTOID_TEST_POSTGRES_URL` is set.
 - **Search backend:** with no `search` setting, a project uses `LocalIndex`, a SQLite file with FTS5 for BM25 and
   exact vector search. `Turbopuffer` is built and used when set, and is optional. Decision 23 said a project needs
   turbopuffer; the local index replaced that, so tests and small projects work without it. It keeps each namespace's
@@ -1883,4 +1894,12 @@ All dates are 2026-11-13 unless noted.
      again; when its hash matches, quotes are filled in from it, and otherwise a quote shows its offsets only. The
      call log keeps request bodies unless `call_log` is "metadata" or "none", so a project that must keep no
      third-party text sets both.
+148. Postgres is a second store behind the same `Store` interface (Kyle, 2026-11-25: "tackle all three"; issue #21).
+     First every read and write outside `store.py` became a named `Store` method, then a contract suite runs on SQLite
+     and Postgres, then `store = Postgres()`. Writes from many processes take turns under a per-schema advisory lock,
+     which keeps SQLite's one-writer model: writes are short and model calls take ingest's time, and the event log's
+     `seq` then follows commit order, so export cursors never skip an event. All 188 tests pass with the store, the
+     index, or both on Postgres, and the demo replayed on Postgres gave the same facts as on SQLite. `PostgresIndex`
+     stays opt-in until an eval compares its keyword ranking (`ts_rank`) with BM25. Not yet: reconnecting after a
+     dropped connection, and an approximate vector index.
 
