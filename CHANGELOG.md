@@ -2,6 +2,18 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.29 (2026-11-25)
+
+- **A document's facts are saved as they are checked.** Inside one document, Factoid used to check every fact
+  (evaluate, repair, and assess) before it linked, resolved, and saved the first one. Now each fact is linked,
+  resolved, and saved as soon as it and every fact before it is checked, while the rest are still being checked. The
+  requests, their order of saving, and the stored facts are the same. On two real-length synthetic sales calls,
+  replayed with each request's recorded latency, a call took 99 s and 101 s instead of 137 s and 136 s, with the same
+  636 facts and no fresh calls; a live run of one call took 93 s instead of 138 s. A document being revised still
+  checks every fact first, since reusing its old ids compares them all at once. If a model call fails partway through
+  a document, the facts saved before it stay saved. A failure in link, resolve, or save already left those facts; a
+  failure while checking used to leave none of the document's facts, and now leaves the ones saved before it.
+
 ## 0.1.28 (2026-11-25)
 
 - **A save no longer slows down as the store grows.** The local index keeps its vectors in memory and updates them on

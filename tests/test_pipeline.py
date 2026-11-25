@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 
 from factoid import Entity, Fact, FactTrait, ProseDocument
 
@@ -918,3 +919,57 @@ def test_resolve_shows_redaction_markers_as_redacted(make_app, fake, monkeypatch
     _cap(app, "Vega's liability to Orion is capped at $2M and [*].", "2025-06-01T00:00:00Z", "b.txt")
     assert seen and all("[*]" not in s for s in seen) and any("[redacted]" in s for s in seen)
     assert any("[*]" in f.text for f in app.list_facts())  # stored text is unchanged
+
+
+def _three_caps(make_app, fake, wait_on, until, log):
+    """Three facts in one document. The fact eval for the fact naming `wait_on` waits until a fact naming `until` is
+    saved (or checked, for until="checked:..."), for at most a second; `log` records checks and saves in order."""
+    app = build(make_app, fake)
+    inner, reached = fake.noul, threading.Event()
+
+    def noul(question, state):
+        if "worth keeping" in question.instructions:
+            if wait_on in state["fact"]:
+                reached.wait(timeout=1.0)
+            log.append(f"checked:{state['fact'][:5]}")
+            if f"checked:{state['fact'][:5]}" == until:
+                reached.set()
+        return inner(question, state)
+
+    fake.noul = noul
+    save = app.save_fact
+
+    def save_fact(fact):
+        save(fact)
+        log.append(f"saved:{fact.text[:5]}")
+        if f"saved:{fact.text[:5]}" == until:
+            reached.set()
+
+    app.save_fact = save_fact
+    return app
+
+
+THREE = ("First, Vega's liability to Orion is capped at $1M.\n\n"
+         "Second, Orion may not assign the agreement without Vega's consent.\n\n"
+         "Third, Vega must give Orion 30 days' notice before ending the agreement.")
+
+
+def test_a_fact_is_saved_before_later_facts_in_its_document_are_checked(make_app, fake):
+    # Breaks when save waits for every fact in the document to be checked.
+    log = []
+    app = _three_caps(make_app, fake, wait_on="Third", until="saved:First", log=log)
+    result = app.ingest_text(THREE, document_type=Contract, metadata={"signed_at": "2025-03-01T00:00:00Z"})
+    assert len(result.facts) == 3
+    assert log.index("saved:First") < log.index("checked:Third")
+
+
+def test_facts_are_saved_in_document_order_when_the_first_is_checked_last(make_app, fake):
+    # Breaks when facts are linked, resolved, and saved in the order their checks finish.
+    log = []
+    app = _three_caps(make_app, fake, wait_on="First", until="checked:Third", log=log)
+    result = app.ingest_text(THREE, document_type=Contract, metadata={"signed_at": "2025-03-01T00:00:00Z"})
+    assert log.index("checked:Third") < log.index("checked:First")
+    order = ["First", "Secon", "Third"]
+    assert [f.text[:5] for f in result.facts] == order
+    assert [r["text"][:5] for r in app.store.query("select text from facts order by rowid")] == order
+    assert [e for e in log if e.startswith("saved:")] == [f"saved:{t}" for t in order]
