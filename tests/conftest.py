@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
-from collections.abc import Callable
+import uuid
+from collections.abc import Callable, Iterator
 from typing import Any
 
 import pytest
@@ -75,10 +77,26 @@ def fake() -> FakeClient:
 
 
 @pytest.fixture
-def make_app(fake: FakeClient) -> Callable[..., Factoid]:
+def make_app(fake: FakeClient) -> Iterator[Callable[..., Factoid]]:
+    """Apps in memory. With `FACTOID_TEST_STORE=postgres` (and `FACTOID_TEST_POSTGRES_URL`), each app's store is a
+    fresh Postgres schema instead, so the whole suite can run against the Postgres store."""
+    schemas: list[tuple[Any, str]] = []
+
     def build(**kwargs: Any) -> Factoid:
         app = Factoid(Settings, in_memory=True, **kwargs)
         app.client = fake  # type: ignore[assignment]
+        if os.environ.get("FACTOID_TEST_STORE") == "postgres":
+            from factoid.postgres import PostgresStore
+
+            schema = f"factoid_test_{uuid.uuid4().hex[:12]}"
+            app.store = PostgresStore(os.environ["FACTOID_TEST_POSTGRES_URL"], schema=schema)
+            schemas.append((app.store, schema))
         return app
 
-    return build
+    yield build
+    for store, schema in schemas:
+        store.close()
+        import psycopg
+
+        with psycopg.connect(os.environ["FACTOID_TEST_POSTGRES_URL"], autocommit=True) as conn:
+            conn.execute(f'drop schema if exists "{schema}" cascade')

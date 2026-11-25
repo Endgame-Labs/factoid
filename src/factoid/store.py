@@ -125,8 +125,13 @@ class Store:
 
     @contextmanager
     def tx(self) -> Iterator[Any]:
-        """One write transaction. Yields a connection with `execute` and `executemany`, for this module only."""
+        """One write transaction. Yields a connection with `execute` and `executemany`, for this module only.
+
+        It takes SQLite's write lock at the start (`begin immediate`), so a write that reads first (a fact's
+        created_at, an entity's aliases) sees no change from another process before it writes."""
         with self._lock:
+            if not self.db.in_transaction:
+                self.db.execute("begin immediate")
             try:
                 yield self.db
                 self.db.commit()
@@ -435,6 +440,8 @@ class Store:
     def fact_ids(self, *, document_id: str | None = None, status: str | None = None,
                  classes: list[str] | None = None) -> list[str]:
         """Fact ids, in the order they were saved, by document, status, and class names."""
+        if classes is not None and not classes:
+            return []
         sql, params = "select id from facts where 1 = 1", []
         if classes is not None:
             sql += f" and class in ({_marks(len(classes))})"
@@ -452,6 +459,8 @@ class Store:
 
     def standing_fact_ids_about(self, entity_ids: list[str], *, outside: str) -> list[str]:
         """Facts that still stand, from documents other than `outside`, linked to any of these entities."""
+        if not entity_ids:
+            return []
         return [r["id"] for r in self.query(
             f"select f.id from facts f join mentions m on m.fact_id = f.id where m.entity_id in "
             f"({_marks(len(entity_ids))}) and f.document_id != ? and f.status in {STANDING} "
@@ -592,6 +601,8 @@ class Store:
 
     def entities_of_classes(self, class_names: list[str]) -> list[Any]:
         """id and props (JSON) of every unmerged entity of these classes."""
+        if not class_names:
+            return []
         return self.query(f"select id, props from entities where merged_into is null and class in "
                           f"({_marks(len(class_names))}) order by rowid", class_names)
 
@@ -692,15 +703,18 @@ class Store:
 
     @contextmanager
     def exporting(self, name: str) -> Iterator[None]:
-        """Held while one export runs, so two runs of the same export take turns. SQLite allows one writer process,
-        so in-process turns are enough here."""
+        """Held while one export runs, so two runs of the same export in this process take turns."""
         with self._export_lock(name):
             yield
 
     def _export_lock(self, name: str) -> threading.Lock:
-        with self._lock:
-            locks = self.__dict__.setdefault("_export_locks", {})
-            return locks.setdefault(name, threading.Lock())
+        where = str(self.path) if self.path is not None else id(self)
+        with _EXPORT_LOCKS_LOCK:
+            return _EXPORT_LOCKS.setdefault((where, name), threading.Lock())
+
+
+_EXPORT_LOCKS: dict[tuple[Any, str], threading.Lock] = {}
+_EXPORT_LOCKS_LOCK = threading.Lock()
 
 
 def _marks(n: int) -> str:

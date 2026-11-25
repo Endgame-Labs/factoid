@@ -27,7 +27,8 @@ class Settings:
     #: The model for each workload: choose, generate, embed, and (optional) rerank. A generation step can have its
     #: own model (situate, extract, repair, or discover); a step without one uses generate.
     models: ClassVar[dict[str, Model]] = DEFAULT_MODELS
-    #: The system of record. `None` means `.factoid/store.db` under `data_dir`.
+    #: The system of record: `Sqlite(path)` or `Postgres()` from `factoid.stores`. `None` means `.factoid/store.db`
+    #: under `data_dir`. A run given its own data folder (an eval, or `--data-dir`) uses a SQLite file there.
     store: ClassVar[Any] = None
     #: The search backend. `None` means the built-in local index in the project's SQLite store.
     search: ClassVar[Any] = None
