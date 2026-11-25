@@ -11,7 +11,7 @@
 **Website:** https://endgame-labs.github.io/factoid/, with an interactive
 [What is a fact?](https://endgame-labs.github.io/factoid/what-is-a-fact.html) page.
 
-> **Status: Version 0.1.27.** Factoid runs end to end, and five example apps publish their eval results. It covers
+> **Status: Version 0.1.28.** Factoid runs end to end, and five example apps publish their eval results. It covers
 > ingest, fact extraction with evals, entities, supersession and as-of search, settling contradictions, eval suites,
 > exports, an HTTP API, and an MCP server. [SPEC.md](https://github.com/Endgame-Labs/factoid/blob/main/SPEC.md) section 17 lists what is built.
 > [CHANGELOG.md](https://github.com/Endgame-Labs/factoid/blob/main/CHANGELOG.md) lists what changed in each version.

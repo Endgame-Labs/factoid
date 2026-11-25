@@ -1063,7 +1063,9 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
   decision models for `choose`: Jev, Fireworks' Rune, and OpenAI's Decisions API.
 - **Search backend:** with no `search` setting, a project uses `LocalIndex`, a SQLite file with FTS5 for BM25 and
   exact vector search. `Turbopuffer` is built and used when set, and is optional. Decision 23 said a project needs
-  turbopuffer; the local index replaced that, so tests and small projects work without it.
+  turbopuffer; the local index replaced that, so tests and small projects work without it. It keeps each namespace's
+  vectors in memory and updates them on every save and delete; a write from another connection (SQLite's
+  `data_version`) makes the next search load them again (decision 146).
 - **`Nli`** is in the default chain but no NLI model is wired up yet. With none set, it is skipped: `factoid eval`
   prints how many facts it skipped and `scorecard.json` has `skipped_fact_evals`. So the working default chain is
   `DecisionFloors`. The README marks it planned, and its Quickstart compares `none` and `decision_floors`.
@@ -1392,7 +1394,7 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
   supersession 1 of 2. Details are in `examples/legal/README.md`.
 - **Default decision model** (decision 139): `typesafe/jev-1.14.0`, in `settings.py`, the `jev` preset, and the
   example apps.
-- **PyPI:** 0.1.27 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
+- **PyPI:** 0.1.28 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
 - **Landing page** (decisions 124, 126, 131, 136, and 141): Jinja templates in `site/` with one shared header, nav, and
   footer, served by Flask while you work and built to self-contained static pages (`site/app.py`). Hosted on GitHub
   Pages at https://endgame-labs.github.io/factoid/; `.github/workflows/pages.yml` builds and publishes it on every
@@ -1866,4 +1868,10 @@ All dates are 2026-11-13 unless noted.
      Rune's other miss, the NBA "earlier Finals standings replaced" check, is Rune calling a standing that follows
      from a game result a duplicate of it (0.955); a per-model duplicate bar cannot separate those from true
      duplicates, so no change.
+146. `LocalIndex` keeps its vectors in memory across saves (Kyle, 2026-11-25: "do it"; PR #27 from Dustin Larimer;
+     0.1.28). Each save used to drop the cached vectors, so the next search loaded them all from disk, and each fact
+     cost more as the store grew: 3.4 s a fact at 77,000 facts. A save or delete now updates the cache in place, a
+     write from another connection reloads it, and a failed write drops it. Near ties are scored again row by row and
+     ordered by id, so results do not depend on where a row sits in memory. Searches match a fresh load in the new
+     tests, and 17 replayed records gave the same 3,062 facts in 97 s instead of 1,404 s.
 
