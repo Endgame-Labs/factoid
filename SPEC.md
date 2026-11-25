@@ -1874,4 +1874,13 @@ All dates are 2026-11-13 unless noted.
      write from another connection reloads it, and a failed write drops it. Near ties are scored again row by row and
      ordered by id, so results do not depend on where a row sits in memory. Searches match a fresh load in the new
      tests, and 17 replayed records gave the same 3,062 facts in 97 s instead of 1,404 s.
+147. Proposed (2026-11-25; issue #22): `Settings.keep_document_text = False` keeps no document text in the store. Facts,
+     entities, and each document's uri, title, metadata, and content hash are kept. The store keeps passage and quote
+     offsets, with a hash of each quote's text in place of the text; chunks keep their vectors and situations but no
+     text, so chunk search is by vector only; revisions keep their hash only. Ingest still reads the whole text while
+     it runs: quotes, the text before a fact that fact evals read, and resolve work as before. Re-ingest keeps old ids
+     by matching quote hashes. On a read, `Document.fetch_text(uri)`, a hook an app may define, supplies the text
+     again; when its hash matches, quotes are filled in from it, and otherwise a quote shows its offsets only. The
+     call log keeps request bodies unless `call_log` is "metadata" or "none", so a project that must keep no
+     third-party text sets both.
 
