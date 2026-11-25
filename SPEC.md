@@ -872,6 +872,9 @@ assignment a provider cannot serve, before any call: TypeSafe serves `choose`; F
   the process. A document's rows (document, passages, and chunks) are saved in one transaction, and each fact and
   entity in its own short one. A document is marked ingested (its hash saved) only when its ingest finishes, so a
   failed run is ingested again next time.
+- Inside one document, facts are checked (evaluate, repair, and assess) in parallel, and each is linked, resolved, and
+  saved in document order as soon as it and every fact before it is checked. A document being revised checks every
+  fact first, because reusing old ids compares them all at once (decision 147).
 - WAL mode is on, so reads and searches are not blocked by ingest.
 - A second process writing to the same project waits its turn through SQLite's busy timeout.
 - Many processes writing at once, or a hosted deployment, is the case for a Postgres backend. It is not built in v1.
@@ -1394,7 +1397,7 @@ diligence app in `examples/legal`, scored on CUAD; `examples/mediasum` reruns th
   supersession 1 of 2. Details are in `examples/legal/README.md`.
 - **Default decision model** (decision 139): `typesafe/jev-1.14.0`, in `settings.py`, the `jev` preset, and the
   example apps.
-- **PyPI:** 0.1.28 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
+- **PyPI:** 0.1.29 is the latest release (decisions 105 and 127). Each later release needs Kyle's go.
 - **Landing page** (decisions 124, 126, 131, 136, and 141): Jinja templates in `site/` with one shared header, nav, and
   footer, served by Flask while you work and built to self-contained static pages (`site/app.py`). Hosted on GitHub
   Pages at https://endgame-labs.github.io/factoid/; `.github/workflows/pages.yml` builds and publishes it on every
@@ -1874,4 +1877,11 @@ All dates are 2026-11-13 unless noted.
      write from another connection reloads it, and a failed write drops it. Near ties are scored again row by row and
      ordered by id, so results do not depend on where a row sits in memory. Searches match a fresh load in the new
      tests, and 17 replayed records gave the same 3,062 facts in 97 s instead of 1,404 s.
+147. A document's facts are saved as they are checked (2026-11-25; 0.1.29). Inside one document, every fact was
+     checked before the first was linked, resolved, and saved, so for about two thirds of a call's ingest only one
+     model request was in flight: resolve asks the decision model once per fact, in order. Now link, resolve, and save
+     start on each fact as soon as it and every fact before it is checked, in document order, so each fact still
+     resolves against the same stored facts. A document being revised keeps the old order, since `_reuse_ids` matches
+     all of its checked facts at once. Replaying two real-length synthetic calls with each request's recorded latency
+     gave the same 636 facts in 99 s and 101 s instead of 137 s and 136 s, with no fresh calls.
 
