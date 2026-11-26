@@ -214,6 +214,22 @@ Built today: `init`, `keys set`, `keys list`, `models`, `doctor`, `ingest`, `fac
 The rest of this README also describes a command that is planned and not built yet: `rebuild`. It is marked "(planned)" where it appears. A guided terminal UI, `factoid setup`, is planned too.
 `SPEC.md` section 17 lists what is built.
 
+## When facts beat chunks
+
+Retrieving chunks spends much of a token budget on text around the answer. A fact is the answer alone, with speakers and
+pronouns resolved, so more of the budget goes to what matters. On 200 questions about 100 MediaSum news transcripts,
+the same reader answered from facts or from chunks of the same transcripts at the same budget:
+
+| Read budget | Facts | Chunks |
+| --- | --- | --- |
+| 512 tokens | 0.925 | 0.57 |
+| 2,048 tokens | 0.965 | 0.87 |
+| 8,192 tokens | 0.955 | 0.945 |
+
+With a large budget the two tie. As the budget shrinks, chunks fall off and facts hold.
+[examples/mediasum](https://github.com/Endgame-Labs/factoid/blob/main/examples/mediasum/README.md) has the full results,
+including the 70 transcripts that were not looked at while tuning.
+
 ## Documents, facts, and entities
 
 Each document type, entity type, fact class, and trait is a Python class. A class holds its definition, prompt or
@@ -412,6 +428,30 @@ factoid ingest contract_register.csv                                 # import fa
 A fact is one self-contained sentence, exact source quotes (with who said each quote and when), links to one or more
 entities, zero or more traits, and properties that say how it ages. A fact has no typed fields; the sentence carries the
 meaning.
+
+Here is one from the [demo](https://github.com/Endgame-Labs/factoid/tree/main/examples/demo), a sales call and two
+emails, trimmed to its main fields:
+
+```yaml
+text: >
+  Samir Patel said that Kestrel Health's finance team only approved 30 analyst seats for the initial rollout in the
+  morning of October 14, 2026 budget check, not 45.
+class: CustomerFact
+traits: [Pricing]
+status: current
+quotes:
+  - text: Finance only approved 30 analyst seats for the initial rollout in this morning's budget check, not 45.
+    speaker: Samir Patel
+    said_at: "05:24"
+mentions:
+  - {text: Samir Patel, role: speaker}
+  - {text: Kestrel Health, role: about}
+valid_from: 2026-10-14
+expires: never
+```
+
+It supersedes an earlier fact from the same call, "Elena Ortiz said that Kestrel Health planned 45 analyst seats for the
+initial rollout". That fact's status is now `superseded`, so Kestrel's current seat count is 30.
 
 A trait is a `FactTrait` subclass whose docstring is the definition the model reads. With no `decide` method, the trait
 is one yes-or-no question built from the docstring and compared against `threshold` (0.5 unless the class or the
@@ -1130,6 +1170,17 @@ published papers by Kyle Wild, Yusuke Takahashi, and Asako Uraki.
 ```
 
 </details>
+
+## Other projects
+
+- [Cerebro](https://open.endgame.io/cerebro) turns a pile of sources into a small library of cited articles for agents.
+  It uses Factoid to pull out the facts first, so each article points back to the exact words it came from.
+- [blowfish](https://open.endgame.io/blowfish) is a self-hostable search engine that speaks the turbopuffer API, so
+  Factoid's search can keep its index in your own bucket.
+- [SalesWorlds](https://huggingface.co/datasets/EndgameLabs/SalesWorlds) is a year of made-up B2B sales data for testing
+  agents: one company's CRM records, calls, email, and chat, with questions, answer keys, and the evidence for each.
+- [Skimmer](https://github.com/dorkitude/skimmer) reads a page, file, or list and keeps only the parts that help with a
+  goal, so an agent reads less.
 
 ## Further reading
 
