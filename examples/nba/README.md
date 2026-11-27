@@ -56,6 +56,9 @@ regenerates them.
 
 - `GameLog`, `BoxScore`, and `PlayerTotals` are structured documents. ESPN IDs link players, games, and teams exactly.
   Each templated cell becomes one fact cited to its file, row, and column, with no model call.
+- A templated fact is final, since no model rewrites it, so the tables word their sentences in `words`: the winner's
+  score first, "1 rebound" but "7 rebounds", and no three-point line for a player who took no threes. Each fact still
+  quotes the cell as the file has it.
 - The game log sets `resolve_cells = True`, so each game's series standing ("In the 2022 NBA Finals, the Celtics lead
   the series 2-1.") supersedes the previous one. The template writes the standing as a current state, without
   "after Game 3", and the row's date says when it held. With "after Game 3", each standing would describe one fixed

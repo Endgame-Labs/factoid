@@ -26,11 +26,11 @@ Facts:
 
 | Fact | Status | Held | From | Linked to |
 | --- | --- | --- | --- | --- |
-| The Golden State Warriors lost to the Boston Celtics 108-120 in Game 1 of the 2022 NBA Finals. | current | 2022-06-03 to now | row 1, `result` | Game 1 of the 2022 NBA Finals (subject), Boston Celtics (about) |
+| The Golden State Warriors lost to the Boston Celtics 120-108 in Game 1 of the 2022 NBA Finals. | current | 2022-06-03 to now | row 1, `result` | Game 1 of the 2022 NBA Finals (subject), Boston Celtics (about) |
 | In the 2022 NBA Finals, the Celtics lead the series 1-0. | superseded | 2022-06-03 to 2022-06-06 | row 1, `series_status` | Game 1 of the 2022 NBA Finals (subject), 2022 NBA Finals (about) |
 | The Golden State Warriors beat the Boston Celtics 107-88 in Game 2 of the 2022 NBA Finals. | current | 2022-06-06 to now | row 2, `result` | Game 2 of the 2022 NBA Finals (subject), Boston Celtics (about) |
 | In the 2022 NBA Finals, the series is tied 1-1. | superseded | 2022-06-06 to 2022-06-09 | row 2, `series_status` | Game 2 of the 2022 NBA Finals (subject), 2022 NBA Finals (about) |
-| The Golden State Warriors lost to the Boston Celtics 100-116 in Game 3 of the 2022 NBA Finals. | current | 2022-06-09 to now | row 3, `result` | Game 3 of the 2022 NBA Finals (subject), Boston Celtics (about) |
+| The Golden State Warriors lost to the Boston Celtics 116-100 in Game 3 of the 2022 NBA Finals. | current | 2022-06-09 to now | row 3, `result` | Game 3 of the 2022 NBA Finals (subject), Boston Celtics (about) |
 | In the 2022 NBA Finals, the Celtics lead the series 2-1. | superseded | 2022-06-09 to 2022-06-11 | row 3, `series_status` | Game 3 of the 2022 NBA Finals (subject), 2022 NBA Finals (about) |
 | The Golden State Warriors beat the Boston Celtics 107-97 in Game 4 of the 2022 NBA Finals. | current | 2022-06-11 to now | row 4, `result` | Game 4 of the 2022 NBA Finals (subject), Boston Celtics (about) |
 | In the 2022 NBA Finals, the series is tied 2-2. | superseded | 2022-06-11 to 2022-06-14 | row 4, `series_status` | Game 4 of the 2022 NBA Finals (subject), 2022 NBA Finals (about) |
@@ -64,7 +64,7 @@ Facts:
 | Draymond Green shot 2-5 from three-point range in Game 6 of the 2022 NBA Finals. | current | 2022-06-17 to now | row 1, `threes` | Game 6 of the 2022 NBA Finals (about), Draymond Green (about) |
 | Andrew Wiggins of the Golden State Warriors had 18 points, 6 rebounds, and 5 assists in 44 minutes in Game 6 of the 2022 NBA Finals. | current | 2022-06-17 to now | row 2, `points` | Game 6 of the 2022 NBA Finals (about), Andrew Wiggins (about), Golden State Warriors (about) |
 | Andrew Wiggins shot 4-9 from three-point range in Game 6 of the 2022 NBA Finals. | current | 2022-06-17 to now | row 2, `threes` | Game 6 of the 2022 NBA Finals (about), Andrew Wiggins (about) |
-| Otto Porter Jr. of the Golden State Warriors had 6 points, 1 rebounds, and 0 assists in 13 minutes in Game 6 of the 2022 NBA Finals. | current | 2022-06-17 to now | row 3, `points` | Game 6 of the 2022 NBA Finals (about), Otto Porter Jr. (about), Golden State Warriors (about) |
+| Otto Porter Jr. of the Golden State Warriors had 6 points, 1 rebound, and 0 assists in 13 minutes in Game 6 of the 2022 NBA Finals. | current | 2022-06-17 to now | row 3, `points` | Game 6 of the 2022 NBA Finals (about), Otto Porter Jr. (about), Golden State Warriors (about) |
 | Otto Porter Jr. shot 2-3 from three-point range in Game 6 of the 2022 NBA Finals. | current | 2022-06-17 to now | row 3, `threes` | Game 6 of the 2022 NBA Finals (about), Otto Porter Jr. (about) |
 | Stephen Curry of the Golden State Warriors had 34 points, 7 rebounds, and 7 assists in 40 minutes in Game 6 of the 2022 NBA Finals. | current | 2022-06-17 to now | row 4, `points` | Game 6 of the 2022 NBA Finals (about), Stephen Curry (about), Golden State Warriors (about) |
 | Stephen Curry shot 6-11 from three-point range in Game 6 of the 2022 NBA Finals. | current | 2022-06-17 to now | row 4, `threes` | Game 6 of the 2022 NBA Finals (about), Stephen Curry (about) |
@@ -75,7 +75,6 @@ Facts:
 | Al Horford of the Boston Celtics had 19 points, 14 rebounds, and 2 assists in 39 minutes in Game 6 of the 2022 NBA Finals. | current | 2022-06-17 to now | row 7, `points` | Game 6 of the 2022 NBA Finals (about), Al Horford (about), Boston Celtics (about) |
 | Al Horford shot 4-5 from three-point range in Game 6 of the 2022 NBA Finals. | current | 2022-06-17 to now | row 7, `threes` | Game 6 of the 2022 NBA Finals (about), Al Horford (about) |
 | Robert Williams III of the Boston Celtics had 10 points, 7 rebounds, and 2 assists in 33 minutes in Game 6 of the 2022 NBA Finals. | current | 2022-06-17 to now | row 8, `points` | Game 6 of the 2022 NBA Finals (about), Robert Williams III (about), Boston Celtics (about) |
-| Robert Williams III shot 0-0 from three-point range in Game 6 of the 2022 NBA Finals. | current | 2022-06-17 to now | row 8, `threes` | Game 6 of the 2022 NBA Finals (about), Robert Williams III (about) |
 | Marcus Smart of the Boston Celtics had 9 points, 6 rebounds, and 9 assists in 38 minutes in Game 6 of the 2022 NBA Finals. | current | 2022-06-17 to now | row 9, `points` | Game 6 of the 2022 NBA Finals (about), Marcus Smart (about), Boston Celtics (about) |
 | Marcus Smart shot 1-2 from three-point range in Game 6 of the 2022 NBA Finals. | current | 2022-06-17 to now | row 9, `threes` | Game 6 of the 2022 NBA Finals (about), Marcus Smart (about) |
 | Jaylen Brown of the Boston Celtics had 34 points, 7 rebounds, and 3 assists in 44 minutes in Game 6 of the 2022 NBA Finals. | current | 2022-06-17 to now | row 10, `points` | Game 6 of the 2022 NBA Finals (about), Jaylen Brown (about), Boston Celtics (about) |
