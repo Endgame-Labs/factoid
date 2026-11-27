@@ -613,3 +613,28 @@ def test_generate_field_reads_one_field_or_falls_back():
     assert generate_field(Client('{"other": 1}'), "q", "answer", "none", system="s") == "none"
     assert generate_field(Client("not json"), "q", "answer", "none", system="s") == "none"
     assert generate_field(Client("[1]"), "q", "answer", "none", system="s") == "none"
+
+
+def test_a_model_error_carries_its_status_and_blames_the_key_only_on_401_and_403(monkeypatch, tmp_path):
+    import httpx
+
+    from factoid.models import CallLog, Model, ModelClient, ModelError
+
+    monkeypatch.setenv("FACTOID_HOME", str(tmp_path))
+    monkeypatch.setenv("FIREWORKS_API_KEY", "fw_test")
+
+    def failing(status):
+        client = ModelClient({"generate": Model("fireworks/glm-5p3-flash")}, CallLog(None), replay=False, attempts=1)
+        client._http = httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(status, json={"e": 1})))
+        with pytest.raises(ModelError) as raised:
+            client.generate("hi")
+        return raised.value
+
+    bad_request = failing(400)
+    assert bad_request.status == 400 and "factoid keys set" not in str(bad_request)
+    assert bad_request.model == "fireworks/glm-5p3-flash" and bad_request.url.startswith("https://")
+    for status in (401, 403):
+        refused = failing(status)
+        assert refused.status == status and "factoid keys set fireworks" in str(refused)
+    assert failing(503).status == 503
+    assert ModelError("no model is set").status is None

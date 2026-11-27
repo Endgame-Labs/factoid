@@ -2,6 +2,14 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## Unreleased
+
+- **`ModelError` carries the HTTP status.** `status` is the status of the last response, or `None` when there was
+  none (no key, a host that never answered, or a missing model). `model` and `url` name the model and the endpoint
+  that was called. Code can now tell a refused key from a bad request without reading the message.
+- **A 400 no longer blames the key.** The hint to check or replace a key now shows only on 401 and 403. A 400 is a
+  bad request, so the key that sent it works.
+
 ## 0.1.30 (2026-11-27)
 
 - **A new version of a document keeps the facts of its unchanged sentences.** While a document was read again, the

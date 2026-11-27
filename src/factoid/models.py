@@ -45,7 +45,13 @@ __all__ = [
 
 
 class ModelError(RuntimeError):
-    """A model call failed, or a workload has no usable model."""
+    """A model call failed, or a workload has no usable model. `status` is the HTTP status of the last response, when
+    there was one; `model` names the model, and `url` the endpoint that was called, when a call was made."""
+
+    def __init__(self, message: str, *, status: int | None = None, model: str | None = None,
+                 url: str | None = None) -> None:
+        super().__init__(message)
+        self.status, self.model, self.url = status, model, url
 
 
 @dataclass(frozen=True)
@@ -500,7 +506,9 @@ class ModelClient:
         def wait(seconds: float, why: str) -> None:
             if seconds >= left():
                 raise ModelError(f"{model.name}: gave up after {attempt + 1} tries in "
-                                 f"{time.monotonic() - started:.0f}s (model_deadline): {why}")
+                                 f"{time.monotonic() - started:.0f}s (model_deadline): {why}",
+                                 status=response.status_code if response is not None else None,
+                                 model=model.name, url=url)
             time.sleep(seconds)
 
         for attempt in range(attempts):
@@ -512,9 +520,10 @@ class ModelClient:
                 # from a host that has answered before is a blip, and is retried.
                 if provider.name not in self._reachable and isinstance(err, (httpx.ConnectError,
                                                                              httpx.ConnectTimeout)):
-                    raise ModelError(f"{model.name}: could not connect to {model.base_url()} ({err})") from err
+                    raise ModelError(f"{model.name}: could not connect to {model.base_url()} ({err})",
+                                     model=model.name, url=url) from err
                 if attempt == attempts - 1:
-                    raise ModelError(f"{model.name}: {err}") from err
+                    raise ModelError(f"{model.name}: {err}", model=model.name, url=url) from err
                 wait(min(60, 2 ** attempt), str(err))
                 continue
             if response.status_code in (429, 500, 502, 503, 504, 529) and attempt < attempts - 1:
@@ -528,11 +537,12 @@ class ModelClient:
             hint = ""
             if response.status_code in (401, 403) and not model.api_key():
                 hint = f" ({provider.base_url_env} is set and no key is; {provider.missing_key()})"
-            elif response.status_code in (400, 401, 403) and model._api_key:
+            elif response.status_code in (401, 403) and model._api_key:  # a 400 is a bad request, not a bad key
                 hint = " (check the api_key given to this Model in code)"
-            elif response.status_code in (400, 401, 403) and provider.api_key():
+            elif response.status_code in (401, 403) and provider.api_key():
                 hint = f" (check the key in {provider.key_env}: `factoid keys set {provider.name}` replaces it)"
-            raise ModelError(f"{model.name}: HTTP {response.status_code}: {response.text[:500]}{hint}")
+            raise ModelError(f"{model.name}: HTTP {response.status_code}: {response.text[:500]}{hint}",
+                             status=response.status_code, model=model.name, url=url)
         data = response.json()
         seconds = time.monotonic() - started
         tokens_in, tokens_cached, tokens_out = _usage(data)
