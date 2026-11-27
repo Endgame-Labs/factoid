@@ -2,7 +2,7 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
-## Unreleased
+## 0.1.31 (2026-11-27)
 
 - **`ModelError` carries the HTTP status.** `status` is the status of the last response, or `None` when there was
   none (no key, a host that never answered, or a missing model). `model` and `url` name the model and the endpoint

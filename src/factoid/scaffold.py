@@ -169,7 +169,7 @@ def _version() -> str:
     from .version import version
 
     found = version()
-    return found if found[:1].isdigit() else "0.1.30"
+    return found if found[:1].isdigit() else "0.1.31"
 
 
 def switch(settings: Path, preset: str) -> bool:
