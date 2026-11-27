@@ -935,10 +935,12 @@ class Factoid:
     # -- reads ----------------------------------------------------------------------------------------------
 
     def _similar_facts(self, fact: Fact, vector: list[float], limit: int) -> list[Fact]:
+        # A revision restates its document's old facts, and resolve judges those, so the distinct check must not.
+        revising = set(self._revising.get(fact.document_id or "", {}).values())
         hits = self.index.hybrid(self.ns("facts"), fact.text, vector, limit)
         out = []
         for fact_id, _ in hits:
-            other = self.load_fact(fact_id)
+            other = None if fact_id in revising else self.load_fact(fact_id)
             if other is not None and other.status in ("current", "contradicted"):
                 out.append(other)
         return out
