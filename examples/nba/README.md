@@ -45,6 +45,13 @@ factoid eval playoffs                      # the whole run, with its checks
 factoid stats --examples 3 --data-dir runs/<time>/playoffs/default
 ```
 
+## Output samples
+
+[`output_samples/`](output_samples/README.md) shows the structured files going in and the facts coming out: the six
+Finals rows of the game log, the starters' box scores from Finals Game 6, and three players' totals, each beside the
+sentences Factoid wrote from them, with the series standings superseding one another. `output_samples/make.py`
+regenerates them.
+
 ## How the documents are read
 
 - `GameLog`, `BoxScore`, and `PlayerTotals` are structured documents. ESPN IDs link players, games, and teams exactly.

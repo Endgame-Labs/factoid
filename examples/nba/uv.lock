@@ -53,7 +53,7 @@ wheels = [
 
 [[package]]
 name = "factoid"
-version = "0.1.26"
+version = "0.1.31"
 source = { editable = "../../" }
 dependencies = [
     { name = "click" },
@@ -69,13 +69,15 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "jinja2", specifier = ">=3.1" },
     { name = "numpy", specifier = ">=2.5.4" },
+    { name = "psycopg", extras = ["binary"], marker = "extra == 'postgres'", specifier = ">=3.2" },
     { name = "pyarrow", marker = "extra == 'parquet'", specifier = ">=18" },
     { name = "pydantic", specifier = ">=2.9" },
 ]
-provides-extras = ["parquet"]
+provides-extras = ["parquet", "postgres"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
     { name = "pyarrow", specifier = ">=18" },
     { name = "pytest", specifier = ">=8" },
     { name = "ruff", specifier = ">=0.17.5" },
