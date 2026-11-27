@@ -2,6 +2,17 @@
 
 Features and fixes that change what Factoid does, by version. `SPEC.md` has the reasons behind each one.
 
+## 0.1.30 (2026-11-27)
+
+- **A new version of a document keeps the facts of its unchanged sentences.** While a document was read again, the
+  distinct check compared each new fact with the document's own old facts, which are still current at that point, and
+  dropped every new fact that restated one. Nothing then claimed the old fact, so it was replaced. Editing one sentence
+  lost the facts of the sentences nobody touched. The distinct check now leaves out a revised document's old facts, and
+  resolve still judges what the new version restates and what it changes. On the demo call with one sentence edited,
+  9 to 11 of the untouched facts kept their ids, against 0 to 1 before. The check also asks for more neighbours while
+  revising, so it still sees three facts from other documents. Thanks to Dustin Larimer (PR #31).
+- **Website:** https://open.endgame.io/factoid, and the README links blowfish as a turbopuffer-compatible endpoint.
+
 ## 0.1.29 (2026-11-25)
 
 - **One decision request fewer per fact (issue #7).** `assess_with_evaluate` is now on by default: the trait and time
