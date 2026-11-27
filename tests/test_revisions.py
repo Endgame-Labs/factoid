@@ -4,6 +4,7 @@ import pytest
 from test_pipeline import Contract, build
 
 from factoid import Fact
+from factoid.fact_evals import QUESTIONS
 
 META = {"signed_at": "2025-03-01T00:00:00Z"}
 CAP = "Vega's liability to Orion is capped at $1M under the supply agreement."
@@ -45,6 +46,17 @@ def test_a_dropped_fact_is_replaced_and_keeps_its_old_text(make_app, fake):
     assert app.store.document_text(old.document_id, revision)[quote.start:quote.end] == quote.text
     assert CAP in app.store.document_text(old.document_id) and ASSIGN not in app.store.document_text(old.document_id)
     assert old.id not in {h.fact.id for h in app.search_facts("assign")}
+
+
+def test_an_unchanged_sentence_keeps_its_fact_when_another_is_edited(make_app, fake):
+    app = build(make_app, fake)
+    first = _ingest(app, CAP + "\n\n" + ASSIGN)
+    old_cap = next(f for f in first.facts if f.text == CAP)
+    inner = fake.noul
+    fake.noul = lambda q, s: (0.02 if q is QUESTIONS["distinct"] and s["fact"] in
+                              {f["text"] for f in s["similar_stored_facts"]} else inner(q, s))
+    _ingest(app, CAP + "\n\n" + ASSIGN.replace("written consent", "signed consent"))
+    assert Fact.get(old_cap.id).status == "current"
 
 
 def test_the_judge_says_what_changed_and_what_is_restated(make_app, fake):
