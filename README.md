@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/art/factoid.dark.gif">
+    <img width="429" alt="A card-catalog drawer with three index cards rising out of it, each with a heading and lines of text." src="docs/art/factoid.light.gif">
+  </picture>
+</p>
+
 # Factoid 📚
 
 [![Website](https://img.shields.io/badge/website-open.endgame.io%2Ffactoid-2563eb.svg)](https://open.endgame.io/factoid)
